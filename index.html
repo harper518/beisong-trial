@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="记忆填空"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-<meta name="theme-color" content="#f0fdfa"/>
+<meta name="theme-color" id="themeColorMeta" content="#f0fdfa"/>
 <link rel="manifest" href="manifest.json"/>
 <title>挖空背诵工具 · 小阮出品</title>
 <style>
@@ -869,6 +869,10 @@ function applySettings() {
   document.documentElement.setAttribute('data-theme', s.darkMode ? 'dark' : 'light');
   document.documentElement.setAttribute('data-color', s.color || 'teal');
   document.documentElement.style.setProperty('--font-size', s.fontSize + 'px');
+  // 更新顶部状态栏颜色
+  const themeColors = {teal:'#f0fdfa',purple:'#faf5ff',blue:'#f0f7ff',rose:'#fff1f5',pink:'#fdf2f8',green:'#f0fdf4',yellow:'#fefce8'};
+  const mc = document.getElementById('themeColorMeta');
+  if (mc) mc.content = s.darkMode ? '#042f2e' : (themeColors[s.color] || '#f0fdfa');
 }
 
 function saveThemeColor(color) {
