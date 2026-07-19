@@ -966,7 +966,6 @@ function exportBankFull(id) {
 
 // ==================== 导入 ====================
 function showImportModal() {
-  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导入数据'); return; }
   const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'importModal';
   ov.innerHTML = `<div class="modal"><div class="modal-header"><h2 class="modal-title">导入题库</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closeImportModal()">✕</button></div>
     <div class="form-group"><label class="form-label">题库名称</label><input id="bankNameInput" type="text" placeholder="例如：生物第三章" style="padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);width:100%"></div>
@@ -1058,7 +1057,6 @@ function doImport() {
 let previewData = null;
 
 function showImportPreview(name, cards) {
-  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导入数据'); return; }
   const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'previewModal';
   // 保留编辑模式信息
   const editId = previewData?.editBankId;
@@ -1536,7 +1534,6 @@ function closePreviewModal() {
 }
 
 function confirmImport() {
-  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导入数据'); return; }
   if (!previewData) return;
   const { name, cards, mode, editBankId } = previewData;
   const cleaned = cards.map(c => {
@@ -2928,7 +2925,6 @@ function showBackupModal(code) {
 }
 
 function showRestorePrompt() {
-  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导入数据'); return; }
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:380px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px">
     <h3 style="margin-bottom:10px">📥 粘贴备份码</h3>
