@@ -74,6 +74,12 @@
   --primary:#eab308; --primary-hover:#ca8a04; --primary-light:#fefce8; --primary-soft:#fef9c3;
   --border:#f0e8c0;
 }
+[data-color="bw"] {
+  --bg:#f5f5f5; --bg-card:#fff; --bg-input:#f5f5f5;
+  --text:#1a1a1a; --text-secondary:#666;
+  --primary:#555; --primary-hover:#333; --primary-light:#f0f0f0; --primary-soft:#e5e5e5;
+  --border:#d4d4d4;
+}
 
 [data-theme="dark"] {
   --bg:#042f2e; --bg-card:#134e4a; --bg-input:#11554e; --bg-overlay:rgba(0,0,0,.7);
@@ -120,6 +126,12 @@
   --text:#fef5d5; --text-secondary:#dcd09e;
   --primary:#facc15; --primary-hover:#fde047; --primary-light:#422006; --primary-soft:#5c3308;
   --border:#5c3308;
+}
+[data-theme="dark"][data-color="bw"] {
+  --bg:#1a1a1a; --bg-card:#2a2a2a; --bg-input:#222;
+  --text:#e5e5e5; --text-secondary:#999;
+  --primary:#aaa; --primary-hover:#ccc; --primary-light:#2a2a2a; --primary-soft:#333;
+  --border:#444;
 }
 [data-theme="dark"][data-color="teal"] {
   --bg:#042f2e; --bg-card:#134e4a; --bg-input:#11554e;
@@ -912,9 +924,10 @@ function applySettings() {
   document.documentElement.setAttribute('data-color', s.color || 'teal');
   document.documentElement.style.setProperty('--font-size', s.fontSize + 'px');
   // 更新顶部状态栏颜色
-  const themeColors = {teal:'#f0fdfa',purple:'#faf5ff',blue:'#f0f7ff',rose:'#fff1f5',pink:'#fdf2f8',green:'#f0fdf4',yellow:'#fefce8'};
+  const themeLight = {teal:'#f0fdfa',purple:'#faf5ff',blue:'#f0f7ff',rose:'#fff1f5',pink:'#fdf2f8',green:'#f0fdf4',yellow:'#fefce8',bw:'#f5f5f5'};
+  const themeDark = {teal:'#042f2e',purple:'#1a0a2e',blue:'#0a1628',rose:'#1f0a14',pink:'#200a18',green:'#051a10',yellow:'#1a1508',bw:'#1a1a1a'};
   const mc = document.getElementById('themeColorMeta');
-  if (mc) mc.content = s.darkMode ? '#042f2e' : (themeColors[s.color] || '#f0fdfa');
+  if (mc) mc.content = s.darkMode ? (themeDark[s.color] || '#042f2e') : (themeLight[s.color] || '#f0fdfa');
 }
 
 function saveThemeColor(color) {
@@ -2934,8 +2947,8 @@ function renderSettings() {
   <div class="section"><div class="section-title">外观</div>
     <div class="setting-item"><div><div class="setting-label">夜间模式</div><div class="setting-desc">暗色主题，夜间刷题更护眼</div></div>
       <label class="toggle"><input type="checkbox" id="darkToggle"${s.darkMode ? ' checked' : ''} onchange="saveSetting('darkMode', this.checked)"><span class="slider"></span></label></div>
-    <div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">${({teal:'青绿',purple:'浅紫',blue:'浅蓝',rose:'玫红',pink:'粉色',green:'浅绿',yellow:'浅黄'})[s.color||'teal']}</div></div>
-      <div class="color-dots"><span class="color-dot${(s.color||'teal')==='teal'?' active':''}" style="background:#0891b2" onclick="saveThemeColor('teal')"></span><span class="color-dot${s.color==='purple'?' active':''}" style="background:#9333ea" onclick="saveThemeColor('purple')"></span><span class="color-dot${s.color==='blue'?' active':''}" style="background:#3b82f6" onclick="saveThemeColor('blue')"></span><span class="color-dot${s.color==='rose'?' active':''}" style="background:#e11d48" onclick="saveThemeColor('rose')"></span><span class="color-dot${s.color==='pink'?' active':''}" style="background:#ec4899" onclick="saveThemeColor('pink')"></span><span class="color-dot${s.color==='green'?' active':''}" style="background:#22c55e" onclick="saveThemeColor('green')"></span><span class="color-dot${s.color==='yellow'?' active':''}" style="background:#eab308" onclick="saveThemeColor('yellow')"></span></div></div>
+    <div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">${({teal:'青绿',purple:'浅紫',blue:'浅蓝',rose:'玫红',pink:'粉色',green:'浅绿',yellow:'浅黄',bw:'黑白'})[s.color||'teal']}</div></div>
+      <div class="color-dots"><span class="color-dot${(s.color||'teal')==='teal'?' active':''}" style="background:#0891b2" onclick="saveThemeColor('teal')"></span><span class="color-dot${s.color==='purple'?' active':''}" style="background:#9333ea" onclick="saveThemeColor('purple')"></span><span class="color-dot${s.color==='blue'?' active':''}" style="background:#3b82f6" onclick="saveThemeColor('blue')"></span><span class="color-dot${s.color==='rose'?' active':''}" style="background:#e11d48" onclick="saveThemeColor('rose')"></span><span class="color-dot${s.color==='pink'?' active':''}" style="background:#ec4899" onclick="saveThemeColor('pink')"></span><span class="color-dot${s.color==='green'?' active':''}" style="background:#22c55e" onclick="saveThemeColor('green')"></span><span class="color-dot${s.color==='yellow'?' active':''}" style="background:#eab308" onclick="saveThemeColor('yellow')"></span><span class="color-dot${s.color==='bw'?' active':''}" style="background:#555" onclick="saveThemeColor('bw')"></span></div></div>
     <div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">${s.fontSize}px</div></div>
       <div class="flex items-center gap-8" style="width:140px"><span style="font-size:13px">A</span><input type="range" min="14" max="24" value="${s.fontSize}" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))"><span style="font-size:18px;font-weight:700">A</span></div></div></div>
 
