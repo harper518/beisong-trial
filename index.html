@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- © 2026 小阮 · 挖空背诵工具 授权码: 7666 -->
+<!-- © 2026 小阮 · 挖空背诵工具（自用） -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"/>
@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="记忆填空"/>
 <link rel="manifest" href="manifest.json"/>
-<title>挖空背诵工具（试用）</title>
+<title>挖空背诵工具（自用）</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -284,7 +284,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8}
 </nav>
 
 <script>
-// ==================== 授权激活（自用版为空，分享版为4位数字） ====================
+// ==================== 授权激活（试用版 - 服务器验证） ====================
 const AUTH_API = 'https://beisong-auth-etltwnrbmg.cn-hangzhou.fcapp.run/auth';
 const AUTH_MINUTES = 10;
 
@@ -391,12 +391,6 @@ function showAuthModal() {
 // ==================== localStorage 数据层 ====================
 const STORAGE_KEY = 'memorize_v2_trial_7666';
 
-function loadData() {
-  try { const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); if (d) return Object.assign({ banks:{}, settings:{}, seqProgress:{}, favorites:{}, wrongBooks:{} }, d); }
-  catch(e) {}
-  return getPresetData_7666();
-}
-
 function getPresetData_7666() {
   const eduCards = [
     { id:'p1', question:'1.简述 20 世纪以后教育的特点。（三级）', answer:'（1）教育的终身化。它包括各个年龄阶段的各种方式的教育。\\n（2）教育的全民化。教育必须面向所有的人，即人人都有接受教育的权利。\\n（3）教育的民主化。一方面让所有的人接受同样的教育，另一方面追求教育的自由化。\\n（4）教育的多元化。具体表现为培养目标的多元化、办学形式的多元化等。\\n（5）教育的现代化。教育的现代化是指现代科学技术在教育上的运用，并由此引起教育思想、教育观念的变化。', koujue:'全（全民化）民（民主化）多（多元化）现（现代化）身（终身化）', chapter:'教育学' },
@@ -423,6 +417,12 @@ function getPresetData_7666() {
     settings: { density:'low', darkMode:false, fontSize:16, voiceEnabled:false, voiceRate:0.9, voicePitch:1.0 },
     seqProgress: {}, favorites: {}, wrongBooks: {}
   };
+}
+
+function loadData() {
+  try { const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); if (d) return Object.assign({ banks:{}, settings:{}, seqProgress:{}, favorites:{}, wrongBooks:{} }, d); }
+  catch(e) {}
+  return getPresetData_7666();
 }
 
 function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -563,7 +563,7 @@ function autoGenerateBlanks(cards, density, seed) {
     const totalLen = located.reduce((s, l) => s + l.text.length, 0) || 1;
     const allocation = new Array(located.length).fill(1); // 每个点至少1个
     // 低=每点1空（仅保底），高=每点约3空按比例自然分配
-    const extraTotal = density === 'low' ? 0 : located.length * 3;
+    const extraTotal = density === 'low' ? 0 : Math.round(located.length * 1.5);
     // 按文本长度比例分配额外空（最大余数法，长的点分到更多）
     const prop = located.map((l, i) => ({ i, share: l.text.length / totalLen * extraTotal, got: 0 }));
     let given = 0;
@@ -680,6 +680,35 @@ function escNl(s) { return escapeHtml(s).replace(/\n/g, '<br>'); }
 function shuffle(a) { const arr = [...a]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 function fmtDate(ts) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function downloadFile(fn, content, mime) { const b = new Blob([content],{type:mime}), url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+function showExportModal(title, content) {
+  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  ov.innerHTML = `<div class="modal" style="animation:none;max-width:420px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;border-radius:var(--radius)">
+    <h3 style="margin-bottom:6px">📤 ${escapeHtml(title)}</h3>
+    <textarea readonly style="width:100%;min-height:160px;max-height:50vh;font-size:13px;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text);word-break:break-all;font-family:inherit" onclick="this.select()">${escapeHtml(content)}</textarea>
+    <p class="text-sm text-secondary mt-6">👆 点上方文字全选 → 复制</p>
+    <div class="flex gap-8 mt-10">
+      <button class="btn btn-primary flex-1" onclick="copyExportContent(this)">📋 一键复制</button>
+      <button class="btn btn-ghost flex-1" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  ov._exportContent = content;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+}
+function copyExportContent(btn) {
+  const ov = btn.closest('.modal-overlay');
+  const content = ov._exportContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(content).then(() => showToast('已复制到剪贴板'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = content; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast('已复制到剪贴板'); } catch(e) { showToast('复制失败，请手动选择复制'); }
+    document.body.removeChild(ta);
+  }
+  ov.remove();
+}
 function showToast(msg) { const c = $('toastContainer'), t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; c.appendChild(t); setTimeout(() => t.remove(), 2300); }
 
 function fuzzyMatch(u, a) {
@@ -697,8 +726,8 @@ function fuzzyMatch(u, a) {
 }
 
 function showConfirm(title, msg, onConfirm) {
-  const ov = document.createElement('div'); ov.className = 'modal-overlay';
-  ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:330px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px"><h3 style="margin-bottom:8px;font-size:17px">${escapeHtml(title)}</h3><p style="color:var(--text-secondary);margin-bottom:22px;font-size:14px">${escapeHtml(msg)}</p><div class="flex gap-10"><button class="btn btn-ghost flex-1 cancel-btn">取消</button><button class="btn btn-danger flex-1 confirm-btn">确认</button></div></div>`;
+  const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  ov.innerHTML = `<div class="modal" style="animation:none;border-radius:var(--radius);max-width:330px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px"><h3 style="margin-bottom:8px;font-size:17px">${escapeHtml(title)}</h3><p style="color:var(--text-secondary);margin-bottom:22px;font-size:14px">${escapeHtml(msg)}</p><div class="flex gap-10"><button class="btn btn-ghost flex-1 cancel-btn">取消</button><button class="btn btn-danger flex-1 confirm-btn">确认</button></div></div>`;
   document.body.appendChild(ov);
   ov.querySelector('.cancel-btn').onclick = () => ov.remove();
   ov.querySelector('.confirm-btn').onclick = () => { ov.remove(); onConfirm(); };
@@ -708,6 +737,8 @@ function showConfirm(title, msg, onConfirm) {
 // ==================== 全局状态 ====================
 let practiceState = null;
 let batchSize = 10;
+let categoryFilter = null; // null=全选，Set=选中分类
+let kjCategoryFilter = null; // 口诀页分类筛选
 let drawMode = 'random-norepeat';
 let hideQuestionStart = false;
 
@@ -722,6 +753,7 @@ function init() {
 }
 
 function initApp() {
+  // 试用版：每30秒检查授权是否过期
   if (AUTH_API && !isPermanentAuth()) {
     setInterval(() => { if (!checkAuth()) { location.reload(); } }, 30000);
   }
@@ -827,7 +859,7 @@ function renderBanks() {
     const wrongCount = (appData.wrongBooks[b.id] || []).length;
     return `<div class="bank-item" onclick="event.stopPropagation()">
       <div class="info" onclick="startPracticeSetup('${b.id}')">
-        <div class="name">${escapeHtml(b.name)}</div>
+        <div class="name" onclick="event.stopPropagation();renameBankPrompt(this, '${b.id}')" title="点击修改名称" style="cursor:pointer">${escapeHtml(b.name)}</div>
         <div class="meta">
           <span>${b.cards.length} 题</span>
           <span>·</span>
@@ -846,7 +878,28 @@ function renderBanks() {
   }).join('');
 }
 
-function deleteBankConfirm(id) {
+function renameBankPrompt(el, id) {
+	  const bank = appData.banks[id];
+	  if (!bank) return;
+	  const oldName = bank.name;
+	  const input = document.createElement('input');
+	  input.type = 'text'; input.value = oldName;
+	  input.style.cssText = 'font-size:inherit;font-weight:700;border:none;border-bottom:2px solid var(--primary);background:transparent;color:var(--text);width:100%;padding:2px 0';
+	  el.innerHTML = '';
+	  el.appendChild(input);
+	  input.focus(); input.select();
+	  const save = () => {
+	    const v = input.value.trim() || oldName;
+	    bank.name = v;
+	    bank.updatedAt = Date.now();
+	    saveData(appData);
+	    el.textContent = v;
+	  };
+	  input.onblur = save;
+	  input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') { el.textContent = oldName; } };
+	}
+
+	function deleteBankConfirm(id) {
   const bank = appData.banks[id];
   if (!bank) return;
   showConfirm('删除题库', `确定删除「${bank.name}」吗？此操作不可撤销。`, () => {
@@ -883,8 +936,8 @@ function exportBank(id) {
   if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   const bank = appData.banks[id];
   if (!bank) return;
-  downloadFile(bank.name + '.txt', bank.cards.map(c => c.question + '|' + c.answer).join('\n'), 'text/plain');
-  showToast('导出成功（纯文本）');
+  const text = bank.cards.map(c => c.question + '|' + c.answer).join('\n');
+  showExportModal(bank.name, text);
 }
 
 function exportBankFull(id) {
@@ -896,24 +949,24 @@ function exportBankFull(id) {
   for (const c of bank.cards) {
     const q = c.question.trim();
     const a = c.answer.trim();
-    const blanks = (c.blanks || []).slice().sort((a, b) => a.start - b.start);
+    const blanks = (c.blanks || []).filter(b => !b._combined).sort((a, b) => a.start - b.start);
     if (!blanks.length) { lines.push(q + '|' + a); continue; }
     const ft = c.fullText || q + '\n' + a;
     const aStart = q.length + 1;
     let out = '', p = aStart;
     for (const b of blanks) {
-      out += ft.substring(p, b.start) + '【' + b.text + '】';
+      out += ft.substring(p, b.start) + '【' + (b.text || '') + '】';
       p = b.end;
     }
     out += ft.substring(p);
     lines.push(q + '|' + out.substring(aStart));
   }
-  downloadFile(bank.name + '_挖空.txt', lines.join('\n'), 'text/plain');
-  showToast('导出成功（含挖空标记）');
+  showExportModal(bank.name + '（挖空）', lines.join('\n'));
 }
 
 // ==================== 导入 ====================
 function showImportModal() {
+  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导入数据'); return; }
   const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'importModal';
   ov.innerHTML = `<div class="modal"><div class="modal-header"><h2 class="modal-title">导入题库</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closeImportModal()">✕</button></div>
     <div class="form-group"><label class="form-label">题库名称</label><input id="bankNameInput" type="text" placeholder="例如：生物第三章" style="padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);width:100%"></div>
@@ -1005,25 +1058,61 @@ function doImport() {
 let previewData = null;
 
 function showImportPreview(name, cards) {
+  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导入数据'); return; }
   const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'previewModal';
   // 保留编辑模式信息
   const editId = previewData?.editBankId;
+  const wasSingle = previewData?._singleCardEdit;
+  const cardIdx = previewData?._cardIdx;
   previewData = { name, cards, mode: 'manual', editBankId: editId };
+  if (wasSingle) { previewData._singleCardEdit = true; previewData._cardIdx = cardIdx; }
 
-  let html = `<div class="modal"><div class="modal-header"><h2 class="modal-title">预览：${escapeHtml(name)}</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closePreviewModal()">✕</button></div>
+  let html = `<div class="modal" style="display:flex;flex-direction:column;max-height:88dvh">
+    <div class="modal-header"><h2 class="modal-title" onclick="editPreviewTitle(this)" title="点击修改标题" style="cursor:pointer">预览：${escapeHtml(name)}</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closePreviewModal()">✕</button></div>
+    <div style="overflow-y:auto;flex:1;min-height:0;padding:0 2px">
     <div class="chip-group mb-12" id="previewModeChips">
       <span class="chip active" data-mode="manual" onclick="switchPreviewMode('manual', this)">✋ 手动挖空</span>
       <span class="chip" data-mode="auto" onclick="switchPreviewMode('auto', this)">🤖 系统自动</span>
     </div>
     <p class="text-sm text-secondary mb-12" id="previewModeHint">👆 点击答案中的字选中挖空，连续的字自动合并。保存后可继续第二轮挖空。</p>
-    <div id="previewCards"></div>`;
-
-  html += `<div class="flex gap-10 mt-16" style="position:sticky;bottom:0;background:var(--bg-card);padding:14px 0">
+    <div id="previewCards"></div>
+    </div>
+    <div class="flex gap-10" style="padding:14px 0 0;flex-shrink:0">
     <button class="btn btn-ghost flex-1" onclick="closePreviewModal()">取消</button>
-    <button class="btn btn-primary flex-1" onclick="confirmImport()">确认导入 (${cards.length} 题)</button></div></div>`;
+    <button class="btn btn-primary flex-1" onclick="confirmImport()">确认导入 (${cards.length} 题)</button>
+    </div></div>`;
   ov.innerHTML = html;
   document.body.appendChild(ov);
   renderPreviewCards();
+  // 固定保存按钮（屏幕中间偏左）
+  const saveBtn = document.createElement('button');
+  saveBtn.id = 'floatingSaveBtn';
+  saveBtn.textContent = '💾';
+  saveBtn.title = '保存选中（回车）';
+  saveBtn.onclick = () => {
+    if (!previewData || previewData.mode !== 'manual') return;
+    const idx = previewData._activeIdx;
+    if (idx == null) return;
+    const sel = previewData.cards[idx]._charSelected || {};
+    if (Object.values(sel).some(v => v)) saveCardSelection(idx);
+  };
+  saveBtn.style.cssText = 'position:fixed;right:12px;top:50%;transform:translateY(-50%);z-index:9999;font-size:28px;padding:8px;min-height:auto;background:transparent;border:none;opacity:.15;cursor:pointer;line-height:1;transition:opacity .2s';
+  saveBtn.onmouseenter = () => { saveBtn.style.opacity = '.5'; };
+  saveBtn.onmouseleave = () => { saveBtn.style.opacity = '.15'; };
+  ov.appendChild(saveBtn);
+  // 回车保存当前选中
+  ov._keyHandler = e => {
+    if (e.key !== 'Enter') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (!previewData || previewData.mode !== 'manual') return;
+    const idx = previewData._activeIdx;
+    if (idx == null) return;
+    const sel = previewData.cards[idx]._charSelected || {};
+    if (!Object.values(sel).some(v => v)) return;
+    e.preventDefault();
+    saveCardSelection(idx);
+  };
+  document.addEventListener('keydown', ov._keyHandler);
 }
 
 function switchPreviewMode(mode, el) {
@@ -1059,8 +1148,8 @@ function renderPreviewCards() {
       ${card.koujue ? `<div class="text-sm mb-6" style="color:var(--primary)">🧠 ${escapeHtml(card.koujue)}</div>` : ''}`;
 
     if (mode === 'manual') {
-      html += `<div class="preview-answer" id="pv-answer-${i}">${renderAnswerChars(card, i)}</div>
-        <div style="margin-top:6px" id="pv-info-${i}">${renderSavedInfo(card)}</div>
+      html += `<div style="position:relative"><div class="preview-answer" id="pv-answer-${i}">${renderAnswerChars(card, i)}</div><button class="btn btn-sm" onclick="saveCardSelection(${i})" style="position:absolute;left:-8px;top:50%;transform:translate(-100%,-50%);opacity:.35;font-size:18px;padding:4px 6px;min-height:auto;background:transparent;border:none;cursor:pointer;line-height:1" title="保存选中（回车）">💾</button></div>
+        <div style="margin-top:6px" id="pv-info-${i}">${renderSavedInfo(card, i)}</div>
         <div class="flex gap-6 mt-6">
           <button class="btn btn-sm btn-ghost" onclick="saveCardSelection(${i})" style="font-size:12px;padding:4px 10px;min-height:28px">💾 保存选中</button>
           <button class="btn btn-sm btn-ghost" onclick="clearCardSelection(${i})" style="font-size:12px;padding:4px 10px;min-height:28px">🔄 清除全部</button>
@@ -1095,11 +1184,11 @@ function renderAnswerChars(card, idx) {
     if (/\s/.test(ch)) { h += ' '; continue; }
     if (saved[i]) {
       const cls = sel[i] ? 'char-sel saved' : 'saved';
-      h += `<span class="preview-char ${cls}" data-ci="${i}" onclick="if(Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})" style="background:var(--blank-bg);border-bottom:2px solid var(--blank-border);border-radius:2px">${escapeHtml(ch)}</span>`;
+      h += `<span class="preview-char ${cls}" data-ci="${i}" onclick="if(!_wasDragging&&Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})" style="background:var(--blank-bg);border-bottom:2px solid var(--blank-border);border-radius:2px">${escapeHtml(ch)}</span>`;
     } else if (sel[i]) {
-      h += `<span class="preview-char char-sel" data-ci="${i}" onclick="if(Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})">${escapeHtml(ch)}</span>`;
+      h += `<span class="preview-char char-sel" data-ci="${i}" onclick="if(!_wasDragging&&Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})">${escapeHtml(ch)}</span>`;
     } else {
-      h += `<span class="preview-char" data-ci="${i}" onclick="if(Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})">${escapeHtml(ch)}</span>`;
+      h += `<span class="preview-char" data-ci="${i}" onclick="if(!_wasDragging&&Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})">${escapeHtml(ch)}</span>`;
     }
   }
   h += '</div>';
@@ -1108,53 +1197,62 @@ function renderAnswerChars(card, idx) {
 
 // 滑动选择
 let swipeSelectMode = null;
-let swipeStartX = 0, swipeStartY = 0;
+let swipeStartX = 0, swipeStartY = 0, _lastTouchX = 0, _lastTouchY = 0;
 function swipeSelectStart(e, idx) {
   _touchJustHappened = Date.now();
-  swipeStartX = e.touches[0].clientX;
-  swipeStartY = e.touches[0].clientY;
+  swipeStartX = _lastTouchX = e.touches[0].clientX;
+  swipeStartY = _lastTouchY = e.touches[0].clientY;
   swipeSelectMode = null;
   const card = previewData.cards[idx];
   const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
   const ci = el?.dataset?.ci;
   if (ci == null) return;
   const charIdx = parseInt(ci);
-  if (card._savedChars && card._savedChars[charIdx]) {
-    toggleImportChar(idx, charIdx);
-    return;
-  }
+  const isSaved = card._savedChars && card._savedChars[charIdx];
+  if (isSaved) toggleImportChar(idx, charIdx);
   // 暂不启动选择模式，等 move 判断方向
-  swipeSelectMode = { idx, adding: !card._charSelected[charIdx], started: false };
+  swipeSelectMode = { idx, adding: isSaved ? false : !(card._charSelected || {})[charIdx], removing: isSaved, started: false };
 }
 
 function swipeSelectMove(e, idx) {
   if (!swipeSelectMode || swipeSelectMode.idx !== idx) return;
-  const dx = Math.abs(e.touches[0].clientX - swipeStartX);
-  const dy = Math.abs(e.touches[0].clientY - swipeStartY);
-  // 如果是垂直滑动，取消选择模式（让页面滚动）
+  const tx = e.touches[0].clientX, ty = e.touches[0].clientY;
+  const dx = Math.abs(tx - swipeStartX), dy = Math.abs(ty - swipeStartY);
   if (dy > dx && dy > 5) { swipeSelectMode = null; return; }
-  // 水平滑动超过阈值才启动
   if (dx < 8 && dy < 8) return;
   if (!swipeSelectMode.started) {
     swipeSelectMode.started = true;
-    toggleImportChar(idx, parseInt(document.elementFromPoint(swipeStartX, swipeStartY)?.dataset?.ci || '0'));
+    if (!swipeSelectMode.removing) {
+      const el0 = document.elementFromPoint(swipeStartX, swipeStartY);
+      const ci0 = el0?.dataset?.ci;
+      if (ci0 != null) toggleImportChar(idx, parseInt(ci0));
+    }
   }
-  const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-  const ci = el?.dataset?.ci;
-  if (ci == null) return;
-  const charIdx = parseInt(ci);
   const card = previewData.cards[idx];
-  if (card._savedChars && card._savedChars[charIdx]) return;
   if (!card._charSelected) card._charSelected = {};
-  if (card._charSelected[charIdx] !== swipeSelectMode.adding) {
-    toggleImportChar(idx, charIdx);
+  const steps = Math.max(Math.abs(tx - _lastTouchX), Math.abs(ty - _lastTouchY));
+  for (let s = 0; s <= steps; s++) {
+    const t = steps === 0 ? 1 : s / steps;
+    const px = Math.round(_lastTouchX + (tx - _lastTouchX) * t);
+    const py = Math.round(_lastTouchY + (ty - _lastTouchY) * t);
+    const el = document.elementFromPoint(px, py);
+    const ci = el?.dataset?.ci;
+    if (ci == null) continue;
+    const charIdx = parseInt(ci);
+    if (swipeSelectMode.removing) {
+      if (card._savedChars && card._savedChars[charIdx]) toggleImportChar(idx, charIdx);
+    } else {
+      if (card._savedChars && card._savedChars[charIdx]) continue;
+      if (card._charSelected[charIdx] !== swipeSelectMode.adding) toggleImportChar(idx, charIdx);
+    }
   }
+  _lastTouchX = tx; _lastTouchY = ty;
   e.preventDefault();
 }
 
 function swipeSelectEnd(idx) {
-  // 没滑动的单击
-  if (swipeSelectMode && !swipeSelectMode.started) {
+  // 没滑动的单击（去除模式在 start 已处理，这里跳过）
+  if (swipeSelectMode && !swipeSelectMode.started && !swipeSelectMode.removing) {
     const card = previewData.cards[idx];
     const el = document.elementFromPoint(swipeStartX, swipeStartY);
     const ci = el?.dataset?.ci;
@@ -1168,50 +1266,55 @@ function swipeSelectEnd(idx) {
   swipeSelectMode = null;
 }
 
-// 鼠标拖拽选择（桌面端）
+// 鼠标选择（桌面端）：mousedown 即时响应，拖动连续选中
+let _wasDragging = false, _lastX = 0, _lastY = 0;
 function mouseSelectStart(e, idx) {
-  swipeStartX = e.clientX; swipeStartY = e.clientY; swipeSelectMode = null;
-  const card = previewData.cards[idx];
+  if (Date.now() - _touchJustHappened < 500) return; // 移动端刚摸过，跳过鼠标事件
+  swipeStartX = _lastX = e.clientX; swipeStartY = _lastY = e.clientY;
+  _wasDragging = true; // 阻止后续 onclick 重复触发
   const el = document.elementFromPoint(e.clientX, e.clientY);
   const ci = el?.dataset?.ci;
-  if (ci == null) return;
+  if (ci == null) { swipeSelectMode = null; return; }
   const charIdx = parseInt(ci);
-  if (card._savedChars && card._savedChars[charIdx]) { toggleImportChar(idx, charIdx); return; }
-  swipeSelectMode = { idx, adding: !card._charSelected[charIdx], started: false };
-  e.preventDefault();
+  const card = previewData.cards[idx];
+  const isSaved = card._savedChars && card._savedChars[charIdx];
+  if (isSaved) toggleImportChar(idx, charIdx);
+  swipeSelectMode = { idx, adding: isSaved ? false : !(card._charSelected || {})[charIdx], removing: isSaved };
 }
 function mouseSelectMove(e, idx) {
+  if (!(e.buttons & 1)) { swipeSelectMode = null; return; }
   if (!swipeSelectMode || swipeSelectMode.idx !== idx) return;
   const dx = Math.abs(e.clientX - swipeStartX), dy = Math.abs(e.clientY - swipeStartY);
-  if (dy > dx && dy > 5) { swipeSelectMode = null; return; }
-  if (dx < 5 && dy < 5) return;
-  if (!swipeSelectMode.started) { swipeSelectMode.started = true; }
-  const el = document.elementFromPoint(e.clientX, e.clientY);
-  const ci = el?.dataset?.ci;
-  if (ci == null) return;
-  const charIdx = parseInt(ci);
+  if (dx < 6 && dy < 6) return;
+  _wasDragging = true;
   const card = previewData.cards[idx];
-  if (card._savedChars && card._savedChars[charIdx]) return;
   if (!card._charSelected) card._charSelected = {};
-  if (card._charSelected[charIdx] !== swipeSelectMode.adding) { toggleImportChar(idx, charIdx); }
-  e.preventDefault();
-}
-function mouseSelectEnd(idx) {
-  if (swipeSelectMode && !swipeSelectMode.started) {
-    const card = previewData.cards[idx];
-    const el = document.elementFromPoint(swipeStartX, swipeStartY);
+  // 插值：在上次位置和当前位置之间逐点检查，防止跳字
+  const steps = Math.max(Math.abs(e.clientX - _lastX), Math.abs(e.clientY - _lastY));
+  for (let s = 0; s <= steps; s++) {
+    const t = steps === 0 ? 1 : s / steps;
+    const px = Math.round(_lastX + (e.clientX - _lastX) * t);
+    const py = Math.round(_lastY + (e.clientY - _lastY) * t);
+    const el = document.elementFromPoint(px, py);
     const ci = el?.dataset?.ci;
-    if (ci != null) {
-      const charIdx = parseInt(ci);
-      if (!(card._savedChars && card._savedChars[charIdx])) { toggleImportChar(idx, charIdx); }
+    if (ci == null) continue;
+    const charIdx = parseInt(ci);
+    if (swipeSelectMode.removing) {
+      if (card._savedChars && card._savedChars[charIdx]) toggleImportChar(idx, charIdx);
+    } else {
+      if (card._savedChars && card._savedChars[charIdx]) continue;
+      if (card._charSelected[charIdx] !== swipeSelectMode.adding) toggleImportChar(idx, charIdx);
     }
   }
-  swipeSelectMode = null;
+  _lastX = e.clientX; _lastY = e.clientY;
+  e.preventDefault();
 }
+function mouseSelectEnd(idx) { swipeSelectMode = null; _wasDragging = false; }
 
 let _touchJustHappened = 0;
 function toggleImportChar(idx, charIdx) {
   const card = previewData.cards[idx];
+  previewData._activeIdx = idx;
   if (!card._charSelected) card._charSelected = {};
   // 如果是已保存的字，点击取消该字所属的挖空
   if (card._savedChars && card._savedChars[charIdx]) {
@@ -1227,7 +1330,7 @@ function toggleImportChar(idx, charIdx) {
     // 全部空被移除后清除手动标记
     if (!card.blanks.length) delete card._manualBlanks;
     document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
-    document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card);
+    document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
     return;
   }
   card._charSelected[charIdx] = !card._charSelected[charIdx];
@@ -1242,48 +1345,53 @@ function toggleImportChar(idx, charIdx) {
 function saveCardSelection(idx) {
   const card = previewData.cards[idx];
   const sel = card._charSelected || {};
-  const indices = Object.keys(sel).filter(k => sel[k]).map(Number).sort((a,b) => a-b);
-  if (!indices.length) return;
+  if (!Object.values(sel).some(v => v)) return;
 
   const q = (card.question || '').trim();
   const rawA = card.answer || '';
-  const a = rawA.trim();
+  const answerStart = q.length + 1;
 
-  // 合并连续选中的字（跳过中间的换行符）
-  const groups = [];
-  let g = [indices[0]];
-  for (let i = 1; i < indices.length; i++) {
-    const prev = g[g.length - 1];
-    // 检查中间是否只有换行符
-    let onlyNL = true;
-    for (let j = prev + 1; j < indices[i]; j++) {
-      if (rawA[j] !== '\n' && !/\s/.test(rawA[j])) { onlyNL = false; break; }
-    }
-    if (indices[i] === prev + 1 || onlyNL) { g.push(indices[i]); }
-    else { groups.push(g); g = [indices[i]]; }
+  // 仅取新选中的字，分组
+  const newIndices = Object.keys(sel).filter(k => sel[k]).map(Number).sort((a,b) => a-b);
+  if (!newIndices.length) return;
+  const newGroups = [];
+  let g = [newIndices[0]];
+  for (let i = 1; i < newIndices.length; i++) {
+    if (newIndices[i] === g[g.length - 1] + 1) g.push(newIndices[i]);
+    else { newGroups.push(g); g = [newIndices[i]]; }
   }
-  groups.push(g);
-  const answerStart = q.length + 1; // +1 for \n
+  newGroups.push(g);
 
   if (!card.blanks) card.blanks = [];
   if (!card._savedChars) card._savedChars = {};
-  for (const g of groups) {
-    const start = g[0], end = g[g.length - 1] + 1;
-    let text = a.substring(start, end).replace(/[\n]/g, '');
-    const bs = answerStart + start, be = answerStart + end;
-    // 保留所有空（含重叠的），做题时随机选
-    card.blanks.push({ start: bs, end: be, text, isAnswer: true });
+
+  for (const ng of newGroups) {
+    const ngStart = answerStart + ng[0];
+    const ngEnd = answerStart + ng[ng.length - 1] + 1;
+    // 查找与新组相邻或重叠的旧空白
+    let mergedStart = ngStart, mergedEnd = ngEnd;
+    card.blanks = card.blanks.filter(b => {
+      if (ngStart < b.end && b.start < ngEnd) {
+        mergedStart = Math.min(mergedStart, b.start);
+        mergedEnd = Math.max(mergedEnd, b.end);
+        return false; // 移除旧空白，后面重建
+      }
+      return true;
+    });
+    // 创建合并后的空白
+    const text = rawA.substring(mergedStart - answerStart, mergedEnd - answerStart).replace(/[\n]/g, '');
+    card.blanks.push({ start: mergedStart, end: mergedEnd, text, isAnswer: true });
     card._manualBlanks = true;
-    // 更新已保存标记
-    for (const ci of g) card._savedChars[ci] = true;
+    // 标记已保存
+    for (let i = mergedStart - answerStart; i < mergedEnd - answerStart; i++) card._savedChars[i] = true;
   }
   card.blanks.sort((a, b) => a.start - b.start);
-  // 清除临时选中
+  // 从相邻独立空生成组合空
+  _rebuildCombinedBlanks(card);
   card._charSelected = {};
 
-  // 刷新
   document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
-  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card);
+  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
 }
 
 function clearCardSelection(idx) {
@@ -1293,13 +1401,68 @@ function clearCardSelection(idx) {
   card.blanks = [];
   delete card._manualBlanks;
   document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
-  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card);
+  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
 }
 
-function renderSavedInfo(card) {
-  const blanks = card.blanks || [];
+function _rebuildCombinedBlanks(card) {
+  // 先清除旧的组合空
+  card.blanks = (card.blanks || []).filter(b => !b._combined);
+  const blanks = card.blanks.slice().sort((a, b) => a.start - b.start);
+  if (blanks.length < 2) return;
+  // 找相邻组（上一个 end == 下一个 start）
+  const groups = [];
+  let cur = [blanks[0]];
+  for (let i = 1; i < blanks.length; i++) {
+    if (blanks[i].start === cur[cur.length - 1].end) {
+      cur.push(blanks[i]);
+    } else {
+      if (cur.length >= 2) groups.push(cur);
+      cur = [blanks[i]];
+    }
+  }
+  if (cur.length >= 2) groups.push(cur);
+  if (!groups.length) return;
+  const q = (card.question || '').trim();
+  const answerStart = q.length + 1;
+  const rawA = card.answer || '';
+  // 为每组相邻空生成所有连续子序列组合
+  for (const g of groups) {
+    for (let len = 2; len <= g.length; len++) {
+      for (let i = 0; i + len <= g.length; i++) {
+        const start = g[i].start;
+        const end = g[i + len - 1].end;
+        const text = rawA.substring(start - answerStart, end - answerStart).replace(/[\n]/g, '');
+        if (!card.blanks.some(b => b.start === start && b.end === end)) {
+          card.blanks.push({ start, end, text, isAnswer: true, _combined: true });
+        }
+      }
+    }
+  }
+  card.blanks.sort((a, b) => a.start - b.start);
+}
+
+function renderSavedInfo(card, idx) {
+  const blanks = (card.blanks || []).slice().sort((a, b) => a.start - b.start).filter(b => !b._combined);
   if (!blanks.length) return '<span style="font-size:11px;color:var(--text-tertiary)">暂未保存挖空</span>';
-  return '<span style="font-size:11px;color:var(--text-secondary)">已保存 ' + blanks.length + ' 个空：</span>' + blanks.map(b => `<span class="blank-tag" style="font-size:11px;padding:2px 8px">${escapeHtml(b.text)}</span>`).join(' ');
+  return '<span style="font-size:11px;color:var(--text-secondary)">已保存 ' + blanks.length + ' 个空：</span>' + blanks.map((b, j) => `<span class="blank-tag" onclick="removeManualBlank(${idx},${j})" style="font-size:11px;padding:2px 8px;cursor:pointer" title="点击取消">${escapeHtml(b.text)} ✕</span>`).join(' ');
+}
+function removeManualBlank(idx, bidx) {
+  const card = previewData.cards[idx];
+  const blanks = (card.blanks || []).slice().sort((a, b) => a.start - b.start).filter(b => !b._combined);
+  const b = blanks[bidx];
+  if (!b) return;
+  // 从 blanks 中移除
+  card.blanks = (card.blanks || []).filter(x => x.start !== b.start || x.end !== b.end);
+  // 清除对应的 _savedChars 标记
+  const q = (card.question || '').trim();
+  const answerStart = q.length + 1;
+  const relStart = b.start - answerStart, relEnd = b.end - answerStart;
+  if (card._savedChars) { for (let j = relStart; j < relEnd; j++) card._savedChars[j] = false; }
+  if (!card.blanks.length) delete card._manualBlanks;
+  // 重建组合空
+  if (card.blanks.length) _rebuildCombinedBlanks(card);
+  document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
+  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
 }
 
 function renderAutoPreview(card) {
@@ -1334,18 +1497,46 @@ function toggleAutoBlank(idx, bidx) {
   document.getElementById('pv-auto-tags-' + idx).innerHTML = renderAutoTags(card, idx);
 }
 
+function editPreviewTitle(h2) {
+  const oldText = previewData.name;
+  const input = document.createElement('input');
+  input.type = 'text'; input.value = oldText;
+  input.style.cssText = 'font-size:18px;font-weight:800;border:none;border-bottom:2px solid var(--primary);background:transparent;color:var(--text);width:100%;padding:4px 0';
+  h2.innerHTML = '';
+  h2.appendChild(input);
+  input.focus(); input.select();
+  input.onblur = () => {
+    const v = input.value.trim() || oldText;
+    previewData.name = v;
+    h2.textContent = '预览：' + v;
+  };
+  input.onkeydown = e => { if (e.key === 'Enter') input.blur(); };
+}
+
 function closePreviewModal() {
-  // 有手动挖空时先确认
-  if (previewData && previewData.cards.some(c => (c.blanks || []).length > 0 || (c._autoBlanks || []).some(b => !b._removed))) {
-    showConfirm('放弃编辑？', '已选的挖空不会保存，确定退出吗？', () => {
+  // 有未保存的选中字时才提醒
+  const hasUnsaved = previewData && previewData.cards.some(c => {
+    const sel = c._charSelected || {};
+    return Object.values(sel).some(v => v);
+  });
+  if (hasUnsaved) {
+    showConfirm('放弃编辑？', '有未保存的选中字，确定退出吗？', () => {
+      const wasSingle = previewData && previewData._singleCardEdit;
       const m = $('previewModal'); if (m) { previewData = null; m.remove(); }
+      if (wasSingle) { if (confirmImport._origSingleCard) confirmImport = confirmImport._origSingleCard; renderPracticeCard(); }
     });
     return;
   }
+  const wasSingleEdit = previewData && previewData._singleCardEdit;
   const m = $('previewModal'); if (m) { previewData = null; m.remove(); }
+  if (wasSingleEdit) {
+    if (confirmImport._origSingleCard) confirmImport = confirmImport._origSingleCard;
+    renderPracticeCard();
+  }
 }
 
 function confirmImport() {
+  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导入数据'); return; }
   if (!previewData) return;
   const { name, cards, mode, editBankId } = previewData;
   const cleaned = cards.map(c => {
@@ -1417,6 +1608,8 @@ function renderPracticeSetup() {
       <div class="form-group">
         <label class="form-label">📚 选择题库</label>
         <select id="bankSelect" onchange="onBankChange()" style="padding:12px 14px">${opts}</select>
+        <div id="categoryFilter" style="margin-top:10px"></div>
+        <div id="categoryFilterHint" style="font-size:12px;color:var(--text-tertiary);margin-top:4px"></div>
       </div>
 
       <div class="form-group">
@@ -1436,30 +1629,23 @@ function renderPracticeSetup() {
           <span class="chip${drawMode === 'random-norepeat' ? ' active' : ''}" data-draw="random-norepeat" onclick="selectDrawMode('random-norepeat', this)">🎯 随机不重复</span>
           <span class="chip${drawMode === 'sequential' ? ' active' : ''}" data-draw="sequential" onclick="selectDrawMode('sequential', this)">📖 顺序出题</span>
         </div>
-        <p class="form-hint" id="drawModeDesc">按题库顺序依次出题，做完记住进度下次接着做</p>
+        <p class="form-hint" id="drawModeDesc">随机抽题不重复，全部做完才重置</p>
         ${seqHtml}
       </div>
 
-      <div class="form-group">
-        <label class="form-label">⛏️ 挖空密度</label>
-        <div class="segmented" id="setupDensity">
-          <button class="seg${density === 'low' ? ' active' : ''}" data-v="low" onclick="changeSetupDensity('low', this)">低</button>
-          <button class="seg${density === 'high' ? ' active' : ''}" data-v="high" onclick="changeSetupDensity('high', this)">高</button>
-        </div>
-        <p class="form-hint">低=每点1空，高=多挖空。做题时随时可调</p>
-      </div>
 
       <div class="form-group">
-        <label class="form-label">🙈 题目显示</label>
+        <label class="form-label">🌸 题目显示</label>
         <div class="chip-group" id="hideQChips">
           <span class="chip active" data-hide="0" onclick="selectHideQ(0, this)">📖 显示题目</span>
-          <span class="chip" data-hide="1" onclick="selectHideQ(1, this)">🙈 隐藏题目</span>
+          <span class="chip" data-hide="1" onclick="selectHideQ(1, this)">🌸 隐藏题目</span>
         </div>
         <p class="form-hint">隐藏题目时只显示填空区，点击按钮可随时显示</p>
       </div>
 
       <button class="btn btn-primary btn-block btn-lg" onclick="startPractice()">👊 开始刷题</button>
     </div>`;
+  setTimeout(() => { const bid = document.getElementById("bankSelect").value; if (bid) { categoryFilter = null; renderCategoryFilter(bid); } }, 0);
 }
 
 function selectCount(n, el) {
@@ -1491,7 +1677,7 @@ function selectDrawMode(mode, el) {
   }[mode] || '';
   const seqDiv = document.getElementById('seqInfo');
   if (seqDiv) seqDiv.style.display = mode === 'sequential' ? '' : 'none';
-  else if (mode === 'sequential') onBankChange();
+  else if (mode === 'sequential') onBankChange(false);
 }
 
 function changeSetupDensity(val, el) {
@@ -1500,8 +1686,9 @@ function changeSetupDensity(val, el) {
   if (el) el.classList.add('active');
 }
 
-function onBankChange() {
+function onBankChange(resetFilter = true) {
   const bankId = document.getElementById('bankSelect').value;
+  if (resetFilter) categoryFilter = null; // 切换题库时重置筛选
   if (!bankId) return;
   sessionStorage.setItem('lastPracticeBank', bankId);
 
@@ -1515,10 +1702,12 @@ function onBankChange() {
       <button class="btn btn-sm" style="padding:4px 12px;font-size:12px;background:var(--danger);color:#fff;border:none;border-radius:6px;font-weight:600" onclick="event.stopPropagation();resetSeqProgress()">重置</button>
     </div>`;
     if (seqDiv) seqDiv.outerHTML = html;
-    else document.getElementById('drawModeChips').parentElement.insertAdjacentHTML('afterend', html);
+    else { const chips = document.getElementById('drawModeChips'); if (chips) chips.parentElement.insertAdjacentHTML('afterend', html); }
   } else if (seqDiv) {
     seqDiv.style.display = 'none';
   }
+  // 更新分类筛选
+  renderCategoryFilter(bankId);
 }
 
 function resetSeqProgress() {
@@ -1526,11 +1715,79 @@ function resetSeqProgress() {
   if (!bankId) return;
   appData.seqProgress[bankId] = 0;
   saveData(appData);
-  onBankChange();
+  onBankChange(false);
   showToast('进度已重置');
 }
 
 function getSeqProgress(bankId) { return appData.seqProgress[bankId] || 0; }
+
+function extractCategories(bank) {
+  if (!bank || !bank.cards) return [];
+  const cats = new Set();
+  for (const c of bank.cards) {
+    const q = (c.question || "").trim();
+    const matches = q.match(/（[^）]{1,8}）/g);
+    if (matches) for (const m of matches) cats.add(m);
+  }
+  return [...cats].sort();
+}
+
+function renderCategoryFilter(bankId) {
+  const div = document.getElementById("categoryFilter");
+  if (!div) return;
+  const bank = appData.banks[bankId];
+  if (!bank) { div.innerHTML = ""; return; }
+  const cats = extractCategories(bank);
+  if (!cats.length) { div.innerHTML = ""; return; }
+  if (!categoryFilter) categoryFilter = new Set(cats);
+  let h = "<label class=\"form-label\" style=\"font-size:13px\">🏷️ 分类筛选</label><div class=\"chip-group\">";
+  h += "<span class=\"chip" + (categoryFilter.size === cats.length ? " active" : "") + "\" onclick=\"toggleAllCategories()\">全部</span>";
+  for (const cat of cats) {
+    h += "<span class=\"chip" + (categoryFilter.has(cat) ? " active" : "") + "\" onclick=\"toggleCategory('" + cat + "')\" style=\"margin-left:4px\">" + cat + "</span>";
+  }
+  h += "</div>";
+  div.innerHTML = h;
+  updateFilteredCount();
+}
+
+function toggleAllCategories() {
+  const bankId = document.getElementById("bankSelect").value;
+  const bank = appData.banks[bankId];
+  if (!bank) return;
+  const cats = extractCategories(bank);
+  if (categoryFilter && categoryFilter.size === cats.length) categoryFilter = new Set();
+  else categoryFilter = new Set(cats);
+  renderCategoryFilter(bankId);
+}
+
+function toggleCategory(cat) {
+  if (!categoryFilter) return;
+  if (categoryFilter.has(cat)) {
+    if (categoryFilter.size <= 1) return; // 至少保留一个分类
+    categoryFilter.delete(cat);
+  } else categoryFilter.add(cat);
+  renderCategoryFilter(document.getElementById("bankSelect").value);
+}
+
+function getFilteredCards(bank) {
+  if (!bank || !bank.cards) return [];
+  if (!categoryFilter || !categoryFilter.size) return bank.cards;
+  return bank.cards.filter(c => {
+    const q = (c.question || "").trim();
+    const matches = q.match(/（[^）]{1,8}）/g) || [];
+    return matches.some(m => categoryFilter.has(m));
+  });
+}
+
+function updateFilteredCount() {
+  const bankId = document.getElementById("bankSelect").value;
+  if (!bankId) return;
+  const bank = appData.banks[bankId];
+  if (!bank) return;
+  const filtered = getFilteredCards(bank);
+  const hint = document.getElementById("categoryFilterHint");
+  if (hint) hint.textContent = "筛选后 " + filtered.length + " / " + bank.cards.length + " 题";
+}
 
 function startPracticeSetup(bankId) {
   const bank = appData.banks[bankId];
@@ -1545,36 +1802,38 @@ function startPractice() {
   if (!bankId) { showToast('请先选择题库'); return; }
   const bank = appData.banks[bankId];
   if (!bank || !bank.cards.length) { showToast('题库为空'); return; }
+  const pool = getFilteredCards(bank);
 
-  const count = batchSize === 0 ? bank.cards.length : Math.min(batchSize, bank.cards.length);
+  if (!pool.length) { showToast("筛选后无题目"); return; }
+  const count = batchSize === 0 ? pool.length : Math.min(batchSize, pool.length);
   let selected;
 
   if (drawMode === 'sequential') {
     const pos = getSeqProgress(bankId);
-    if (pos >= bank.cards.length) {
+    if (pos >= pool.length) {
       if (!confirm('题库已全部做完一轮，是否重置进度从头开始？')) return;
       appData.seqProgress[bankId] = 0;
       saveData(appData);
-      selected = [...bank.cards.slice(0, count)];
+      selected = [...pool.slice(0, count)];
     } else {
-      selected = [...bank.cards.slice(pos, Math.min(pos + count, bank.cards.length))];
+      selected = [...pool.slice(pos, Math.min(pos + count, pool.length))];
     }
   } else if (drawMode === 'random-norepeat') {
     if (!appData.doneSets) appData.doneSets = {};
     if (!appData.doneSets[bankId]) appData.doneSets[bankId] = [];
     const doneSet = appData.doneSets[bankId];
-    const available = bank.cards.filter(c => !doneSet.includes(c.id));
+    const available = pool.filter(c => !doneSet.includes(c.id));
     if (available.length === 0) {
       if (!confirm('所有题目都已做过一轮，是否重置重新开始？')) return;
       appData.doneSets[bankId] = [];
       saveData(appData);
-      selected = shuffle([...bank.cards]).slice(0, count);
+      selected = shuffle([...pool]).slice(0, count);
     } else {
       selected = shuffle(available).slice(0, Math.min(count, available.length));
     }
   } else {
     // random-repeat
-    selected = shuffle([...bank.cards]).slice(0, count);
+    selected = shuffle([...pool]).slice(0, count);
   }
 
   const qh = new Set();
@@ -1625,7 +1884,8 @@ function renderPracticeCard() {
         <button class="seg${density === 'low' ? ' active' : ''}" data-v="low" onclick="changeDensity('low', this)" style="padding:5px 10px;min-height:32px;font-size:13px">低</button>
         <button class="seg${density === 'high' ? ' active' : ''}" data-v="high" onclick="changeDensity('high', this)" style="padding:5px 10px;min-height:32px;font-size:13px">高</button>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="regenerateCurrentBlanks()" style="padding:6px 8px;font-size:var(--font-size)" title="换一批空">🔄</button>
+      <button class="btn btn-ghost btn-sm" onclick="editCurrentCardBlanks()" style="padding:6px 8px;font-size:var(--font-size)" title="手动挖空">🐑</button>
+	      <button class="btn btn-ghost btn-sm" onclick="regenerateCurrentBlanks()" style="padding:6px 8px;font-size:var(--font-size)" title="换一批空">🔄</button>
       <div class="flex gap-4" style="margin-left:auto">
         <button class="btn btn-ghost btn-sm" onclick="toggleRevealCurrent()" style="padding:6px 8px;font-size:var(--font-size)" title="显示原文">💡</button>
         ${hasKj ? `<button class="btn btn-ghost btn-sm" onclick="toggleKoujuePanel()" style="padding:6px 8px;font-size:var(--font-size);color:var(--primary)" title="口诀">🧠</button>` : ''}
@@ -1645,8 +1905,8 @@ function renderPracticeCard() {
 
     <!-- 底部导航 -->
     <div class="flex gap-8" style="margin-top:20px">
-      <button class="btn flex-1" onclick="prevCard()"${st.index === 0 ? ' disabled style="opacity:.3"' : ''} style="background:color-mix(in srgb, var(--primary-soft) 50%, transparent);color:var(--primary);border:none;font-weight:600">← 上一题</button>
-      <button class="btn flex-1" id="btnNextPractice" onclick="nextCard()" style="background:color-mix(in srgb, var(--primary-soft) 50%, transparent);color:var(--primary);border:none;font-weight:600">${cur === total ? '✓ 完成' : '下一题 →'}</button>
+      <button class="btn flex-1" onclick="prevCard()"${st.index === 0 ? ' disabled style="opacity:.3"' : ''} style="background:var(--primary-soft);color:var(--primary);border:none;font-weight:600">← 上一题</button>
+      <button class="btn flex-1" id="btnNextPractice" onclick="nextCard()" style="background:var(--primary-soft);color:var(--primary);border:none;font-weight:600">${cur === total ? '✓ 完成' : '下一题 →'}</button>
     </div>
   </div>`;
 
@@ -1677,37 +1937,33 @@ function renderPracticeCard() {
     if (fi && !revealed) fi.focus();
   }, 200);
 
-  // 长按3秒显示答案，再次点击隐藏
+  // 双击空白显示答案（第一下聚焦不算）
   const cardText = c.querySelector('#cardText');
   if (cardText && !revealed) {
+    const taps = new Map(); // inp → { count, lastTime }
     cardText.querySelectorAll('.blank-input').forEach(inp => {
-      let timer = null;
-      inp.addEventListener('touchstart', e => {
-        if (inp.classList.contains('peeked')) return;
-        timer = setTimeout(() => {
-          inp.value = inp.dataset.ans || '';
-          inp.classList.add('peeked');
-          timer = null;
-        }, 3000);
-      }, { passive: true });
-      inp.addEventListener('touchend', () => { if (timer) { clearTimeout(timer); timer = null; } });
-      inp.addEventListener('touchmove', () => { if (timer) { clearTimeout(timer); timer = null; } });
-      inp.addEventListener('mousedown', e => {
-        if (inp.classList.contains('peeked')) return;
-        timer = setTimeout(() => {
-          inp.value = inp.dataset.ans || '';
-          inp.classList.add('peeked');
-          timer = null;
-        }, 3000);
-      });
-      inp.addEventListener('mouseup', () => { if (timer) { clearTimeout(timer); timer = null; } });
-      inp.addEventListener('mouseleave', () => { if (timer) { clearTimeout(timer); timer = null; } });
-      inp.addEventListener('focus', e => {
+      inp.addEventListener('pointerdown', e => {
+        const now = Date.now();
+        const t = taps.get(inp) || { count: 0, lastTime: 0 };
+        if (now - t.lastTime > 800) t.count = 0;
+        // 第一下只聚焦不算，从第二下开始计数
+        if (document.activeElement !== inp && !inp.classList.contains('peeked')) {
+          t.lastTime = now;
+          taps.set(inp, t);
+          return;
+        }
+        t.count++;
+        t.lastTime = now;
         if (inp.classList.contains('peeked')) {
           inp.value = '';
           inp.classList.remove('peeked');
-          e.preventDefault();
+          t.count = 0;
+        } else if (t.count >= 2) {
+          inp.value = inp.dataset.ans || '';
+          inp.classList.add('peeked');
+          t.count = 0;
         }
+        taps.set(inp, t);
       });
     });
   }
@@ -1722,9 +1978,9 @@ function renderCardWithBlanks(card, revealed, hideQ) {
   // 题目：点击可隐藏/显示
   let h = '';
   if (hideQ) {
-    h += `<div style="margin-bottom:10px;padding:8px;background:var(--bg-input);border-radius:6px;text-align:center;font-size:12px;color:var(--text-tertiary);cursor:pointer" onclick="toggleQuestion()">题目已隐藏，点击显示</div>`;
+    h += `<div style="margin-bottom:10px;padding:8px;background:var(--bg-input);border-radius:6px;text-align:center;font-size:12px;color:var(--text-tertiary);cursor:pointer" onclick="event.stopPropagation();toggleQuestion()">题目已隐藏，点击显示</div>`;
   } else {
-    h += `<div style="margin-bottom:10px;line-height:1.6;cursor:pointer" onclick="toggleQuestion()" title="点击隐藏题目">${escNl(q)}</div>`;
+    h += `<div style="margin-bottom:10px;line-height:1.6;cursor:pointer" onclick="event.stopPropagation();toggleQuestion()" title="点击隐藏题目">${escNl(q)}</div>`;
   }
 
   // 分隔 + 答案区
@@ -1747,7 +2003,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     if (revealed) {
       ah += `<span class="revealed-text">${escNl(b.text)}</span>`;
     } else {
-      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text)}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onblur="autoCheckIfDone()">`;
+      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text)}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
     }
     le = b.end;
   }
@@ -1900,7 +2156,7 @@ function regenerateCurrentBlanks() {
   saveCurrentAnswers();
   const card = practiceState.cards[practiceState.index];
   // 有重叠空 → 切换替代空；否则 → 按当前密度重新生成
-  if (hasOverlappingBlanks(card)) {
+  if (card._manualBlanks || hasOverlappingBlanks(card)) {
     card._blankRound = (card._blankRound || 0) + 1;
   } else {
     Object.assign(card, regenerateBlanks(card, appData.settings.density || 'low'));
@@ -1909,10 +2165,48 @@ function regenerateCurrentBlanks() {
   delete practiceState.answers[card.id];
   practiceState.revealed.delete(card.id);
   const bank = appData.banks[practiceState.bankId];
-  if (bank) { const c = bank.cards.find(x => x.id === card.id); if (c) { c.blanks = card.blanks; c.fullText = card.fullText; delete c._manualBlanks; } }
+  if (bank) { const c = bank.cards.find(x => x.id === card.id); if (c) { c.blanks = card.blanks; c.fullText = card.fullText; if (!card._manualBlanks) delete c._manualBlanks; } }
   saveData(appData);
   renderPracticeCard();
   showToast('已重新挖空');
+}
+
+function editCurrentCardBlanks() {
+  saveCurrentAnswers();
+  const card = practiceState.cards[practiceState.index];
+  if (!card) return;
+  const copy = JSON.parse(JSON.stringify(card));
+  delete copy._blankRound;
+  const saved = {};
+  const q = (copy.question || "").trim();
+  const answerStart = q.length + 1;
+  for (const b of (copy.blanks || [])) {
+    for (let j = b.start - answerStart; j < b.end - answerStart; j++) saved[j] = true;
+  }
+  copy._charSelected = {};
+  copy._savedChars = saved;
+  copy._autoBlanks = null;
+  previewData = { name: "单题编辑", cards: [copy], mode: "manual", _singleCardEdit: true, _cardIdx: practiceState.index };
+  showImportPreview("单题编辑", [copy]);
+  const origConfirm = confirmImport;
+  confirmImport._origSingleCard = origConfirm;
+  confirmImport = function() {
+    if (!previewData || !previewData._singleCardEdit) { confirmImport = confirmImport._origSingleCard || origConfirm; return confirmImport(); }
+    const edited = previewData.cards[0];
+    delete edited._charSelected; delete edited._savedChars; delete edited._autoBlanks;
+    practiceState.cards[previewData._cardIdx] = edited;
+    practiceState.revealed.delete(edited.id);
+    delete practiceState.answers[edited.id];
+    const bank = appData.banks[practiceState.bankId];
+    if (bank) {
+      const c = bank.cards.find(x => x.id === edited.id);
+      if (c) { c.blanks = edited.blanks; c.fullText = edited.fullText; c._manualBlanks = edited._manualBlanks; }
+      saveData(appData);
+    }
+    previewData = null; const m = $('previewModal'); if (m) m.remove();
+    confirmImport = origConfirm;
+    renderPracticeCard();
+  };
 }
 
 function hasOverlappingBlanks(card) {
@@ -1933,6 +2227,7 @@ function changeDensity(density, el) {
   saveCurrentAnswers();
   let count = 0;
   for (const card of practiceState.cards) {
+    if (card._manualBlanks) continue;
     Object.assign(card, regenerateBlanks(card, density));
     delete card._manualBlanks;
     delete practiceState.answers[card.id];
@@ -1943,6 +2238,7 @@ function changeDensity(density, el) {
   const bank = appData.banks[practiceState.bankId];
   if (bank) {
     for (const card of practiceState.cards) {
+      if (card._manualBlanks) continue;
       const c = bank.cards.find(x => x.id === card.id);
       if (c) { c.blanks = card.blanks; c.fullText = card.fullText; delete c._manualBlanks; }
     }
@@ -1954,11 +2250,18 @@ function changeDensity(density, el) {
 function speakCard() {
   const ss = window.speechSynthesis;
   if (!ss) { showToast('浏览器不支持语音朗读'); return; }
+  const card = practiceState.cards[practiceState.index];
+  if (!card) return;
+  // 切到不同卡片 → 取消旧的，重新开始
+  if (practiceState._speakingCardId && practiceState._speakingCardId !== card.id) {
+    ss.cancel(); practiceState._speakingCardId = null;
+  }
   // 暂停 → 继续
   if (ss.speaking && ss.paused) { ss.resume(); return; }
   // 朗读中 → 暂停
   if (ss.speaking) { ss.pause(); return; }
   // 开始朗读
+  practiceState._speakingCardId = card.id;
   doSpeakCard();
 }
 
@@ -1968,7 +2271,7 @@ function doSpeakCard() {
   const ss = window.speechSynthesis;
   ss.cancel();
   const u = new SpeechSynthesisUtterance(card.fullText || card.question + card.answer);
-  u.lang = 'zh-CN'; u.rate = appData.settings.voiceRate || 0.9;
+  u.lang = 'zh-CN'; u.rate = appData.settings.voiceRate || 0.9; u.pitch = appData.settings.voicePitch || 1.0;
   const voiceName = appData.settings.voiceName;
   if (voiceName) {
     const voices = ss.getVoices();
@@ -2092,6 +2395,7 @@ function retrySameSettings() {
 }
 
 function backToPracticeSetup() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
   practiceState = null;
   $('practiceResult').style.display = 'none';
   $('practiceActive').style.display = 'none';
@@ -2305,13 +2609,79 @@ function renderKoujueStart() {
 
   c.innerHTML = `<div class="flex justify-between items-center mb-16">
     <h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em">口诀背诵</h1>
-    <select id="kjBankSelect" style="width:auto;min-width:150px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" onchange="renderKoujueCards()">
+    <select id="kjBankSelect" style="width:auto;min-width:150px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" onchange="kjCategoryFilter=null;renderKoujueCards()">
       ${allKjBanks.map(b => `<option value="${b.bankId}"${b.bankId === bankId ? ' selected' : ''}>${escapeHtml(b.bankName)} (${b.cards.length}条)</option>`).join('')}
     </select>
   </div>
+  <div id="kjCategoryFilter" style="margin-bottom:12px"></div>
+  <div id="kjCategoryHint" style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px"></div>
   <div id="kjList"></div>`;
 
   renderKoujueCards();
+}
+
+function getFilteredKjCards(bank) {
+  if (!bank || !bank.cards) return [];
+  const kjCards = bank.cards.filter(x => x.koujue);
+  if (!kjCategoryFilter || !kjCategoryFilter.size) return kjCards;
+  return kjCards.filter(c => {
+    const q = (c.question || "").trim();
+    const matches = q.match(/（[^）]{1,8}）/g) || [];
+    return matches.some(m => kjCategoryFilter.has(m));
+  });
+}
+
+function renderKjCategoryFilter() {
+  const div = document.getElementById("kjCategoryFilter");
+  if (!div) return;
+  const sel = document.getElementById("kjBankSelect");
+  if (!sel) return;
+  const bank = appData.banks[sel.value];
+  if (!bank) { div.innerHTML = ""; return; }
+  const cats = extractCategories(bank);
+  if (!cats.length) { div.innerHTML = ""; return; }
+  if (!kjCategoryFilter) kjCategoryFilter = new Set(cats);
+  let h = "<label class=\"form-label\" style=\"font-size:13px\">🏷️ 分类筛选</label><div class=\"chip-group\">";
+  h += "<span class=\"chip" + (kjCategoryFilter.size === cats.length ? " active" : "") + "\" onclick=\"toggleAllKjCategories()\">全部</span>";
+  for (const cat of cats) {
+    h += "<span class=\"chip" + (kjCategoryFilter.has(cat) ? " active" : "") + "\" onclick=\"toggleKjCategory('" + cat + "')\" style=\"margin-left:4px\">" + cat + "</span>";
+  }
+  h += "</div>";
+  div.innerHTML = h;
+  updateKjFilteredCount();
+}
+
+function toggleAllKjCategories() {
+  const sel = document.getElementById("kjBankSelect");
+  if (!sel) return;
+  const bank = appData.banks[sel.value];
+  if (!bank) return;
+  const cats = extractCategories(bank);
+  if (kjCategoryFilter && kjCategoryFilter.size === cats.length) kjCategoryFilter = new Set();
+  else kjCategoryFilter = new Set(cats);
+  renderKjCategoryFilter();
+  renderKoujueCards();
+}
+
+function toggleKjCategory(cat) {
+  if (!kjCategoryFilter) return;
+  if (kjCategoryFilter.has(cat)) {
+    if (kjCategoryFilter.size <= 1) return;
+    kjCategoryFilter.delete(cat);
+  } else kjCategoryFilter.add(cat);
+  renderKjCategoryFilter();
+  renderKoujueCards();
+}
+
+function updateKjFilteredCount() {
+  const sel = document.getElementById("kjBankSelect");
+  if (!sel) return;
+  const bank = appData.banks[sel.value];
+  if (!bank) return;
+  const total = bank.cards.filter(x => x.koujue).length;
+  const filtered = getFilteredKjCards(bank);
+  const hint = document.getElementById("kjCategoryHint");
+  if (hint) hint.textContent = "筛选后 " + filtered.length + " / " + total + " 条口诀";
 }
 
 function renderKoujueCards() {
@@ -2319,8 +2689,9 @@ function renderKoujueCards() {
   if (!sel) return;
   const bank = appData.banks[sel.value];
   if (!bank) return;
-  const cards = bank.cards.filter(x => x.koujue);
-  if (!cards.length) { document.getElementById('kjList').innerHTML = `<div class="empty"><p>该题库没有口诀</p></div>`; return; }
+  const cards = getFilteredKjCards(bank);
+  renderKjCategoryFilter();
+  if (!cards.length) { document.getElementById('kjList').innerHTML = `<div class="empty"><p>该分类下没有口诀</p></div>`; return; }
 
   const groups = {};
   cards.forEach(card => { const ch = card.chapter || '未分类'; if (!groups[ch]) groups[ch] = []; groups[ch].push(card); });
@@ -2332,7 +2703,10 @@ function renderKoujueCards() {
       const parsed = parseKoujue(card.koujue);
       const keywordsOnly = parsed.map(p => escapeHtml(p.char)).join(' ');
       html += `<div class="kj-card" id="kj-${card.id}">
-        <div class="kj-mnemonic">${keywordsOnly || escapeHtml(card.koujue)}</div>
+        <div class="kj-mnemonic">
+          ${keywordsOnly || escapeHtml(card.koujue)}
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editKoujue('${card.id}')" style="padding:2px 6px;font-size:12px;opacity:.4;float:right" title="编辑口诀">✏️</button>
+        </div>
         <div class="kj-meaning" id="kj-mean-${card.id}">
           <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:6px">${escapeHtml(card.question.replace(/^[\d\.\、\s]+/, ''))}</div>
           ${parsed.map(p => `<span class="kj-char">${escapeHtml(p.char)}</span><span class="kj-desc">（${escapeHtml(p.desc)}）</span>`).join(' ')}
@@ -2370,11 +2744,55 @@ function parseKoujue(kj) {
   return result;
 }
 
+function editKoujue(cardId) {
+  // 找到卡片所属的 bank
+  let bank = null, card = null;
+  for (const b of Object.values(appData.banks)) {
+    const c = b.cards.find(x => x.id === cardId);
+    if (c) { bank = b; card = c; break; }
+  }
+  if (!card) return;
+
+  const el = document.getElementById('kj-' + cardId);
+  if (!el) return;
+
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+    <textarea id="kjEditTextarea" style="width:100%;min-height:60px;padding:8px;border:2px solid var(--primary);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" rows="2">${escapeHtml(card.koujue || '')}</textarea>
+    <div class="flex gap-8" style="justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();cancelEditKoujue('${cardId}')">取消</button>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();saveKoujue('${cardId}')">保存</button>
+    </div>
+  </div>`;
+  el.onclick = null; // 编辑时禁用点击展开
+}
+
+function cancelEditKoujue(cardId) {
+  // 重新渲染口诀列表
+  renderKoujueCards();
+}
+
+function saveKoujue(cardId) {
+  const ta = document.getElementById('kjEditTextarea');
+  if (!ta) return;
+  const newKj = ta.value.trim();
+
+  let bank = null, card = null;
+  for (const b of Object.values(appData.banks)) {
+    const c = b.cards.find(x => x.id === cardId);
+    if (c) { bank = b; card = c; break; }
+  }
+  if (!card) return;
+
+  card.koujue = newKj;
+  saveData(appData);
+  renderKoujueCards();
+}
+
 // ==================== 设置 ====================
 function renderSettings() {
   const c = $('settingsContainer');
   const s = appData.settings;
-  const density = s.density || 'medium';
+  const density = s.density || 'low';
 
   c.innerHTML = `<div class="section"><div class="section-title">挖空设置</div>
     <div class="setting-item"><div><div class="setting-label">默认挖空密度</div><div class="setting-desc">每道题的挖空数量，做题时随时可调</div></div>
@@ -2402,7 +2820,9 @@ function renderSettings() {
         <option value="three-times"${s.readMode==='three-times'?' selected':''}>每题三遍</option>
       </select></div>
     <div class="setting-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc" id="rateVal">${s.voiceRate || 0.9}x</div></div>
-      <div style="width:140px"><input type="range" min="0.5" max="2" value="${s.voiceRate || 0.9}" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div></div>
+      <div style="width:140px"><input type="range" min="0.5" max="2" value="${s.voiceRate || 0.9}" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>
+    <div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">${s.voicePitch || 1.0}x</div></div>
+      <div style="width:140px"><input type="range" min="0.5" max="2" value="${s.voicePitch || 1.0}" step="0.1" oninput="updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div>
 
   <div class="section"><div class="section-title">数据管理</div>
     <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">
@@ -2413,7 +2833,7 @@ function renderSettings() {
     </div></div>
 
   <div class="section"><div class="section-title">关于</div>
-    <div class="setting-item"><div><div class="setting-label">挖空背诵工具（小阮出品）</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div></div>`;
+    <div class="setting-item"><div><div class="setting-label">挖空背诵工具（自用）</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div></div>`;
 }
 
 function updateDensitySetting(val, el) {
@@ -2424,6 +2844,7 @@ function updateDensitySetting(val, el) {
 
 function updateFontSize(val) { saveSetting('fontSize', val); document.getElementById('fontVal').textContent = val + 'px'; }
 function updateVoiceRate(val) { saveSetting('voiceRate', val); document.getElementById('rateVal').textContent = val + 'x'; }
+function updateVoicePitch(val) { saveSetting('voicePitch', val); document.getElementById('pitchVal').textContent = val + 'x'; }
 function updateVoiceName(val) {
   saveSetting('voiceName', val || '');
   document.getElementById('voiceNameVal').textContent = val || '自动选择';
@@ -2448,11 +2869,14 @@ function loadVoices() {
     return;
   }
   const sel = document.getElementById('voiceSelect');
-  if (!sel || sel.options.length > 1) return;
-  const zhVoices = voices.filter(v => v.lang.startsWith('zh'));
-  for (const v of zhVoices) {
+  if (!sel) return;
+  // 清空旧选项（保留第一个"自动选择"）
+  while (sel.options.length > 1) sel.remove(1);
+  const keep = ['婷婷', 'Sandy', 'sandy', 'Alex'];
+  const filtered = voices.filter(v => keep.some(k => v.name.includes(k)));
+  for (const v of filtered) {
     const opt = document.createElement('option');
-    opt.value = v.name; opt.textContent = v.name;
+    opt.value = v.name; opt.textContent = v.name + ' (' + v.lang + ')';
     if (v.name === appData.settings.voiceName) opt.selected = true;
     sel.appendChild(opt);
   }
