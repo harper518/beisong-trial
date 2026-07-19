@@ -285,25 +285,26 @@ textarea{min-height:160px;resize:vertical;line-height:1.8}
 
 <script>
 // ==================== 授权激活（自用版为空，分享版为4位数字） ====================
-const AUTH_CODES = ['12345', '12312', '37825']; // 第1个=10分钟，第2个=再加10分钟，第3个=永久
+const AUTH_API = 'https://beisong-auth-etltwnrbmg.cn-hangzhou.fcapp.run/auth';
 const AUTH_MINUTES = 10;
 
-function getCurrentAuthCode() {
-  const level = parseInt(localStorage.getItem('memorize_auth_level') || '0');
-  return AUTH_CODES[Math.min(level, AUTH_CODES.length - 1)];
+function getAuthData() {
+  try {
+    const raw = localStorage.getItem('memorize_auth_data');
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
 }
 
 function isPermanentAuth() {
-  return localStorage.getItem('memorize_auth_permanent') === '1';
+  const d = getAuthData();
+  return d && d.permanent === true;
 }
 
 function checkAuth() {
-  if (!AUTH_CODES.length) return true;
   if (isPermanentAuth()) return true;
-  const ts = sessionStorage.getItem('memorize_auth_ts');
-  if (!ts) return false;
-  const elapsed = (Date.now() - parseInt(ts)) / 60000;
-  return elapsed < AUTH_MINUTES;
+  const d = getAuthData();
+  if (!d || !d.expireAt) return false;
+  return Date.now() < d.expireAt;
 }
 
 function showAuthModal() {
@@ -315,11 +316,11 @@ function showAuthModal() {
   ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:340px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px">
     <div style="text-align:center;font-size:48px;margin-bottom:12px">🔐</div>
     <h3 style="text-align:center;margin-bottom:6px">试用版本</h3>
-    <p class="text-sm text-secondary" style="text-align:center;margin-bottom:16px">密码为 <b>12345</b>，有效期 10 分钟</p>
-    <input type="number" id="authInput" placeholder="输入5位密码" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:20px;text-align:center;letter-spacing:6px">
+    <p class="text-sm text-secondary" style="text-align:center;margin-bottom:16px">请输入授权密码，有效期 10 分钟</p>
+    <input type="number" id="authInput" placeholder="输入密码" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:20px;text-align:center;letter-spacing:6px">
     <p class="text-sm" id="authError" style="text-align:center;color:var(--danger);margin-top:10px;display:none"></p>
     <button class="btn btn-primary btn-block mt-12" id="authBtn">验证</button>
-    <p class="text-sm text-secondary" style="text-align:center;margin-top:16px">请联系微信获取永久密码</p>
+    <p class="text-sm text-secondary" style="text-align:center;margin-top:16px">请联系微信获取密码</p>
   </div>`;
   document.body.appendChild(ov);
 
@@ -328,43 +329,58 @@ function showAuthModal() {
   const err = document.getElementById('authError');
 
   let lockTime = 0, countdownId = 0;
-  function doAuth() {
+  async function doAuth() {
     if (locked) return;
-    if (input.value.trim() === getCurrentAuthCode()) {
-      const level = parseInt(localStorage.getItem('memorize_auth_level') || '0');
-      const isLast = level >= AUTH_CODES.length - 1;
-      if (isLast) {
-        localStorage.setItem('memorize_auth_permanent', '1');
-      } else {
-        localStorage.setItem('memorize_auth_level', String(level + 1));
-        sessionStorage.setItem('memorize_auth_ts', Date.now().toString());
+    const password = input.value.trim();
+    if (!password) return;
+    btn.disabled = true; btn.textContent = '验证中...';
+    try {
+      const currentLevel = (getAuthData() && getAuthData().level) || 0;
+      const resp = await fetch(AUTH_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, level: currentLevel })
+      });
+      const result = await resp.json();
+      if (result.success) {
+        localStorage.setItem('memorize_auth_data', JSON.stringify({
+          level: result.level,
+          expireAt: result.expireAt,
+          permanent: result.permanent,
+          signature: result.signature
+        }));
+        ov.remove();
+        initApp();
+        return;
       }
-      ov.remove();
-      initApp();
-      return;
-    }
-    attempts++;
-    if (attempts >= 3) {
-      locked = true; lockTime = Date.now();
-      btn.disabled = true; input.disabled = true;
-      countdownId = setInterval(() => {
-        const remain = 30 - Math.floor((Date.now() - lockTime) / 1000);
-        if (remain <= 0) { clearInterval(countdownId); err.textContent = ''; return; }
-        err.textContent = '输错 3 次，已锁定 ' + remain + ' 秒';
-      }, 1000);
+      // 密码错误
+      attempts++;
+      if (attempts >= 3) {
+        locked = true; lockTime = Date.now();
+        btn.disabled = true; input.disabled = true;
+        countdownId = setInterval(() => {
+          const remain = 30 - Math.floor((Date.now() - lockTime) / 1000);
+          if (remain <= 0) { clearInterval(countdownId); err.textContent = ''; return; }
+          err.textContent = '输错 3 次，已锁定 ' + remain + ' 秒';
+        }, 1000);
+        err.style.display = 'block';
+        setTimeout(() => {
+          locked = false; attempts = 0;
+          err.style.display = 'none';
+          btn.disabled = false; input.disabled = false;
+          input.value = ''; input.focus();
+        }, 30000);
+      } else {
+        err.textContent = '密码错误（' + attempts + '/3）';
+        err.style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    } catch(e) {
+      err.textContent = '网络错误，请重试';
       err.style.display = 'block';
-      setTimeout(() => {
-        locked = false; attempts = 0;
-        err.style.display = 'none';
-        btn.disabled = false; input.disabled = false;
-        input.value = ''; input.focus();
-      }, 30000);
-    } else {
-      err.textContent = '密码错误（' + attempts + '/3）';
-      err.style.display = 'block';
-      input.value = '';
-      input.focus();
     }
+    btn.disabled = false; btn.textContent = '验证';
   }
 
   btn.onclick = doAuth;
@@ -706,7 +722,7 @@ function init() {
 }
 
 function initApp() {
-  if (AUTH_CODES.length && !isPermanentAuth()) {
+  if (AUTH_API && !isPermanentAuth()) {
     setInterval(() => { if (!checkAuth()) { location.reload(); } }, 30000);
   }
   getSetting('density', 'low');
@@ -864,7 +880,7 @@ function editBank(id) {
 }
 
 function exportBank(id) {
-  if (AUTH_CODES.length && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   const bank = appData.banks[id];
   if (!bank) return;
   downloadFile(bank.name + '.txt', bank.cards.map(c => c.question + '|' + c.answer).join('\n'), 'text/plain');
@@ -872,7 +888,7 @@ function exportBank(id) {
 }
 
 function exportBankFull(id) {
-  if (AUTH_CODES.length && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   const bank = appData.banks[id];
   if (!bank) return;
   // 导出为纯文本，挖空用【】标记
@@ -2451,7 +2467,7 @@ function makeBackupCode() {
 }
 
 function copyBackup() {
-  if (AUTH_CODES.length && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   try {
     const code = makeBackupCode();
     // 优先用 clipboard API
@@ -2488,7 +2504,7 @@ function showBackupModal(code) {
 }
 
 function showRestorePrompt() {
-  if (AUTH_CODES.length && !isPermanentAuth()) { showToast('试用版不支持导入数据'); return; }
+  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导入数据'); return; }
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:380px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px">
     <h3 style="margin-bottom:10px">📥 粘贴备份码</h3>
