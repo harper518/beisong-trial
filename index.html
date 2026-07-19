@@ -1,0 +1,2541 @@
+<!DOCTYPE html>
+<!-- © 2026 小阮 · 挖空背诵工具 授权码: 7666 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,shrink-to-fit=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="记忆填空"/>
+<link rel="manifest" href="manifest.json"/>
+<title>挖空背诵工具（试用）</title>
+<style>
+/* ============ CSS Variables ============ */
+:root {
+  --bg:#f0fdfa; --bg-card:#fff; --bg-input:#f0fdfa; --bg-overlay:rgba(15,23,42,0.5);
+  --text:#134e4a; --text-secondary:#5f8b89; --text-tertiary:#99b8b6;
+  --primary:#0891b2; --primary-hover:#0e7490; --primary-light:#ecfeff; --primary-soft:#cffafe;
+  --success:#10b981; --success-light:#ecfdf5; --danger:#ef4444; --danger-light:#fef2f2;
+  --warning:#f59e0b; --warning-light:#fffbeb;
+  --blank-bg:#fef3c7; --blank-border:#f59e0b; --blank-revealed-bg:#d1fae5; --blank-revealed-text:#059669;
+  --border:#cce8e6; --shadow-sm:0 1px 2px rgba(0,0,0,.05); --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 6px rgba(0,0,0,.06),0 2px 4px rgba(0,0,0,.04); --shadow-lg:0 10px 25px rgba(0,0,0,.08);
+  --radius:14px; --radius-sm:10px; --radius-xs:6px;
+  --font-size:16px; --font-size-sm:12px; --font-size-lg:17px; --font-size-xl:20px;
+  --transition:0.2s cubic-bezier(.4,0,.2,1); --safe-bottom:env(safe-area-inset-bottom,16px);
+}
+[data-theme="dark"] {
+  --bg:#042f2e; --bg-card:#134e4a; --bg-input:#11554e; --bg-overlay:rgba(0,0,0,.7);
+  --text:#ccfbf1; --text-secondary:#99b8b6; --text-tertiary:#5f8b89;
+  --primary:#22d3ee; --primary-hover:#67e8f9; --primary-light:#164e63; --primary-soft:#155e75;
+  --success:#34d399; --success-light:#064e3b; --danger:#f87171; --danger-light:#7f1d1d;
+  --warning:#fbbf24; --warning-light:#78350f;
+  --blank-bg:#713f12; --blank-border:#b45309; --blank-revealed-bg:#064e3b; --blank-revealed-text:#34d399;
+  --border:#11554e; --shadow-sm:0 1px 2px rgba(0,0,0,.3); --shadow:0 1px 3px rgba(0,0,0,.4);
+  --shadow-md:0 4px 6px rgba(0,0,0,.4); --shadow-lg:0 10px 25px rgba(0,0,0,.5);
+}
+
+/* ============ Reset ============ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:var(--font-size);line-height:1.6;color:var(--text);background:var(--bg);
+  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
+}
+body{max-width:480px;margin:0 auto;min-height:100dvh;padding-bottom:calc(72px + var(--safe-bottom));overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y}
+input,textarea,select,button{font-family:inherit;font-size:inherit}
+input[type="text"],input[type="search"],textarea{user-select:text;-webkit-user-select:text}
+
+/* ============ Buttons ============ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border:none;border-radius:var(--radius-sm);font-size:var(--font-size);font-weight:600;cursor:pointer;transition:all var(--transition);white-space:nowrap;min-height:44px;touch-action:manipulation;letter-spacing:.01em}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(8,145,178,.3)}
+.btn-primary:active{box-shadow:0 1px 3px rgba(8,145,178,.2)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-outline{background:var(--bg-card);color:var(--primary);border:2px solid var(--primary)}
+.btn-ghost{background:var(--bg-input);color:var(--text);border:none}
+.btn-sm{padding:6px 14px;font-size:13px;min-height:34px;border-radius:var(--radius-xs)}
+.btn-lg{padding:14px 28px;font-size:17px;min-height:52px;border-radius:var(--radius)}
+.btn-block{width:100%;justify-content:center}
+
+/* ============ Cards ============ */
+.card{background:var(--bg-card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:12px}
+
+/* ============ Bottom Tab Bar ============ */
+.tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:calc(68px + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:var(--bg-card);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.tab-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 4px 2px;border:none;background:none;color:var(--text-tertiary);font-size:10px;font-weight:500;cursor:pointer;transition:all var(--transition);position:relative;flex:1}
+.tab-item .tab-icon{font-size:21px;line-height:1;transition:transform var(--transition)}
+.tab-item.active{color:var(--primary);font-weight:700}
+.tab-item.active .tab-icon{transform:scale(1.08)}
+.tab-item .badge{position:absolute;top:1px;left:55%;background:var(--danger);color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;line-height:17px;text-align:center;border-radius:9px;padding:0 5px;transform:translateX(4px)}
+
+/* ============ Pages ============ */
+.page{display:none;padding:12px 12px 20px;animation:pageIn .25s ease}.page.active{display:block}
+@keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+
+/* ============ Bank List ============ */
+.bank-item{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:var(--bg-card);border-radius:var(--radius);margin-bottom:10px;box-shadow:var(--shadow-sm);border:1px solid var(--border);cursor:pointer;transition:all var(--transition);gap:12px;position:relative;overflow:hidden}
+.bank-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--primary);border-radius:0 3px 3px 0;opacity:0;transition:opacity var(--transition)}
+.bank-item:active{background:var(--bg-input);transform:scale(.985)}
+.bank-item:active::before{opacity:1}
+.bank-item .info{flex:1;min-width:0}
+.bank-item .name{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.bank-item .meta{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px}
+.bank-item .actions{display:flex;gap:4px;flex-shrink:0}
+.bank-item .actions .btn-icon{width:36px;height:36px;padding:0;border-radius:50%;background:var(--bg-input);border:none;color:var(--text-secondary);font-size:var(--font-size);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--transition)}
+.bank-item .actions .btn-icon:active{background:var(--primary-soft);color:var(--primary)}
+
+/* ============ Empty State ============ */
+.empty{text-align:center;padding:56px 24px;color:var(--text-secondary)}
+.empty .icon{font-size:52px;margin-bottom:14px;display:block;opacity:.8}
+.empty h3{font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px}
+.empty p{font-size:14px;line-height:1.7}
+
+/* ============ Chip Selectors ============ */
+.chip-group{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 18px;border-radius:22px;border:2px solid var(--border);background:var(--bg-card);font-size:var(--font-size-sm);font-weight:500;cursor:pointer;transition:all var(--transition);white-space:nowrap;color:var(--text-secondary)}
+.chip:active{transform:scale(.96)}
+.chip.active{background:var(--primary-light);border-color:var(--primary);color:var(--primary);font-weight:700;box-shadow:0 0 0 3px rgba(8,145,178,.12)}
+
+/* ============ Forms ============ */
+textarea,select,input[type="number"]{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:var(--font-size);font-family:inherit;background:var(--bg-card);color:var(--text);transition:all var(--transition);-webkit-appearance:none}
+textarea:focus,select:focus,input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(8,145,178,.08)}
+textarea{min-height:160px;resize:vertical;line-height:1.8}
+.form-group{margin-bottom:14px}
+.form-label{font-size:14px;font-weight:700;margin-bottom:8px;display:block;color:var(--text)}
+.form-hint{font-size:12px;color:var(--text-secondary);margin-top:4px;line-height:1.5}
+
+/* ============ Practice Card ============ */
+
+.practice-card{background:var(--bg-card);border-radius:var(--radius);padding:14px 14px;box-shadow:var(--shadow-md);border:1px solid var(--border);min-height:100px;margin-bottom:10px;position:relative}
+.practice-card .card-text{font-size:var(--font-size-lg);line-height:2.0;word-break:break-word}
+.practice-card .blank-input{
+  display:inline-block;min-width:36px;max-width:120px;
+  padding:2px 4px;border:none;border-bottom:2px dashed var(--blank-border);
+  background:var(--blank-bg);border-radius:4px 4px 0 0;
+  font-size:var(--font-size-lg);font-weight:500;line-height:1.5;
+  text-align:center;color:var(--text);
+  transition:all var(--transition);margin:0 2px;vertical-align:baseline;
+}
+.practice-card .blank-input:focus{
+  outline:none;border-bottom-color:var(--primary);border-bottom-style:solid;
+  background:var(--primary-light);box-shadow:0 2px 8px rgba(8,145,178,.12);
+  transform:translateY(-1px);
+}
+.practice-card .blank-input.revealed{
+  border-bottom-color:var(--success);border-bottom-style:solid;
+  background:var(--blank-revealed-bg);color:var(--blank-revealed-text);
+}
+.practice-card .blank-input.correct{
+  border-bottom-color:var(--success);border-bottom-style:solid;
+  background:var(--success-light);
+}
+.practice-card .blank-input.wrong{
+  border-bottom-color:var(--danger);border-bottom-style:solid;
+  background:var(--danger-light);color:var(--danger);
+}
+.practice-card .revealed-text{color:var(--blank-revealed-text);font-weight:700;padding:1px 3px;border-radius:3px;background:var(--blank-revealed-bg)}
+
+/* ============ Browse ============ */
+.browse-dir-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg-card);border-bottom:1px solid var(--border);cursor:pointer;transition:background var(--transition)}
+.browse-dir-item:active{background:var(--bg-input)}
+.browse-dir-item:first-of-type{border-radius:var(--radius) var(--radius) 0 0}
+
+/* ============ Koujue Panel (in practice) ============ */
+.kj-panel{background:var(--primary-light);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:14px;display:none;border:1px solid var(--primary-soft)}
+.kj-panel.show{display:block;animation:pageIn .2s ease}
+.kj-panel .kj-keywords{font-size:var(--font-size-lg);font-weight:800;color:var(--primary);letter-spacing:.08em}
+.kj-panel .kj-full{font-size:14px;color:var(--text);margin-top:8px;padding-top:8px;border-top:1px dashed var(--primary-soft);line-height:2;display:none}
+.kj-panel .kj-full.show{display:block}
+.kj-panel .kj-tap-hint{font-size:11px;color:var(--text-tertiary);margin-top:6px}
+
+/* ============ Koujue Cards ============ */
+.kj-card{background:var(--bg-card);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm);border:1px solid var(--border);cursor:pointer;transition:all var(--transition);margin-bottom:8px}
+.kj-card:active{background:var(--primary-soft)}
+.kj-card .kj-mnemonic{font-size:var(--font-size-lg);font-weight:800;color:var(--primary);letter-spacing:.05em;line-height:2}
+.kj-card .kj-meaning{font-size:var(--font-size);color:var(--text);margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);line-height:2;display:none}
+.kj-card .kj-meaning.show{display:block;animation:pageIn .2s ease}
+.kj-card .kj-meaning .kj-char{color:var(--primary);font-weight:700}
+.kj-card .kj-meaning .kj-desc{color:var(--text-secondary);font-size:var(--font-size-sm)}
+
+/* ============ Segmented Control ============ */
+.segmented{display:inline-flex;background:var(--bg-input);border-radius:10px;padding:3px;gap:0}
+.segmented .seg{padding:8px 16px;border:none;background:transparent;border-radius:8px;font-size:14px;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:all var(--transition);min-height:38px;white-space:nowrap}
+.segmented .seg.active{background:var(--bg-card);color:var(--text);font-weight:700;box-shadow:var(--shadow-sm)}
+
+/* ============ Modal ============ */
+.modal-overlay{position:fixed;inset:0;background:var(--bg-overlay);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:pageIn .2s ease;touch-action:pan-y;overscroll-behavior:none}
+.modal{background:var(--bg-card);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:88dvh;overflow-y:auto;padding:22px 18px 28px;animation:slideUp .35s ease;overscroll-behavior:none}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:18px;font-weight:800}
+
+/* ============ Settings ============ */
+.section{margin-bottom:26px}
+.section-title{font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;padding-left:4px}
+.setting-item{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;background:var(--bg-card);border-bottom:1px solid var(--border);gap:14px;transition:background var(--transition)}
+.setting-item:first-of-type{border-radius:var(--radius) var(--radius) 0 0}
+.setting-item:last-of-type{border-radius:0 0 var(--radius) var(--radius);border-bottom:none}
+.setting-item:only-of-type{border-radius:var(--radius);border-bottom:none}
+.setting-label{font-weight:600;font-size:var(--font-size)}
+.setting-desc{font-size:13px;color:var(--text-secondary);margin-top:1px}
+
+/* ============ Toggle ============ */
+.toggle{position:relative;width:51px;height:31px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:31px;transition:var(--transition)}
+.toggle .slider::before{content:"";position:absolute;height:25px;width:25px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:var(--transition);box-shadow:0 2px 4px rgba(0,0,0,.15)}
+.toggle input:checked+.slider{background:var(--primary)}
+.toggle input:checked+.slider::before{transform:translateX(20px)}
+
+/* ============ Preview (Import) ============ */
+.preview-answer{line-height:2.6;font-size:var(--font-size-lg);letter-spacing:.08em;user-select:none;-webkit-user-select:none}
+.preview-char{padding:1px 2px;border-radius:3px;cursor:pointer;transition:all .1s;border:1px solid transparent}
+.preview-char:active{transform:scale(.9)}
+.preview-char.char-sel{background:var(--warning);border-color:var(--warning);color:#fff}
+.preview-char.saved{cursor:default}
+.preview-card{background:var(--bg-card);border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border);margin-bottom:10px}
+.preview-card .preview-text{font-size:var(--font-size);line-height:2.2;word-break:break-word}
+.preview-card .blank-tag{display:inline-block;background:var(--warning);padding:3px 12px;border-radius:14px;font-size:12px;color:#fff;cursor:pointer;margin:2px;font-weight:600;transition:all var(--transition)}
+.preview-card .blank-tag.removed{background:var(--text-tertiary);text-decoration:line-through;opacity:.6}
+.preview-card .blank-highlight{background:var(--blank-bg);border-bottom:2px solid var(--blank-border);border-radius:3px;padding:1px 5px}
+
+/* ============ Toast ============ */
+.toast-container{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:10px 22px;border-radius:22px;background:#1e293b;color:#fff;font-size:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:toastIn .35s ease,toastOut .3s ease 1.8s forwards;text-align:center;white-space:nowrap}
+@keyframes toastIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(-8px)}}
+
+/* ============ Sequence Progress ============ */
+.seq-info{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:13px;margin-top:8px;gap:8px}
+.seq-info b{color:var(--primary)}
+
+/* ============ Utility ============ */
+.text-center{text-align:center}.text-sm{font-size:var(--font-size-sm)}.text-secondary{color:var(--text-secondary)}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}
+.flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}
+.gap-6{gap:6px}.gap-8{gap:8px}.gap-10{gap:10px}.gap-12{gap:12px}.gap-16{gap:16px}.flex-1{flex:1}.hidden{display:none!important}.w-full{width:100%}
+.flex-wrap{flex-wrap:wrap}
+
+/* ============ Responsive ============ */
+@media(min-width:481px){
+  body{border-left:1px solid var(--border);border-right:1px solid var(--border)}
+  .modal{border-radius:var(--radius);margin-bottom:20px;max-height:85dvh}
+  .modal-overlay{align-items:center}
+}
+/* ============ iPad ============ */
+@media(min-width:768px){
+  body{max-width:768px}
+  :root{--font-size-lg:19px;--font-size-xl:22px}
+  .page{padding:16px 20px 24px}
+  .practice-card{padding:22px 24px}
+  .practice-card .blank-input{min-width:48px;max-width:160px}
+  .bank-item{padding:18px 22px}
+  .tab-bar{max-width:768px}
+  .preview-answer{font-size:19px;line-height:2.8;letter-spacing:.1em}
+  .preview-char{padding:2px 3px}
+  .browse-dir-item{padding:14px 18px}
+}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ====== 题库页面 ====== -->
+<div class="page active" id="page-banks">
+  <div class="flex justify-between items-center mb-16">
+    <div>
+      <h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em">我的题库</h1>
+      <p class="text-sm text-secondary">📚 管理你的填空题和简答题</p>
+    </div>
+    <button class="btn btn-primary" onclick="showImportModal()" style="padding:10px 18px">＋ 导入</button>
+  </div>
+  <div id="banksContainer"></div>
+</div>
+
+<!-- ====== 做题页面 ====== -->
+<div class="page" id="page-practice">
+  <div id="practiceSetup"></div>
+  <div id="practiceActive" style="display:none"></div>
+  <div id="practiceResult" style="display:none"></div>
+</div>
+
+<!-- ====== 浏览页面 ====== -->
+<div class="page" id="page-browse"><div id="browseContainer"></div></div>
+
+<!-- ====== 口诀页面 ====== -->
+<div class="page" id="page-koujue"><div id="koujueContainer"></div></div>
+
+<!-- ====== 设置页面 ====== -->
+<div class="page" id="page-settings">
+  <h1 style="font-size:24px;font-weight:800;margin-bottom:20px;letter-spacing:-.02em">设置</h1>
+  <div id="settingsContainer"></div>
+</div>
+
+<!-- ====== 底部导航 ====== -->
+<nav class="tab-bar">
+  <button class="tab-item active" data-tab="banks" onclick="switchTab('banks')"><span class="tab-icon">📚</span>题库</button>
+  <button class="tab-item" data-tab="practice" onclick="switchTab('practice')"><span class="tab-icon">📝</span>做题</button>
+  <button class="tab-item" data-tab="browse" onclick="switchTab('browse')"><span class="tab-icon">📖</span>浏览</button>
+  <button class="tab-item" data-tab="koujue" onclick="switchTab('koujue')"><span class="tab-icon">🧠</span>口诀</button>
+  <button class="tab-item" data-tab="settings" onclick="switchTab('settings')"><span class="tab-icon">⚙️</span>设置</button>
+</nav>
+
+<script>
+// ==================== 授权激活（自用版为空，分享版为4位数字） ====================
+const AUTH_CODES = ['12345', '12312', '37825']; // 第1个=10分钟，第2个=再加10分钟，第3个=永久
+const AUTH_MINUTES = 10;
+
+function getCurrentAuthCode() {
+  const level = parseInt(localStorage.getItem('memorize_auth_level') || '0');
+  return AUTH_CODES[Math.min(level, AUTH_CODES.length - 1)];
+}
+
+function isPermanentAuth() {
+  return localStorage.getItem('memorize_auth_permanent') === '1';
+}
+
+function checkAuth() {
+  if (!AUTH_CODES.length) return true;
+  if (isPermanentAuth()) return true;
+  const ts = sessionStorage.getItem('memorize_auth_ts');
+  if (!ts) return false;
+  const elapsed = (Date.now() - parseInt(ts)) / 60000;
+  return elapsed < AUTH_MINUTES;
+}
+
+function showAuthModal() {
+  let attempts = 0, locked = false;
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.id = 'authModal';
+  ov.style.zIndex = '9999';
+  ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:340px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px">
+    <div style="text-align:center;font-size:48px;margin-bottom:12px">🔐</div>
+    <h3 style="text-align:center;margin-bottom:6px">试用版本</h3>
+    <p class="text-sm text-secondary" style="text-align:center;margin-bottom:16px">密码为 <b>12345</b>，有效期 10 分钟</p>
+    <input type="number" id="authInput" placeholder="输入5位密码" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:20px;text-align:center;letter-spacing:6px">
+    <p class="text-sm" id="authError" style="text-align:center;color:var(--danger);margin-top:10px;display:none"></p>
+    <button class="btn btn-primary btn-block mt-12" id="authBtn">验证</button>
+    <p class="text-sm text-secondary" style="text-align:center;margin-top:16px">请联系微信获取永久密码</p>
+  </div>`;
+  document.body.appendChild(ov);
+
+  const input = document.getElementById('authInput');
+  const btn = document.getElementById('authBtn');
+  const err = document.getElementById('authError');
+
+  let lockTime = 0, countdownId = 0;
+  function doAuth() {
+    if (locked) return;
+    if (input.value.trim() === getCurrentAuthCode()) {
+      const level = parseInt(localStorage.getItem('memorize_auth_level') || '0');
+      const isLast = level >= AUTH_CODES.length - 1;
+      if (isLast) {
+        localStorage.setItem('memorize_auth_permanent', '1');
+      } else {
+        localStorage.setItem('memorize_auth_level', String(level + 1));
+        sessionStorage.setItem('memorize_auth_ts', Date.now().toString());
+      }
+      ov.remove();
+      initApp();
+      return;
+    }
+    attempts++;
+    if (attempts >= 3) {
+      locked = true; lockTime = Date.now();
+      btn.disabled = true; input.disabled = true;
+      countdownId = setInterval(() => {
+        const remain = 30 - Math.floor((Date.now() - lockTime) / 1000);
+        if (remain <= 0) { clearInterval(countdownId); err.textContent = ''; return; }
+        err.textContent = '输错 3 次，已锁定 ' + remain + ' 秒';
+      }, 1000);
+      err.style.display = 'block';
+      setTimeout(() => {
+        locked = false; attempts = 0;
+        err.style.display = 'none';
+        btn.disabled = false; input.disabled = false;
+        input.value = ''; input.focus();
+      }, 30000);
+    } else {
+      err.textContent = '密码错误（' + attempts + '/3）';
+      err.style.display = 'block';
+      input.value = '';
+      input.focus();
+    }
+  }
+
+  btn.onclick = doAuth;
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); });
+  setTimeout(() => input.focus(), 400);
+}
+
+// ==================== localStorage 数据层 ====================
+const STORAGE_KEY = 'memorize_v2_trial_7666';
+
+function loadData() {
+  try { const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); if (d) return Object.assign({ banks:{}, settings:{}, seqProgress:{}, favorites:{}, wrongBooks:{} }, d); }
+  catch(e) {}
+  return getPresetData_7666();
+}
+
+function getPresetData_7666() {
+  const eduCards = [
+    { id:'p1', question:'1.简述 20 世纪以后教育的特点。（三级）', answer:'（1）教育的终身化。它包括各个年龄阶段的各种方式的教育。\\n（2）教育的全民化。教育必须面向所有的人，即人人都有接受教育的权利。\\n（3）教育的民主化。一方面让所有的人接受同样的教育，另一方面追求教育的自由化。\\n（4）教育的多元化。具体表现为培养目标的多元化、办学形式的多元化等。\\n（5）教育的现代化。教育的现代化是指现代科学技术在教育上的运用，并由此引起教育思想、教育观念的变化。', koujue:'全（全民化）民（民主化）多（多元化）现（现代化）身（终身化）', chapter:'教育学' },
+    { id:'p2', question:'2.简述生产力对教育的制约作用。（三级）', answer:'生产力对教育的制约作用——生产力水平决定教育发展水平。\\n①生产力水平决定教育的规模和速度。\\n②生产力制约人才培养的规格和教育结构。\\n③生产力制约教学内容、方法、组织形式与手段。', koujue:'龟（规模）速（速度）够（结构）防（方法）守（手段）', chapter:'教育学' },
+    { id:'p3', question:'3.简述政治经济制度对教育的制约。（一级）', answer:'(1)政治经济制度决定教育的性质\\n(2)政治经济制度决定教育的宗旨与目的\\n(3)政治经济制度决定教育的领导权\\n(4)政治经济制度决定受教育权\\n(5)政治经济制度决定教育内容和教育管理体制', koujue:'慕（宗旨与目的）容（教育内容和教育管理体制）姓（性质）两权（领导权和受教育权）', chapter:'教育学' },
+    { id:'p4', question:'4.简述教育的政治功能。（一级）', answer:'（1）教育培养出政治经济制度所需要的人才\\n（2）教育促进政治民主化\\n（3）教育通过宣传统治阶级的思想意识，创造一定的社会舆论环境来为政治服务\\n（4）教育通过传播一定的社会政治意识形态，完成年轻一代的政治社会化', koujue:'人（人才）鱼（社会舆论）公主（民主）促政治（政治社会化）', chapter:'教育学' },
+    { id:'p5', question:'5.简述教育的人口功能（二级）', answer:'（1）教育可减少人口数量，是控制人口增长的重要手段\\n（2）教育是提高人口素质的重要手段\\n（3）教育能够改善人口结构，调整人才构成和流动合理化', koujue:'质（素质）数（数量）够（人口结构）流动（流动合理化）', chapter:'教育学' }
+  ];
+  const medCards = [
+    { id:'m1', question:'1.窒息发生时的表现和抢救', answer:'窒息表现：咯血突然减少或中止，病人感胸闷、憋气、出冷汗，随即烦躁、表情紧张或惊恐、两手乱动或手指喉头，继而出现发绀、呼吸窘迫、全身抽搐、昏迷，甚至心跳、呼吸停止而死亡。\\n\\n窒息抢救：①对大咯血及意识不清的病人，应在病床旁备好急救设备，一旦病人出现窒息征象，应立即取头低脚高45°俯卧位，头偏向一侧，轻拍背部，迅速排出在气道和口咽部的血块，或直接刺激咽部以咳出血块。②必要时用吸痰管进行负压吸引。③给予高浓度吸氧。④做好气管插管或气管切开的准备与配合工作，以解除呼吸道阻塞。', koujue:'', chapter:'内科护理学' },
+    { id:'m2', question:'2.慢性肾衰的饮食护理', answer:'①饮食原则：优质低蛋白，充足热量，低盐，低钾，低磷饮食。\\n②蛋白质：慢性肾衰竭病人应限制蛋白质的摄入，且饮食中50%以上的蛋白质为优质蛋白，如鸡蛋，牛奶，瘦肉，鱼等动物蛋白，与豆制品等植物蛋白摄入比例一般为1：1。\\n③热量：供给病人足够的热量，以减少体内蛋白质的消耗，摄入热量的70%由碳水化合物供给，可选用热量高，蛋白质含量低的食物。\\n④其他：脂肪摄入不超过总热量的30%，一般每天钠摄入量不超过2g，低磷饮食，补充水溶性维生素和矿物质。', koujue:'', chapter:'内科护理学' },
+    { id:'m4', question:'4.稳定性心绞痛的临床表现', answer:'(1)部位：主要在胸骨体之后，可波及心前区，手掌大小范围，界限不很清楚，常放射至左肩、左臂内侧达环指和小指，或至颈、咽或下颌部。\\n(2)性质：胸痛常为压迫、发闷或紧缩性，也可有烧灼感，但不像针刺或刀割样锐性痛，偶伴濒死感。有些病人仅觉胸闷而非胸痛。发作时，病人往往不自觉地停止正在进行的活动，直至症状缓解。\\n(3)诱因：体力劳动、情绪激动、饱餐、寒冷、吸烟、心动过速、休克等均可诱发。疼痛多发生于劳力或情绪激动的当时，而不是在其之后发生。\\n(4)持续时间：疼痛一般持续数分钟至十余分钟，多为3~5分钟。\\n(5)缓解方式：一般在停止原来诱发症状的活动后即可缓解；舌下含服硝酸甘油等硝酸酯类药物也能在几分钟内缓解。', koujue:'', chapter:'内科护理学' },
+    { id:'m5', question:'5.高血压非药物治疗，并提出5类药物', answer:'高血压的非药物治疗的主要措施：(1)控制体重；(2)减少食物中钠盐的摄入量，并增加钾盐的摄入量；(3)减少脂肪摄入；(4)戒烟、限酒；(5)增加运动；(6)减轻精神压力，保持心理平衡；(7)必要时补充叶酸制剂。\\n\\n药物：利尿药，β受体拮抗药，钙通道阻滞药，血管紧张素转化酶抑制剂，血管紧张素II受体拮抗药。', koujue:'', chapter:'内科护理学' },
+    { id:'m6', question:'6.肺结核预防，治疗', answer:'控制传染源：控制传染源的关键是早期发现和彻底治愈肺结核病人。\\n切断传染途径：开窗通风，保持空气新鲜，合理处理容器和肺结核病人所使用的物品。\\n保护易感人群：卡介苗接种，化学药物预防。', koujue:'', chapter:'内科护理学' },
+    { id:'m7', question:'7.左心衰竭抢救', answer:'①体位：采取病人自感舒适的体位\\n②氧疗：适用于有低氧血症的病人，首先应保证有开放的气道，立即给予鼻导管高流量给氧\\n③救治准备：迅速开放静脉通道，留置导尿管，心电监护及血氧饱和度监测等\\n④遵医嘱用药：如吗啡，快速利尿药，血管扩张药等\\n⑤非药物治疗：无创机械通气或气管插管机械通气，应用于合并严重呼吸衰竭，经常规治疗不能改善者及心肺复苏病人\\n⑥出入量管理\\n⑦病情监测：严密检测血压，呼吸，血氧饱和度，心率，心电图\\n⑧心理护理\\n⑨做好基础护理与日常生活护理', koujue:'', chapter:'内科护理学' },
+    { id:'m8', question:'8.COPD的呼吸功能锻炼', answer:'（1）缩唇呼吸：缩唇呼吸的技巧是通过缩唇形成的微弱阻力来延长呼气时间，增加气道压力，延缓气道塌陷。病人闭嘴经鼻吸气，然后通过缩唇缓慢呼气，同时收缩腹部。吸气与呼气时间比为1:2或1:3。\\n（2）膈式或腹式呼吸：病人可取立位，平卧位或半卧位，两手分别放于前胸部和上腹部。用鼻缓慢吸气时，膈肌最大程度下降、腹肌松弛、腹部凸出、手感到腹部向上抬起。呼气时经口呼出，腹肌收缩、膈肌松弛、膈肌随腹腔内压增加而上抬，推动肺部气体排出，手感到腹部下降。', koujue:'', chapter:'内科护理学' },
+    { id:'m9', question:'9.促进有效排痰', answer:'包括有效咳嗽，气道湿化，胸部叩击，体位引流和机械吸痰。\\n①有效咳嗽适用于神志清楚，一般状况良好，能够配合的病人。\\n②气道湿化适用于痰液粘稠，不易咳出者，包括湿化治疗和雾化治疗两种方法。\\n③胸部叩击是通过叩击所产生的震动和重力作用，使滞留在气道内的分泌物松动移行到中心气道，通过咳嗽的方式排出体外。\\n④体位引流是通过适当的体位摆放，使病人受累肺段的支气管尽可能垂直于地面，利用重力的作用使支气管的分泌物流向气管，然后通过咳嗽等方式排出体外。\\n⑤机械吸痰适用于痰液粘稠无力咳出，意识不清或建立人工气道的病人。', koujue:'', chapter:'内科护理学' }
+  ];
+  return {
+    banks: {
+      'preset_edu': { id:'preset_edu', name:'教育学简答题（示例）', createdAt: Date.now(), updatedAt: Date.now(), cards: eduCards },
+      'preset_med': { id:'preset_med', name:'内科护理学简答题（示例）', createdAt: Date.now()+1000, updatedAt: Date.now()+1000, cards: medCards }
+    },
+    settings: { density:'low', darkMode:false, fontSize:16, voiceEnabled:false, voiceRate:0.9, voicePitch:1.0 },
+    seqProgress: {}, favorites: {}, wrongBooks: {}
+  };
+}
+
+function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+let appData = loadData();
+
+function getSetting(key, defVal) {
+  if (appData.settings[key] === undefined) { appData.settings[key] = defVal; saveData(appData); }
+  return appData.settings[key];
+}
+
+function saveSetting(key, value) { appData.settings[key] = value; saveData(appData); applySettings(); }
+
+function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,8); }
+
+// ==================== 自动挖空算法 ====================
+const STOP_WORDS = new Set(['的','了','是','在','和','与','或','对','从','到','等','这','那','其','之','也','就','都','但','而','且','所','被','把','让','向','同','及','以及','着','过','可以','能够','需要','应该','必须','可能','已经','正在','将要','没有','不是','什么','怎么','怎样','如何','为什么','哪个','哪里','因为','所以','虽然','但是','如果','即使','除非','无论','不管','进行','使用','通过','根据','关于','对于','由于','为了','一个','一种','这个','这种','一些','这些','那些','每个','第一','第二','第三','首先','其次','最后','然后','接着','方面','部分','情况','过程','结果','作用','功能','特点','具有','形成','产生','发生','发展','变化','包括','包含','主要','重要','基本','一般','特别','非常','比较','更加','一定','所有','任何','不同','相同','之间','之中','之后','之前','以内','以外','以上','以下','不能','不会','不可','不再','也是','就有','都会','也可','是指','称为','叫做','属于','用来','用以','用于','作为','其中','其他','其它','各自','某些','有的','有些','我国','人们','我们','他们','你们','它们','当','并','则','以','可','能','会','要','有','无']);
+
+const CHAR_STOP = new Set(['的','了','是','和','与','或','对','在','中','上','下','等','并','则','以','可','能','会','要','有','无','及','被','把','从','到','由','让','向','同','为','因','所','而','且','虽','但','却','只','仅','又','再','还','也','就','都','很','更','最','极','较','太','非','不','没','将','已','正','着','过']);
+
+const TECH_CHARS = /[酶碱酸质体胞器官腺激素膜核基因蛋白链层壁骨骼脉瓣翅鞘壳齿爪鳍鳞根茎叶花果律则理病症炎瘤癌剂论定程件器仪网络数图表演示验证据测算计控制调节元子分离解合反应氧氢碳氮铁钙钠钾维生素矿纤脂淀粉糖盐溶液渗透呼光遗传变异免疫神经血淋代谢激荷蒙染色粒线核苷磷嘌呤嘧啶肽氨羧羟醛酮酯醚苯酚烃烯炔烷醇法权利义务责任罪刑罚诉审判宪政府议会选举立司行帝朝代战革命运动约条]/;
+
+function hasTechChar(s) { return TECH_CHARS.test(s); }
+
+// ---- 简单种子随机数（"换一批空"产生不同结果） ----
+function seededRandom(seed) {
+  let s = (seed | 0) || 1;
+  return function() { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+}
+
+// ---- 将答案按"得分点"拆分 ----
+function splitIntoPoints(text) {
+  if (!text || !text.trim()) return [];
+  // 先按换行拆
+  const rawParts = text.split(/\n/).map(l => l.trim()).filter(Boolean);
+  const points = [];
+  for (const line of rawParts) {
+    // 去掉序号前缀：1. 2、 （1） ① 等
+    let cleaned = line.replace(/^[\d一二三四五六七八九十百]+[\.\、\)）]\s*/, '');
+    cleaned = cleaned.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]\s*/, '');
+    cleaned = cleaned.replace(/^（[\d一二三四五六七八九十百]+）\s*/, '');
+    if (!cleaned.trim()) continue;
+    // 对每行按主要标点拆分
+    const sub = cleaned.split(/[；;。](?=\S)/);
+    for (const s of sub) {
+      const t = s.trim();
+      if (!t) continue;
+      // 如果一段太长，再按逗号拆
+      if (t.length > 20 && /[，,]/.test(t)) {
+        const parts = t.split(/[，,](?=\S)/);
+        for (const p of parts) { const tp = p.trim(); if (tp) points.push(tp); }
+      } else {
+        points.push(t);
+      }
+    }
+  }
+  return points.length ? points : [text.trim().replace(/^[\d一二三四五六七八九十百]+[\.\、\)）]\s*/, '')];
+}
+
+// ---- 在原文中定位每个得分点 ----
+function locatePoints(fullText, points) {
+  const located = [];
+  let searchFrom = 0;
+  for (const pt of points) {
+    const idx = fullText.indexOf(pt, searchFrom);
+    if (idx >= 0) {
+      located.push({ text: pt, start: idx, end: idx + pt.length });
+      searchFrom = idx + pt.length;
+    }
+  }
+  return located;
+}
+
+// ---- 提取关键词（支持种子随机） ----
+function extractKeywords(text, count, seed) {
+  if (!text || !text.trim()) return [];
+  const rng = seed != null ? seededRandom(seed) : null;
+  const candidates = [];
+
+  for (let len = 5; len >= 2; len--) {
+    for (let i = 0; i <= text.length - len; i++) {
+      const phrase = text.substring(i, i + len);
+      if (STOP_WORDS.has(phrase)) continue;
+      if (CHAR_STOP.has(phrase[0]) || CHAR_STOP.has(phrase[phrase.length - 1])) continue;
+      // 不能以标点、序号、括号开头或结尾
+      if (/[，,。！!？?、；;：:""''（）()《》【】…—\-·・\d]/.test(phrase[0]) ||
+          /[，,。！!？?、；;：:""''（）()《》【】…—\-·・\d]/.test(phrase[phrase.length - 1])) continue;
+      // 纯数字/序号不要
+      if (/^[\d一二三四五六七八九十百千万亿\.\、\)）]+$/.test(phrase)) continue;
+      let score = len * 3;
+      // 得分点关键词大幅加分（学科术语=得分点核心）
+      if (hasTechChar(phrase)) score += 12;
+      // 中英文混合（如"DNA复制"）加分
+      if (/[A-Za-z]/.test(phrase)) score += 6;
+      // 数字参与但不主导的词（如"3个"）适度加分
+      if (/[\d一二三四五六七八九十百千万亿]/.test(phrase) && !/^\d+$/.test(phrase)) score += 3;
+      // 在逗号/分号/句号/换行后面紧跟的词（得分点开头）加分
+      if (i === 0 || /[，,。；;、\n]/.test(text[i - 1])) score += 5;
+      // 包含多个技术字的更可能是核心概念
+      const techCount = (phrase.match(TECH_CHARS) || []).length;
+      if (techCount >= 2) score += 4;
+      // 惩罚虚词
+      score -= (phrase.match(/[的了是在和与或对中上下等所被把让向同及着过]/g) || []).length * 4;
+      // 随机扰动
+      if (rng) score += rng() * 6 - 3;
+      if (score >= 3) candidates.push({ start: i, end: i + len, text: phrase, score });
+    }
+  }
+  // 按分数降序，同分按长度降序（优先选长的、完整的词组）
+  candidates.sort((a, b) => b.score - a.score || b.text.length - a.text.length);
+  const selected = [], used = new Set();
+  for (const c of candidates) {
+    if (selected.length >= count) break;
+    let overlap = false;
+    for (let p = c.start; p < c.end; p++) { if (used.has(p)) { overlap = true; break; } }
+    if (!overlap) { selected.push(c); for (let p = c.start; p < c.end; p++) used.add(p); }
+  }
+  selected.sort((a, b) => a.start - b.start);
+  return selected;
+}
+
+// ---- 自动挖空：每个得分点至少一个空，优先挖得分关键词 ----
+function autoGenerateBlanks(cards, density, seed) {
+  return cards.map((card, cardIdx) => {
+    const q = card.question.trim();
+    const a = card.answer.trim();
+    const ft = q + '\n' + a;
+    const answerStart = q.length + 1;
+    if (!a) return { ...card, fullText: ft, blanks: [] };
+
+    const pointTexts = splitIntoPoints(a);
+    if (!pointTexts.length) return { ...card, fullText: ft, blanks: [] };
+
+    // 在原文中定位每个得分点
+    const located = locatePoints(a, pointTexts);
+
+    // 分配空数：每个小点至少1个空，额外空按文本长度比例分配
+    const totalLen = located.reduce((s, l) => s + l.text.length, 0) || 1;
+    const allocation = new Array(located.length).fill(1); // 每个点至少1个
+    // 低=每点1空（仅保底），高=每点约3空按比例自然分配
+    const extraTotal = density === 'low' ? 0 : located.length * 3;
+    // 按文本长度比例分配额外空（最大余数法，长的点分到更多）
+    const prop = located.map((l, i) => ({ i, share: l.text.length / totalLen * extraTotal, got: 0 }));
+    let given = 0;
+    // 先取整数部分
+    for (const p of prop) { p.got = Math.floor(p.share); given += p.got; }
+    // 余数大的优先补1
+    prop.sort((a, b) => (b.share - b.got) - (a.share - a.got));
+    for (let i = 0; i < extraTotal - given; i++) { prop[i].got++; }
+    for (const p of prop) { allocation[p.i] += p.got; }
+
+    // 重新定位（上面的 located 被改了）
+    const pts = locatePoints(a, pointTexts);
+    const blanks = [];
+    for (let pi = 0; pi < Math.min(pts.length, allocation.length); pi++) {
+      const pt = pts[pi];
+      const need = allocation[pi];
+      if (need > 0 && pt.text.trim()) {
+        const ptSeed = seed != null ? seed + cardIdx * 97 + pi * 31 : undefined;
+        const kws = extractKeywords(pt.text, need, ptSeed);
+        if (kws.length > 0) {
+          for (const kw of kws) {
+            blanks.push({
+              start: answerStart + pt.start + kw.start,
+              end: answerStart + pt.start + kw.end,
+              text: kw.text,
+              isAnswer: true
+            });
+          }
+        } else {
+          // 没找到关键词？把整个得分点挖掉（排除序号和标点）
+          const cleanText = pt.text.replace(/^[\d\.\、\)）①②③④⑤⑥⑦⑧⑨⑩\s]+/, '').trim();
+          if (cleanText) {
+            const idx = pt.text.indexOf(cleanText);
+            blanks.push({
+              start: answerStart + pt.start + idx,
+              end: answerStart + pt.start + idx + cleanText.length,
+              text: cleanText,
+              isAnswer: true
+            });
+          }
+        }
+      }
+    }
+
+    blanks.sort((a, b) => a.start - b.start);
+
+    // 去重（相同位置只保留一个）
+    const deduped = [];
+    const seen = new Set();
+    for (const b of blanks) {
+      const k = b.start + ':' + b.end;
+      if (!seen.has(k)) { seen.add(k); deduped.push(b); }
+    }
+
+    return { ...card, fullText: ft, blanks: deduped };
+  });
+}
+
+function regenerateBlanks(card, density) {
+  const seed = Math.floor(Date.now() % 100000) + Math.floor(Math.random() * 900000);
+  const r = autoGenerateBlanks([{ question: card.question, answer: card.answer }], density, seed)[0];
+  return { ...card, blanks: r.blanks, fullText: r.fullText };
+}
+
+// ==================== 解析导入文本 ====================
+function parseImportText(rawText) {
+  const lines = rawText.split(/\n/).filter(l => l.trim()), cards = [];
+  for (const line of lines) {
+    const t = line.trim(); if (!t) continue;
+    const parts = t.split('|');
+    if (parts.length >= 2) cards.push({ question: parts[0].trim(), answer: parts.slice(1).join('|').trim() });
+    else if (t.includes('\t')) { const tp = t.split('\t'); cards.push({ question: tp[0].trim(), answer: tp.slice(1).join('\t').trim() }); }
+    else cards.push({ question: t, answer: '' });
+  }
+  return cards;
+}
+
+function parseJianDaText(rawText) {
+  const lines = rawText.split(/\n/), cards = [];
+  let current = null, chapter = '';
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    if (/^第[一二三四五六七八九十百\d]+章/.test(line)) { chapter = line; continue; }
+    if (/^\d+[\.\、]/.test(line)) {
+      if (current && current.question) cards.push(current);
+      current = { question: line, answer: '', koujue: '', chapter };
+    } else if (current) {
+      if (/^(口诀|背诵技巧)[：:]/.test(line)) {
+        current.koujue = line.replace(/^(口诀|背诵技巧)[：:]\s*/, '').trim();
+      } else {
+        current.answer += (current.answer ? '\n' : '') + line;
+      }
+    }
+  }
+  if (current && current.question) cards.push(current);
+  return cards;
+}
+
+function isJianDaFormat(rawText) {
+  const lines = rawText.split(/\n/).filter(l => l.trim());
+  let kj = 0, num = 0;
+  for (const line of lines) {
+    if (/^(口诀|背诵技巧)[：:]/.test(line)) kj++;
+    if (/^\d+[\.\、]/.test(line)) num++;
+  }
+  return kj >= 2 && num >= 3;
+}
+
+// ==================== 工具函数 ====================
+function $(id) { return document.getElementById(id); }
+function escapeHtml(s) { if (!s) return ''; return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function escNl(s) { return escapeHtml(s).replace(/\n/g, '<br>'); }
+function shuffle(a) { const arr = [...a]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+function fmtDate(ts) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function downloadFile(fn, content, mime) { const b = new Blob([content],{type:mime}), url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+function showToast(msg) { const c = $('toastContainer'), t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; c.appendChild(t); setTimeout(() => t.remove(), 2300); }
+
+function fuzzyMatch(u, a) {
+  if (!u && !a) return true;
+  if (!u || !a) return false;
+  const n = s => s.replace(/[，,。！!？?、；;：:""''（）()《》【】…—\-·・\s]/g, '').toLowerCase().trim();
+  const ua = n(u), ca = n(a);
+  if (ua === ca) return true;
+  if (ca.length > 6) {
+    const max = Math.max(ua.length, ca.length), set = new Set(ua.split(''));
+    let m = 0; for (const ch of ca) if (set.has(ch)) m++;
+    return m / max >= 0.7;
+  }
+  return false;
+}
+
+function showConfirm(title, msg, onConfirm) {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:330px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px"><h3 style="margin-bottom:8px;font-size:17px">${escapeHtml(title)}</h3><p style="color:var(--text-secondary);margin-bottom:22px;font-size:14px">${escapeHtml(msg)}</p><div class="flex gap-10"><button class="btn btn-ghost flex-1 cancel-btn">取消</button><button class="btn btn-danger flex-1 confirm-btn">确认</button></div></div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('.cancel-btn').onclick = () => ov.remove();
+  ov.querySelector('.confirm-btn').onclick = () => { ov.remove(); onConfirm(); };
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+}
+
+// ==================== 全局状态 ====================
+let practiceState = null;
+let batchSize = 10;
+let drawMode = 'random-norepeat';
+let hideQuestionStart = false;
+
+// ==================== 初始化 ====================
+function init() {
+  // 先加载外观设置，让授权弹窗也跟随暗色/字体
+  getSetting('darkMode', false);
+  getSetting('fontSize', 16);
+  applySettings();
+  if (!checkAuth()) { showAuthModal(); return; }
+  initApp();
+}
+
+function initApp() {
+  if (AUTH_CODES.length && !isPermanentAuth()) {
+    setInterval(() => { if (!checkAuth()) { location.reload(); } }, 30000);
+  }
+  getSetting('density', 'low');
+  getSetting('voiceEnabled', false);
+  getSetting('voiceRate', 0.9);
+  getSetting('voicePitch', 1.0);
+
+  // 防止刷题时水平滑动退出页面
+  let pageStartX = 0, pageStartY = 0;
+  document.addEventListener('touchstart', e => {
+    pageStartX = e.touches[0].clientX;
+    pageStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    // 如果子元素已经处理过（如预览滑动选字），不重复拦截
+    if (e.defaultPrevented) return;
+    const dx = Math.abs(e.touches[0].clientX - pageStartX);
+    const dy = Math.abs(e.touches[0].clientY - pageStartY);
+    if (dx > dy && dx > 20) e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.activeElement?.classList.contains('blank-input')) {
+      e.preventDefault();
+      saveCurrentAnswers();
+      const card = practiceState.cards[practiceState.index];
+      const ua = practiceState.answers[card.id] || {};
+      const inputs = [...document.querySelectorAll('.blank-input')];
+      const curIdx = inputs.indexOf(document.activeElement);
+      // 先检查是否全填了
+      let allFilled = true;
+      for (const inp of inputs) {
+        const bidx = parseInt(inp.dataset.bidx);
+        if (!(ua[bidx] || '').trim()) { allFilled = false; break; }
+      }
+      if (allFilled) {
+        checkMyAnswers();
+        document.activeElement.blur();
+        return;
+      }
+      // 从当前位置往后找第一个没填的
+      for (let i = curIdx + 1; i < inputs.length; i++) {
+        const bidx = parseInt(inputs[i].dataset.bidx);
+        if (!(ua[bidx] || '').trim()) { inputs[i].focus(); return; }
+      }
+      // 后面都有了，从头找第一个没填的
+      for (let i = 0; i < curIdx; i++) {
+        const bidx = parseInt(inputs[i].dataset.bidx);
+        if (!(ua[bidx] || '').trim()) { inputs[i].focus(); return; }
+      }
+    }
+  });
+
+  switchTab('banks');
+}
+document.addEventListener('DOMContentLoaded', init);
+
+function applySettings() {
+  const s = appData.settings;
+  document.documentElement.setAttribute('data-theme', s.darkMode ? 'dark' : 'light');
+  document.documentElement.style.setProperty('--font-size', s.fontSize + 'px');
+}
+
+// ==================== Tab 切换 ====================
+function switchTab(name) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = $('page-' + name);
+  if (page) page.classList.add('active');
+
+  if (name === 'banks') renderBanks();
+  else if (name === 'practice') {
+    if (practiceState && $('practiceActive').style.display !== 'none') {
+      // 正在做题中，恢复而不是重置
+      $('practiceSetup').style.display = 'none';
+      $('practiceResult').style.display = 'none';
+      $('practiceActive').style.display = 'block';
+      renderPracticeCard();
+    } else if (practiceState && $('practiceResult').style.display !== 'none') {
+      // 在结果页，保持
+    } else {
+      renderPracticeSetup();
+    }
+  }
+  else if (name === 'browse') renderBrowseStart();
+  else if (name === 'koujue') renderKoujueStart();
+  else if (name === 'settings') { renderSettings(); setTimeout(loadVoices, 300); }
+}
+
+// ==================== 题库管理 ====================
+function renderBanks() {
+  const c = $('banksContainer');
+  const banks = Object.values(appData.banks).sort((a, b) => b.createdAt - a.createdAt);
+
+  if (!banks.length) {
+    c.innerHTML = `<div class="empty"><span class="icon">📚</span><h3>还没有题库</h3><p>点击右上角「＋ 导入」<br>粘贴文本或上传文件开始使用</p></div>`;
+    return;
+  }
+
+  c.innerHTML = banks.map(b => {
+    const starCount = b.cards.filter(x => x.starred).length;
+    const wrongCount = (appData.wrongBooks[b.id] || []).length;
+    return `<div class="bank-item" onclick="event.stopPropagation()">
+      <div class="info" onclick="startPracticeSetup('${b.id}')">
+        <div class="name">${escapeHtml(b.name)}</div>
+        <div class="meta">
+          <span>${b.cards.length} 题</span>
+          <span>·</span>
+          <span>${fmtDate(b.createdAt)}</span>
+          ${starCount ? `<span>· ⭐${starCount}</span>` : ''}
+          ${wrongCount ? `<span style="color:var(--danger)">· ❌${wrongCount}</span>` : ''}
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn-icon" onclick="event.stopPropagation();editBank('${b.id}')" title="编辑挖空">✏️</button>
+        <button class="btn-icon" onclick="event.stopPropagation();exportBank('${b.id}')" title="导出文本">📤</button>
+        <button class="btn-icon" onclick="event.stopPropagation();exportBankFull('${b.id}')" title="导出含挖空">💾</button>
+        <button class="btn-icon" onclick="event.stopPropagation();deleteBankConfirm('${b.id}')" title="删除">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteBankConfirm(id) {
+  const bank = appData.banks[id];
+  if (!bank) return;
+  showConfirm('删除题库', `确定删除「${bank.name}」吗？此操作不可撤销。`, () => {
+    delete appData.banks[id];
+    delete appData.seqProgress[id];
+    delete appData.wrongBooks[id];
+    delete appData.favorites[id];
+    saveData(appData);
+    showToast('已删除');
+    renderBanks();
+  });
+}
+
+function editBank(id) {
+  const bank = appData.banks[id];
+  if (!bank) return;
+  // 准备卡片：从已有 blanks 恢复 _savedChars 标记
+  const cards = bank.cards.map(c => {
+    const saved = {};
+    const q = (c.question || '').trim();
+    const answerStart = q.length + 1;
+    for (const b of (c.blanks || [])) {
+      const relStart = b.start - answerStart;
+      const relEnd = b.end - answerStart;
+      for (let j = relStart; j < relEnd; j++) saved[j] = true;
+    }
+    return { ...c, _charSelected: {}, _savedChars: saved, _autoBlanks: null };
+  });
+  previewData = { name: bank.name, cards, mode: 'manual', editBankId: id };
+  showImportPreview(bank.name, cards);
+}
+
+function exportBank(id) {
+  if (AUTH_CODES.length && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  const bank = appData.banks[id];
+  if (!bank) return;
+  downloadFile(bank.name + '.txt', bank.cards.map(c => c.question + '|' + c.answer).join('\n'), 'text/plain');
+  showToast('导出成功（纯文本）');
+}
+
+function exportBankFull(id) {
+  if (AUTH_CODES.length && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  const bank = appData.banks[id];
+  if (!bank) return;
+  // 导出为纯文本，挖空用【】标记
+  const lines = [];
+  for (const c of bank.cards) {
+    const q = c.question.trim();
+    const a = c.answer.trim();
+    const blanks = (c.blanks || []).slice().sort((a, b) => a.start - b.start);
+    if (!blanks.length) { lines.push(q + '|' + a); continue; }
+    const ft = c.fullText || q + '\n' + a;
+    const aStart = q.length + 1;
+    let out = '', p = aStart;
+    for (const b of blanks) {
+      out += ft.substring(p, b.start) + '【' + b.text + '】';
+      p = b.end;
+    }
+    out += ft.substring(p);
+    lines.push(q + '|' + out.substring(aStart));
+  }
+  downloadFile(bank.name + '_挖空.txt', lines.join('\n'), 'text/plain');
+  showToast('导出成功（含挖空标记）');
+}
+
+// ==================== 导入 ====================
+function showImportModal() {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'importModal';
+  ov.innerHTML = `<div class="modal"><div class="modal-header"><h2 class="modal-title">导入题库</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closeImportModal()">✕</button></div>
+    <div class="form-group"><label class="form-label">题库名称</label><input id="bankNameInput" type="text" placeholder="例如：生物第三章" style="padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);width:100%"></div>
+    <div class="form-group"><label class="form-label">粘贴题目</label><textarea id="importTextarea" placeholder="每行一题，用 | 分隔题目和答案&#10;&#10;示例：&#10;光合作用的场所是|叶绿体&#10;植物细胞的基本结构包括|细胞壁、细胞膜、细胞质、细胞核"></textarea></div>
+    <div class="text-center text-sm text-secondary mb-12">—— 或者上传文件 ——</div>
+    <div class="form-group"><input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none"><button class="btn btn-outline btn-block" onclick="document.getElementById('csvFileInput').click()">📁 选择 TXT / CSV 文件</button></div>
+    <div class="form-hint mb-16">💡 <b>格式：</b>每行一题，题目和答案用 <b>|</b> 或 <b>Tab</b> 分隔。也支持含「口诀」的简答题格式（自动识别）。</div>
+    <div class="flex gap-10"><button class="btn btn-ghost flex-1" onclick="closeImportModal()">取消</button><button class="btn btn-primary flex-1" onclick="doImport()">预览 →</button></div></div>`;
+  document.body.appendChild(ov);
+  document.getElementById('csvFileInput').onchange = handleFileImport;
+  setTimeout(() => $('bankNameInput')?.focus(), 350);
+}
+
+function closeImportModal() { const m = $('importModal'); if (m) m.remove(); }
+
+async function handleFileImport(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const text = await file.text();
+  $('importTextarea').value = text;
+  if (!$('bankNameInput').value) $('bankNameInput').value = file.name.replace(/\.(csv|txt)$/i, '');
+  showToast('文件已加载');
+}
+
+// 解析含【】挖空标记的文本
+function parseMbakText(rawText) {
+  const lines = rawText.split(/\n/), cards = [];
+  for (const line of lines) {
+    const t = line.trim(); if (!t) continue;
+    const sep = t.indexOf('|');
+    if (sep < 0) continue;
+    const q = t.substring(0, sep).trim();
+    const aMarked = t.substring(sep + 1).trim();
+    if (!aMarked.includes('【')) { cards.push({ question: q, answer: aMarked }); continue; }
+    const blanks = [];
+    let clean = '', p = 0;
+    const re = /【([^】]*)】/g;
+    let m;
+    while ((m = re.exec(aMarked)) !== null) {
+      clean += aMarked.substring(p, m.index);
+      const s = clean.length;
+      clean += m[1];
+      blanks.push({ start: s, end: s + m[1].length, text: m[1], isAnswer: true });
+      p = m.index + m[0].length;
+    }
+    clean += aMarked.substring(p);
+    cards.push({ question: q, answer: clean, blanks, fullText: q + '\n' + clean });
+  }
+  return cards;
+}
+
+function doImport() {
+  const name = $('bankNameInput').value.trim();
+  const raw = $('importTextarea').value.trim();
+  if (!name) { showToast('请输入题库名称'); return; }
+  if (!raw) { showToast('请粘贴题目或上传文件'); return; }
+
+  let cards, hasBlanks = false;
+  if (isJianDaFormat(raw)) { cards = parseJianDaText(raw); showToast('检测到简答题格式'); }
+  else if (raw.trim().startsWith('{')) { try {
+    const data = JSON.parse(raw);
+    if (data._format === 'mbak' && data.cards && data.cards.length) {
+      cards = data.cards; if (data.name) name = data.name;
+      hasBlanks = true; showToast('导入含挖空备份');
+    } else { cards = []; }
+  } catch(e) { cards = parseImportText(raw); } }
+  else if (raw.includes('【') && raw.includes('】') && raw.includes('|')) {
+    cards = parseMbakText(raw); hasBlanks = true; showToast('导入含挖空文本');
+  }
+  else { cards = parseImportText(raw); }
+
+  if (!cards.length) { showToast('未能解析题目，请检查格式'); return; }
+
+  cards = cards.map(c => {
+    c.question = (c.question || '').trim();
+    c.answer = (c.answer || '').trim();
+    const ft = c.question + '\n' + c.answer;
+    return { ...c, id: generateId(), fullText: ft,
+      wrongCount: c.wrongCount || 0, correctCount: c.correctCount || 0,
+      lastPracticed: c.lastPracticed || null, starred: c.starred || false,
+      _charSelected: {}, _savedChars: {},
+      blanks: hasBlanks ? (c.blanks || []) : [] };
+  });
+
+  closeImportModal();
+  showImportPreview(name, cards);
+}
+
+// ==================== 导入预览（点击选字挖空） ====================
+let previewData = null;
+
+function showImportPreview(name, cards) {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'previewModal';
+  // 保留编辑模式信息
+  const editId = previewData?.editBankId;
+  previewData = { name, cards, mode: 'manual', editBankId: editId };
+
+  let html = `<div class="modal"><div class="modal-header"><h2 class="modal-title">预览：${escapeHtml(name)}</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closePreviewModal()">✕</button></div>
+    <div class="chip-group mb-12" id="previewModeChips">
+      <span class="chip active" data-mode="manual" onclick="switchPreviewMode('manual', this)">✋ 手动挖空</span>
+      <span class="chip" data-mode="auto" onclick="switchPreviewMode('auto', this)">🤖 系统自动</span>
+    </div>
+    <p class="text-sm text-secondary mb-12" id="previewModeHint">👆 点击答案中的字选中挖空，连续的字自动合并。保存后可继续第二轮挖空。</p>
+    <div id="previewCards"></div>`;
+
+  html += `<div class="flex gap-10 mt-16" style="position:sticky;bottom:0;background:var(--bg-card);padding:14px 0">
+    <button class="btn btn-ghost flex-1" onclick="closePreviewModal()">取消</button>
+    <button class="btn btn-primary flex-1" onclick="confirmImport()">确认导入 (${cards.length} 题)</button></div></div>`;
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  renderPreviewCards();
+}
+
+function switchPreviewMode(mode, el) {
+  previewData.mode = mode;
+  document.querySelectorAll('#previewModeChips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('previewModeHint').textContent = mode === 'manual'
+    ? '👆 点击答案中的字选中挖空，连续的字自动合并。保存后可继续第二轮挖空。'
+    : '🤖 系统按得分点自动挖空，可点击标签取消/恢复。';
+  if (mode === 'auto') {
+    // 为每道题生成自动挖空
+    previewData.cards.forEach(c => {
+      if (!c._autoBlanks) {
+        const auto = autoGenerateBlanks([{ question: c.question, answer: c.answer }], appData.settings.density || 'low')[0];
+        c._autoBlanks = auto.blanks.map(b => ({ ...b, _removed: false }));
+        c.fullText = auto.fullText;
+      }
+    });
+  }
+  renderPreviewCards();
+}
+
+function renderPreviewCards() {
+  const container = document.getElementById('previewCards');
+  const cards = previewData.cards;
+  const mode = previewData.mode;
+  let html = '';
+
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
+    html += `<div class="preview-card" data-idx="${i}">
+      <div class="text-sm text-secondary mb-6">第 ${i + 1} 题 · ${escapeHtml(card.question.replace(/^[\d\.\、\s]+/, '').substring(0, 30))}</div>
+      ${card.koujue ? `<div class="text-sm mb-6" style="color:var(--primary)">🧠 ${escapeHtml(card.koujue)}</div>` : ''}`;
+
+    if (mode === 'manual') {
+      html += `<div class="preview-answer" id="pv-answer-${i}">${renderAnswerChars(card, i)}</div>
+        <div style="margin-top:6px" id="pv-info-${i}">${renderSavedInfo(card)}</div>
+        <div class="flex gap-6 mt-6">
+          <button class="btn btn-sm btn-ghost" onclick="saveCardSelection(${i})" style="font-size:12px;padding:4px 10px;min-height:28px">💾 保存选中</button>
+          <button class="btn btn-sm btn-ghost" onclick="clearCardSelection(${i})" style="font-size:12px;padding:4px 10px;min-height:28px">🔄 清除全部</button>
+        </div>`;
+    } else {
+      const autoBlanks = card._autoBlanks || [];
+      html += `<div class="preview-text" id="pv-auto-text-${i}">${renderAutoPreview(card)}</div>
+        <div class="text-sm text-secondary mt-8" id="pv-auto-tags-${i}">${renderAutoTags(card, i)}</div>`;
+    }
+
+    html += `</div>`;
+  }
+  container.innerHTML = html;
+}
+
+function renderAnswerChars(card, idx) {
+  const a = card.answer || '';
+  if (!a) return '<span style="color:var(--text-tertiary)">（无答案）</span>';
+  const sel = card._charSelected || {};
+  const saved = card._savedChars || {};
+  let h = `<div class="preview-answer-inner" style="touch-action:pan-y;user-select:none;-webkit-user-select:none"
+    ontouchstart="swipeSelectStart(event,${idx})"
+    ontouchmove="swipeSelectMove(event,${idx})"
+    ontouchend="swipeSelectEnd(${idx})"
+    onmousedown="mouseSelectStart(event,${idx})"
+    onmousemove="mouseSelectMove(event,${idx})"
+    onmouseup="mouseSelectEnd(${idx})"
+    onmouseleave="mouseSelectEnd(${idx})">`;
+  for (let i = 0; i < a.length; i++) {
+    const ch = a[i];
+    if (ch === '\n') { h += '<span style="opacity:.2">↵</span>'; continue; }
+    if (/\s/.test(ch)) { h += ' '; continue; }
+    if (saved[i]) {
+      const cls = sel[i] ? 'char-sel saved' : 'saved';
+      h += `<span class="preview-char ${cls}" data-ci="${i}" onclick="if(Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})" style="background:var(--blank-bg);border-bottom:2px solid var(--blank-border);border-radius:2px">${escapeHtml(ch)}</span>`;
+    } else if (sel[i]) {
+      h += `<span class="preview-char char-sel" data-ci="${i}" onclick="if(Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})">${escapeHtml(ch)}</span>`;
+    } else {
+      h += `<span class="preview-char" data-ci="${i}" onclick="if(Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})">${escapeHtml(ch)}</span>`;
+    }
+  }
+  h += '</div>';
+  return h;
+}
+
+// 滑动选择
+let swipeSelectMode = null;
+let swipeStartX = 0, swipeStartY = 0;
+function swipeSelectStart(e, idx) {
+  _touchJustHappened = Date.now();
+  swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
+  swipeSelectMode = null;
+  const card = previewData.cards[idx];
+  const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+  const ci = el?.dataset?.ci;
+  if (ci == null) return;
+  const charIdx = parseInt(ci);
+  if (card._savedChars && card._savedChars[charIdx]) {
+    toggleImportChar(idx, charIdx);
+    return;
+  }
+  // 暂不启动选择模式，等 move 判断方向
+  swipeSelectMode = { idx, adding: !card._charSelected[charIdx], started: false };
+}
+
+function swipeSelectMove(e, idx) {
+  if (!swipeSelectMode || swipeSelectMode.idx !== idx) return;
+  const dx = Math.abs(e.touches[0].clientX - swipeStartX);
+  const dy = Math.abs(e.touches[0].clientY - swipeStartY);
+  // 如果是垂直滑动，取消选择模式（让页面滚动）
+  if (dy > dx && dy > 5) { swipeSelectMode = null; return; }
+  // 水平滑动超过阈值才启动
+  if (dx < 8 && dy < 8) return;
+  if (!swipeSelectMode.started) {
+    swipeSelectMode.started = true;
+    toggleImportChar(idx, parseInt(document.elementFromPoint(swipeStartX, swipeStartY)?.dataset?.ci || '0'));
+  }
+  const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+  const ci = el?.dataset?.ci;
+  if (ci == null) return;
+  const charIdx = parseInt(ci);
+  const card = previewData.cards[idx];
+  if (card._savedChars && card._savedChars[charIdx]) return;
+  if (!card._charSelected) card._charSelected = {};
+  if (card._charSelected[charIdx] !== swipeSelectMode.adding) {
+    toggleImportChar(idx, charIdx);
+  }
+  e.preventDefault();
+}
+
+function swipeSelectEnd(idx) {
+  // 没滑动的单击
+  if (swipeSelectMode && !swipeSelectMode.started) {
+    const card = previewData.cards[idx];
+    const el = document.elementFromPoint(swipeStartX, swipeStartY);
+    const ci = el?.dataset?.ci;
+    if (ci != null) {
+      const charIdx = parseInt(ci);
+      if (!(card._savedChars && card._savedChars[charIdx])) {
+        toggleImportChar(idx, charIdx);
+      }
+    }
+  }
+  swipeSelectMode = null;
+}
+
+// 鼠标拖拽选择（桌面端）
+function mouseSelectStart(e, idx) {
+  swipeStartX = e.clientX; swipeStartY = e.clientY; swipeSelectMode = null;
+  const card = previewData.cards[idx];
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const ci = el?.dataset?.ci;
+  if (ci == null) return;
+  const charIdx = parseInt(ci);
+  if (card._savedChars && card._savedChars[charIdx]) { toggleImportChar(idx, charIdx); return; }
+  swipeSelectMode = { idx, adding: !card._charSelected[charIdx], started: false };
+  e.preventDefault();
+}
+function mouseSelectMove(e, idx) {
+  if (!swipeSelectMode || swipeSelectMode.idx !== idx) return;
+  const dx = Math.abs(e.clientX - swipeStartX), dy = Math.abs(e.clientY - swipeStartY);
+  if (dy > dx && dy > 5) { swipeSelectMode = null; return; }
+  if (dx < 5 && dy < 5) return;
+  if (!swipeSelectMode.started) { swipeSelectMode.started = true; }
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const ci = el?.dataset?.ci;
+  if (ci == null) return;
+  const charIdx = parseInt(ci);
+  const card = previewData.cards[idx];
+  if (card._savedChars && card._savedChars[charIdx]) return;
+  if (!card._charSelected) card._charSelected = {};
+  if (card._charSelected[charIdx] !== swipeSelectMode.adding) { toggleImportChar(idx, charIdx); }
+  e.preventDefault();
+}
+function mouseSelectEnd(idx) {
+  if (swipeSelectMode && !swipeSelectMode.started) {
+    const card = previewData.cards[idx];
+    const el = document.elementFromPoint(swipeStartX, swipeStartY);
+    const ci = el?.dataset?.ci;
+    if (ci != null) {
+      const charIdx = parseInt(ci);
+      if (!(card._savedChars && card._savedChars[charIdx])) { toggleImportChar(idx, charIdx); }
+    }
+  }
+  swipeSelectMode = null;
+}
+
+let _touchJustHappened = 0;
+function toggleImportChar(idx, charIdx) {
+  const card = previewData.cards[idx];
+  if (!card._charSelected) card._charSelected = {};
+  // 如果是已保存的字，点击取消该字所属的挖空
+  if (card._savedChars && card._savedChars[charIdx]) {
+    card._savedChars[charIdx] = false;
+    const a = (card.answer || '').trim();
+    const q = (card.question || '').trim();
+    const answerStart = q.length + 1;
+    card.blanks = (card.blanks || []).filter(b => {
+      const relStart = b.start - answerStart;
+      const relEnd = b.end - answerStart;
+      return !(charIdx >= relStart && charIdx < relEnd);
+    });
+    // 全部空被移除后清除手动标记
+    if (!card.blanks.length) delete card._manualBlanks;
+    document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
+    document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card);
+    return;
+  }
+  card._charSelected[charIdx] = !card._charSelected[charIdx];
+  // 用 data-ci 查找元素
+  const container = document.getElementById('pv-answer-' + idx);
+  if (container) {
+    const el = container.querySelector('[data-ci="' + charIdx + '"]');
+    if (el) el.classList.toggle('char-sel', card._charSelected[charIdx]);
+  }
+}
+
+function saveCardSelection(idx) {
+  const card = previewData.cards[idx];
+  const sel = card._charSelected || {};
+  const indices = Object.keys(sel).filter(k => sel[k]).map(Number).sort((a,b) => a-b);
+  if (!indices.length) return;
+
+  const q = (card.question || '').trim();
+  const rawA = card.answer || '';
+  const a = rawA.trim();
+
+  // 合并连续选中的字（跳过中间的换行符）
+  const groups = [];
+  let g = [indices[0]];
+  for (let i = 1; i < indices.length; i++) {
+    const prev = g[g.length - 1];
+    // 检查中间是否只有换行符
+    let onlyNL = true;
+    for (let j = prev + 1; j < indices[i]; j++) {
+      if (rawA[j] !== '\n' && !/\s/.test(rawA[j])) { onlyNL = false; break; }
+    }
+    if (indices[i] === prev + 1 || onlyNL) { g.push(indices[i]); }
+    else { groups.push(g); g = [indices[i]]; }
+  }
+  groups.push(g);
+  const answerStart = q.length + 1; // +1 for \n
+
+  if (!card.blanks) card.blanks = [];
+  if (!card._savedChars) card._savedChars = {};
+  for (const g of groups) {
+    const start = g[0], end = g[g.length - 1] + 1;
+    let text = a.substring(start, end).replace(/[\n]/g, '');
+    const bs = answerStart + start, be = answerStart + end;
+    // 保留所有空（含重叠的），做题时随机选
+    card.blanks.push({ start: bs, end: be, text, isAnswer: true });
+    card._manualBlanks = true;
+    // 更新已保存标记
+    for (const ci of g) card._savedChars[ci] = true;
+  }
+  card.blanks.sort((a, b) => a.start - b.start);
+  // 清除临时选中
+  card._charSelected = {};
+
+  // 刷新
+  document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
+  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card);
+}
+
+function clearCardSelection(idx) {
+  const card = previewData.cards[idx];
+  card._charSelected = {};
+  card._savedChars = {};
+  card.blanks = [];
+  delete card._manualBlanks;
+  document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
+  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card);
+}
+
+function renderSavedInfo(card) {
+  const blanks = card.blanks || [];
+  if (!blanks.length) return '<span style="font-size:11px;color:var(--text-tertiary)">暂未保存挖空</span>';
+  return '<span style="font-size:11px;color:var(--text-secondary)">已保存 ' + blanks.length + ' 个空：</span>' + blanks.map(b => `<span class="blank-tag" style="font-size:11px;padding:2px 8px">${escapeHtml(b.text)}</span>`).join(' ');
+}
+
+function renderAutoPreview(card) {
+  const text = card.fullText || card.question + '\n' + card.answer;
+  const blanks = (card._autoBlanks || []).filter(b => !b._removed);
+  if (!blanks.length) return escNl(text);
+  let h = '', le = 0;
+  for (const b of blanks) {
+    h += escNl(text.substring(le, b.start));
+    h += `<span class="blank-highlight">${escNl(b.text)}</span>`;
+    le = b.end;
+  }
+  h += escNl(text.substring(le));
+  return h;
+}
+
+function renderAutoTags(card, idx) {
+  const blanks = card._autoBlanks || [];
+  const active = blanks.filter(b => !b._removed);
+  let h = active.length + ' 个挖空 ';
+  h += blanks.map((b, j) => {
+    const cls = b._removed ? 'blank-tag removed' : 'blank-tag';
+    return `<span class="${cls}" onclick="toggleAutoBlank(${idx}, ${j})">${escapeHtml(b.text)}${b._removed ? ' ↺' : ' ✕'}</span>`;
+  }).join(' ');
+  return h;
+}
+
+function toggleAutoBlank(idx, bidx) {
+  const card = previewData.cards[idx];
+  card._autoBlanks[bidx]._removed = !card._autoBlanks[bidx]._removed;
+  document.getElementById('pv-auto-text-' + idx).innerHTML = renderAutoPreview(card);
+  document.getElementById('pv-auto-tags-' + idx).innerHTML = renderAutoTags(card, idx);
+}
+
+function closePreviewModal() {
+  // 有手动挖空时先确认
+  if (previewData && previewData.cards.some(c => (c.blanks || []).length > 0 || (c._autoBlanks || []).some(b => !b._removed))) {
+    showConfirm('放弃编辑？', '已选的挖空不会保存，确定退出吗？', () => {
+      const m = $('previewModal'); if (m) { previewData = null; m.remove(); }
+    });
+    return;
+  }
+  const m = $('previewModal'); if (m) { previewData = null; m.remove(); }
+}
+
+function confirmImport() {
+  if (!previewData) return;
+  const { name, cards, mode, editBankId } = previewData;
+  const cleaned = cards.map(c => {
+    delete c._charSelected; delete c._savedChars;
+    if (mode === 'auto' && c._autoBlanks) {
+      c.blanks = c._autoBlanks.filter(b => !b._removed);
+      delete c._manualBlanks;
+    }
+    delete c._autoBlanks;
+    return c;
+  });
+
+  if (editBankId) {
+    // 编辑模式：更新已有题库
+    const bank = appData.banks[editBankId];
+    if (bank) {
+      bank.cards = cleaned;
+      bank.updatedAt = Date.now();
+      saveData(appData);
+      previewData = null; const m = $('previewModal'); if (m) m.remove();
+      showToast(`已更新！${cleaned.length} 题`);
+    }
+  } else {
+    // 新建模式
+    const bankId = generateId();
+    appData.banks[bankId] = { id: bankId, name, createdAt: Date.now(), updatedAt: Date.now(), cards: cleaned };
+    saveData(appData);
+    previewData = null; const m = $('previewModal'); if (m) m.remove();
+    showToast(`导入成功！${cleaned.length} 题`);
+  }
+  renderBanks();
+}
+
+// ==================== 做题 - 设置页 ====================
+function renderPracticeSetup() {
+  const c = $('practiceSetup');
+  const banks = Object.values(appData.banks).sort((a, b) => b.createdAt - a.createdAt);
+  const density = appData.settings.density || 'low';
+
+  if (!banks.length) {
+    c.innerHTML = `<div class="empty"><span class="icon">📝</span><h3>还没有题库</h3><p>请先在「题库」页面导入题目</p></div>`;
+    $('practiceActive').style.display = 'none';
+    $('practiceResult').style.display = 'none';
+    return;
+  }
+
+  c.style.display = 'block';
+  $('practiceActive').style.display = 'none';
+  $('practiceResult').style.display = 'none';
+
+  let lastBank = sessionStorage.getItem('lastPracticeBank') || '';
+  if (lastBank && !appData.banks[lastBank]) lastBank = '';
+
+  const opts = banks.map(b => `<option value="${b.id}"${b.id === lastBank ? ' selected' : ''}>${escapeHtml(b.name)}（${b.cards.length} 题）</option>`).join('');
+
+  // 顺序进度
+  let seqHtml = '';
+  if (drawMode === 'sequential' && lastBank && appData.banks[lastBank]) {
+    const pos = getSeqProgress(lastBank);
+    const bank = appData.banks[lastBank];
+    seqHtml = `<div class="seq-info" id="seqInfo" style="display:${drawMode === 'sequential' ? '' : 'none'}">
+      <span>📖 当前进度：第 <b>${Math.min(pos + 1, bank.cards.length)}</b> / ${bank.cards.length} 题</span>
+      <button class="btn btn-sm" style="padding:4px 12px;font-size:12px;background:var(--danger);color:#fff;border:none;border-radius:6px;font-weight:600" onclick="event.stopPropagation();resetSeqProgress()">重置</button>
+    </div>`;
+  }
+
+  c.innerHTML = `<div style="text-align:center;padding:8px 0 4px"><h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em">开始刷题</h1></div>
+    <div class="card" style="padding:20px">
+      <div class="form-group">
+        <label class="form-label">📚 选择题库</label>
+        <select id="bankSelect" onchange="onBankChange()" style="padding:12px 14px">${opts}</select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🔢 每轮题数</label>
+        <div class="flex items-center gap-8" id="countChips">
+          <span class="chip${batchSize === 10 ? ' active' : ''}" data-n="10" onclick="selectCount(10, this)" style="margin-right:12px">10 题</span>
+          <span style="font-size:13px;color:var(--text-secondary)">或自定义：</span>
+          <input type="number" id="customCount" placeholder="数量" min="1" onchange="selectCustom()" style="width:70px;text-align:center;padding:9px">
+          <span style="font-size:13px;color:var(--text-secondary)">题</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🎯 出题方式</label>
+        <div class="chip-group" id="drawModeChips">
+          <span class="chip${drawMode === 'random-repeat' ? ' active' : ''}" data-draw="random-repeat" onclick="selectDrawMode('random-repeat', this)">🎲 随机重复</span>
+          <span class="chip${drawMode === 'random-norepeat' ? ' active' : ''}" data-draw="random-norepeat" onclick="selectDrawMode('random-norepeat', this)">🎯 随机不重复</span>
+          <span class="chip${drawMode === 'sequential' ? ' active' : ''}" data-draw="sequential" onclick="selectDrawMode('sequential', this)">📖 顺序出题</span>
+        </div>
+        <p class="form-hint" id="drawModeDesc">按题库顺序依次出题，做完记住进度下次接着做</p>
+        ${seqHtml}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">⛏️ 挖空密度</label>
+        <div class="segmented" id="setupDensity">
+          <button class="seg${density === 'low' ? ' active' : ''}" data-v="low" onclick="changeSetupDensity('low', this)">低</button>
+          <button class="seg${density === 'high' ? ' active' : ''}" data-v="high" onclick="changeSetupDensity('high', this)">高</button>
+        </div>
+        <p class="form-hint">低=每点1空，高=多挖空。做题时随时可调</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🙈 题目显示</label>
+        <div class="chip-group" id="hideQChips">
+          <span class="chip active" data-hide="0" onclick="selectHideQ(0, this)">📖 显示题目</span>
+          <span class="chip" data-hide="1" onclick="selectHideQ(1, this)">🙈 隐藏题目</span>
+        </div>
+        <p class="form-hint">隐藏题目时只显示填空区，点击按钮可随时显示</p>
+      </div>
+
+      <button class="btn btn-primary btn-block btn-lg" onclick="startPractice()">👊 开始刷题</button>
+    </div>`;
+}
+
+function selectCount(n, el) {
+  batchSize = n;
+  document.querySelectorAll('#countChips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('customCount').value = '';
+}
+
+function selectCustom() {
+  batchSize = parseInt(document.getElementById('customCount').value) || 0;
+  document.querySelectorAll('#countChips .chip').forEach(c => c.classList.remove('active'));
+}
+
+function selectHideQ(val, el) {
+  hideQuestionStart = val === 1;
+  document.querySelectorAll('#hideQChips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function selectDrawMode(mode, el) {
+  drawMode = mode;
+  document.querySelectorAll('#drawModeChips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('drawModeDesc').textContent = {
+    'random-repeat': '每轮随机抽题，题目可能重复出现',
+    'random-norepeat': '随机抽题但不重复，全部做完才重置',
+    'sequential': '按题库顺序依次出题，做完记住进度下次接着做'
+  }[mode] || '';
+  const seqDiv = document.getElementById('seqInfo');
+  if (seqDiv) seqDiv.style.display = mode === 'sequential' ? '' : 'none';
+  else if (mode === 'sequential') onBankChange();
+}
+
+function changeSetupDensity(val, el) {
+  saveSetting('density', val);
+  document.querySelectorAll('#setupDensity .seg').forEach(s => s.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function onBankChange() {
+  const bankId = document.getElementById('bankSelect').value;
+  if (!bankId) return;
+  sessionStorage.setItem('lastPracticeBank', bankId);
+
+  let seqDiv = document.getElementById('seqInfo');
+  if (drawMode === 'sequential') {
+    const pos = getSeqProgress(bankId);
+    const bank = appData.banks[bankId];
+    if (!bank) return;
+    const html = `<div class="seq-info" id="seqInfo">
+      <span>📖 当前进度：第 <b>${Math.min(pos + 1, bank.cards.length)}</b> / ${bank.cards.length} 题</span>
+      <button class="btn btn-sm" style="padding:4px 12px;font-size:12px;background:var(--danger);color:#fff;border:none;border-radius:6px;font-weight:600" onclick="event.stopPropagation();resetSeqProgress()">重置</button>
+    </div>`;
+    if (seqDiv) seqDiv.outerHTML = html;
+    else document.getElementById('drawModeChips').parentElement.insertAdjacentHTML('afterend', html);
+  } else if (seqDiv) {
+    seqDiv.style.display = 'none';
+  }
+}
+
+function resetSeqProgress() {
+  const bankId = document.getElementById('bankSelect').value;
+  if (!bankId) return;
+  appData.seqProgress[bankId] = 0;
+  saveData(appData);
+  onBankChange();
+  showToast('进度已重置');
+}
+
+function getSeqProgress(bankId) { return appData.seqProgress[bankId] || 0; }
+
+function startPracticeSetup(bankId) {
+  const bank = appData.banks[bankId];
+  if (!bank) return;
+  sessionStorage.setItem('lastPracticeBank', bankId);
+  switchTab('practice');
+}
+
+// ==================== 做题 - 开始 ====================
+function startPractice() {
+  const bankId = document.getElementById('bankSelect').value;
+  if (!bankId) { showToast('请先选择题库'); return; }
+  const bank = appData.banks[bankId];
+  if (!bank || !bank.cards.length) { showToast('题库为空'); return; }
+
+  const count = batchSize === 0 ? bank.cards.length : Math.min(batchSize, bank.cards.length);
+  let selected;
+
+  if (drawMode === 'sequential') {
+    const pos = getSeqProgress(bankId);
+    if (pos >= bank.cards.length) {
+      if (!confirm('题库已全部做完一轮，是否重置进度从头开始？')) return;
+      appData.seqProgress[bankId] = 0;
+      saveData(appData);
+      selected = [...bank.cards.slice(0, count)];
+    } else {
+      selected = [...bank.cards.slice(pos, Math.min(pos + count, bank.cards.length))];
+    }
+  } else if (drawMode === 'random-norepeat') {
+    if (!appData.doneSets) appData.doneSets = {};
+    if (!appData.doneSets[bankId]) appData.doneSets[bankId] = [];
+    const doneSet = appData.doneSets[bankId];
+    const available = bank.cards.filter(c => !doneSet.includes(c.id));
+    if (available.length === 0) {
+      if (!confirm('所有题目都已做过一轮，是否重置重新开始？')) return;
+      appData.doneSets[bankId] = [];
+      saveData(appData);
+      selected = shuffle([...bank.cards]).slice(0, count);
+    } else {
+      selected = shuffle(available).slice(0, Math.min(count, available.length));
+    }
+  } else {
+    // random-repeat
+    selected = shuffle([...bank.cards]).slice(0, count);
+  }
+
+  const qh = new Set();
+  if (hideQuestionStart) { for (const c of selected) qh.add(c.id); }
+  practiceState = {
+    bankId, bankName: bank.name,
+    cards: selected, index: 0,
+    mode: drawMode,
+    answers: {}, revealed: new Set(),
+    questionHidden: qh, koujueExpanded: {},
+    total: selected.length
+  };
+
+  $('practiceSetup').style.display = 'none';
+  $('practiceResult').style.display = 'none';
+  $('practiceActive').style.display = 'block';
+  renderPracticeCard();
+}
+
+// ==================== 做题 - 卡片渲染 ====================
+function renderPracticeCard() {
+  const st = practiceState;
+  const c = $('practiceActive');
+
+  if (st.index >= st.total) { showPracticeResult(); return; }
+
+  const card = st.cards[st.index];
+  const cur = st.index + 1, total = st.total;
+  const revealed = st.revealed.has(card.id);
+  const qHidden = st.questionHidden.has(card.id);
+  const density = appData.settings.density || 'low';
+  const textHtml = renderCardWithBlanks(card, revealed, qHidden);
+  const starIcon = card.starred ? '⭐' : '☆';
+  const hasKj = !!card.koujue;
+  const kjState = st.koujueExpanded[card.id] || 0;
+  const hasVoice = appData.settings.voiceEnabled;
+  c.innerHTML = `<div>
+    <!-- 顶部导航 -->
+    <div class="flex justify-between items-center mb-8">
+      <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()" style="padding:4px 8px;font-size:18px" title="返回">🏠</button>
+      <span style="font-size:14px;font-weight:700;color:var(--text)">${cur} / ${total}</span>
+      <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleStarCurrent()">${starIcon}</button>
+    </div>
+
+    <!-- 密度 + 工具 同行 -->
+    <div class="flex items-center gap-8 mb-8">
+      <div class="segmented" id="densityCtrl" style="flex:0">
+        <button class="seg${density === 'low' ? ' active' : ''}" data-v="low" onclick="changeDensity('low', this)" style="padding:5px 10px;min-height:32px;font-size:13px">低</button>
+        <button class="seg${density === 'high' ? ' active' : ''}" data-v="high" onclick="changeDensity('high', this)" style="padding:5px 10px;min-height:32px;font-size:13px">高</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="regenerateCurrentBlanks()" style="padding:6px 8px;font-size:var(--font-size)" title="换一批空">🔄</button>
+      <div class="flex gap-4" style="margin-left:auto">
+        <button class="btn btn-ghost btn-sm" onclick="toggleRevealCurrent()" style="padding:6px 8px;font-size:var(--font-size)" title="显示原文">💡</button>
+        ${hasKj ? `<button class="btn btn-ghost btn-sm" onclick="toggleKoujuePanel()" style="padding:6px 8px;font-size:var(--font-size);color:var(--primary)" title="口诀">🧠</button>` : ''}
+        ${hasVoice ? `<button class="btn btn-ghost btn-sm" onclick="speakCard()" style="padding:6px 8px;font-size:var(--font-size)" title="朗读">🔊</button>` : ''}
+      </div>
+    </div>
+
+    <!-- 题目卡片 -->
+    <div class="practice-card"><div class="card-text" id="cardText">${textHtml}</div></div>
+
+    <!-- 口诀面板 -->
+    ${hasKj ? `<div class="kj-panel${kjState > 0 ? ' show' : ''}" id="kjPanel" style="padding:10px 14px;margin-bottom:10px">
+      <div class="kj-keywords" onclick="expandKoujue()" style="cursor:pointer">${renderKjKeywords(card.koujue)}</div>
+      <div class="kj-full${kjState > 1 ? ' show' : ''}" onclick="collapseKoujue()" style="cursor:pointer">${renderKjFull(card.koujue)}</div>
+      <div class="kj-tap-hint">${kjState === 0 ? '' : kjState === 1 ? '👆 点关键字查看完整含义' : ''}</div>
+    </div>` : ''}
+
+    <!-- 底部导航 -->
+    <div class="flex gap-8" style="margin-top:20px">
+      <button class="btn flex-1" onclick="prevCard()"${st.index === 0 ? ' disabled style="opacity:.3"' : ''} style="background:color-mix(in srgb, var(--primary-soft) 50%, transparent);color:var(--primary);border:none;font-weight:600">← 上一题</button>
+      <button class="btn flex-1" id="btnNextPractice" onclick="nextCard()" style="background:color-mix(in srgb, var(--primary-soft) 50%, transparent);color:var(--primary);border:none;font-weight:600">${cur === total ? '✓ 完成' : '下一题 →'}</button>
+    </div>
+  </div>`;
+
+  // 点击答题卡左右区域切换题目
+  const pc = c.querySelector('.practice-card');
+  if (pc) {
+    pc.addEventListener('click', e => {
+      const rect = pc.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const w = rect.width;
+      // 点左1/6区域 → 上一题
+      if (x < w / 6 && st.index > 0) {
+        saveCurrentAnswers();
+        st.index--;
+        renderPracticeCard();
+      }
+      // 点右1/6区域 → 下一题
+      else if (x > w * 5 / 6 && st.index < st.total - 1) {
+        saveCurrentAnswers();
+        st.index++;
+        renderPracticeCard();
+      }
+    });
+  }
+
+  setTimeout(() => {
+    const fi = document.querySelector('#cardText .blank-input');
+    if (fi && !revealed) fi.focus();
+  }, 200);
+
+  // 长按3秒显示答案，再次点击隐藏
+  const cardText = c.querySelector('#cardText');
+  if (cardText && !revealed) {
+    cardText.querySelectorAll('.blank-input').forEach(inp => {
+      let timer = null;
+      inp.addEventListener('touchstart', e => {
+        if (inp.classList.contains('peeked')) return;
+        timer = setTimeout(() => {
+          inp.value = inp.dataset.ans || '';
+          inp.classList.add('peeked');
+          timer = null;
+        }, 3000);
+      }, { passive: true });
+      inp.addEventListener('touchend', () => { if (timer) { clearTimeout(timer); timer = null; } });
+      inp.addEventListener('touchmove', () => { if (timer) { clearTimeout(timer); timer = null; } });
+      inp.addEventListener('mousedown', e => {
+        if (inp.classList.contains('peeked')) return;
+        timer = setTimeout(() => {
+          inp.value = inp.dataset.ans || '';
+          inp.classList.add('peeked');
+          timer = null;
+        }, 3000);
+      });
+      inp.addEventListener('mouseup', () => { if (timer) { clearTimeout(timer); timer = null; } });
+      inp.addEventListener('mouseleave', () => { if (timer) { clearTimeout(timer); timer = null; } });
+      inp.addEventListener('focus', e => {
+        if (inp.classList.contains('peeked')) {
+          inp.value = '';
+          inp.classList.remove('peeked');
+          e.preventDefault();
+        }
+      });
+    });
+  }
+}
+
+function renderCardWithBlanks(card, revealed, hideQ) {
+  const q = card.question.trim();
+  const a = card.answer.trim();
+  const text = card.fullText || q + '\n' + a;
+  const answerStart = q.length + 1; // +1 for \n
+
+  // 题目：点击可隐藏/显示
+  let h = '';
+  if (hideQ) {
+    h += `<div style="margin-bottom:10px;padding:8px;background:var(--bg-input);border-radius:6px;text-align:center;font-size:12px;color:var(--text-tertiary);cursor:pointer" onclick="toggleQuestion()">题目已隐藏，点击显示</div>`;
+  } else {
+    h += `<div style="margin-bottom:10px;line-height:1.6;cursor:pointer" onclick="toggleQuestion()" title="点击隐藏题目">${escNl(q)}</div>`;
+  }
+
+  // 分隔 + 答案区
+  if (!a) return h;
+  h += `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-weight:600;letter-spacing:.5px">── 填空区 ──</div>`;
+
+  // 解决重叠空：分组后每组选一个
+  const blanks = resolveBlanks(card);
+  if (!blanks.length) {
+    h += `<div style="line-height:1.9">${escNl(a)}</div>`;
+    return h;
+  }
+
+  // 渲染答案，带挖空
+  let ah = '', le = answerStart;
+  for (let i = 0; i < blanks.length; i++) {
+    const b = blanks[i];
+    const saved = (practiceState.answers[card.id] || {})[i] || '';
+    ah += escNl(text.substring(le, b.start));
+    if (revealed) {
+      ah += `<span class="revealed-text">${escNl(b.text)}</span>`;
+    } else {
+      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text)}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onblur="autoCheckIfDone()">`;
+    }
+    le = b.end;
+  }
+  ah += escNl(text.substring(le));
+  h += `<div style="line-height:1.9">${ah}</div>`;
+  return h;
+}
+
+// 解决重叠空：分组后每组选一个（_blankRound 控制轮换）
+function resolveBlanks(card) {
+  const all = card.blanks || [];
+  if (!all.length) return [];
+  const sorted = [...all].sort((a, b) => a.start - b.start);
+  const groups = [];
+  for (const b of sorted) {
+    let added = false;
+    for (const g of groups) {
+      if (g.some(gb => gb.start < b.end && b.start < gb.end)) {
+        g.push(b); added = true; break;
+      }
+    }
+    if (!added) groups.push([b]);
+  }
+  const round = card._blankRound || 0;
+  let resolved = groups.map(g => g[round % g.length]);
+  return resolved;
+}
+
+function saveCurrentAnswers() {
+  const inputs = document.querySelectorAll('#cardText .blank-input');
+  const ans = {};
+  inputs.forEach(inp => {
+    const cid = inp.dataset.cid, bidx = parseInt(inp.dataset.bidx);
+    if (!ans[cid]) ans[cid] = {};
+    ans[cid][bidx] = inp.value.trim();
+  });
+  for (const [cid, blanks] of Object.entries(ans)) {
+    if (!practiceState.answers[cid]) practiceState.answers[cid] = {};
+    Object.assign(practiceState.answers[cid], blanks);
+  }
+}
+
+function nextCard() { saveCurrentAnswers(); practiceState.index++; renderPracticeCard(); }
+function prevCard() { saveCurrentAnswers(); practiceState.index--; renderPracticeCard(); }
+
+function checkMyAnswers() {
+  saveCurrentAnswers();
+  const card = practiceState.cards[practiceState.index];
+  if (!card || practiceState.revealed.has(card.id)) return;
+  // 检查当前显示的所有输入框是否都已填写
+  const inputs = document.querySelectorAll('#cardText .blank-input');
+  for (const inp of inputs) {
+    if (!inp.value.trim()) return;
+  }
+  if (!inputs.length) return;
+  applyCheckToInputs(card);
+}
+
+function autoCheckIfDone() {
+  saveCurrentAnswers();
+  const card = practiceState.cards[practiceState.index];
+  if (!card || practiceState.revealed.has(card.id)) return;
+  const inputs = document.querySelectorAll('#cardText .blank-input');
+  for (const inp of inputs) {
+    if (!inp.value.trim()) return;
+  }
+  if (inputs.length) applyCheckToInputs(card);
+}
+
+function applyCheckToInputs(card) {
+  const inputs = document.querySelectorAll('#cardText .blank-input');
+  let hasWrong = false;
+  inputs.forEach(inp => {
+    const userAns = inp.value.trim();
+    const correctAns = (inp.dataset.ans || '').trim();
+    inp.classList.remove('correct', 'wrong');
+    if (fuzzyMatch(userAns, correctAns)) {
+      inp.classList.add('correct');
+    } else {
+      inp.classList.add('wrong');
+      hasWrong = true;
+    }
+  });
+  // 有错则收集整题到错题本（不去重，用户手动管理）
+  if (hasWrong) {
+    if (!appData.wrongBooks) appData.wrongBooks = {};
+    if (!appData.wrongBooks[practiceState.bankId]) appData.wrongBooks[practiceState.bankId] = [];
+    if (!appData.wrongBooks[practiceState.bankId].includes(card.id)) {
+      appData.wrongBooks[practiceState.bankId].push(card.id);
+    }
+    saveData(appData);
+  }
+}
+
+function toggleRevealCurrent() {
+  saveCurrentAnswers();
+  const card = practiceState.cards[practiceState.index];
+  practiceState.revealed.has(card.id) ? practiceState.revealed.delete(card.id) : practiceState.revealed.add(card.id);
+  renderPracticeCard();
+}
+
+function toggleStarCurrent() {
+  const card = practiceState.cards[practiceState.index];
+  card.starred = !card.starred;
+  const bank = appData.banks[practiceState.bankId];
+  if (bank) { const c = bank.cards.find(x => x.id === card.id); if (c) c.starred = card.starred; }
+  saveData(appData);
+  renderPracticeCard();
+}
+
+function toggleQuestion() {
+  const card = practiceState.cards[practiceState.index];
+  if (practiceState.questionHidden.has(card.id)) practiceState.questionHidden.delete(card.id);
+  else practiceState.questionHidden.add(card.id);
+  renderPracticeCard();
+}
+
+function toggleKoujuePanel() {
+  const card = practiceState.cards[practiceState.index];
+  const cur = practiceState.koujueExpanded[card.id] || 0;
+  practiceState.koujueExpanded[card.id] = cur >= 2 ? 0 : cur + 1;
+  renderPracticeCard();
+}
+
+function expandKoujue() {
+  const card = practiceState.cards[practiceState.index];
+  practiceState.koujueExpanded[card.id] = 2;
+  renderPracticeCard();
+}
+
+function collapseKoujue() {
+  const card = practiceState.cards[practiceState.index];
+  practiceState.koujueExpanded[card.id] = 1;
+  renderPracticeCard();
+}
+
+function renderKjKeywords(kj) {
+  const parsed = parseKoujue(kj);
+  if (!parsed.length) return escapeHtml(kj);
+  return parsed.map(p => `<span>${escapeHtml(p.char)}</span>`).join(' ');
+}
+
+function renderKjFull(kj) {
+  const parsed = parseKoujue(kj);
+  if (!parsed.length) return escapeHtml(kj);
+  return parsed.map(p => `<span class="kj-char">${escapeHtml(p.char)}</span><span class="kj-desc">（${escapeHtml(p.desc)}）</span>`).join(' ');
+}
+
+function regenerateCurrentBlanks() {
+  saveCurrentAnswers();
+  const card = practiceState.cards[practiceState.index];
+  // 有重叠空 → 切换替代空；否则 → 按当前密度重新生成
+  if (hasOverlappingBlanks(card)) {
+    card._blankRound = (card._blankRound || 0) + 1;
+  } else {
+    Object.assign(card, regenerateBlanks(card, appData.settings.density || 'low'));
+    delete card._manualBlanks;
+  }
+  delete practiceState.answers[card.id];
+  practiceState.revealed.delete(card.id);
+  const bank = appData.banks[practiceState.bankId];
+  if (bank) { const c = bank.cards.find(x => x.id === card.id); if (c) { c.blanks = card.blanks; c.fullText = card.fullText; delete c._manualBlanks; } }
+  saveData(appData);
+  renderPracticeCard();
+  showToast('已重新挖空');
+}
+
+function hasOverlappingBlanks(card) {
+  const all = card.blanks || [];
+  for (let i = 0; i < all.length; i++) {
+    for (let j = i + 1; j < all.length; j++) {
+      if (all[i].start < all[j].end && all[j].start < all[i].end) return true;
+    }
+  }
+  return false;
+}
+
+function changeDensity(density, el) {
+  saveSetting('density', density);
+  document.querySelectorAll('#densityCtrl .seg').forEach(s => s.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (!practiceState || !practiceState.cards) return;
+  saveCurrentAnswers();
+  let count = 0;
+  for (const card of practiceState.cards) {
+    Object.assign(card, regenerateBlanks(card, density));
+    delete card._manualBlanks;
+    delete practiceState.answers[card.id];
+    practiceState.revealed.delete(card.id);
+    count++;
+  }
+  // 同步到题库
+  const bank = appData.banks[practiceState.bankId];
+  if (bank) {
+    for (const card of practiceState.cards) {
+      const c = bank.cards.find(x => x.id === card.id);
+      if (c) { c.blanks = card.blanks; c.fullText = card.fullText; delete c._manualBlanks; }
+    }
+    saveData(appData);
+  }
+  renderPracticeCard();
+}
+
+function speakCard() {
+  const ss = window.speechSynthesis;
+  if (!ss) { showToast('浏览器不支持语音朗读'); return; }
+  // 暂停 → 继续
+  if (ss.speaking && ss.paused) { ss.resume(); return; }
+  // 朗读中 → 暂停
+  if (ss.speaking) { ss.pause(); return; }
+  // 开始朗读
+  doSpeakCard();
+}
+
+function doSpeakCard() {
+  const card = practiceState.cards[practiceState.index];
+  if (!card) return;
+  const ss = window.speechSynthesis;
+  ss.cancel();
+  const u = new SpeechSynthesisUtterance(card.fullText || card.question + card.answer);
+  u.lang = 'zh-CN'; u.rate = appData.settings.voiceRate || 0.9;
+  const voiceName = appData.settings.voiceName;
+  if (voiceName) {
+    const voices = ss.getVoices();
+    const picked = voices.find(v => v.name === voiceName);
+    if (picked) u.voice = picked;
+  }
+  if (!u.voice) {
+    const zh = ss.getVoices().find(v => v.lang.startsWith('zh'));
+    if (zh) u.voice = zh;
+  }
+  // 朗读结束后的行为
+  const readMode = appData.settings.readMode || 'once';
+  u.onend = () => {
+    if (readMode === 'loop') {
+      // 循环读同一题
+      setTimeout(() => doSpeakCard(), 500);
+    } else if (readMode === 'three-times') {
+      practiceState._readCount = (practiceState._readCount || 0) + 1;
+      if (practiceState._readCount < 3) {
+        setTimeout(() => doSpeakCard(), 500);
+      } else {
+        practiceState._readCount = 0;
+        // 3遍读完，自动下一题
+        if (practiceState.index < practiceState.total - 1) {
+          setTimeout(() => { nextCard(); setTimeout(() => doSpeakCard(), 300); }, 500);
+        }
+      }
+    } else if (readMode === 'auto-next') {
+      // 自动下一题
+      if (practiceState.index < practiceState.total - 1) {
+        setTimeout(() => { nextCard(); setTimeout(() => doSpeakCard(), 300); }, 500);
+      }
+    }
+    // 'once' mode: do nothing
+  };
+  practiceState._readCount = 0;
+  ss.speak(u);
+}
+
+// ==================== 做题结果 ====================
+function showPracticeResult() {
+  const st = practiceState;
+  const total = st.total;
+  const bank = appData.banks[st.bankId];
+
+  // 更新顺序进度
+  if (st.mode === 'sequential') {
+    const pos = getSeqProgress(st.bankId);
+    appData.seqProgress[st.bankId] = Math.min(pos + total, bank?.cards.length || 0);
+  }
+  // 更新随机不重复的已完成集
+  if (st.mode === 'random-norepeat') {
+    if (!appData.doneSets) appData.doneSets = {};
+    if (!appData.doneSets[st.bankId]) appData.doneSets[st.bankId] = [];
+    for (const card of st.cards) {
+      if (!appData.doneSets[st.bankId].includes(card.id)) appData.doneSets[st.bankId].push(card.id);
+    }
+  }
+
+  // 更新卡片统计
+  if (bank) {
+    for (const card of st.cards) {
+      const orig = bank.cards.find(x => x.id === card.id);
+      if (orig) {
+        orig.lastPracticed = Date.now(); orig.starred = card.starred;
+        orig.blanks = card.blanks; orig.fullText = card.fullText;
+      }
+    }
+  }
+  saveData(appData);
+
+  // 练习轮次计数
+  appData.roundCount = (appData.roundCount || 0) + 1;
+  saveData(appData);
+
+  const rc = $('practiceResult');
+  rc.style.display = 'block';
+  rc.innerHTML = `<div class="card" style="text-align:center;padding:24px 20px">
+    <div style="font-size:48px;margin-bottom:8px">✅</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:4px">本轮完成</div>
+    <div class="text-sm text-secondary">共 ${total} 题 · ${escapeHtml(st.bankName)}</div>
+    <div class="flex gap-8 flex-wrap justify-center mt-16">
+      <button class="btn btn-primary btn-sm" onclick="retrySameSettings()">▶ 再来一轮</button>
+      <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()">🔄 重新设置</button>
+    </div>
+    <div class="text-center mt-12">
+      <span style="font-size:12px;color:var(--text-tertiary);cursor:pointer;text-decoration:underline" onclick="copyBackup()">💾 复制备份码保存</span>
+    </div>
+  </div>`;
+
+  // 每5轮提醒
+  if (appData.roundCount % 5 === 0) {
+    setTimeout(() => showToast('📋 已练习 ' + appData.roundCount + ' 轮，记得备份数据哦'), 1500);
+  }
+}
+
+function retrySameSettings() {
+  const bankId = practiceState.bankId;
+  const bank = appData.banks[bankId];
+  if (!bank) return;
+  const count = practiceState.total;
+  let selected;
+  if (practiceState.mode === 'sequential') {
+    const pos = getSeqProgress(bankId);
+    if (pos >= bank.cards.length) {
+      appData.seqProgress[bankId] = 0;
+      saveData(appData);
+      selected = [...bank.cards.slice(0, count)];
+    } else {
+      selected = [...bank.cards.slice(pos, Math.min(pos + count, bank.cards.length))];
+    }
+  } else {
+    selected = shuffle(bank.cards).slice(0, count);
+  }
+  const qh = new Set();
+  if (hideQuestionStart) { for (const c of selected) qh.add(c.id); }
+  practiceState = { ...practiceState, cards: selected, index: 0, answers: {}, revealed: new Set(), questionHidden: qh, koujueExpanded: {}, total: selected.length };
+  $('practiceResult').style.display = 'none';
+  $('practiceActive').style.display = 'block';
+  renderPracticeCard();
+}
+
+function backToPracticeSetup() {
+  practiceState = null;
+  $('practiceResult').style.display = 'none';
+  $('practiceActive').style.display = 'none';
+  renderPracticeSetup();
+}
+
+// ==================== 浏览模式（目录 + 详情） ====================
+let browseState = null; // { bankId, bankName, cards, index, view: 'list'|'detail' }
+
+function renderBrowseStart() {
+  const c = $('browseContainer');
+  const banks = Object.values(appData.banks).sort((a, b) => b.createdAt - a.createdAt);
+
+  if (!banks.length) {
+    c.innerHTML = `<div class="empty"><span class="icon">📖</span><h3>还没有题库</h3><p>请先在「题库」页面导入题目</p></div>`;
+    return;
+  }
+
+  let bankId = sessionStorage.getItem('lastPracticeBank');
+  if (!bankId || !appData.banks[bankId]) bankId = banks[0].id;
+  const bank = appData.banks[bankId];
+  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', _filteredCards: bank.cards };
+
+  const wrongCount = (appData.wrongBooks && appData.wrongBooks[bankId]) ? appData.wrongBooks[bankId].length : 0;
+  const favCount = bank.cards.filter(c => c.starred).length;
+
+  c.innerHTML = `<div class="flex justify-between items-center mb-10">
+    <h1 style="font-size:20px;font-weight:800">📖 目录</h1>
+    <select id="browseBankSelect" style="width:auto;min-width:130px;padding:8px 10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px" onchange="changeBrowseBank()">
+      ${banks.map(b => `<option value="${b.id}"${b.id === bankId ? ' selected' : ''}>${escapeHtml(b.name)}</option>`).join('')}
+    </select>
+  </div>
+  <div class="chip-group mb-12" id="browseFilterChips">
+    <span class="chip active" data-filter="all" onclick="setBrowseFilter('all', this)">全部</span>
+    <span class="chip" data-filter="star" onclick="setBrowseFilter('star', this)">⭐ 收藏${favCount ? ' · '+favCount : ''}</span>
+    <span class="chip" data-filter="wrong" onclick="setBrowseFilter('wrong', this)">❌ 错题${wrongCount ? ' · '+wrongCount : ''}</span>
+  </div>
+  <div id="browseActive"></div>`;
+  renderBrowseList();
+}
+
+function setBrowseFilter(filter, el) {
+  browseState.filter = filter;
+  document.querySelectorAll('#browseFilterChips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderBrowseList();
+}
+
+function changeBrowseBank() {
+  const bankId = document.getElementById('browseBankSelect').value;
+  const bank = appData.banks[bankId];
+  if (!bank) return;
+  const wrongCount = (appData.wrongBooks && appData.wrongBooks[bankId]) ? appData.wrongBooks[bankId].length : 0;
+  const favCount = bank.cards.filter(c => c.starred).length;
+  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', _filteredCards: bank.cards };
+  // 更新 chip 数量
+  const chips = document.querySelectorAll('#browseFilterChips .chip');
+  if (chips[1]) chips[1].textContent = '⭐ 收藏' + (favCount ? ' · ' + favCount : '');
+  if (chips[2]) chips[2].textContent = '❌ 错题' + (wrongCount ? ' · ' + wrongCount : '');
+  renderBrowseList();
+}
+
+function renderBrowseList() {
+  const c = $('browseActive');
+  const st = browseState;
+  if (!st || !st.cards.length) { c.innerHTML = `<div class="empty"><p>题库为空</p></div>`; return; }
+
+  // 筛选
+  let cards = st.cards;
+  const wrongIds = (appData.wrongBooks && appData.wrongBooks[st.bankId]) ? appData.wrongBooks[st.bankId] : [];
+  if (st.filter === 'star') cards = cards.filter(c => c.starred);
+  if (st.filter === 'wrong') cards = cards.filter(c => wrongIds.includes(c.id));
+  if (!cards.length) {
+    c.innerHTML = `<div class="empty"><p>${st.filter === 'wrong' ? '暂无错题，做题时诊断后自动收集' : st.filter === 'star' ? '暂无收藏' : '题库为空'}</p></div>`;
+    return;
+  }
+
+  // 按章节分组
+  const groups = {};
+  cards.forEach((card, i) => {
+    const ch = card.chapter || '';
+    if (!groups[ch]) groups[ch] = [];
+    groups[ch].push({ ...card, _idx: st.cards.indexOf(card) });
+  });
+  // 保存筛选后的卡片列表，供详情导航使用
+  st._filteredCards = cards.map(c => ({ ...c, _idx: st.cards.indexOf(c) }));
+
+  let html = '';
+  for (const [chapter, list] of Object.entries(groups)) {
+    if (chapter) html += `<div class="section-title" style="margin-top:12px">${escapeHtml(chapter)} · ${list.length} 题</div>`;
+    for (const card of list) {
+      const qText = card.question.replace(/^[\d\.\、\s]+/, '').substring(0, 35);
+      html += `<div class="browse-dir-item" onclick="openBrowseDetail(${card._idx})">
+        <span style="font-size:11px;color:var(--text-tertiary);min-width:28px">${card._idx + 1}</span>
+        <span style="flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(qText)}</span>
+        <span style="font-size:20px;flex-shrink:0;cursor:pointer;padding:6px 10px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center" onclick="event.stopPropagation();toggleBrowseStarFromList(${card._idx})">${card.starred ? '⭐' : '☆'}</span>
+      </div>`;
+    }
+  }
+
+  c.innerHTML = html;
+}
+
+function openBrowseDetail(idx) {
+  browseState._scrollY = document.getElementById('browseActive').scrollTop || window.scrollY;
+  // idx 是全题库索引，映射到筛选后列表的位置
+  const filtered = browseState._filteredCards || browseState.cards;
+  const fi = filtered.findIndex(c => c._idx === idx);
+  browseState.index = fi >= 0 ? fi : 0;
+  browseState.view = 'detail';
+  renderBrowseDetail();
+}
+
+function renderBrowseDetail() {
+  const c = $('browseActive');
+  const st = browseState;
+  const filtered = st._filteredCards || st.cards;
+  const card = filtered[st.index];
+  if (!card) { backToBrowseList(); return; }
+  const cur = st.index + 1, total = filtered.length;
+  const wrongIds = (appData.wrongBooks && appData.wrongBooks[st.bankId]) ? appData.wrongBooks[st.bankId] : [];
+  const isWrong = wrongIds.includes(card.id);
+
+  c.innerHTML = `<div>
+    <div class="flex justify-between items-center mb-10">
+      <button class="btn btn-ghost btn-sm" onclick="backToBrowseList()">← 目录</button>
+      <span class="text-sm text-secondary">${cur} / ${total}</span>
+      <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleBrowseStar()">${card.starred ? '⭐' : '☆'}</button>
+    </div>
+    <div style="line-height:2;font-size:var(--font-size-lg)">
+      <div style="margin-bottom:12px;font-weight:500">${escNl(card.question)}</div>
+      ${card.answer ? `<div style="color:var(--text-secondary)">${escNl(card.answer)}</div>` : ''}
+    </div>
+    ${isWrong ? `<div class="text-center mt-10"><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeFromWrongBook('${card.id}')">🗑 移出错题本</button></div>` : ''}
+    <div class="flex gap-8 mt-16">
+      <button class="btn btn-ghost flex-1" onclick="browsePrev()"${st.index === 0 ? ' disabled style="opacity:.4"' : ''}>← 上一题</button>
+      <button class="btn btn-ghost flex-1" onclick="browseNext()"${st.index >= total - 1 ? ' disabled style="opacity:.4"' : ''}>下一题 →</button>
+    </div>
+  </div>`;
+}
+
+function backToBrowseList() {
+  browseState.view = 'list';
+  renderBrowseList();
+  setTimeout(() => {
+    if (browseState._scrollY) {
+      document.getElementById('browseActive').scrollTop = browseState._scrollY;
+      window.scrollTo(0, browseState._scrollY);
+    }
+  }, 50);
+}
+
+function browsePrev() { const filtered = browseState._filteredCards || browseState.cards; if (browseState.index > 0) { browseState.index--; renderBrowseDetail(); } }
+function browseNext() { const filtered = browseState._filteredCards || browseState.cards; if (browseState.index < filtered.length - 1) { browseState.index++; renderBrowseDetail(); } }
+
+function removeFromWrongBook(cardId) {
+  if (!browseState) return;
+  const bankId = browseState.bankId;
+  if (appData.wrongBooks && appData.wrongBooks[bankId]) {
+    appData.wrongBooks[bankId] = appData.wrongBooks[bankId].filter(id => id !== cardId);
+  }
+  saveData(appData);
+  showToast('已移出错题本');
+  renderBrowseDetail();
+}
+
+function toggleBrowseStarFromList(idx) {
+  const card = browseState.cards[idx];
+  card.starred = !card.starred;
+  const bank = appData.banks[browseState.bankId];
+  if (bank) { const c = bank.cards.find(x => x.id === card.id); if (c) c.starred = card.starred; }
+  saveData(appData);
+  renderBrowseList();
+}
+
+function toggleBrowseStar() {
+  if (!browseState) return;
+  const filtered = browseState._filteredCards || browseState.cards;
+  const card = filtered[browseState.index];
+  if (!card) return;
+  card.starred = !card.starred;
+  const bank = appData.banks[browseState.bankId];
+  if (bank) { const c = bank.cards.find(x => x.id === card.id); if (c) c.starred = card.starred; }
+  saveData(appData);
+  renderBrowseDetail();
+}
+
+// ==================== 口诀模式 ====================
+function renderKoujueStart() {
+  const c = $('koujueContainer');
+  const banks = Object.values(appData.banks).sort((a, b) => b.createdAt - a.createdAt);
+
+  if (!banks.length) {
+    c.innerHTML = `<div class="empty"><span class="icon">🧠</span><h3>还没有题库</h3><p>请先导入含口诀的简答题文件</p></div>`;
+    return;
+  }
+
+  let bankId = sessionStorage.getItem('lastPracticeBank');
+  if (!bankId || !appData.banks[bankId]) bankId = banks[0].id;
+
+  let allKjBanks = [];
+  for (const b of banks) {
+    const kjCards = b.cards.filter(x => x.koujue);
+    if (kjCards.length) allKjBanks.push({ bankId: b.id, bankName: b.name, cards: kjCards });
+  }
+
+  if (!allKjBanks.length) {
+    c.innerHTML = `<div class="empty"><span class="icon">🧠</span><h3>当前没有口诀</h3><p>导入含「口诀」格式的简答题文件即可<br>格式：<code>口诀：全（全民化）民（民主化）</code></p></div>`;
+    return;
+  }
+
+  c.innerHTML = `<div class="flex justify-between items-center mb-16">
+    <h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em">口诀背诵</h1>
+    <select id="kjBankSelect" style="width:auto;min-width:150px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" onchange="renderKoujueCards()">
+      ${allKjBanks.map(b => `<option value="${b.bankId}"${b.bankId === bankId ? ' selected' : ''}>${escapeHtml(b.bankName)} (${b.cards.length}条)</option>`).join('')}
+    </select>
+  </div>
+  <div id="kjList"></div>`;
+
+  renderKoujueCards();
+}
+
+function renderKoujueCards() {
+  const sel = document.getElementById('kjBankSelect');
+  if (!sel) return;
+  const bank = appData.banks[sel.value];
+  if (!bank) return;
+  const cards = bank.cards.filter(x => x.koujue);
+  if (!cards.length) { document.getElementById('kjList').innerHTML = `<div class="empty"><p>该题库没有口诀</p></div>`; return; }
+
+  const groups = {};
+  cards.forEach(card => { const ch = card.chapter || '未分类'; if (!groups[ch]) groups[ch] = []; groups[ch].push(card); });
+
+  let html = '';
+  for (const [chapter, list] of Object.entries(groups)) {
+    html += `<div class="section"><div class="section-title">${escapeHtml(chapter)} · ${list.length} 条</div>`;
+    for (const card of list) {
+      const parsed = parseKoujue(card.koujue);
+      const keywordsOnly = parsed.map(p => escapeHtml(p.char)).join(' ');
+      html += `<div class="kj-card" id="kj-${card.id}">
+        <div class="kj-mnemonic">${keywordsOnly || escapeHtml(card.koujue)}</div>
+        <div class="kj-meaning" id="kj-mean-${card.id}">
+          <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:6px">${escapeHtml(card.question.replace(/^[\d\.\、\s]+/, ''))}</div>
+          ${parsed.map(p => `<span class="kj-char">${escapeHtml(p.char)}</span><span class="kj-desc">（${escapeHtml(p.desc)}）</span>`).join(' ')}
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  document.getElementById('kjList').innerHTML = html;
+
+  for (const card of cards) {
+    const el = document.getElementById('kj-' + card.id);
+    const meanEl = document.getElementById('kj-mean-' + card.id);
+    if (el && meanEl) {
+      el.onclick = () => {
+        const showing = meanEl.classList.contains('show');
+        document.querySelectorAll('#kjList .kj-meaning.show').forEach(m => m.classList.remove('show'));
+        if (!showing) meanEl.classList.add('show');
+      };
+    }
+  }
+}
+
+function parseKoujue(kj) {
+  if (!kj) return [];
+  const result = [];
+  const re = /[^\s，,。！!？?、；;：:""''（）()《》—\-]+（[^）]*）/g;
+  let m;
+  while ((m = re.exec(kj)) !== null) {
+    const full = m[0], li = full.lastIndexOf('（');
+    if (li > 0) result.push({ char: full.substring(0, li), desc: full.substring(li + 1, full.length - 1) });
+  }
+  if (!result.length && kj.trim()) result.push({ char: kj.trim(), desc: '' });
+  return result;
+}
+
+// ==================== 设置 ====================
+function renderSettings() {
+  const c = $('settingsContainer');
+  const s = appData.settings;
+  const density = s.density || 'medium';
+
+  c.innerHTML = `<div class="section"><div class="section-title">挖空设置</div>
+    <div class="setting-item"><div><div class="setting-label">默认挖空密度</div><div class="setting-desc">每道题的挖空数量，做题时随时可调</div></div>
+      <div class="segmented" id="settingsDensity">
+        <button class="seg${density === 'low' ? ' active' : ''}" data-v="low" onclick="updateDensitySetting('low', this)">低</button>
+        <button class="seg${density === 'high' ? ' active' : ''}" data-v="high" onclick="updateDensitySetting('high', this)">高</button>
+      </div></div></div>
+
+  <div class="section"><div class="section-title">外观</div>
+    <div class="setting-item"><div><div class="setting-label">夜间模式</div><div class="setting-desc">暗色主题，夜间刷题更护眼</div></div>
+      <label class="toggle"><input type="checkbox" id="darkToggle"${s.darkMode ? ' checked' : ''} onchange="saveSetting('darkMode', this.checked)"><span class="slider"></span></label></div>
+    <div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">${s.fontSize}px</div></div>
+      <div class="flex items-center gap-8" style="width:140px"><span style="font-size:13px">A</span><input type="range" min="14" max="24" value="${s.fontSize}" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))"><span style="font-size:18px;font-weight:700">A</span></div></div></div>
+
+  <div class="section"><div class="section-title">语音</div>
+    <div class="setting-item"><div><div class="setting-label">语音朗读</div><div class="setting-desc">使用手机 TTS 朗读，再次点击暂停</div></div>
+      <label class="toggle"><input type="checkbox" id="voiceToggle"${s.voiceEnabled ? ' checked' : ''} onchange="saveSetting('voiceEnabled', this.checked)"><span class="slider"></span></label></div>
+    <div class="setting-item"><div><div class="setting-label">朗读声音</div><div class="setting-desc" id="voiceNameVal">${s.voiceName || '自动选择'}</div></div>
+      <select class="text-sm" id="voiceSelect" style="width:auto;min-width:120px;padding:6px 10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px" onchange="updateVoiceName(this.value)"><option value="">自动选择</option></select></div>
+    <div class="setting-item"><div><div class="setting-label">朗读模式</div><div class="setting-desc" id="readModeVal">${{once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']}</div></div>
+      <select id="readModeSelect" style="width:auto;min-width:120px;padding:6px 10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px" onchange="updateReadMode(this.value)">
+        <option value="once"${(s.readMode||'once')==='once'?' selected':''}>仅读一遍</option>
+        <option value="loop"${s.readMode==='loop'?' selected':''}>循环朗读</option>
+        <option value="auto-next"${s.readMode==='auto-next'?' selected':''}>自动下一题</option>
+        <option value="three-times"${s.readMode==='three-times'?' selected':''}>每题三遍</option>
+      </select></div>
+    <div class="setting-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc" id="rateVal">${s.voiceRate || 0.9}x</div></div>
+      <div style="width:140px"><input type="range" min="0.5" max="2" value="${s.voiceRate || 0.9}" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div></div>
+
+  <div class="section"><div class="section-title">数据管理</div>
+    <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">
+      <button class="btn btn-outline btn-block" onclick="copyBackup()">📋 复制备份码</button>
+      <button class="btn btn-outline btn-block" onclick="showRestorePrompt()">📥 粘贴备份码恢复</button>
+      <button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空错题本</button>
+      <button class="btn btn-danger btn-block" onclick="clearAllData()">🗑️ 删除所有数据</button>
+    </div></div>
+
+  <div class="section"><div class="section-title">关于</div>
+    <div class="setting-item"><div><div class="setting-label">挖空背诵工具（小阮出品）</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div></div>`;
+}
+
+function updateDensitySetting(val, el) {
+  saveSetting('density', val);
+  document.querySelectorAll('#settingsDensity .seg').forEach(s => s.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function updateFontSize(val) { saveSetting('fontSize', val); document.getElementById('fontVal').textContent = val + 'px'; }
+function updateVoiceRate(val) { saveSetting('voiceRate', val); document.getElementById('rateVal').textContent = val + 'x'; }
+function updateVoiceName(val) {
+  saveSetting('voiceName', val || '');
+  document.getElementById('voiceNameVal').textContent = val || '自动选择';
+}
+
+function updateReadMode(val) {
+  saveSetting('readMode', val);
+  document.getElementById('readModeVal').textContent = {once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[val];
+}
+
+function loadVoices() {
+  if (!window.speechSynthesis) return;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) {
+    // Chrome 等浏览器异步加载语音列表，监听 voiceschanged 事件
+    window.speechSynthesis.onvoiceschanged = () => {
+      window.speechSynthesis.onvoiceschanged = null;
+      loadVoices();
+    };
+    // 兜底：200ms 后重试
+    setTimeout(() => { if (window.speechSynthesis) loadVoices(); }, 200);
+    return;
+  }
+  const sel = document.getElementById('voiceSelect');
+  if (!sel || sel.options.length > 1) return;
+  const zhVoices = voices.filter(v => v.lang.startsWith('zh'));
+  for (const v of zhVoices) {
+    const opt = document.createElement('option');
+    opt.value = v.name; opt.textContent = v.name;
+    if (v.name === appData.settings.voiceName) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function makeBackupCode() {
+  const json = JSON.stringify(appData);
+  const bytes = new TextEncoder().encode(json);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+function copyBackup() {
+  if (AUTH_CODES.length && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  try {
+    const code = makeBackupCode();
+    // 优先用 clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(() => {
+        showToast('备份码已复制 (' + code.length + '字符)');
+      }).catch(() => fallbackCopy(code));
+    } else {
+      fallbackCopy(code);
+    }
+  } catch(e) { showToast('导出失败'); }
+}
+
+function fallbackCopy(code) {
+  // iPhone 兼容：用 textarea + execCommand
+  const ta = document.createElement('textarea');
+  ta.value = code; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); showToast('备份码已复制'); } catch(e) { showBackupModal(code); }
+  document.body.removeChild(ta);
+}
+
+function showBackupModal(code) {
+  // 最终兜底：弹窗让用户手动复制
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:380px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px">
+    <h3 style="margin-bottom:10px">📋 备份码（${code.length}字符）</h3>
+    <textarea readonly style="width:100%;min-height:80px;font-size:11px;word-break:break-all;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text)">${code}</textarea>
+    <p class="text-sm text-secondary mt-8">长按上方文字 → 全选 → 复制，粘贴到备忘录保存</p>
+    <button class="btn btn-primary btn-block mt-12" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+}
+
+function showRestorePrompt() {
+  if (AUTH_CODES.length && !isPermanentAuth()) { showToast('试用版不支持导入数据'); return; }
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:380px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px">
+    <h3 style="margin-bottom:10px">📥 粘贴备份码</h3>
+    <textarea id="restoreTextarea" placeholder="在此粘贴之前复制的备份码..." style="width:100%;min-height:100px;font-size:13px;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text)"></textarea>
+    <div class="flex gap-8 mt-12">
+      <button class="btn btn-ghost flex-1" onclick="this.closest('.modal-overlay').remove()">取消</button>
+      <button class="btn btn-primary flex-1" onclick="doRestore(this)">恢复</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+}
+
+function doRestore(btn) {
+  const code = document.getElementById('restoreTextarea').value.trim();
+  if (!code) { showToast('请粘贴备份码'); return; }
+  try {
+    const bin = atob(code);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const json = new TextDecoder().decode(bytes);
+    const data = JSON.parse(json);
+    if (!data.banks) { showToast('备份码无效'); return; }
+    appData = data;
+    saveData(appData);
+    showToast('恢复成功！');
+    setTimeout(() => location.reload(), 800);
+  } catch(e) { showToast('备份码无效'); }
+}
+
+function clearWrongBook() {
+  showConfirm('清空错题本', '确定清空所有题库的错题记录吗？', () => {
+    appData.wrongBooks = {};
+    saveData(appData);
+    showToast('错题本已清空');
+  });
+}
+
+function clearAllData() {
+  showConfirm('删除所有数据', '此操作不可撤销！将删除所有题库、设置和进度。', () => {
+    appData = { banks: {}, settings: {}, seqProgress: {}, favorites: {}, wrongBooks: {} };
+    saveData(appData);
+    showToast('已全部删除');
+    switchTab('banks');
+  });
+}
+</script>
+
+</body>
+</html>
