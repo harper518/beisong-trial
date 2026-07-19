@@ -2858,7 +2858,14 @@ function renderSettings() {
   const s = appData.settings;
   const density = s.density || 'low';
 
-  c.innerHTML = `<div class="section"><div class="section-title">挖空设置</div>
+  c.innerHTML = `<div class="section"><div class="section-title">数据管理</div>
+    <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">
+      <button class="btn btn-outline btn-block" onclick="copyBackup()">📋 复制备份码</button>
+      <button class="btn btn-outline btn-block" onclick="showRestorePrompt()">📥 粘贴备份码恢复</button>
+      <button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空错题本</button>
+    </div></div>
+
+  <div class="section"><div class="section-title">挖空设置</div>
     <div class="setting-item"><div><div class="setting-label">默认挖空密度</div><div class="setting-desc">每道题的挖空数量，做题时随时可调</div></div>
       <div class="segmented" id="settingsDensity">
         <button class="seg${density === 'low' ? ' active' : ''}" data-v="low" onclick="updateDensitySetting('low', this)">低</button>
@@ -2890,17 +2897,10 @@ function renderSettings() {
     <div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">${s.voicePitch || 1.0}x</div></div>
       <div style="width:140px"><input type="range" min="0.5" max="2" value="${s.voicePitch || 1.0}" step="0.1" oninput="updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div>
 
-  <div class="section"><div class="section-title">数据管理</div>
-    <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">
-      <button class="btn btn-outline btn-block" onclick="copyBackup()">📋 复制备份码</button>
-      <button class="btn btn-outline btn-block" onclick="showRestorePrompt()">📥 粘贴备份码恢复</button>
-      <button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空错题本</button>
-      <button class="btn btn-danger btn-block" onclick="clearAllData()">🗑️ 删除所有数据</button>
-    </div></div>
-
   <div class="section"><div class="section-title">关于</div>
     <div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div>
-    <div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div></div>`;
+    <div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>
+    <div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div></div>`;
 }
 
 function checkUpdate() {
