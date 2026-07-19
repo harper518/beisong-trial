@@ -2879,19 +2879,33 @@ function loadVoices() {
   }
 }
 
-function makeBackupCode() {
+async function makeBackupCode() {
   const json = JSON.stringify(appData);
+  // 尝试 gzip 压缩（减小 80-90%）
+  if (typeof CompressionStream !== 'undefined') {
+    try {
+      const blob = new Blob([json]);
+      const cs = new CompressionStream('gzip');
+      const stream = blob.stream().pipeThrough(cs);
+      const compressed = await new Response(stream).blob();
+      const bytes = new Uint8Array(await compressed.arrayBuffer());
+      let bin = '';
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return 'Z' + btoa(bin);
+    } catch(e) {}
+  }
+  // 不支持压缩时用原始 base64
   const bytes = new TextEncoder().encode(json);
   let bin = '';
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
+  return 'U' + btoa(bin);
 }
 
-function copyBackup() {
+async function copyBackup() {
   if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   try {
-    const code = makeBackupCode();
-    // 优先用 clipboard API
+    const code = await makeBackupCode();
+    // 优先用 clipboard API（压缩后体积小，很容易复制）
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(code).then(() => {
         showToast('备份码已复制 (' + code.length + '字符)');
@@ -2903,7 +2917,6 @@ function copyBackup() {
 }
 
 function fallbackCopy(code) {
-  // iPhone 兼容：用 textarea + execCommand
   const ta = document.createElement('textarea');
   ta.value = code; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
   document.body.appendChild(ta); ta.focus(); ta.select();
@@ -2912,7 +2925,6 @@ function fallbackCopy(code) {
 }
 
 function showBackupModal(code) {
-  // 最终兜底：弹窗让用户手动复制
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:380px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px">
     <h3 style="margin-bottom:10px">📋 备份码（${code.length}字符）</h3>
@@ -2938,14 +2950,28 @@ function showRestorePrompt() {
   ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
 }
 
-function doRestore(btn) {
+async function doRestore(btn) {
   const code = document.getElementById('restoreTextarea').value.trim();
   if (!code) { showToast('请粘贴备份码'); return; }
   try {
-    const bin = atob(code);
+    const prefix = code[0];
+    const base64 = code.slice(1);
+    const bin = atob(base64);
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    const json = new TextDecoder().decode(bytes);
+
+    let json;
+    if (prefix === 'Z' && typeof DecompressionStream !== 'undefined') {
+      // gzip 压缩的备份码
+      try {
+        const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+        json = await new Response(stream).text();
+      } catch(e) { json = new TextDecoder().decode(bytes); }
+    } else {
+      // 未压缩的备份码（兼容旧版）
+      json = new TextDecoder().decode(bytes);
+    }
+
     const data = JSON.parse(json);
     if (!data.banks) { showToast('备份码无效'); return; }
     appData = data;
