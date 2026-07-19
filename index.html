@@ -25,17 +25,6 @@
   --font-size:16px; --font-size-sm:12px; --font-size-lg:17px; --font-size-xl:20px;
   --transition:0.2s cubic-bezier(.4,0,.2,1); --safe-bottom:env(safe-area-inset-bottom,16px);
 }
-[data-theme="dark"] {
-  --bg:#042f2e; --bg-card:#134e4a; --bg-input:#11554e; --bg-overlay:rgba(0,0,0,.7);
-  --text:#ccfbf1; --text-secondary:#99b8b6; --text-tertiary:#5f8b89;
-  --primary:#22d3ee; --primary-hover:#67e8f9; --primary-light:#164e63; --primary-soft:#155e75;
-  --success:#34d399; --success-light:#064e3b; --danger:#f87171; --danger-light:#7f1d1d;
-  --warning:#fbbf24; --warning-light:#78350f;
-  --blank-bg:#713f12; --blank-border:#b45309; --blank-revealed-bg:#064e3b; --blank-revealed-text:#34d399;
-  --border:#11554e; --shadow-sm:0 1px 2px rgba(0,0,0,.3); --shadow:0 1px 3px rgba(0,0,0,.4);
-  --shadow-md:0 4px 6px rgba(0,0,0,.4); --shadow-lg:0 10px 25px rgba(0,0,0,.5);
-}
-
 /* ---- 主题色选择器 ---- */
 .color-dots { display:flex; gap:10px; flex-wrap:wrap; }
 .color-dot { width:30px; height:30px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all .2s; display:inline-block; box-shadow:0 1px 3px rgba(0,0,0,.15); }
@@ -84,6 +73,17 @@
   --text:#4a3f1d; --text-secondary:#8e805c;
   --primary:#eab308; --primary-hover:#ca8a04; --primary-light:#fefce8; --primary-soft:#fef9c3;
   --border:#f0e8c0;
+}
+
+[data-theme="dark"] {
+  --bg:#042f2e; --bg-card:#134e4a; --bg-input:#11554e; --bg-overlay:rgba(0,0,0,.7);
+  --text:#ccfbf1; --text-secondary:#99b8b6; --text-tertiary:#5f8b89;
+  --primary:#22d3ee; --primary-hover:#67e8f9; --primary-light:#164e63; --primary-soft:#155e75;
+  --success:#34d399; --success-light:#064e3b; --danger:#f87171; --danger-light:#7f1d1d;
+  --warning:#fbbf24; --warning-light:#78350f;
+  --blank-bg:#713f12; --blank-border:#b45309; --blank-revealed-bg:#064e3b; --blank-revealed-text:#34d399;
+  --border:#11554e; --shadow-sm:0 1px 2px rgba(0,0,0,.3); --shadow:0 1px 3px rgba(0,0,0,.4);
+  --shadow-md:0 4px 6px rgba(0,0,0,.4); --shadow-lg:0 10px 25px rgba(0,0,0,.5);
 }
 
 /* ============ Reset ============ */
@@ -2872,14 +2872,6 @@ function renderSettings() {
         <button class="seg${density === 'high' ? ' active' : ''}" data-v="high" onclick="updateDensitySetting('high', this)">高</button>
       </div></div></div>
 
-  <div class="section"><div class="section-title">外观</div>
-    <div class="setting-item"><div><div class="setting-label">夜间模式</div><div class="setting-desc">暗色主题，夜间刷题更护眼</div></div>
-      <label class="toggle"><input type="checkbox" id="darkToggle"${s.darkMode ? ' checked' : ''} onchange="saveSetting('darkMode', this.checked)"><span class="slider"></span></label></div>
-    <div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">${({teal:'青绿',purple:'浅紫',blue:'浅蓝',rose:'玫红',pink:'粉色',green:'浅绿',yellow:'浅黄'})[s.color||'teal']}</div></div>
-      <div class="color-dots"><span class="color-dot${(s.color||'teal')==='teal'?' active':''}" style="background:#0891b2" onclick="saveThemeColor('teal')"></span><span class="color-dot${s.color==='purple'?' active':''}" style="background:#9333ea" onclick="saveThemeColor('purple')"></span><span class="color-dot${s.color==='blue'?' active':''}" style="background:#3b82f6" onclick="saveThemeColor('blue')"></span><span class="color-dot${s.color==='rose'?' active':''}" style="background:#e11d48" onclick="saveThemeColor('rose')"></span><span class="color-dot${s.color==='pink'?' active':''}" style="background:#ec4899" onclick="saveThemeColor('pink')"></span><span class="color-dot${s.color==='green'?' active':''}" style="background:#22c55e" onclick="saveThemeColor('green')"></span><span class="color-dot${s.color==='yellow'?' active':''}" style="background:#eab308" onclick="saveThemeColor('yellow')"></span></div></div>
-    <div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">${s.fontSize}px</div></div>
-      <div class="flex items-center gap-8" style="width:140px"><span style="font-size:13px">A</span><input type="range" min="14" max="24" value="${s.fontSize}" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))"><span style="font-size:18px;font-weight:700">A</span></div></div></div>
-
   <div class="section"><div class="section-title">语音</div>
     <div class="setting-item"><div><div class="setting-label">语音朗读</div><div class="setting-desc">使用手机 TTS 朗读，再次点击暂停</div></div>
       <label class="toggle"><input type="checkbox" id="voiceToggle"${s.voiceEnabled ? ' checked' : ''} onchange="saveSetting('voiceEnabled', this.checked)"><span class="slider"></span></label></div>
@@ -2897,10 +2889,18 @@ function renderSettings() {
     <div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">${s.voicePitch || 1.0}x</div></div>
       <div style="width:140px"><input type="range" min="0.5" max="2" value="${s.voicePitch || 1.0}" step="0.1" oninput="updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div>
 
+  <div class="section"><div class="section-title">外观</div>
+    <div class="setting-item"><div><div class="setting-label">夜间模式</div><div class="setting-desc">暗色主题，夜间刷题更护眼</div></div>
+      <label class="toggle"><input type="checkbox" id="darkToggle"${s.darkMode ? ' checked' : ''} onchange="saveSetting('darkMode', this.checked)"><span class="slider"></span></label></div>
+    <div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">${({teal:'青绿',purple:'浅紫',blue:'浅蓝',rose:'玫红',pink:'粉色',green:'浅绿',yellow:'浅黄'})[s.color||'teal']}</div></div>
+      <div class="color-dots"><span class="color-dot${(s.color||'teal')==='teal'?' active':''}" style="background:#0891b2" onclick="saveThemeColor('teal')"></span><span class="color-dot${s.color==='purple'?' active':''}" style="background:#9333ea" onclick="saveThemeColor('purple')"></span><span class="color-dot${s.color==='blue'?' active':''}" style="background:#3b82f6" onclick="saveThemeColor('blue')"></span><span class="color-dot${s.color==='rose'?' active':''}" style="background:#e11d48" onclick="saveThemeColor('rose')"></span><span class="color-dot${s.color==='pink'?' active':''}" style="background:#ec4899" onclick="saveThemeColor('pink')"></span><span class="color-dot${s.color==='green'?' active':''}" style="background:#22c55e" onclick="saveThemeColor('green')"></span><span class="color-dot${s.color==='yellow'?' active':''}" style="background:#eab308" onclick="saveThemeColor('yellow')"></span></div></div>
+    <div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">${s.fontSize}px</div></div>
+      <div class="flex items-center gap-8" style="width:140px"><span style="font-size:13px">A</span><input type="range" min="14" max="24" value="${s.fontSize}" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))"><span style="font-size:18px;font-weight:700">A</span></div></div></div>
+
   <div class="section"><div class="section-title">关于</div>
     <div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div>
-    <div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>
-    <div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div></div>`;
+    <div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>
+    <div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div></div>`;
 }
 
 function checkUpdate() {
