@@ -2832,7 +2832,20 @@ function renderSettings() {
     </div></div>
 
   <div class="section"><div class="section-title">关于</div>
-    <div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div></div>`;
+    <div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div>
+    <div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div></div>`;
+}
+
+function checkUpdate() {
+  showToast('正在清除缓存...');
+  // 清除 Service Worker 缓存
+  if ('caches' in window) {
+    caches.keys().then(function(names) {
+      names.forEach(function(name) { caches.delete(name); });
+    });
+  }
+  // 强制刷新（跳过浏览器缓存）
+  setTimeout(function() { location.reload(true); }, 500);
 }
 
 function updateDensitySetting(val, el) {
