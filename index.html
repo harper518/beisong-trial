@@ -2920,35 +2920,42 @@ async function copyBackup() {
   if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   try {
     const code = await makeBackupCode();
-    // 优先用 clipboard API（压缩后体积小，很容易复制）
+    showBackupModal(code);
+    // 同时尝试自动复制
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(code).then(() => {
-        showToast('备份码已复制 (' + code.length + '字符)');
-      }).catch(() => fallbackCopy(code));
-    } else {
-      fallbackCopy(code);
+      navigator.clipboard.writeText(code).then(function() {
+        showToast('备份码已自动复制');
+      }).catch(function() {});
     }
   } catch(e) { showToast('导出失败'); }
 }
 
-function fallbackCopy(code) {
-  const ta = document.createElement('textarea');
-  ta.value = code; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
-  document.body.appendChild(ta); ta.focus(); ta.select();
-  try { document.execCommand('copy'); showToast('备份码已复制'); } catch(e) { showBackupModal(code); }
-  document.body.removeChild(ta);
+function showBackupModal(code) {
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'backupModal';
+  ov.innerHTML = '<div class="modal" style="border-radius:var(--radius);max-width:380px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px">'
+    + '<h3 style="margin-bottom:10px">📋 备份码（' + code.length + '字符）</h3>'
+    + '<textarea id="backupCodeText" readonly style="width:100%;min-height:80px;font-size:11px;word-break:break-all;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text)">' + code + '</textarea>'
+    + '<div class="flex gap-8 mt-12"><button class="btn btn-primary flex-1" onclick="copyBackupCode()">📋 一键复制</button>'
+    + '<button class="btn btn-ghost flex-1" onclick="document.getElementById(\'backupModal\').remove()">关闭</button></div>'
+    + '</div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
 }
 
-function showBackupModal(code) {
-  const ov = document.createElement('div'); ov.className = 'modal-overlay';
-  ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:380px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px">
-    <h3 style="margin-bottom:10px">📋 备份码（${code.length}字符）</h3>
-    <textarea readonly style="width:100%;min-height:80px;font-size:11px;word-break:break-all;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text)">${code}</textarea>
-    <p class="text-sm text-secondary mt-8">长按上方文字 → 全选 → 复制，粘贴到备忘录保存</p>
-    <button class="btn btn-primary btn-block mt-12" onclick="this.closest('.modal-overlay').remove()">关闭</button>
-  </div>`;
-  document.body.appendChild(ov);
-  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+function copyBackupCode() {
+  var ta = document.getElementById('backupCodeText');
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('已复制到剪贴板');
+  } catch(e) {
+    ta.setSelectionRange(0, ta.value.length);
+    navigator.clipboard.writeText(ta.value).then(function() {
+      showToast('已复制到剪贴板');
+    }).catch(function() {
+      showToast('复制失败，请长按手动复制');
+    });
+  }
 }
 
 function showRestorePrompt() {
