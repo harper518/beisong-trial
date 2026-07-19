@@ -36,6 +36,56 @@
   --shadow-md:0 4px 6px rgba(0,0,0,.4); --shadow-lg:0 10px 25px rgba(0,0,0,.5);
 }
 
+/* ---- 主题色选择器 ---- */
+.color-dots { display:flex; gap:10px; flex-wrap:wrap; }
+.color-dot { width:30px; height:30px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all .2s; display:inline-block; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.color-dot.active { border-color:var(--text); transform:scale(1.18); box-shadow:0 2px 6px rgba(0,0,0,.25); }
+.color-dot:active { transform:scale(.92); }
+
+/* ============ 主题色 ============ */
+[data-color="teal"] {
+  --bg:#f0fdfa; --bg-card:#fff; --bg-input:#f0fdfa;
+  --text:#134e4a; --text-secondary:#5f8b89;
+  --primary:#0891b2; --primary-hover:#0e7490; --primary-light:#ecfeff; --primary-soft:#cffafe;
+  --border:#cce8e6;
+}
+[data-color="purple"] {
+  --bg:#faf5ff; --bg-card:#fff; --bg-input:#faf5ff;
+  --text:#4a1d6e; --text-secondary:#7c5c9e;
+  --primary:#9333ea; --primary-hover:#7e22ce; --primary-light:#f5f0ff; --primary-soft:#ede9fe;
+  --border:#e0d4f5;
+}
+[data-color="blue"] {
+  --bg:#f0f7ff; --bg-card:#fff; --bg-input:#f0f7ff;
+  --text:#1e3a5f; --text-secondary:#5c7c9e;
+  --primary:#3b82f6; --primary-hover:#2563eb; --primary-light:#eff6ff; --primary-soft:#dbeafe;
+  --border:#d0e0f5;
+}
+[data-color="rose"] {
+  --bg:#fff1f5; --bg-card:#fff; --bg-input:#fff1f5;
+  --text:#5f1e3a; --text-secondary:#9e5c7c;
+  --primary:#e11d48; --primary-hover:#be123c; --primary-light:#ffe4e6; --primary-soft:#fecdd3;
+  --border:#f5d0e0;
+}
+[data-color="pink"] {
+  --bg:#fdf2f8; --bg-card:#fff; --bg-input:#fdf2f8;
+  --text:#6e1d4a; --text-secondary:#9e5c7c;
+  --primary:#ec4899; --primary-hover:#db2777; --primary-light:#fdf2f8; --primary-soft:#fce7f3;
+  --border:#f5d0e8;
+}
+[data-color="green"] {
+  --bg:#f0fdf4; --bg-card:#fff; --bg-input:#f0fdf4;
+  --text:#14532d; --text-secondary:#5c8e6e;
+  --primary:#22c55e; --primary-hover:#16a34a; --primary-light:#f0fdf4; --primary-soft:#dcfce7;
+  --border:#d0f5e0;
+}
+[data-color="yellow"] {
+  --bg:#fefce8; --bg-card:#fff; --bg-input:#fefce8;
+  --text:#4a3f1d; --text-secondary:#8e805c;
+  --primary:#eab308; --primary-hover:#ca8a04; --primary-light:#fefce8; --primary-soft:#fef9c3;
+  --border:#f0e8c0;
+}
+
 /* ============ Reset ============ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{
@@ -817,7 +867,14 @@ document.addEventListener('DOMContentLoaded', init);
 function applySettings() {
   const s = appData.settings;
   document.documentElement.setAttribute('data-theme', s.darkMode ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-color', s.color || 'teal');
   document.documentElement.style.setProperty('--font-size', s.fontSize + 'px');
+}
+
+function saveThemeColor(color) {
+  saveSetting('color', color);
+  applySettings();
+  renderSettings();
 }
 
 // ==================== Tab 切换 ====================
@@ -2803,6 +2860,8 @@ function renderSettings() {
   <div class="section"><div class="section-title">外观</div>
     <div class="setting-item"><div><div class="setting-label">夜间模式</div><div class="setting-desc">暗色主题，夜间刷题更护眼</div></div>
       <label class="toggle"><input type="checkbox" id="darkToggle"${s.darkMode ? ' checked' : ''} onchange="saveSetting('darkMode', this.checked)"><span class="slider"></span></label></div>
+    <div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">${({teal:'青绿',purple:'浅紫',blue:'浅蓝',rose:'玫红',pink:'粉色',green:'浅绿',yellow:'浅黄'})[s.color||'teal']}</div></div>
+      <div class="color-dots"><span class="color-dot${(s.color||'teal')==='teal'?' active':''}" style="background:#0891b2" onclick="saveThemeColor('teal')"></span><span class="color-dot${s.color==='purple'?' active':''}" style="background:#9333ea" onclick="saveThemeColor('purple')"></span><span class="color-dot${s.color==='blue'?' active':''}" style="background:#3b82f6" onclick="saveThemeColor('blue')"></span><span class="color-dot${s.color==='rose'?' active':''}" style="background:#e11d48" onclick="saveThemeColor('rose')"></span><span class="color-dot${s.color==='pink'?' active':''}" style="background:#ec4899" onclick="saveThemeColor('pink')"></span><span class="color-dot${s.color==='green'?' active':''}" style="background:#22c55e" onclick="saveThemeColor('green')"></span><span class="color-dot${s.color==='yellow'?' active':''}" style="background:#eab308" onclick="saveThemeColor('yellow')"></span></div></div>
     <div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">${s.fontSize}px</div></div>
       <div class="flex items-center gap-8" style="width:140px"><span style="font-size:13px">A</span><input type="range" min="14" max="24" value="${s.fontSize}" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))"><span style="font-size:18px;font-weight:700">A</span></div></div></div>
 
