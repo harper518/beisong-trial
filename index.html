@@ -788,7 +788,7 @@ function showConfirm(title, msg, onConfirm) {
 
 // ==================== 全局状态 ====================
 let practiceState = null;
-let batchSize = 10;
+let batchSize = appData.settings.roundSize != null ? appData.settings.roundSize : 10;
 let categoryFilter = null; // null=全选，Set=选中分类
 let kjCategoryFilter = null; // 口诀页分类筛选
 let drawMode = 'random-norepeat';
@@ -1671,9 +1671,11 @@ function renderPracticeSetup() {
       <div class="form-group">
         <label class="form-label">🔢 每轮题数</label>
         <div class="flex items-center gap-8" id="countChips">
-          <span class="chip${batchSize === 10 ? ' active' : ''}" data-n="10" onclick="selectCount(10, this)" style="margin-right:12px">10 题</span>
+          <span class="chip${batchSize === 5 ? ' active' : ''}" data-n="5" onclick="selectCount(5, this)">5 题</span>
+          <span class="chip${batchSize === 10 ? ' active' : ''}" data-n="10" onclick="selectCount(10, this)">10 题</span>
+          <span class="chip${batchSize === 20 ? ' active' : ''}" data-n="20" onclick="selectCount(20, this)">20 题</span>
           <span style="font-size:13px;color:var(--text-secondary)">或自定义：</span>
-          <input type="number" id="customCount" placeholder="数量" min="1" onchange="selectCustom()" style="width:70px;text-align:center;padding:9px">
+          <input type="number" id="customCount" placeholder="数量" min="1" value="${batchSize !== 5 && batchSize !== 10 && batchSize !== 20 && batchSize ? batchSize : ''}" onchange="selectCustom()" style="width:70px;text-align:center;padding:9px">
           <span style="font-size:13px;color:var(--text-secondary)">题</span>
         </div>
       </div>
@@ -1706,6 +1708,7 @@ function renderPracticeSetup() {
 
 function selectCount(n, el) {
   batchSize = n;
+  saveSetting('roundSize', n);
   document.querySelectorAll('#countChips .chip').forEach(c => c.classList.remove('active'));
   if (el) el.classList.add('active');
   document.getElementById('customCount').value = '';
@@ -1713,6 +1716,7 @@ function selectCount(n, el) {
 
 function selectCustom() {
   batchSize = parseInt(document.getElementById('customCount').value) || 0;
+  saveSetting('roundSize', batchSize);
   document.querySelectorAll('#countChips .chip').forEach(c => c.classList.remove('active'));
 }
 
