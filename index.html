@@ -2390,8 +2390,7 @@ function autoCheckIfDone() {
 	  var a = card.answer ? card.answer.trim() : '';
 	  if (!a) return '';
 	  var blanks = card.blanks || [];
-	  if (!blanks.length) return '<div style="color:var(--text-secondary)">' + a.replace(/
-/g, '<br>') + '</div>';
+	  if (!blanks.length) return '<div style="color:var(--text-secondary)">' + a.replace(/\n/g, '<br>') + '</div>';
 	  // 排序并去重叠
 	  var sorted = blanks.slice().sort(function(x,y){return x.start - y.start;});
 	  var groups = [];
@@ -2412,8 +2411,7 @@ function autoCheckIfDone() {
 	  var wa = wrongDetail.wrongAnswers || [];
 	  for (var k = 0; k < resolved.length; k++) {
 	    var bk = resolved[k];
-	    html += (a.substring(le, bk.start)).replace(/
-/g, '<br>');
+	    html += (a.substring(le, bk.start)).replace(/\n/g, '<br>');
 	    var isWr = wi.indexOf(k) >= 0;
 	    var ua = isWr ? (wa[wi.indexOf(k)] || '') : (bk.text || '');
 	    var clr = isWr ? 'var(--danger)' : 'var(--success)';
@@ -2422,8 +2420,7 @@ function autoCheckIfDone() {
 	    html += ' <span style="font-size:12px;color:var(--text-tertiary)">(' + bk.text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + ')</span>';
 	    le = bk.end;
 	  }
-	  html += (a.substring(le)).replace(/
-/g, '<br>');
+	  html += (a.substring(le)).replace(/\n/g, '<br>');
 	  html += '</div>';
 	  return html;
 	}
