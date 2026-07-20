@@ -2387,44 +2387,40 @@ function autoCheckIfDone() {
 
 	// 错题回顾：渲染带错空标记的答案
 	function renderWrongPreview(card, wrongDetail) {
-	  var a = card.answer ? card.answer.trim() : '';
-	  if (!a) return '';
-	  var blanks = card.blanks || [];
-	  if (!blanks.length) return '<div style="color:var(--text-secondary)">' + a.replace(/\n/g, '<br>') + '</div>';
-	  // 排序并去重叠
-	  var sorted = blanks.slice().sort(function(x,y){return x.start - y.start;});
-	  var groups = [];
-	  for (var i = 0; i < sorted.length; i++) {
-	    var b = sorted[i], added = false;
-	    for (var j = 0; j < groups.length; j++) {
-	      if (groups[j].some(function(gb){return gb.start < b.end && b.start < gb.end;})) {
-	        groups[j].push(b); added = true; break;
-	      }
-	    }
-	    if (!added) groups.push([b]);
-	  }
-	  var resolved = groups.map(function(g){return g[0];});
-	  var html = '<div style="font-size:11px;color:var(--text-tertiary);margin:8px 0 4px;font-weight:600">── 错题回顾 ──</div>';
-	  html += '<div style="line-height:2.2">';
-	  var le = 0;
-	  var wi = wrongDetail.wrongIndices || [];
-	  var wa = wrongDetail.wrongAnswers || [];
-	  for (var k = 0; k < resolved.length; k++) {
-	    var bk = resolved[k];
-	    html += (a.substring(le, bk.start)).replace(/\n/g, '<br>');
-	    var isWr = wi.indexOf(k) >= 0;
-	    var ua = isWr ? (wa[wi.indexOf(k)] || '') : (bk.text || '');
-	    var clr = isWr ? 'var(--danger)' : 'var(--success)';
-	    var bg = isWr ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)';
-	    html += '<span style="display:inline-block;border-bottom:2px solid ' + clr + ';background:' + bg + ';padding:1px 6px;border-radius:3px;margin:0 2px;font-weight:500">' + (ua || '?').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>';
-	    html += ' <span style="font-size:12px;color:var(--text-tertiary)">(' + bk.text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + ')</span>';
-	    le = bk.end;
-	  }
-	  html += (a.substring(le)).replace(/\n/g, '<br>');
-	  html += '</div>';
-	  return html;
-	}
-
+  var a = card.answer ? card.answer.trim() : '';
+  if (!a) return '';
+  var blanks = card.blanks || [];
+  if (!blanks.length) return '<div style="color:var(--text-secondary)">' + a.replace(/\n/g, '<br>') + '</div>';
+  var sorted = blanks.slice().sort(function(x,y){return x.start - y.start;});
+  var groups = [];
+  for (var i = 0; i < sorted.length; i++) {
+    var b = sorted[i], added = false;
+    for (var j = 0; j < groups.length; j++) {
+      if (groups[j].some(function(gb){return gb.start < b.end && b.start < gb.end;})) {
+        groups[j].push(b); added = true; break;
+      }
+    }
+    if (!added) groups.push([b]);
+  }
+  var resolved = groups.map(function(g){return g[0];});
+  var html = '<div style="font-size:11px;color:var(--text-tertiary);margin:8px 0 4px;font-weight:600">错题回顾  (' + wrongDetail.wrongIndices.length + ' 个答错)</div>';
+  html += '<div style="line-height:2.2">';
+  var le = 0;
+  var wi = wrongDetail.wrongIndices || [];
+  for (var k = 0; k < resolved.length; k++) {
+    var bk = resolved[k];
+    html += (a.substring(le, bk.start)).replace(/\n/g, '<br>');
+    var isWr = wi.indexOf(k) >= 0;
+    var bg = isWr ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.1)';
+    var border = isWr ? '2px solid var(--danger)' : '2px solid var(--success)';
+    var icon = isWr ? ' ✗' : ' ✓';
+    html += '<span style="display:inline-block;border:' + border + ';background:' + bg + ';padding:2px 8px;border-radius:4px;margin:2px 4px;font-weight:600">' + bk.text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + icon + '</span>';
+    le = bk.end;
+  }
+  html += (a.substring(le)).replace(/\n/g, '<br>');
+  html += '</div>';
+  return html;
+}
 	function applyCheckToInputs(card) {
   const inputs = document.querySelectorAll('#cardText .blank-input');
   let hasWrong = false;
