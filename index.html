@@ -835,7 +835,7 @@ function isJianDaFormat(rawText) {
 // ==================== 工具函数 ====================
 function $(id) { return document.getElementById(id); }
 function escapeHtml(s) { if (!s) return ''; return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-function escNl(s) { return escapeHtml(s).replace(/\n/g, '<br>'); }
+function escNl(s) { return escapeHtml(s).replace(/\n/g, '<br>').replace(/\\n/g, '<br>'); }
 function shuffle(a) { const arr = [...a]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 function fmtDate(ts) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function downloadFile(fn, content, mime) { const b = new Blob([content],{type:mime}), url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
