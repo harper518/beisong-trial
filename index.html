@@ -410,10 +410,12 @@ function checkAuth() {
   if (isPermanentAuth()) return true;
   const d = getAuthData();
   if (!d || !d.expireAt) return false;
-  return Date.now() < d.expireAt;
+  if (Date.now() >= d.expireAt) { localStorage.removeItem('memorize_auth_data'); return false; }
+  return true;
 }
 
 function showAuthModal() {
+  localStorage.removeItem('memorize_auth_data');
   let attempts = 0, locked = false;
   const ov = document.createElement('div');
   ov.className = 'modal-overlay';
