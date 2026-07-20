@@ -2386,9 +2386,9 @@ function autoCheckIfDone() {
 	}
 
 	// 错题回顾：渲染带错空标记的答案
-	function renderWrongPreview(card, wrongDetail) {
+	// 错题互动复习：显示空填空框，点击显示/隐藏答案
+function renderWrongCardInteractive(card, wrongDetail) {
   var a = card.answer ? card.answer.trim() : '';
-  if (!a) return '';
   var blanks = card.blanks || [];
   if (!blanks.length) return '<div style="color:var(--text-secondary)">' + a.replace(/\n/g, '<br>') + '</div>';
   var sorted = blanks.slice().sort(function(x,y){return x.start - y.start;});
@@ -2403,25 +2403,45 @@ function autoCheckIfDone() {
     if (!added) groups.push([b]);
   }
   var resolved = groups.map(function(g){return g[0];});
-  var html = '<div style="font-size:11px;color:var(--text-tertiary);margin:8px 0 4px;font-weight:600">错题回顾  (' + wrongDetail.wrongIndices.length + ' 个答错)</div>';
-  html += '<div style="line-height:2.2">';
-  var le = 0;
   var wi = wrongDetail.wrongIndices || [];
+  var cid = card.id;
+  var html = '<div style="font-size:11px;color:var(--text-tertiary);margin:8px 0 4px;font-weight:600">错题回顾 (' + wi.length + ' 个答错)</div>';
+  html += '<div style="line-height:2.2" id="wrongBlanks_' + cid + '">';
+  var le = 0;
   for (var k = 0; k < resolved.length; k++) {
     var bk = resolved[k];
     html += (a.substring(le, bk.start)).replace(/\n/g, '<br>');
     var isWr = wi.indexOf(k) >= 0;
-    var bg = isWr ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.1)';
-    var border = isWr ? '2px solid var(--danger)' : '2px solid var(--success)';
-    var icon = isWr ? ' ✗' : ' ✓';
-    html += '<span style="display:inline-block;border:' + border + ';background:' + bg + ';padding:2px 8px;border-radius:4px;margin:2px 4px;font-weight:600">' + bk.text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + icon + '</span>';
+    var brd = isWr ? 'var(--danger)' : 'var(--success)';
+    html += '<input type="text" class="blank-input" id="wbi_' + cid + '_' + k + '" data-ans="' + bk.text.replace(/"/g,'&quot;') + '" style="border-color:' + brd + ';width:80px" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
     le = bk.end;
   }
   html += (a.substring(le)).replace(/\n/g, '<br>');
   html += '</div>';
+  html += '<div style="margin-top:8px;text-align:center">';
+  html += '<button class="btn btn-sm btn-outline" onclick="toggleWrongAnswers(\'' + cid + '\',' + resolved.length + ')" id="wrongBtn_' + cid + '">显示答案</button>';
+  html += '</div>';
   return html;
 }
-	function applyCheckToInputs(card) {
+
+function toggleWrongAnswers(cardId, count) {
+  var btn = document.getElementById('wrongBtn_' + cardId);
+  if (!btn) return;
+  var revealing = btn.textContent.indexOf('显示') >= 0;
+  for (var i = 0; i < count; i++) {
+    var inp = document.getElementById('wbi_' + cardId + '_' + i);
+    if (inp) {
+      if (revealing) {
+        inp.value = inp.dataset.ans || '';
+      } else {
+        inp.value = '';
+      }
+    }
+  }
+  btn.textContent = revealing ? '隐藏答案' : '显示答案';
+}
+
+function applyCheckToInputs(card) {
   const inputs = document.querySelectorAll('#cardText .blank-input');
   let hasWrong = false;
   const wrongIndices = [];
@@ -2894,7 +2914,7 @@ function renderBrowseDetail() {
     </div>
     <div style="line-height:2;font-size:var(--font-size-lg)">
       <div style="margin-bottom:12px;font-weight:500">${escNl(card.question)}</div>
-      ${wrongDetail && wrongDetail.wrongIndices ? renderWrongPreview(card, wrongDetail) : (card.answer ? `<div style="color:var(--text-secondary)">${escNl(card.answer)}</div>` : '')}
+      ${wrongDetail && wrongDetail.wrongIndices ? renderWrongCardInteractive(card, wrongDetail) : (card.answer ? `<div style="color:var(--text-secondary)">${escNl(card.answer)}</div>` : '')}
     </div>
     ${isWrong ? `<div class="text-center mt-10"><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeFromWrongBook('${card.id}')">🗑 移出错题本</button></div>` : ''}
     <div class="flex gap-8 mt-16">
