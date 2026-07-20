@@ -390,8 +390,8 @@ textarea{min-height:160px;resize:vertical;line-height:1.8}
 </nav>
 
 <script>
-// ==================== 授权激活（试用版 - 服务器验证） ====================
-const AUTH_API = 'https://beisong-auth-etltwnrbmg.cn-hangzhou.fcapp.run/auth';
+// ==================== 授权激活（本地验证） ====================
+const AUTH_CODES = ['5826', '6387', '37825'];
 const AUTH_MINUTES = 10;
 
 function getAuthData() {
@@ -421,7 +421,7 @@ function showAuthModal() {
   ov.style.zIndex = '9999';
   ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:340px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px">
     <div style="text-align:center;font-size:48px;margin-bottom:12px">🔐</div>
-    <h3 style="text-align:center;margin-bottom:6px">试用版本</h3>
+    <h3 style="text-align:center;margin-bottom:6px">授权验证</h3>
     <p class="text-sm text-secondary" style="text-align:center;margin-bottom:16px">请输入授权密码，有效期 10 分钟</p>
     <input type="number" id="authInput" placeholder="输入密码" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:20px;text-align:center;letter-spacing:6px">
     <p class="text-sm" id="authError" style="text-align:center;color:var(--danger);margin-top:10px;display:none"></p>
@@ -435,56 +435,63 @@ function showAuthModal() {
   const err = document.getElementById('authError');
 
   let lockTime = 0, countdownId = 0;
-  async function doAuth() {
+  function doAuth() {
     if (locked) return;
     const password = input.value.trim();
     if (!password) return;
     btn.disabled = true; btn.textContent = '验证中...';
-    try {
-      const currentLevel = (getAuthData() && getAuthData().level) || 0;
-      const resp = await fetch(AUTH_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, level: currentLevel })
-      });
-      const result = await resp.json();
-      if (result.success) {
-        localStorage.setItem('memorize_auth_data', JSON.stringify({
-          level: result.level,
-          expireAt: result.expireAt,
-          permanent: result.permanent,
-          signature: result.signature
-        }));
-        ov.remove();
-        initApp();
-        return;
-      }
-      // 密码错误
-      attempts++;
-      if (attempts >= 3) {
-        locked = true; lockTime = Date.now();
-        btn.disabled = true; input.disabled = true;
-        countdownId = setInterval(() => {
-          const remain = 30 - Math.floor((Date.now() - lockTime) / 1000);
-          if (remain <= 0) { clearInterval(countdownId); err.textContent = ''; return; }
-          err.textContent = '输错 3 次，已锁定 ' + remain + ' 秒';
-        }, 1000);
-        err.style.display = 'block';
-        setTimeout(() => {
-          locked = false; attempts = 0;
-          err.style.display = 'none';
-          btn.disabled = false; input.disabled = false;
-          input.value = ''; input.focus();
-        }, 30000);
-      } else {
-        err.textContent = '密码错误（' + attempts + '/3）';
-        err.style.display = 'block';
-        input.value = '';
-        input.focus();
-      }
-    } catch(e) {
-      err.textContent = '网络错误，请重试';
+
+    const currentLevel = (getAuthData() && getAuthData().level) || 0;
+
+    // 永久密码（最后一个）无论当前 level 都可以直接使用
+    if (password === AUTH_CODES[AUTH_CODES.length - 1]) {
+      localStorage.setItem('memorize_auth_data', JSON.stringify({
+        level: AUTH_CODES.length - 1,
+        expireAt: null,
+        permanent: true
+      }));
+      ov.remove();
+      initApp();
+      return;
+    }
+
+    // 当前层级密码验证
+    if (password === AUTH_CODES[currentLevel]) {
+      const isLast = currentLevel >= AUTH_CODES.length - 1;
+      const expireAt = isLast ? null : Date.now() + AUTH_MINUTES * 60 * 1000;
+      const newLevel = isLast ? currentLevel : currentLevel + 1;
+      localStorage.setItem('memorize_auth_data', JSON.stringify({
+        level: newLevel,
+        expireAt: expireAt,
+        permanent: isLast
+      }));
+      ov.remove();
+      initApp();
+      return;
+    }
+
+    // 密码错误
+    attempts++;
+    if (attempts >= 3) {
+      locked = true; lockTime = Date.now();
+      btn.disabled = true; input.disabled = true;
+      countdownId = setInterval(() => {
+        const remain = 30 - Math.floor((Date.now() - lockTime) / 1000);
+        if (remain <= 0) { clearInterval(countdownId); err.textContent = ''; return; }
+        err.textContent = '输错 3 次，已锁定 ' + remain + ' 秒';
+      }, 1000);
       err.style.display = 'block';
+      setTimeout(() => {
+        locked = false; attempts = 0;
+        err.style.display = 'none';
+        btn.disabled = false; input.disabled = false;
+        input.value = ''; input.focus();
+      }, 30000);
+    } else {
+      err.textContent = '密码错误（' + attempts + '/3）';
+      err.style.display = 'block';
+      input.value = '';
+      input.focus();
     }
     btn.disabled = false; btn.textContent = '验证';
   }
@@ -787,7 +794,7 @@ function shuffle(a) { const arr = [...a]; for (let i = arr.length - 1; i > 0; i-
 function fmtDate(ts) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function downloadFile(fn, content, mime) { const b = new Blob([content],{type:mime}), url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
 function showExportModal(title, content) {
-  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
   ov.innerHTML = `<div class="modal" style="animation:none;max-width:420px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;border-radius:var(--radius)">
     <h3 style="margin-bottom:6px">📤 ${escapeHtml(title)}</h3>
@@ -860,7 +867,7 @@ function init() {
 
 function initApp() {
   // 试用版：每30秒检查授权是否过期
-  if (AUTH_API && !isPermanentAuth()) {
+  if (!isPermanentAuth()) {
     setInterval(() => { if (!checkAuth()) { location.reload(); } }, 30000);
   }
   getSetting('density', 'low');
@@ -1051,7 +1058,7 @@ function editBank(id) {
 }
 
 function exportBank(id) {
-  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   const bank = appData.banks[id];
   if (!bank) return;
   const text = bank.cards.map(c => c.question + '|' + c.answer).join('\n');
@@ -1059,7 +1066,7 @@ function exportBank(id) {
 }
 
 function exportBankFull(id) {
-  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   const bank = appData.banks[id];
   if (!bank) return;
   // 导出为纯文本，挖空用【】标记
@@ -3039,7 +3046,7 @@ async function makeBackupCode() {
 }
 
 async function copyBackup() {
-  if (AUTH_API && !isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   try {
     const code = await makeBackupCode();
     showBackupModal(code);
