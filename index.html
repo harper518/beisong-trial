@@ -207,7 +207,7 @@ input[type="text"],input[type="search"],textarea{user-select:text;-webkit-user-s
 /* ============ Forms ============ */
 textarea,select,input[type="number"]{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:var(--font-size);font-family:inherit;background:var(--bg-card);color:var(--text);transition:all var(--transition);-webkit-appearance:none}
 textarea:focus,select:focus,input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(8,145,178,.08)}
-textarea{min-height:160px;resize:vertical;line-height:1.8}
+textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .form-group{margin-bottom:14px}
 .form-label{font-size:14px;font-weight:700;margin-bottom:8px;display:block;color:var(--text)}
 .form-hint{font-size:12px;color:var(--text-secondary);margin-top:4px;line-height:1.5}
@@ -746,17 +746,61 @@ function regenerateBlanks(card, density) {
 // ==================== 解析导入文本 ====================
 function parseImportText(rawText) {
   const lines = rawText.split(/\n/).filter(l => l.trim()), cards = [];
+  const seps = ['——','→',' - ','=','：','|',':','~','\t'];
   for (const line of lines) {
     const t = line.trim(); if (!t) continue;
-    const parts = t.split('|');
-    if (parts.length >= 2) cards.push({ question: parts[0].trim(), answer: parts.slice(1).join('|').trim() });
-    else if (t.includes('\t')) { const tp = t.split('\t'); cards.push({ question: tp[0].trim(), answer: tp.slice(1).join('\t').trim() }); }
-    else cards.push({ question: t, answer: '' });
+    let found = false;
+    for (const sep of seps) {
+      const idx = t.indexOf(sep);
+      if (idx > 0 && idx < t.length - sep.length) {
+        if (sep === ':' && (t.indexOf(':') !== t.lastIndexOf(':') || /^\d+:\d/.test(t) || /^https?:/.test(t))) continue;
+        cards.push({ question: t.substring(0, idx).trim(), answer: t.substring(idx + sep.length).trim() });
+        found = true; break;
+      }
+    }
+    if (!found) cards.push({ question: t, answer: '' });
   }
   return cards;
 }
 
-function parseJianDaText(rawText) {
+function isQAFormat(rawText) {
+	  const lines = rawText.split(/\n/).filter(l => l.trim());
+	  let qCount = 0, aCount = 0;
+	  for (const line of lines) {
+	    if (/^(Q[：:\.]|问[：:]|题目[：:])/.test(line)) qCount++;
+	    if (/^(A[：:\.]|答[：:]|答案[：:])/.test(line)) aCount++;
+	  }
+	  return qCount >= 2 && aCount >= 2;
+	}
+
+	function parseQAText(rawText) {
+	  const lines = rawText.split(/\n/), cards = [];
+	  let current = null, chapter = '';
+	  for (let i = 0; i < lines.length; i++) {
+	    const line = lines[i].trim();
+	    if (!line) continue;
+	    if (/^第[一二三四五六七八九十百\d]+章/.test(line)) { chapter = line; continue; }
+	    if (/^(Q[：:\.]|问[：:]|题目[：:])/.test(line)) {
+	      if (current && current.question) cards.push(current);
+	      current = { question: line.replace(/^(Q[：:\.]|问[：:]|题目[：:])\s*/, '').trim(), answer: '', koujue: '', chapter };
+	    } else if (/^(A[：:\.]|答[：:]|答案[：:])/.test(line) && current) {
+	      current.answer += (current.answer ? '\n' : '') + line.replace(/^(A[：:\.]|答[：:]|答案[：:])\s*/, '').trim();
+	    } else if (current) {
+	      if (/^(口诀|背诵技巧)[：:]/.test(line)) {
+	        current.koujue = line.replace(/^(口诀|背诵技巧)[：:]\s*/, '').trim();
+	      } else if (/^\d+[\.\、]/.test(line)) {
+	        if (current.question) cards.push(current);
+	        current = { question: line, answer: '', koujue: '', chapter };
+	      } else {
+	        current.answer += (current.answer ? '\n' : '') + line;
+	      }
+	    }
+	  }
+	  if (current && current.question) cards.push(current);
+	  return cards;
+	}
+
+	function parseJianDaText(rawText) {
   const lines = rawText.split(/\n/), cards = [];
   let current = null, chapter = '';
   for (let i = 0; i < lines.length; i++) {
@@ -1096,13 +1140,19 @@ function showImportModal() {
   const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'importModal';
   ov.innerHTML = `<div class="modal"><div class="modal-header"><h2 class="modal-title">导入题库</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closeImportModal()">✕</button></div>
     <div class="form-group"><label class="form-label">题库名称</label><input id="bankNameInput" type="text" placeholder="例如：生物第三章" style="padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);width:100%"></div>
-    <div class="form-group"><label class="form-label">粘贴题目</label><textarea id="importTextarea" placeholder="每行一题，用 | 分隔题目和答案&#10;&#10;示例：&#10;光合作用的场所是|叶绿体&#10;植物细胞的基本结构包括|细胞壁、细胞膜、细胞质、细胞核"></textarea></div>
+    <div class="form-group" style="position:relative"><label class="form-label">粘贴题目</label><button class="btn btn-ghost btn-sm" onclick="toggleTextareaExpand()" style="position:absolute;top:0;right:0;padding:2px 8px;font-size:14px" title="放大/缩小文本框">⛶</button><textarea id="importTextarea" placeholder="每行一题，用 | 分隔题目和答案&#10;&#10;示例：&#10;光合作用的场所是|叶绿体&#10;植物细胞的基本结构包括|细胞壁、细胞膜、细胞质、细胞核"></textarea></div>
     <div class="text-center text-sm text-secondary mb-12">—— 或者上传文件 ——</div>
-    <div class="form-group"><input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none"><button class="btn btn-outline btn-block" onclick="document.getElementById('csvFileInput').click()">📁 选择 TXT / CSV 文件</button></div>
-    <div class="form-hint mb-16">💡 <b>格式：</b>每行一题，题目和答案用 <b>|</b> 或 <b>Tab</b> 分隔。也支持含「口诀」的简答题格式（自动识别）。</div>
+    <div class="form-group"><input type="file" id="csvFileInput" accept=".csv,.txt,.md" style="display:none"><button class="btn btn-outline btn-block" onclick="document.getElementById('csvFileInput').click()">📁 选择 TXT / CSV / MD 文件</button></div>
+    <div class="form-group"><input type="file" id="wordFileInput" accept=".docx" style="display:none"><button class="btn btn-outline btn-block" id="wordImportBtn" onclick="document.getElementById('wordFileInput').click()">📄 选择 Word 文件 (.docx)</button></div>
+    <div class="form-group"><input type="file" id="pdfFileInput" accept=".pdf" style="display:none"><button class="btn btn-outline btn-block" id="pdfImportBtn" onclick="document.getElementById('pdfFileInput').click()">📑 选择 PDF 文件 (.pdf)</button></div>
+    <div class="flex gap-6 mb-12" style="flex-wrap:wrap"><button class="btn btn-sm btn-outline" onclick="cleanEmptyLines()">🧹 删除空行</button><button class="btn btn-sm btn-outline" onclick="cleanNumberPrefix()">🔢 去编号前缀</button><button class="btn btn-sm btn-outline" onclick="cleanMergeLines()">↔️ 合并断行</button><button class="btn btn-sm btn-outline" onclick="cleanHtmlTags()">🏷️ 去HTML标签</button></div>
+    <div class="form-group"><label class="form-label">识别格式</label><select id="importFormat" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size)"><option value="auto">🤖 自动检测（推荐）</option><option value="sep">📋 分隔符格式（| ： → = 等）</option><option value="jianda">📝 简答题格式（编号+口诀）</option><option value="qa">💬 Q&A格式（问/答 标记）</option></select></div>
+    <div class="form-hint mb-16">💡 支持的分隔符：<b>|</b> <b>：</b> <b>:</b> <b>→</b> <b>=</b> <b>——</b> <b>-</b> <b>~</b> <b>Tab</b>。也支持简答题和 Q&A 格式。</div>
     <div class="flex gap-10"><button class="btn btn-ghost flex-1" onclick="closeImportModal()">取消</button><button class="btn btn-primary flex-1" onclick="doImport()">预览 →</button></div></div>`;
   document.body.appendChild(ov);
   document.getElementById('csvFileInput').onchange = handleFileImport;
+  document.getElementById('wordFileInput').onchange = handleWordImport;
+  document.getElementById('pdfFileInput').onchange = handlePdfImport;
   setTimeout(() => $('bankNameInput')?.focus(), 350);
 }
 
@@ -1116,7 +1166,106 @@ async function handleFileImport(e) {
   showToast('文件已加载');
 }
 
-// 解析含【】挖空标记的文本
+async function handleWordImport(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const btn = document.getElementById('wordImportBtn');
+  btn.disabled = true; btn.textContent = '⏳ 解析中...';
+  try {
+    if (!window.mammoth) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js';
+        s.onload = resolve; s.onerror = () => reject(new Error('CDN load failed'));
+        document.head.appendChild(s);
+      });
+    }
+    const buf = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer: buf });
+    const text = result.value.trim();
+    if (!text) { showToast('Word 文件为空或无法读取'); return; }
+    $('importTextarea').value = text;
+    if (!$('bankNameInput').value) $('bankNameInput').value = file.name.replace(/\.docx?$/i, '');
+    showToast('Word 文件已解析（' + text.length + ' 字符），请检查格式后导入');
+  } catch(err) {
+    showToast('Word 解析失败：' + err.message);
+  }
+  btn.disabled = false; btn.textContent = '📄 选择 Word 文件 (.docx)';
+  e.target.value = '';
+}
+
+async function handlePdfImport(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const btn = document.getElementById('pdfImportBtn');
+  btn.disabled = true; btn.textContent = '⏳ 解析中...';
+  try {
+    if (!window.pdfjsLib) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+        s.onload = resolve; s.onerror = () => reject(new Error('CDN load failed'));
+        document.head.appendChild(s);
+      });
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    }
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const texts = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(it => it.str).join(' ');
+      if (pageText.trim()) texts.push(pageText.trim());
+      btn.textContent = '⏳ 解析中... (' + i + '/' + pdf.numPages + ')';
+    }
+    const text = texts.join('\n\n');
+    if (!text.trim()) { showToast('PDF 为空或无法读取文字（可能是扫描件）'); return; }
+    $('importTextarea').value = text;
+    if (!$('bankNameInput').value) $('bankNameInput').value = file.name.replace(/\.pdf$/i, '');
+    showToast('PDF 已解析（' + pdf.numPages + ' 页，' + text.length + ' 字符），请检查格式后导入');
+  } catch(err) {
+    showToast('PDF 解析失败：' + err.message);
+  }
+  btn.disabled = false; btn.textContent = '📑 选择 PDF 文件 (.pdf)';
+  e.target.value = '';
+}
+
+function toggleTextareaExpand() {
+	  const ta = $('importTextarea'); if (!ta) return;
+	  if (ta.style.minHeight) { ta.style.minHeight = ''; ta.style.fontSize = ''; showToast('已缩小'); }
+	  else { ta.style.minHeight = '60vh'; ta.style.fontSize = '16px'; showToast('已放大，再次点击缩小'); }
+	}
+
+	// ==================== 格式清洗 ====================
+		function cleanEmptyLines() {
+		  const ta = $("importTextarea"); if (!ta) return;
+		  ta.value = ta.value.split(/\n/).filter(l => l.trim()).join("\n");
+		  showToast("空行已删除");
+		}
+		function cleanNumberPrefix() {
+		  const ta = $("importTextarea"); if (!ta) return;
+		  ta.value = ta.value.split(/\n/).map(l => {
+		    return l.replace(/^[\d]+[\.\、\)）]\s*/, "").replace(/^[①-⑳]+[\.\、]?\s*/, "").replace(/^\([\d]+\)\s*/, "").replace(/^（[\d]+）\s*/, "").replace(/^\w\.\s*/, "").trim();
+		  }).join("\n");
+		  showToast("编号前缀已去除");
+		}
+		function cleanMergeLines() {
+		  const ta = $("importTextarea"); if (!ta) return;
+		  ta.value = ta.value.split(/\n/).reduce((acc, l) => {
+		    const t = l.trim();
+		    if (!t) { acc.push(""); return acc; }
+		    if (acc.length > 0 && acc[acc.length-1] !== "" && !/^\d/.test(t) && !/^[①-⑩]/.test(t) && !/^\(/.test(t) && !/^（/.test(t) && !/^[Q问A答]/.test(t)) {
+		      acc[acc.length-1] += t;
+		    } else { acc.push(t); }
+		    return acc;
+		  }, []).filter(l => l !== "").join("\n");
+		  showToast("断行已合并");
+		}
+		function cleanHtmlTags() {
+		  const ta = $("importTextarea"); if (!ta) return;
+		  ta.value = ta.value.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, "\"");
+		  showToast("HTML标签已去除");
+		}
+	// 解析含【】挖空标记的文本
 function parseMbakText(rawText) {
   const lines = rawText.split(/\n/), cards = [];
   for (const line of lines) {
@@ -1149,19 +1298,40 @@ function doImport() {
   if (!name) { showToast('请输入题库名称'); return; }
   if (!raw) { showToast('请粘贴题目或上传文件'); return; }
 
+  const format = $('importFormat')?.value || 'auto';
   let cards, hasBlanks = false;
-  if (isJianDaFormat(raw)) { cards = parseJianDaText(raw); showToast('检测到简答题格式'); }
-  else if (raw.trim().startsWith('{')) { try {
-    const data = JSON.parse(raw);
-    if (data._format === 'mbak' && data.cards && data.cards.length) {
-      cards = data.cards; if (data.name) name = data.name;
-      hasBlanks = true; showToast('导入含挖空备份');
-    } else { cards = []; }
-  } catch(e) { cards = parseImportText(raw); } }
-  else if (raw.includes('【') && raw.includes('】') && raw.includes('|')) {
-    cards = parseMbakText(raw); hasBlanks = true; showToast('导入含挖空文本');
+
+  if (format === 'sep') {
+    cards = parseImportText(raw);
+  } else if (format === 'jianda') {
+    cards = parseJianDaText(raw); showToast('简答题格式');
+  } else if (format === 'qa') {
+    cards = parseQAText(raw); showToast('Q&A 格式');
+  } else {
+    // 自动检测
+    const lines = raw.split(/\n/).filter(l => l.trim());
+    const sepRe = /[：:→=——\|～~\t]| - /;
+    let sepLines = 0;
+    for (const l of lines) {
+      for (const s of ['——','→',' - ','=','：','|',':','~','\t']) { if (l.includes(s)) { sepLines++; break; } }
+    }
+    const sepRatio = sepLines / Math.max(lines.length, 1);
+
+    if (raw.trim().startsWith('{')) { try {
+      const data = JSON.parse(raw);
+      if (data._format === 'mbak' && data.cards && data.cards.length) {
+        cards = data.cards; if (data.name) name = data.name;
+        hasBlanks = true; showToast('导入含挖空备份');
+      } else { cards = []; }
+    } catch(e) { cards = parseImportText(raw); } }
+    else if (raw.includes('【') && raw.includes('】') && raw.includes('|')) {
+      cards = parseMbakText(raw); hasBlanks = true; showToast('导入含挖空文本');
+    }
+    else if (sepRatio > 0.6) { cards = parseImportText(raw); showToast('分隔符格式'); }
+    else if (isJianDaFormat(raw)) { cards = parseJianDaText(raw); showToast('简答题格式'); }
+    else if (isQAFormat(raw)) { cards = parseQAText(raw); showToast('Q&A 格式'); }
+    else { cards = parseImportText(raw); }
   }
-  else { cards = parseImportText(raw); }
 
   if (!cards.length) { showToast('未能解析题目，请检查格式'); return; }
 
@@ -1758,8 +1928,6 @@ function renderPracticeSetup() {
         <p class="form-hint" id="drawModeDesc">随机抽题不重复，全部做完才重置</p>
         ${seqHtml}
       </div>
-
-
       <div class="form-group">
         <label class="form-label">🌸 题目显示</label>
         <div class="chip-group" id="hideQChips">
@@ -2004,6 +2172,7 @@ function renderPracticeCard() {
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()" style="padding:4px 8px;font-size:18px" title="返回">🏠</button>
       <span style="font-size:14px;font-weight:700;color:var(--text)">${cur} / ${total}</span>
       <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleStarCurrent()">${starIcon}</button>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--danger)" onclick="deleteCurrentCard()" title="删除此题">🗑️</button>
     </div>
 
     <!-- 密度 + 工具 同行 -->
@@ -2242,7 +2411,25 @@ function toggleStarCurrent() {
   renderPracticeCard();
 }
 
-function toggleQuestion() {
+function deleteCurrentCard() {
+	  const st = practiceState;
+	  const card = st.cards[st.index];
+	  showConfirm('删除题目', '确定删除此题吗？', () => {
+	    const bank = appData.banks[st.bankId];
+	    if (bank) bank.cards = bank.cards.filter(c => c.id !== card.id);
+	    st.cards.splice(st.index, 1);
+	    st.total = st.cards.length;
+	    st.revealed.delete(card.id);
+	    st.questionHidden.delete(card.id);
+	    if (st.userAnswersMap) st.userAnswersMap.delete(card.id);
+	    saveData(appData);
+	    showToast('已删除');
+	    if (st.total === 0) { backToPracticeSetup(); }
+	    else { if (st.index >= st.total) st.index = st.total - 1; renderPracticeCard(); }
+	  });
+	}
+
+	function toggleQuestion() {
   const card = practiceState.cards[practiceState.index];
   if (practiceState.questionHidden.has(card.id)) practiceState.questionHidden.delete(card.id);
   else practiceState.questionHidden.add(card.id);
@@ -2964,10 +3151,32 @@ function renderSettings() {
   <div class="section"><div class="section-title">关于</div>
     <div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div>
     <div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>
-    <div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div></div>`;
+    <div class="setting-item" style="cursor:pointer" onclick="addToDesktop()"><div><div class="setting-label">💻 添加到桌面</div><div class="setting-desc">下载桌面快捷方式，双击即可打开</div></div><div style="display:flex;align-items:center">↓</div></div>
+	    <div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div></div>`;
 }
 
-function checkUpdate() {
+function addToDesktop() {
+		  var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+		  var isAndroid = /Android/.test(navigator.userAgent);
+		  var title = '挖空背诵工具';
+		  if (isIOS) {
+		    showConfirm('添加到主屏幕', '1. 点下方工具栏的 <b>分享</b> 图标（方块带箭头）<br>2. 滑动找到 <b>添加到主屏幕</b><br>3. 点右上角"添加"', null, '知道了', true);
+		  } else if (isAndroid) {
+		    showConfirm('添加到主屏幕', '1. 点浏览器右上角 <b>⋮</b> 菜单<br>2. 选择 <b>添加到主屏幕</b><br>3. 点"添加"确认', null, '知道了', true);
+		  } else {
+		    var url = location.protocol === 'file:' ? location.href : 'https://laylll.github.io/beisong-trial/';
+		    var blob = new Blob(['[InternetShortcut]\\nURL=' + url], {type: 'text/plain'});
+		    var a = document.createElement('a');
+		    a.href = URL.createObjectURL(blob);
+		    a.download = title + '.url';
+		    document.body.appendChild(a);
+		    a.click();
+		    document.body.removeChild(a);
+		    URL.revokeObjectURL(a.href);
+		    showToast('快捷方式已下载，放到桌面即可');
+		  }
+		}
+	function checkUpdate() {
   showToast('正在清除缓存...');
   // 清除 Service Worker 缓存
   if ('caches' in window) {
