@@ -1027,7 +1027,7 @@ function renderBanks() {
 
   c.innerHTML = banks.map(b => {
     const starCount = b.cards.filter(x => x.starred).length;
-    const wrongCount = (appData.wrongBooks[b.id] || []).length;
+    const wrongCount = Object.keys(getWrongBook(b.id)).length;
     return `<div class="bank-item" onclick="event.stopPropagation()">
       <div class="info" onclick="startPracticeSetup('${b.id}')">
         <div class="name" onclick="event.stopPropagation();renameBankPrompt(this, '${b.id}')" title="点击修改名称" style="cursor:pointer">${escapeHtml(b.name)}</div>
@@ -2370,10 +2370,70 @@ function autoCheckIfDone() {
   if (inputs.length) applyCheckToInputs(card);
 }
 
-function applyCheckToInputs(card) {
+// 获取错题本对象（兼容旧数组格式）
+	function getWrongBook(bankId) {
+	  if (!appData.wrongBooks) appData.wrongBooks = {};
+	  if (!appData.wrongBooks[bankId]) { appData.wrongBooks[bankId] = {}; return {}; }
+	  if (Array.isArray(appData.wrongBooks[bankId])) {
+	    // 从旧数组格式升级
+	    var obj = {};
+	    appData.wrongBooks[bankId].forEach(function(id) { obj[id] = {}; });
+	    appData.wrongBooks[bankId] = obj;
+	    saveData(appData);
+	    return obj;
+	  }
+	  return appData.wrongBooks[bankId];
+	}
+
+	// 错题回顾：渲染带错空标记的答案
+	function renderWrongPreview(card, wrongDetail) {
+	  var a = card.answer ? card.answer.trim() : '';
+	  if (!a) return '';
+	  var blanks = card.blanks || [];
+	  if (!blanks.length) return '<div style="color:var(--text-secondary)">' + a.replace(/
+/g, '<br>') + '</div>';
+	  // 排序并去重叠
+	  var sorted = blanks.slice().sort(function(x,y){return x.start - y.start;});
+	  var groups = [];
+	  for (var i = 0; i < sorted.length; i++) {
+	    var b = sorted[i], added = false;
+	    for (var j = 0; j < groups.length; j++) {
+	      if (groups[j].some(function(gb){return gb.start < b.end && b.start < gb.end;})) {
+	        groups[j].push(b); added = true; break;
+	      }
+	    }
+	    if (!added) groups.push([b]);
+	  }
+	  var resolved = groups.map(function(g){return g[0];});
+	  var html = '<div style="font-size:11px;color:var(--text-tertiary);margin:8px 0 4px;font-weight:600">── 错题回顾 ──</div>';
+	  html += '<div style="line-height:2.2">';
+	  var le = 0;
+	  var wi = wrongDetail.wrongIndices || [];
+	  var wa = wrongDetail.wrongAnswers || [];
+	  for (var k = 0; k < resolved.length; k++) {
+	    var bk = resolved[k];
+	    html += (a.substring(le, bk.start)).replace(/
+/g, '<br>');
+	    var isWr = wi.indexOf(k) >= 0;
+	    var ua = isWr ? (wa[wi.indexOf(k)] || '') : (bk.text || '');
+	    var clr = isWr ? 'var(--danger)' : 'var(--success)';
+	    var bg = isWr ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)';
+	    html += '<span style="display:inline-block;border-bottom:2px solid ' + clr + ';background:' + bg + ';padding:1px 6px;border-radius:3px;margin:0 2px;font-weight:500">' + (ua || '?').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>';
+	    html += ' <span style="font-size:12px;color:var(--text-tertiary)">(' + bk.text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + ')</span>';
+	    le = bk.end;
+	  }
+	  html += (a.substring(le)).replace(/
+/g, '<br>');
+	  html += '</div>';
+	  return html;
+	}
+
+	function applyCheckToInputs(card) {
   const inputs = document.querySelectorAll('#cardText .blank-input');
   let hasWrong = false;
-  inputs.forEach(inp => {
+  const wrongIndices = [];
+  const wrongAnswers = [];
+  inputs.forEach((inp, i) => {
     const userAns = inp.value.trim();
     const correctAns = (inp.dataset.ans || '').trim();
     inp.classList.remove('correct', 'wrong');
@@ -2382,19 +2442,17 @@ function applyCheckToInputs(card) {
     } else {
       inp.classList.add('wrong');
       hasWrong = true;
+      wrongIndices.push(i);
+      wrongAnswers.push(userAns);
     }
   });
-  // 有错则收集整题到错题本（不去重，用户手动管理）
+  // 有错则收集整题到错题本，记录错空位置和填的答案
   if (hasWrong) {
-    if (!appData.wrongBooks) appData.wrongBooks = {};
-    if (!appData.wrongBooks[practiceState.bankId]) appData.wrongBooks[practiceState.bankId] = [];
-    if (!appData.wrongBooks[practiceState.bankId].includes(card.id)) {
-      appData.wrongBooks[practiceState.bankId].push(card.id);
-    }
+    const wb = getWrongBook(practiceState.bankId);
+    wb[card.id] = { wrongIndices: wrongIndices, wrongAnswers: wrongAnswers };
     saveData(appData);
   }
 }
-
 function toggleRevealCurrent() {
   saveCurrentAnswers();
   const card = practiceState.cards[practiceState.index];
@@ -2734,7 +2792,7 @@ function renderBrowseStart() {
   const bank = appData.banks[bankId];
   browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', _filteredCards: bank.cards };
 
-  const wrongCount = (appData.wrongBooks && appData.wrongBooks[bankId]) ? appData.wrongBooks[bankId].length : 0;
+  const wrongCount = Object.keys(getWrongBook(bankId)).length;
   const favCount = bank.cards.filter(c => c.starred).length;
 
   c.innerHTML = `<div class="flex justify-between items-center mb-10">
@@ -2763,7 +2821,7 @@ function changeBrowseBank() {
   const bankId = document.getElementById('browseBankSelect').value;
   const bank = appData.banks[bankId];
   if (!bank) return;
-  const wrongCount = (appData.wrongBooks && appData.wrongBooks[bankId]) ? appData.wrongBooks[bankId].length : 0;
+  const wrongCount = Object.keys(getWrongBook(bankId)).length;
   const favCount = bank.cards.filter(c => c.starred).length;
   browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', _filteredCards: bank.cards };
   // 更新 chip 数量
@@ -2780,9 +2838,9 @@ function renderBrowseList() {
 
   // 筛选
   let cards = st.cards;
-  const wrongIds = (appData.wrongBooks && appData.wrongBooks[st.bankId]) ? appData.wrongBooks[st.bankId] : [];
+  const wbBrowse = getWrongBook(st.bankId);
   if (st.filter === 'star') cards = cards.filter(c => c.starred);
-  if (st.filter === 'wrong') cards = cards.filter(c => wrongIds.includes(c.id));
+  if (st.filter === 'wrong') cards = cards.filter(c => c.id in wbBrowse);
   if (!cards.length) {
     c.innerHTML = `<div class="empty"><p>${st.filter === 'wrong' ? '暂无错题，做题时诊断后自动收集' : st.filter === 'star' ? '暂无收藏' : '题库为空'}</p></div>`;
     return;
@@ -2831,8 +2889,9 @@ function renderBrowseDetail() {
   const card = filtered[st.index];
   if (!card) { backToBrowseList(); return; }
   const cur = st.index + 1, total = filtered.length;
-  const wrongIds = (appData.wrongBooks && appData.wrongBooks[st.bankId]) ? appData.wrongBooks[st.bankId] : [];
-  const isWrong = wrongIds.includes(card.id);
+  const wbDetail = getWrongBook(st.bankId);
+  const isWrong = card.id in wbDetail;
+  const wrongDetail = wbDetail[card.id] || null;
 
   c.innerHTML = `<div>
     <div class="flex justify-between items-center mb-10">
@@ -2842,7 +2901,7 @@ function renderBrowseDetail() {
     </div>
     <div style="line-height:2;font-size:var(--font-size-lg)">
       <div style="margin-bottom:12px;font-weight:500">${escNl(card.question)}</div>
-      ${card.answer ? `<div style="color:var(--text-secondary)">${escNl(card.answer)}</div>` : ''}
+      ${wrongDetail && wrongDetail.wrongIndices ? renderWrongPreview(card, wrongDetail) : (card.answer ? `<div style="color:var(--text-secondary)">${escNl(card.answer)}</div>` : '')}
     </div>
     ${isWrong ? `<div class="text-center mt-10"><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeFromWrongBook('${card.id}')">🗑 移出错题本</button></div>` : ''}
     <div class="flex gap-8 mt-16">
@@ -2869,9 +2928,8 @@ function browseNext() { const filtered = browseState._filteredCards || browseSta
 function removeFromWrongBook(cardId) {
   if (!browseState) return;
   const bankId = browseState.bankId;
-  if (appData.wrongBooks && appData.wrongBooks[bankId]) {
-    appData.wrongBooks[bankId] = appData.wrongBooks[bankId].filter(id => id !== cardId);
-  }
+  const wbRemove = getWrongBook(bankId);
+  delete wbRemove[cardId];
   saveData(appData);
   showToast('已移出错题本');
   renderBrowseDetail();
