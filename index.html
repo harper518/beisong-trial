@@ -3517,7 +3517,6 @@ function toggleAllAnswers() {
   if (!practiceState.answersHidden) saveCurrentAnswers(); // 隐藏前先保存当前输入
   practiceState.answersHidden = !practiceState.answersHidden;
   renderPracticeCard();
-  showToast(practiceState.answersHidden ? '💐 答案已隐藏' : '💐 答案已显示');
 }
 
 function toggleStarCurrent() {
