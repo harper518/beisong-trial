@@ -1824,7 +1824,6 @@ function clearTextareaById(id) {
   ta.value = ''; showToast('已清空');
 }
 
-
 async function handleSplitFileImportQ(e) {
   var file = e.target.files[0]; if (!file) return;
   var text = await file.text();
@@ -1932,7 +1931,6 @@ async function handlePdfImport(e) {
 		  ta.value = ta.value.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, "\"");
 		  showToast("HTML标签已去除");
 		}
-		async 					// 解析含【】挖空标记的文本
 
 function copyFormatPrompt() {
   var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案\n3. 如果答案中需要挖空，用 @关键词@ 标记要挖掉的位置\n4. 如果有多行答案，在答案中用换行分隔\n5. 如有口诀，加在答案后面：题目|答案|口诀\n6. 也可用 # 标记题目、% 标记答案（多行答案每行一个%）\n\n【输出示例】\n光合作用的场所是哪里|叶绿体|光（光合）叶（叶绿体）\n植物细胞的结构包括什么|细胞壁\n细胞膜\n细胞质\n细胞核\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空';
