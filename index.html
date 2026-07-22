@@ -25,7 +25,7 @@
   --transition:0.2s cubic-bezier(.4,0,.2,1); --safe-bottom:env(safe-area-inset-bottom,16px);
 }
 /* ---- 主题色选择器 ---- */
-.color-dots { display:flex; gap:10px; flex-wrap:wrap; }
+.color-dots { display:grid; grid-template-columns:repeat(5,30px); gap:10px; justify-content:start; }
 .color-dot { width:30px; height:30px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all .2s; display:inline-block; box-shadow:0 1px 3px rgba(0,0,0,.15); }
 .color-dot.active { border-color:var(--text); transform:scale(1.18); box-shadow:0 2px 6px rgba(0,0,0,.25); }
 .color-dot:active { transform:scale(.92); }
@@ -78,6 +78,20 @@
   --text:#1a1a1a; --text-secondary:#666;
   --primary:#555; --primary-hover:#333; --primary-light:#f0f0f0; --primary-soft:#e5e5e5;
   --border:#d4d4d4;
+}
+/* 护眼 · 米黄 */
+[data-color="cream"] {
+  --bg:#fffaf3; --bg-card:#fff; --bg-input:#fffaf3;
+  --text:#4a3728; --text-secondary:#8b7355;
+  --primary:#c8965c; --primary-hover:#a6773f; --primary-light:#fff8f0; --primary-soft:#fef0e0;
+  --border:#e8d5c0;
+}
+/* 护眼 · 豆沙绿 */
+[data-color="sage"] {
+  --bg:#f4faf0; --bg-card:#fff; --bg-input:#f4faf0;
+  --text:#2d4a2d; --text-secondary:#6b8e6b;
+  --primary:#6b9e6b; --primary-hover:#4a7c4a; --primary-light:#f0f8f0; --primary-soft:#e0f0e0;
+  --border:#c8dcc8;
 }
 
 [data-theme="dark"] {
@@ -164,7 +178,7 @@ input[type="text"],input[type="search"],textarea{user-select:text;-webkit-user-s
 .btn-block{width:100%;justify-content:center}
 
 /* ============ Cards ============ */
-.card{background:var(--bg-card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:12px}
+.card{background:var(--bg-card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:12px;overflow-wrap:break-word;word-break:break-word}
 
 /* ============ Bottom Tab Bar ============ */
 .tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:calc(68px + var(--safe-bottom));padding-bottom:var(--safe-bottom);background:var(--bg-card);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
@@ -218,7 +232,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 /* ============ Practice Card ============ */
 
 .practice-card{background:var(--bg-card);border-radius:var(--radius);padding:14px 14px;box-shadow:var(--shadow-md);border:1px solid var(--border);min-height:100px;margin-bottom:10px;position:relative}
-.practice-card .card-text{font-size:var(--font-size-lg);line-height:2.0;word-break:break-word}
+.practice-card .card-text{font-size:var(--font-size-lg);line-height:2.0;word-break:break-word;overflow-wrap:break-word;overflow-x:hidden}
 .practice-card .blank-input{
   display:inline-block;min-width:36px;max-width:120px;
   padding:2px 4px;border:none;border-bottom:2px dashed var(--blank-border);
@@ -304,7 +318,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .preview-char.char-sel{background:var(--warning);border-color:var(--warning);color:#fff}
 .preview-char.saved{cursor:default}
 .preview-card{background:var(--bg-card);border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border);margin-bottom:10px}
-.preview-card .preview-text{font-size:var(--font-size);line-height:2.2;word-break:break-word}
+.preview-card .preview-text{font-size:var(--font-size);line-height:2.2;word-break:break-word;overflow-wrap:break-word;overflow-x:hidden}
 .preview-card .blank-tag{display:inline-block;background:var(--warning);padding:3px 12px;border-radius:14px;font-size:12px;color:#fff;cursor:pointer;margin:2px;font-weight:600;transition:all var(--transition)}
 .preview-card .blank-tag.removed{background:var(--text-tertiary);text-decoration:line-through;opacity:.6}
 .preview-card .blank-highlight{background:var(--blank-bg);border-bottom:2px solid var(--blank-border);border-radius:3px;padding:1px 5px}
@@ -871,7 +885,24 @@ function parseImportText(rawText) {
       const idx = t.indexOf(sep);
       if (idx > 0 && idx < t.length - sep.length) {
         if (sep === ':' && (t.indexOf(':') !== t.lastIndexOf(':') || /^\d+:\d/.test(t) || /^https?:/.test(t))) continue;
-        cards.push({ question: t.substring(0, idx).trim(), answer: t.substring(idx + sep.length).trim() });
+        const q = t.substring(0, idx).trim();
+        var rest = t.substring(idx + sep.length).trim();
+
+        // 尝试从剩余部分提取口诀：查找分隔符，取最后一次出现位置
+        var koujue = '';
+        var bestJ = -1;
+        for (var k = 0; k < seps.length; k++) {
+          var j = rest.lastIndexOf(seps[k]);
+          if (j > 0 && j < rest.length - seps[k].length && j > bestJ) bestJ = j;
+        }
+        if (bestJ > 0) {
+          koujue = rest.substring(bestJ + 1).trim();
+          rest = rest.substring(0, bestJ).trim();
+          // 口诀不要太长（超过答案一半且>20字则不是口诀）
+          if (koujue.length > Math.max(rest.length * 0.6, 20)) { koujue = ''; rest = rest + ' | ' + koujue; }
+        }
+
+        cards.push({ question: q, answer: rest, koujue: koujue });
         found = true; break;
       }
     }
@@ -1070,6 +1101,7 @@ function showBankPicker(currentId, onPick) {
 // 朗读声音弹窗（代替原生 select，避免 iPad 旋转）
 var _availableVoices = [];
 function showVoicePicker() {
+  loadVoices(); // 确保语音列表是最新的
   var currentVal = document.getElementById('voiceSelect').value;
   var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
   var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:400px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;max-height:70dvh;overflow-y:auto"><h3 style="margin-bottom:4px;font-size:18px">🎙️ 选择朗读声音</h3><p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">点击选择一个声音</p>';
@@ -1177,6 +1209,26 @@ function init() {
   }
 }
 
+function showIntroModal() {
+  var count = parseInt(localStorage.getItem('memorize_intro_count') || '0', 10);
+  if (count >= 5) return;
+  localStorage.setItem('memorize_intro_count', String(count + 1));
+
+  var msg = '<div style="text-align:left;line-height:1.8;font-size:14px">' +
+    '<div style="font-size:20px;text-align:center;margin-bottom:14px">📖 欢迎使用挖空背诵工具</div>' +
+    '<div style="margin-bottom:12px"><b>📝 两种导入方式：</b></div>' +
+    '<div style="margin-bottom:8px"><b>方式一 · 直接粘贴：</b><br>在"题库"页点 <b>＋ 导入</b>，将题目粘贴进文本框。<br>格式：<code>题目|答案</code> 或 <code>题目：答案</code>，一行一题。</div>' +
+    '<div style="margin-bottom:8px"><b>方式二 · 豆包导入：</b><br>在豆包 App 中长按对话 → 复制全文 → 回到工具点 <b>＋ 导入</b>，粘贴后自动识别。</div>' +
+    '<div style="margin-bottom:14px;color:var(--text-secondary);font-size:12px">🔐 数据存储在浏览器本地，更换设备后需重新导入。</div>' +
+    '<div style="text-align:center;color:var(--text-tertiary);font-size:11px">提示 ' + count + '/5 次 · 点击下方按钮关闭</div>' +
+    '</div>';
+
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  ov.innerHTML = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:400px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px;max-height:80dvh;overflow-y:auto">' + msg + '<button class="btn btn-primary btn-block" style="margin-top:16px" onclick="this.closest(\'.modal-overlay\').remove()">知道了 👍</button></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
+
 function initApp() {
   try {
   // 试用版：每30秒检查授权是否过期
@@ -1282,6 +1334,7 @@ function initApp() {
   }
 
   switchTab('banks');
+  setTimeout(function() { showIntroModal(); }, 600);
   } catch(e) {
     console.error('initApp error:', e);
     showFatalError(e.message || '初始化异常');
@@ -1311,8 +1364,8 @@ function applySettings() {
   document.documentElement.setAttribute('data-color', s.color || 'teal');
   document.documentElement.style.setProperty('--font-size', s.fontSize + 'px');
   // 更新顶部状态栏颜色
-  const themeLight = {teal:'#f0fdfa',purple:'#faf5ff',blue:'#f0f7ff',rose:'#fff1f5',pink:'#fdf2f8',green:'#f0fdf4',yellow:'#fefce8',bw:'#f5f5f5'};
-  const themeDark = {teal:'#042f2e',purple:'#1a0a2e',blue:'#0a1628',rose:'#1f0a14',pink:'#200a18',green:'#051a10',yellow:'#1a1508',bw:'#1a1a1a'};
+  const themeLight = {teal:'#f0fdfa',purple:'#faf5ff',blue:'#f0f7ff',rose:'#fff1f5',pink:'#fdf2f8',green:'#f0fdf4',yellow:'#fefce8',bw:'#f5f5f5',cream:'#fffaf3',sage:'#f4faf0'};
+  const themeDark = {teal:'#042f2e',purple:'#1a0a2e',blue:'#0a1628',rose:'#1f0a14',pink:'#200a18',green:'#051a10',yellow:'#1a1508',bw:'#1a1a1a',cream:'#2a2018',sage:'#1a2a1a'};
   const mc = document.getElementById('themeColorMeta');
   if (mc) mc.content = s.darkMode ? (themeDark[s.color] || '#042f2e') : (themeLight[s.color] || '#f0fdfa');
 }
@@ -1487,6 +1540,7 @@ function editBank(id) {
   showImportPreview(bank.name, cards);
 }
 
+
 function exportBank(id) {
   if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   const bank = appData.banks[id];
@@ -1520,18 +1574,53 @@ function exportBankFull(id) {
 }
 
 // ==================== 导入 ====================
+var _importFormat = 'auto';
 function showImportModal() {
   const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'importModal';
   ov.innerHTML = `<div class="modal"><div class="modal-header"><h2 class="modal-title">导入题库</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closeImportModal()">✕</button></div>
     <div class="form-group"><label class="form-label">题库名称</label><input id="bankNameInput" type="text" placeholder="例如：生物第三章" style="padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);width:100%"></div>
     <div class="form-group" style="position:relative"><label class="form-label">粘贴题目</label><button class="btn btn-ghost btn-sm" onclick="toggleTextareaExpand()" style="position:absolute;top:0;right:0;padding:2px 8px;font-size:14px" title="放大/缩小文本框">⛶</button><textarea id="importTextarea" placeholder="每行一题，用 | 分隔题目和答案&#10;&#10;示例：&#10;光合作用的场所是|叶绿体&#10;植物细胞的基本结构包括|细胞壁、细胞膜、细胞质、细胞核"></textarea></div>
+    <!-- 分开导入（可折叠） -->
+    <div style="border-top:2px dashed var(--border);padding-top:14px;margin-top:8px;margin-bottom:12px">
+      <button class="btn btn-ghost btn-block" onclick="toggleSplitImport()" style="justify-content:space-between;font-size:14px">
+        <span>📂 题目和答案分开粘贴</span><span id="splitImportArrow" style="font-size:18px;transition:transform .2s">▸</span>
+      </button>
+      <div id="splitImportSection" style="display:none;margin-top:12px">
+        <div class="form-group"><label class="form-label">📝 题目（一行一题）</label>
+          <textarea id="importQuestions" placeholder="在此粘贴所有题目...&#10;&#10;1. 光合作用的场所是&#10;2. 植物细胞的基本结构包括" style="min-height:80px"></textarea>
+          <div class="flex gap-6" style="margin-top:6px;flex-wrap:wrap">
+            <button class="btn btn-sm btn-ghost" onclick="pasteFromTextarea('importQuestions')">📋 粘贴</button>
+            <button class="btn btn-sm btn-ghost" onclick="copyFromTextarea('importQuestions')">📝 复制</button>
+            <button class="btn btn-sm btn-ghost" onclick="clearTextareaById('importQuestions')">🗑️ 清空</button>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">✅ 答案（一行一答案）</label>
+          <textarea id="importAnswers" placeholder="在此粘贴所有答案...&#10;&#10;叶绿体&#10;细胞壁、细胞膜、细胞质、细胞核" style="min-height:80px"></textarea>
+          <div class="flex gap-6" style="margin-top:6px;flex-wrap:wrap">
+            <button class="btn btn-sm btn-ghost" onclick="pasteFromTextarea('importAnswers')">📋 粘贴</button>
+            <button class="btn btn-sm btn-ghost" onclick="copyFromTextarea('importAnswers')">📝 复制</button>
+            <button class="btn btn-sm btn-ghost" onclick="clearTextareaById('importAnswers')">🗑️ 清空</button>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px">两边的第1行配对为第1题，第2行配对为第2题，以此类推。如果也填写了上方的主文本框，则分开导入的内容会合并进去。</p>
+      </div>
+    </div>
+
     <div class="text-center text-sm text-secondary mb-12">—— 或者上传文件 ——</div>
     <div class="form-group"><input type="file" id="csvFileInput" accept=".csv,.txt,.md" style="display:none"><button class="btn btn-outline btn-block" onclick="document.getElementById('csvFileInput').click()">📁 选择 TXT / CSV / MD 文件</button></div>
     <div class="form-group"><input type="file" id="wordFileInput" accept=".docx" style="display:none"><button class="btn btn-outline btn-block" id="wordImportBtn" onclick="document.getElementById('wordFileInput').click()">📄 选择 Word 文件 (.docx)</button></div>
     <div class="form-group"><input type="file" id="pdfFileInput" accept=".pdf" style="display:none"><button class="btn btn-outline btn-block" id="pdfImportBtn" onclick="document.getElementById('pdfFileInput').click()">📑 选择 PDF 文件 (.pdf)</button></div>
     <div class="flex gap-6 mb-12" style="flex-wrap:wrap"><button class="btn btn-sm btn-outline" onclick="cleanEmptyLines()">🧹 删除空行</button><button class="btn btn-sm btn-outline" onclick="cleanNumberPrefix()">🔢 去编号前缀</button><button class="btn btn-sm btn-outline" onclick="cleanMergeLines()">↔️ 合并断行</button><button class="btn btn-sm btn-outline" onclick="cleanHtmlTags()">🏷️ 去HTML标签</button></div>
-    <div class="form-group"><label class="form-label">识别格式</label><select id="importFormat" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size)"><option value="auto">🤖 自动检测（推荐）</option><option value="sep">📋 分隔符格式（| ： → = 等）</option><option value="jianda">📝 简答题格式（编号+口诀）</option><option value="qa">💬 Q&A格式（问/答 标记）</option><option value="hashpct">🏷️ #%格式（#题目 %答案）</option></select></div>
-    <div class="form-hint mb-16">💡 支持的分隔符：<b>|</b> <b>：</b> <b>:</b> <b>→</b> <b>=</b> <b>——</b> <b>-</b> <b>~</b> <b>Tab</b>。也支持简答题和 Q&A 格式。</div>
+    <div class="form-group"><label class="form-label">识别格式</label>
+      <div class="chip-group" id="importFormatGroup" style="margin-bottom:0">
+        <span class="chip active" data-fmt="auto" onclick="selectImportFormat('auto', this)">🤖 自动检测</span>
+        <span class="chip" data-fmt="sep" onclick="selectImportFormat('sep', this)">📋 分隔符</span>
+        <span class="chip" data-fmt="jianda" onclick="selectImportFormat('jianda', this)">📝 简答题</span>
+        <span class="chip" data-fmt="qa" onclick="selectImportFormat('qa', this)">💬 Q&A</span>
+        <span class="chip" data-fmt="hashpct" onclick="selectImportFormat('hashpct', this)">🏷️ #%格式</span>
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-top:8px" id="importFormatHint">自动识别粘贴内容的格式，推荐使用</p>
+      <p style="font-size:12px;color:var(--text-tertiary);margin-top:4px" id="importFormatExample"><code>题目|答案</code> 或 <code>题目：答案</code>，一行一题</p></div>
     <div class="flex gap-10"><button class="btn btn-ghost flex-1" onclick="closeImportModal()">取消</button><button class="btn btn-primary flex-1" onclick="doImport()">预览 →</button></div></div>`;
   document.body.appendChild(ov);
   document.getElementById('csvFileInput').onchange = handleFileImport;
@@ -1541,6 +1630,64 @@ function showImportModal() {
 }
 
 function closeImportModal() { const m = $('importModal'); if (m) m.remove(); }
+
+function selectImportFormat(fmt, el) {
+  _importFormat = fmt;
+  document.querySelectorAll('#importFormatGroup .chip').forEach(function(c) { c.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  var hint = document.getElementById('importFormatHint');
+  var example = document.getElementById('importFormatExample');
+  var hints = {
+    'auto': '自动识别粘贴内容的格式，推荐使用',
+    'sep': '用分隔符连接题目和答案，如 | ： → = ——',
+    'jianda': '简答题格式：编号 + 题目 + 口诀（可选），答案中有【】挖空标记',
+    'qa': 'Q&A格式：以"问"/"答"或"Q"/"A"标记题目和答案',
+    'hashpct': '#%格式：#后跟题目，%后跟答案，一行一题'
+  };
+  var examples = {
+    'auto': '<code>题目|答案</code> 或 <code>题目：答案</code>，一行一题',
+    'sep': '示例：<code>光合作用场所是|叶绿体</code><br>支持的分隔符：<b>|</b> <b>：</b> <b>:</b> <b>→</b> <b>=</b> <b>——</b> <b>-</b> <b>~</b> <b>Tab</b>',
+    'jianda': '示例：<code>1.简述教育的文化功能。（一级）|（1）教育【传递和保存】文化...|口诀：全（全民化）民（民主化）</code>',
+    'qa': '示例：<code>问：光合作用的场所是？\\n答：叶绿体</code> 或 <code>Q: 植物细胞结构？\\nA: 细胞壁、细胞膜...</code>',
+    'hashpct': '示例：<code>#光合作用的场所是\\n%叶绿体</code>'
+  };
+  if (hint) hint.textContent = hints[fmt] || hints['auto'];
+  if (example) example.innerHTML = examples[fmt] || examples['auto'];
+}
+
+function toggleSplitImport() {
+  var sec = document.getElementById('splitImportSection');
+  var arrow = document.getElementById('splitImportArrow');
+  if (!sec) return;
+  var isOpen = sec.style.display !== 'none';
+  sec.style.display = isOpen ? 'none' : 'block';
+  if (arrow) {
+    arrow.textContent = isOpen ? '▸' : '▾';
+    arrow.style.transform = isOpen ? '' : 'rotate(0deg)';
+  }
+}
+
+function pasteFromTextarea(id) {
+  var ta = document.getElementById(id); if (!ta) return;
+  navigator.clipboard.readText().then(function(text) {
+    if (text) { ta.value = text; showToast('已粘贴（' + text.length + ' 字符）'); }
+    else showToast('剪贴板为空');
+  }).catch(function() { showToast('无法读取剪贴板，请长按手动粘贴'); });
+}
+
+function copyFromTextarea(id) {
+  var ta = document.getElementById(id); if (!ta) return;
+  var text = ta.value.trim();
+  if (!text) { showToast('文本框为空'); return; }
+  navigator.clipboard.writeText(text).then(function() { showToast('已复制'); })
+    .catch(function() { showToast('复制失败，请手动选择复制'); });
+}
+
+function clearTextareaById(id) {
+  var ta = document.getElementById(id); if (!ta) return;
+  if (!ta.value.trim()) return;
+  ta.value = ''; showToast('已清空');
+}
 
 async function handleFileImport(e) {
   const file = e.target.files[0]; if (!file) return;
@@ -1649,6 +1796,31 @@ function toggleTextareaExpand() {
 		  ta.value = ta.value.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, "\"");
 		  showToast("HTML标签已去除");
 		}
+		async function pasteFromClipboard() {
+		  const ta = $("importTextarea"); if (!ta) return;
+		  try {
+		    const text = await navigator.clipboard.readText();
+		    if (text) { ta.value = text; showToast("已从剪贴板粘贴（" + text.length + " 字符）"); }
+		    else showToast("剪贴板为空");
+		  } catch(e) { showToast("无法读取剪贴板，请手动 Ctrl+V 粘贴"); }
+		}
+		function copyToClipboard() {
+		  const ta = $("importTextarea"); if (!ta) return;
+		  const text = ta.value.trim();
+		  if (!text) { showToast("文本框为空，没有可复制的内容"); return; }
+		  navigator.clipboard.writeText(text).then(function() {
+		    showToast("已复制到剪贴板（" + text.length + " 字符）");
+		  }).catch(function() {
+		    showToast("复制失败，请手动 Ctrl+A Ctrl+C");
+		  });
+		}
+		function clearTextarea() {
+		  const ta = $("importTextarea"); if (!ta) return;
+		  if (!ta.value.trim()) return;
+		  ta.value = "";
+		  showToast("文本框已清空");
+		}
+
 	// 解析含【】挖空标记的文本
 function parseMbakText(rawText) {
   const lines = rawText.split(/\n/), cards = [];
@@ -1678,11 +1850,13 @@ function parseMbakText(rawText) {
 
 function doImport() {
   const name = $('bankNameInput').value.trim();
-  const raw = $('importTextarea').value.trim();
+  var raw = $('importTextarea').value.trim();
+  // 将字面量 \n 转为真正的换行符
+  raw = raw.replace(/\\n/g, '\n');
   if (!name) { showToast('请输入题库名称'); return; }
   if (!raw) { showToast('请粘贴题目或上传文件'); return; }
 
-  var _fmtEl = $('importFormat'); const format = (_fmtEl ? _fmtEl.value : null) || 'auto';
+  const format = _importFormat || 'auto';
   let cards, hasBlanks = false;
 
   if (format === 'sep') {
@@ -1718,6 +1892,29 @@ function doImport() {
     else if (isQAFormat(raw)) { cards = parseQAText(raw); showToast('Q&A 格式'); }
     else if (isHashPctFormat(raw)) { cards = parseHashPctText(raw); showToast('#%格式'); }
     else { cards = parseImportText(raw); }
+  }
+
+  // 分开导入：题目和答案分别粘贴
+  var qSplit = ($('importQuestions')?.value || '').trim();
+  var aSplit = ($('importAnswers')?.value || '').trim();
+  if (qSplit && aSplit) {
+    qSplit = qSplit.replace(/\\n/g, '\n');
+    aSplit = aSplit.replace(/\\n/g, '\n');
+    var qLines = qSplit.split(/\n/).filter(function(l) { return l.trim(); });
+    var aLines = aSplit.split(/\n/).filter(function(l) { return l.trim(); });
+    var minLen = Math.min(qLines.length, aLines.length);
+    var splitCards = [];
+    for (var si = 0; si < minLen; si++) {
+      var sq = qLines[si].replace(/^[\d\.\、\s]+/, '').trim();
+      var sa = aLines[si].trim();
+      if (sq && sa) splitCards.push({ question: sq, answer: sa });
+    }
+    if (splitCards.length) {
+      cards = cards.concat(splitCards);
+      if (splitCards.length < qLines.length || splitCards.length < aLines.length) {
+        showToast('分开导入：配对 ' + splitCards.length + ' 题（题目' + qLines.length + '行/答案' + aLines.length + '行，取较少者）');
+      }
+    }
   }
 
   if (!cards.length) { showToast('未能解析题目，请检查格式'); return; }
@@ -2748,7 +2945,8 @@ function startPractice() {
     answers: {}, revealed: new Set(),
     questionHidden: qh, koujueExpanded: {},
     total: selected.length,
-    _streak: 0
+    _streak: 0,
+    answersHidden: false
   };
 
   $('practiceSetup').style.display = 'none';
@@ -2777,7 +2975,7 @@ function renderPracticeCard() {
 
   const card = st.cards[st.index];
   const cur = st.index + 1, total = st.total;
-  const revealed = st.revealed.has(card.id);
+  const revealed = !st.answersHidden && st.revealed.has(card.id);
   const qHidden = st.questionHidden.has(card.id);
   const density = appData.settings.density || 'low';
   const textHtml = renderCardWithBlanks(card, revealed, qHidden);
@@ -2804,6 +3002,7 @@ function renderPracticeCard() {
 	      <button class="btn btn-ghost btn-sm" onclick="regenerateCurrentBlanks()" style="padding:6px 8px;font-size:var(--font-size)" title="换一批空">🔄</button>
       <div class="flex gap-4" style="margin-left:auto">
         <button class="btn btn-ghost btn-sm" onclick="toggleRevealCurrent()" style="padding:6px 8px;font-size:var(--font-size)" title="显示原文">✨</button>
+        <button class="btn btn-ghost btn-sm" id="btnToggleAllAnswers" onclick="toggleAllAnswers()" style="padding:6px 8px;font-size:var(--font-size)" title="隐藏/显示全部答案">${st.answersHidden ? '💐' : '👁️'}</button>
         ${hasKj ? `<button class="btn btn-ghost btn-sm" onclick="toggleKoujuePanel()" style="padding:6px 8px;font-size:var(--font-size);color:var(--primary)" title="口诀">💡</button>` : ''}
         ${hasVoice ? `<button class="btn btn-ghost btn-sm" onclick="speakCard()" style="padding:6px 8px;font-size:var(--font-size)" title="朗读">🔊</button>` : ''}
       </div>
@@ -2906,7 +3105,11 @@ function renderCardWithBlanks(card, revealed, hideQ) {
   // 解决重叠空：分组后每组选一个
   const blanks = resolveBlanks(card);
   if (!blanks.length) {
-    h += `<div style="line-height:1.9">${escNl(a)}</div>`;
+    if (revealed) {
+      h += `<div style="line-height:1.9">${escNl(a)}</div>`;
+    } else {
+      h += `<div style="line-height:1.9;color:var(--text-tertiary)">答案已隐藏，点击 👁️ 按钮显示</div>`;
+    }
     return h;
   }
 
@@ -2919,7 +3122,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     if (revealed) {
       ah += `<span class="revealed-text">${escNl(b.text)}</span>`;
     } else {
-      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text)}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
+      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text)}" value="${escapeHtml(practiceState.answersHidden ? '' : saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
     }
     le = b.end;
   }
@@ -3131,12 +3334,6 @@ function applyCheckToInputs(card) {
       const emojis = {5:'🔥',10:'💥',15:'⚡',20:'🌟',30:'💎',50:'👑'};
       showToast(emojis[practiceState._streak] + ' 完美连击！×' + practiceState._streak);
     }
-    // 随机幸运题：~12% 概率
-    if (Math.random() < 0.12) {
-      appData.unicorns = (appData.unicorns || 0) + 2;
-      saveData(appData);
-      showToast('🍀 幸运题！额外获得 +2 🦄');
-    }
   } else {
     practiceState._streak = 0;
   }
@@ -3145,6 +3342,11 @@ function toggleRevealCurrent() {
   saveCurrentAnswers();
   const card = practiceState.cards[practiceState.index];
   practiceState.revealed.has(card.id) ? practiceState.revealed.delete(card.id) : practiceState.revealed.add(card.id);
+  renderPracticeCard();
+}
+
+function toggleAllAnswers() {
+  practiceState.answersHidden = !practiceState.answersHidden;
   renderPracticeCard();
 }
 
@@ -3312,18 +3514,30 @@ function doSpeakCard() {
   if (!card) return;
   const ss = window.speechSynthesis;
   ss.cancel();
-  const u = new SpeechSynthesisUtterance(card.fullText || card.question + card.answer);
-  u.lang = 'zh-CN'; u.rate = appData.settings.voiceRate || 0.9; u.pitch = appData.settings.voicePitch || 1.0;
-  const voiceName = appData.settings.voiceName;
-  if (voiceName) {
-    const voices = ss.getVoices();
-    const picked = voices.find(v => v.name === voiceName);
-    if (picked) u.voice = picked;
+  const rawText = card.fullText || card.question + card.answer;
+  const cleanText = rawText.replace(/\\n/g, '，').replace(/\n/g, '，');
+  var u = new SpeechSynthesisUtterance(cleanText);
+  u.rate = appData.settings.voiceRate || 0.9;
+  u.pitch = appData.settings.voicePitch || 1.0;
+
+  var voices = ss.getVoices();
+  // 1. 优先使用用户保存的指定语音
+  var voiceName = appData.settings.voiceName;
+  if (voiceName && voices.length) {
+    var picked = voices.find(function(v) { return v.name === voiceName; });
+    if (picked) { u.voice = picked; u.lang = picked.lang || 'zh-CN'; }
   }
-  if (!u.voice) {
-    const zh = ss.getVoices().find(v => v.lang.startsWith('zh'));
-    if (zh) u.voice = zh;
+  // 2. 没指定语音 → 自动匹配中文语音（兼容QQ浏览器/讯飞等）
+  if (!u.voice && voices.length) {
+    var zhVoice = voices.find(isChineseVoice);
+    if (zhVoice) { u.voice = zhVoice; u.lang = zhVoice.lang || 'zh-CN'; }
   }
+  // 3. 没找到中文语音 → 用第一个可用语音 + 中文 lang
+  if (!u.voice && voices.length) {
+    u.voice = voices[0];
+  }
+  // 4. 没有任何语音 → 设 lang 为 zh-CN，让引擎自行处理
+  u.lang = u.lang || 'zh-CN';
   // 朗读结束后的行为
   const readMode = appData.settings.readMode || 'once';
   u.onend = () => {
@@ -3386,27 +3600,12 @@ function showPracticeResult() {
   }
   saveData(appData);
 
-  // 练习轮次计数
-  appData.roundCount = (appData.roundCount || 0) + 1;
-  // 🦄 印章累积
-  appData.unicorns = (appData.unicorns || 0) + total;
-
-  // 📊 每日统计
-  if (!appData.dailyStats) appData.dailyStats = {};
-  const today = new Date().toISOString().slice(0, 10);
-  if (!appData.dailyStats[today]) appData.dailyStats[today] = { cards: 0, unicorns: 0 };
-  appData.dailyStats[today].cards += total;
-  appData.dailyStats[today].unicorns += total;
-  saveData(appData);
-
   const rc = $('practiceResult');
   rc.style.display = 'block';
   rc.innerHTML = `<div class="card" style="text-align:center;padding:24px 20px">
     <div style="font-size:48px;margin-bottom:8px">✅</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px">本轮完成</div>
     <div class="text-sm text-secondary">共 ${total} 题 · ${escapeHtml(st.bankName)}</div>
-    <div style="margin-top:14px;font-size:28px;letter-spacing:2px">${'🦄'.repeat(Math.min(total, 20))}</div>
-    <div style="font-size:14px;color:var(--text-secondary);margin-top:4px">本轮获得 <b style="color:var(--primary);font-size:18px">${total}</b> 个印章</div>
     <div class="flex gap-8 flex-wrap justify-center mt-16">
       <button class="btn btn-primary btn-sm" onclick="retrySameSettings()">▶ 再来一轮</button>
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()">🔄 重新设置</button>
@@ -3415,64 +3614,6 @@ function showPracticeResult() {
       <span style="font-size:12px;color:var(--text-tertiary);cursor:pointer;text-decoration:underline" onclick="copyBackup()">💾 复制备份码保存</span>
     </div>
   </div>`;
-
-  // 每5轮提醒
-  if (appData.roundCount % 5 === 0) {
-    setTimeout(() => showToast('📋 已练习 ' + appData.roundCount + ' 轮，记得备份数据哦'), 1500);
-  }
-
-  // 📊 周日弹出每周回顾
-  if (new Date().getDay() === 0) {
-    showWeeklyReview();
-  }
-}
-
-function showWeeklyReview() {
-  const ds = appData.dailyStats || {};
-  const now = new Date();
-  const getWeekRange = (offset) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() - d.getDay() + offset); // Sunday-based
-    const start = new Date(d);
-    start.setDate(start.getDate() - (offset ? 0 : 7));
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6);
-    return { start, end };
-  };
-  const fmtD = d => d.toISOString().slice(0, 10);
-
-  const thisWeek = getWeekRange(0);
-  const lastWeek = getWeekRange(-7);
-
-  let thisCards = 0, thisUnicorns = 0, thisDays = 0;
-  let lastCards = 0, lastUnicorns = 0;
-
-  for (let d = new Date(thisWeek.start); d <= thisWeek.end; d.setDate(d.getDate() + 1)) {
-    const key = fmtD(d);
-    if (ds[key]) { thisCards += ds[key].cards; thisUnicorns += ds[key].unicorns; thisDays++; }
-  }
-  for (let d = new Date(lastWeek.start); d <= lastWeek.end; d.setDate(d.getDate() + 1)) {
-    const key = fmtD(d);
-    if (ds[key]) { lastCards += ds[key].cards; lastUnicorns += ds[key].unicorns; }
-  }
-
-  const diff = thisCards - lastCards;
-  let compareMsg = '';
-  if (lastCards === 0 && thisCards > 0) compareMsg = '这是你的第一周，好的开始！';
-  else if (diff > 0) compareMsg = '比上周多了 <b>' + diff + '</b> 题，进步明显！📈';
-  else if (diff < 0) compareMsg = '比上周少了 <b>' + Math.abs(diff) + '</b> 题，下周加油！💪';
-  else compareMsg = '和上周持平，保持稳定！✊';
-
-  const msg = '<div style="text-align:center;line-height:2">' +
-    '<div style="font-size:40px;margin-bottom:8px">📊</div>' +
-    '<div style="font-size:18px;font-weight:800;margin-bottom:12px">本周回顾</div>' +
-    '<div>📝 刷了 <b>' + thisCards + '</b> 题</div>' +
-    '<div>🦄 获得 <b>' + thisUnicorns + '</b> 个印章</div>' +
-    '<div>🔥 练习 <b>' + thisDays + '</b> 天</div>' +
-    '<div style="margin-top:8px;color:var(--text-secondary)">' + compareMsg + '</div>' +
-    '</div>';
-
-  setTimeout(() => showInfoModal('每周回顾', msg, '继续加油！🎉'), 2000);
 }
 
 function showInfoModal(title, htmlMsg, btnText) {
@@ -3505,10 +3646,7 @@ const MANUALS = {
 <div>• <b>收藏</b>：可按题目 / 口诀 / 错题三个子分类筛选，搜索框快速查找</div>
 
 <div style="font-weight:700;margin-top:12px;color:var(--primary)">▎激励</div>
-<div>• 🦄 印章：做一题得一印章，设置页看累计 + 里程碑鼓励语</div>
 <div>• 🔥 连击：连续答对5/10/15/20/30/50题弹出彩蛋</div>
-<div>• 🍀 幸运题：约12%概率答对额外 +2🦄</div>
-<div>• 📊 周回顾：周日刷完弹出本周统计，和上周对比</div>
 
 <div style="font-weight:700;margin-top:12px;color:var(--primary)">▎设置</div>
 <div>• 暗色模式 + 8种主题色 + 字体大小可调</div>
@@ -3531,7 +3669,6 @@ const MANUALS = {
 <div>• 错题本定期清零：设置 → 清空错题本</div>
 <div>• 用 <code>@答案@</code> 手动标空比自动挖空更精准</div>
 <div>• 用 <b>← →</b> 把常用题库排最上面</div>
-<div>• 每天刷几轮凑连击，印章积少成多</div>
 </div>`},
 
   simple: { title: '📋 简约说明书', content: `<div style="line-height:2">
@@ -3539,7 +3676,6 @@ const MANUALS = {
 <div><b>手动挖空</b>：答案中写 <code>@关键词@</code> 标记要挖的位置</div>
 <div><b>刷题</b>：填完自动诊断，回车手动诊断，⭐收藏 💡口诀</div>
 <div><b>错题</b>：答错自动进错题本，底部标签可复习</div>
-<div><b>印章</b>：做一题得一🦄，设置页查看</div>
 <div><b>备份</b>：设置 → 复制备份码 → 粘贴到别处保存</div>
 <div><b>密码</b>：试用 <code>5826</code>，永久找 <b>小红书2750492576（说明购买永久）低价</b></div>
 </div>`},
@@ -3562,8 +3698,8 @@ const MANUALS = {
 <div>• 刷题：选题库 → 设题数 → 开始 → 填空 → 自动诊断</div>
 <div>• 复习：错题本 + 收藏分类筛选</div>
 <div>• 备份：设置 → 复制备份码 → 存到微信/备忘录</div>
-<div style="margin-top:8px">🦄 <b>激励</b></div>
-<div>• 印章累计 + 里程碑 / 连击彩蛋 / 幸运题 +2 / 周日周报</div>
+<div style="margin-top:8px">🔥 <b>激励</b></div>
+<div>• 连击彩蛋</div>
 <div style="margin-top:8px">✏️ <b>手动挖空</b></div>
 <div>• 答案中写 <code>@要挖的词@</code>，导入时自动识别</div>
 <div style="margin-top:8px">🔐 <b>密码</b></div>
@@ -3612,7 +3748,7 @@ function retrySameSettings() {
   }
   const qh = new Set();
   if (hideQuestionStart) { for (const c of selected) qh.add(c.id); }
-  practiceState = { ...practiceState, cards: selected, index: 0, answers: {}, revealed: new Set(), questionHidden: qh, koujueExpanded: {}, total: selected.length };
+  practiceState = { ...practiceState, cards: selected, index: 0, answers: {}, revealed: new Set(), questionHidden: qh, koujueExpanded: {}, total: selected.length, answersHidden: false };
   $('practiceResult').style.display = 'none';
   $('practiceActive').style.display = 'block';
   renderPracticeCard();
@@ -4271,15 +4407,6 @@ function renderSettings() {
       <button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空错题本</button>
     </div></div>
 
-  <div class="section"><div class="section-title">🦄 我的印章</div>
-    <div class="unicorn-stats" style="text-align:center;padding:16px 0">
-      <div style="letter-spacing:3px;line-height:1.4;word-break:break-all" id="unicornHerd"></div>
-      <div style="font-size:15px;color:var(--text-secondary);margin-top:8px">
-        累计获得 <b style="color:var(--primary);font-size:22px">${(appData.unicorns || 0)}</b> 个印章
-      </div>
-      <div style="font-size:13px;color:var(--text-tertiary);margin-top:4px" id="unicornMilestone"></div>
-      <div style="font-size:12px;color:var(--text-tertiary);margin-top:8px">累计练习 <b>${appData.roundCount || 0}</b> 轮</div>
-    </div></div>
 
   <div class="section"><div class="section-title">挖空设置</div>
     <div class="setting-item"><div><div class="setting-label">默认挖空密度</div><div class="setting-desc">每道题的挖空数量，做题时随时可调</div></div>
@@ -4303,8 +4430,8 @@ function renderSettings() {
   <div class="section"><div class="section-title">外观</div>
     <div class="setting-item"><div><div class="setting-label">夜间模式</div><div class="setting-desc">暗色主题，夜间刷题更护眼</div></div>
       <label class="toggle"><input type="checkbox" id="darkToggle"${s.darkMode ? ' checked' : ''} onchange="saveSetting('darkMode', this.checked)"><span class="slider"></span></label></div>
-    <div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">${({teal:'青绿',purple:'浅紫',blue:'浅蓝',rose:'玫红',pink:'粉色',green:'浅绿',yellow:'浅黄',bw:'黑白'})[s.color||'teal']}</div></div>
-      <div class="color-dots"><span class="color-dot${(s.color||'teal')==='teal'?' active':''}" style="background:#0891b2" onclick="saveThemeColor('teal')"></span><span class="color-dot${s.color==='purple'?' active':''}" style="background:#9333ea" onclick="saveThemeColor('purple')"></span><span class="color-dot${s.color==='blue'?' active':''}" style="background:#3b82f6" onclick="saveThemeColor('blue')"></span><span class="color-dot${s.color==='rose'?' active':''}" style="background:#e11d48" onclick="saveThemeColor('rose')"></span><span class="color-dot${s.color==='pink'?' active':''}" style="background:#ec4899" onclick="saveThemeColor('pink')"></span><span class="color-dot${s.color==='green'?' active':''}" style="background:#22c55e" onclick="saveThemeColor('green')"></span><span class="color-dot${s.color==='yellow'?' active':''}" style="background:#eab308" onclick="saveThemeColor('yellow')"></span><span class="color-dot${s.color==='bw'?' active':''}" style="background:#555" onclick="saveThemeColor('bw')"></span></div></div>
+    <div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">${({teal:'青绿',purple:'浅紫',blue:'浅蓝',rose:'玫红',pink:'粉色',green:'浅绿',yellow:'浅黄',bw:'黑白',cream:'护眼·米黄',sage:'护眼·豆沙绿'})[s.color||'teal']}</div></div>
+      <div class="color-dots"><span class="color-dot${(s.color||'teal')==='teal'?' active':''}" style="background:#0891b2" onclick="saveThemeColor('teal')"></span><span class="color-dot${s.color==='purple'?' active':''}" style="background:#9333ea" onclick="saveThemeColor('purple')"></span><span class="color-dot${s.color==='blue'?' active':''}" style="background:#3b82f6" onclick="saveThemeColor('blue')"></span><span class="color-dot${s.color==='rose'?' active':''}" style="background:#e11d48" onclick="saveThemeColor('rose')"></span><span class="color-dot${s.color==='pink'?' active':''}" style="background:#ec4899" onclick="saveThemeColor('pink')"></span><span class="color-dot${s.color==='green'?' active':''}" style="background:#22c55e" onclick="saveThemeColor('green')"></span><span class="color-dot${s.color==='yellow'?' active':''}" style="background:#eab308" onclick="saveThemeColor('yellow')"></span><span class="color-dot${s.color==='cream'?' active':''}" style="background:#c8965c" onclick="saveThemeColor('cream')"></span><span class="color-dot${s.color==='sage'?' active':''}" style="background:#6b9e6b" onclick="saveThemeColor('sage')"></span><span class="color-dot${s.color==='bw'?' active':''}" style="background:#555" onclick="saveThemeColor('bw')"></span></div></div>
     <div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">${s.fontSize}px</div></div>
       <div class="flex items-center gap-8" style="width:140px"><span style="font-size:13px">A</span><input type="range" min="14" max="24" value="${s.fontSize}" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))"><span style="font-size:18px;font-weight:700">A</span></div></div></div>
 
@@ -4315,68 +4442,8 @@ function renderSettings() {
     <div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:#e91e63">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:#e91e63">→</div></div>
 	    <div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div></div>`;
   loadVoices();
-  renderUnicornHerd();
 }
 
-function renderUnicornHerd() {
-  const total = appData.unicorns || 0;
-  const herdEl = document.getElementById("unicornHerd");
-  const msEl = document.getElementById("unicornMilestone");
-  if (!herdEl) return;
-  if (total === 0) {
-    herdEl.innerHTML = "<span style=\"color:var(--text-tertiary);font-size:14px\">还没有印章，快去刷题吧！</span>";
-  } else if (total >= 100) {
-    herdEl.style.fontSize = "";
-    herdEl.innerHTML = "<span style=\"font-size:48px;font-weight:800;color:var(--primary)\">🦄 × " + total + "</span>";
-  } else {
-    var size = total <= 9 ? 36 : total <= 29 ? 20 : 14;
-    var herd = "";
-    for (var i = 0; i < total; i++) {
-      herd += "🦄";
-      if ((i + 1) % 10 === 0 && i + 1 < total) herd += " ";
-    }
-    herdEl.style.fontSize = size + "px";
-    herdEl.innerHTML = herd;
-  }
-  if (msEl) {
-    const milestones = [
-      [1, "🎉 第一枚印章！坚持下去"],
-      [10, "🌟 已经10个印章了，渐入佳境"],
-      [30, "🔥 30个印章！你是个狠人"],
-      [50, "💪 50印章达成，记忆力在变强"],
-      [100, "👑 百章大师，所向披靡"],
-      [200, "🏆 200印章，传说级的坚持"],
-      [500, "🐉 500印章！你是记忆之王"]
-    ];
-    let msg = "";
-    for (const [n, m] of milestones) {
-      if (total >= n) msg = m;
-    }
-    msEl.textContent = msg;
-  }
-}
-
-function addToDesktop() {
-		  var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-		  var isAndroid = /Android/.test(navigator.userAgent);
-		  var title = '挖空背诵工具';
-		  if (isIOS) {
-		    showConfirm('添加到主屏幕', '1. 点下方工具栏的 <b>分享</b> 图标（方块带箭头）<br>2. 滑动找到 <b>添加到主屏幕</b><br>3. 点右上角"添加"', null, '知道了', true);
-		  } else if (isAndroid) {
-		    showConfirm('添加到主屏幕', '1. 点浏览器右上角 <b>⋮</b> 菜单<br>2. 选择 <b>添加到主屏幕</b><br>3. 点"添加"确认', null, '知道了', true);
-		  } else {
-		    var url = location.protocol === 'file:' ? location.href : 'https://laylll.github.io/beisong-trial/';
-		    var blob = new Blob(['[InternetShortcut]\\nURL=' + url], {type: 'text/plain'});
-		    var a = document.createElement('a');
-		    a.href = URL.createObjectURL(blob);
-		    a.download = title + '.url';
-		    document.body.appendChild(a);
-		    a.click();
-		    document.body.removeChild(a);
-		    URL.revokeObjectURL(a.href);
-		    showToast('快捷方式已下载，放到桌面即可');
-		  }
-		}
 	function checkUpdate() {
   showToast('正在清除缓存...');
   // 清除 Service Worker 缓存
@@ -4408,21 +4475,38 @@ function updateReadMode(val) {
   document.getElementById('readModeVal').textContent = {once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[val];
 }
 
+function isChineseVoice(v) {
+  const lang = (v.lang || '').toLowerCase();
+  const name = (v.name || '').toLowerCase();
+  // 标准中文 lang 标签
+  if (lang.startsWith('zh')) return true;
+  // ISO 639-3 官话
+  if (lang.startsWith('cmn')) return true;
+  // 部分引擎（如讯飞）使用 yue 粤语也算中文
+  if (lang.startsWith('yue')) return true;
+  // 按语音名称匹配：常见中文 TTS 引擎的关键词
+  const cnKeywords = ['中文', '普通话', '国语', 'chinese', 'mandarin', 'cantonese', '讯飞', 'xunfei', 'xiaoxiao', 'yunyang', 'hanhan', 'yating', 'zhiwei', 'kangkang', 'yaoyao', '小小', '云希', '晓晓', '云扬'];
+  for (var i = 0; i < cnKeywords.length; i++) {
+    if (name.indexOf(cnKeywords[i].toLowerCase()) !== -1) return true;
+  }
+  return false;
+}
+
 function loadVoices() {
   if (!window.speechSynthesis) return;
-  const voices = window.speechSynthesis.getVoices();
+  var voices = window.speechSynthesis.getVoices();
   if (!voices.length) {
     // Chrome 等浏览器异步加载语音列表，监听 voiceschanged 事件
-    window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.onvoiceschanged = function() {
       window.speechSynthesis.onvoiceschanged = null;
       loadVoices();
     };
-    // 兜底：200ms 后重试
-    setTimeout(() => { if (window.speechSynthesis) loadVoices(); }, 200);
+    // 兜底：200ms 后重试（QQ浏览器可能需要更长时间）
+    setTimeout(function() { if (window.speechSynthesis) loadVoices(); }, 500);
     return;
   }
-  // 存储到全局数组，供 showVoicePicker 弹窗使用
-  const zhVoices = voices.filter(v => v.lang.startsWith("zh"));
+  // 过滤中文语音，兼容各种引擎（系统TTS、讯飞、QQ浏览器等）
+  var zhVoices = voices.filter(isChineseVoice);
   _availableVoices = zhVoices.length ? zhVoices : voices;
 }
 
