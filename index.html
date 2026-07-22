@@ -335,9 +335,9 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 
 /* ============ Utility ============ */
 .text-center{text-align:center}.text-sm{font-size:var(--font-size-sm)}.text-secondary{color:var(--text-secondary)}
-.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}
-.flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}
-.gap-6{gap:6px}.gap-8{gap:8px}.gap-10{gap:10px}.gap-12{gap:12px}.gap-16{gap:16px}.flex-1{flex:1}.hidden{display:none!important}.w-full{width:100%}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mt-6{margin-top:6px}.mt-10{margin-top:10px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-6{margin-bottom:6px}.mb-10{margin-bottom:10px}
+.flex{display:flex}.flex-between{display:flex;justify-content:space-between;align-items:center}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}
+.gap-4{gap:4px}.gap-6{gap:6px}.gap-8{gap:8px}.gap-10{gap:10px}.gap-12{gap:12px}.gap-16{gap:16px}.flex-1{flex:1}.hidden{display:none!important}.w-full{width:100%}
 .flex-wrap{flex-wrap:wrap}
 
 /* ============ Responsive ============ */
@@ -1345,7 +1345,6 @@ function initApp() {
     }
   }
   document.addEventListener('keydown', handleBlankEnter);
-  document.addEventListener('keypress', handleBlankEnter);
 
   // 首次打开检测：如果完全没数据，提示文件位置注意事项
   const banksExist = Object.keys(appData.banks).length > 0;
@@ -1608,8 +1607,9 @@ function renameBankPrompt(el, id) {
 	    saveData(appData);
 	    el.textContent = v;
 	  };
-	  input.onblur = save;
-	  input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') { el.textContent = oldName; } };
+	  let cancelled = false;
+  input.onblur = () => { if (!cancelled) save(); };
+  input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') { cancelled = true; el.textContent = oldName; } };
 	}
 
 	function deleteBankConfirm(id) {
@@ -1852,8 +1852,7 @@ async function handleFileImport(e) {
 
 async function handleWordImport(e) {
   const file = e.target.files[0]; if (!file) return;
-  const btn = document.getElementById('wordImportBtn');
-  btn.disabled = true; btn.textContent = '⏳ 解析中...';
+  showToast('⏳ Word 解析中...');
   try {
     if (!window.mammoth) {
       await new Promise((resolve, reject) => {
@@ -1873,14 +1872,12 @@ async function handleWordImport(e) {
   } catch(err) {
     showToast('Word 解析失败：' + err.message);
   }
-  btn.disabled = false; btn.textContent = '📄 选择 Word 文件 (.docx)';
   e.target.value = '';
 }
 
 async function handlePdfImport(e) {
   const file = e.target.files[0]; if (!file) return;
-  const btn = document.getElementById('pdfImportBtn');
-  btn.disabled = true; btn.textContent = '⏳ 解析中...';
+  showToast('⏳ PDF 解析中...');
   try {
     if (!window.pdfjsLib) {
       await new Promise((resolve, reject) => {
@@ -1899,7 +1896,7 @@ async function handlePdfImport(e) {
       const content = await page.getTextContent();
       const pageText = content.items.map(it => it.str).join(' ');
       if (pageText.trim()) texts.push(pageText.trim());
-      btn.textContent = '⏳ 解析中... (' + i + '/' + pdf.numPages + ')';
+      // progress
     }
     const text = texts.join('\n\n');
     if (!text.trim()) { showToast('PDF 为空或无法读取文字（可能是扫描件）'); return; }
@@ -1909,15 +1906,8 @@ async function handlePdfImport(e) {
   } catch(err) {
     showToast('PDF 解析失败：' + err.message);
   }
-  btn.disabled = false; btn.textContent = '📑 选择 PDF 文件 (.pdf)';
   e.target.value = '';
 }
-
-function toggleTextareaExpand() {
-	  const ta = $('importTextarea'); if (!ta) return;
-	  if (ta.style.minHeight) { ta.style.minHeight = ''; ta.style.fontSize = ''; showToast('已缩小'); }
-	  else { ta.style.minHeight = '60vh'; ta.style.fontSize = '16px'; showToast('已放大，再次点击缩小'); }
-	}
 
 	// ==================== 格式清洗 ====================
 		function cleanEmptyLines() {
@@ -1925,14 +1915,7 @@ function toggleTextareaExpand() {
 		  ta.value = ta.value.split(/\n/).filter(l => l.trim()).join("\n");
 		  showToast("空行已删除");
 		}
-		function cleanNumberPrefix() {
-		  const ta = $("importTextarea"); if (!ta) return;
-		  ta.value = ta.value.split(/\n/).map(l => {
-		    return l.replace(/^[\d]+[\.\、\)）]\s*/, "").replace(/^[①-⑳]+[\.\、]?\s*/, "").replace(/^\([\d]+\)\s*/, "").replace(/^（[\d]+）\s*/, "").replace(/^\w\.\s*/, "").trim();
-		  }).join("\n");
-		  showToast("编号前缀已去除");
-		}
-		function cleanMergeLines() {
+				function cleanMergeLines() {
 		  const ta = $("importTextarea"); if (!ta) return;
 		  ta.value = ta.value.split(/\n/).reduce((acc, l) => {
 		    const t = l.trim();
@@ -1949,32 +1932,7 @@ function toggleTextareaExpand() {
 		  ta.value = ta.value.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, "\"");
 		  showToast("HTML标签已去除");
 		}
-		async function pasteFromClipboard() {
-		  const ta = $("importTextarea"); if (!ta) return;
-		  try {
-		    const text = await navigator.clipboard.readText();
-		    if (text) { ta.value = text; showToast("已从剪贴板粘贴（" + text.length + " 字符）"); }
-		    else showToast("剪贴板为空");
-		  } catch(e) { showToast("无法读取剪贴板，请手动 Ctrl+V 粘贴"); }
-		}
-		function copyToClipboard() {
-		  const ta = $("importTextarea"); if (!ta) return;
-		  const text = ta.value.trim();
-		  if (!text) { showToast("文本框为空，没有可复制的内容"); return; }
-		  navigator.clipboard.writeText(text).then(function() {
-		    showToast("已复制到剪贴板（" + text.length + " 字符）");
-		  }).catch(function() {
-		    showToast("复制失败，请手动 Ctrl+A Ctrl+C");
-		  });
-		}
-		function clearTextarea() {
-		  const ta = $("importTextarea"); if (!ta) return;
-		  if (!ta.value.trim()) return;
-		  ta.value = "";
-		  showToast("文本框已清空");
-		}
-
-	// 解析含【】挖空标记的文本
+		async 					// 解析含【】挖空标记的文本
 
 function copyFormatPrompt() {
   var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案\n3. 如果答案中需要挖空，用 @关键词@ 标记要挖掉的位置\n4. 如果有多行答案，在答案中用换行分隔\n5. 如有口诀，加在答案后面：题目|答案|口诀\n6. 也可用 # 标记题目、% 标记答案（多行答案每行一个%）\n\n【输出示例】\n光合作用的场所是哪里|叶绿体|光（光合）叶（叶绿体）\n植物细胞的结构包括什么|细胞壁\n细胞膜\n细胞质\n细胞核\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空';
@@ -2150,19 +2108,6 @@ function showImportPreview(name, cards) {
   saveBtn.onmouseenter = () => { saveBtn.style.opacity = '.5'; };
   saveBtn.onmouseleave = () => { saveBtn.style.opacity = '.15'; };
   ov.appendChild(saveBtn);
-  // 回车保存当前选中
-  ov._keyHandler = e => {
-    if (e.key !== 'Enter') return;
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    if (!previewData || previewData.mode !== 'manual') return;
-    const idx = previewData._activeIdx;
-    if (idx == null) return;
-    const sel = previewData.cards[idx]._charSelected || {};
-    if (!Object.values(sel).some(v => v)) return;
-    e.preventDefault();
-    saveCardSelection(idx);
-  };
-  document.addEventListener('keydown', ov._keyHandler);
 }
 
 function switchPreviewMode(mode, el) {
