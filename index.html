@@ -1267,6 +1267,31 @@ function initApp() {
       if (_lastBlankInput && document.body.contains(_lastBlankInput)) {
         activeEl = _lastBlankInput;
       } else {
+        // 焦点不在输入框 → 全局快捷键（仅练习模式）
+        if (practiceState && practiceState.cards && $('practiceActive').style.display !== 'none' && $('practiceResult').style.display === 'none') {
+          if (e.key === 'ArrowLeft' || e.keyCode === 37) {
+            e.preventDefault();
+            if (practiceState.index > 0) { saveCurrentAnswers(); practiceState.index--; renderPracticeCard(); }
+            return;
+          }
+          if (e.key === 'ArrowRight' || e.keyCode === 39) {
+            e.preventDefault();
+            if (practiceState.index < practiceState.total - 1) { saveCurrentAnswers(); practiceState.index++; renderPracticeCard(); }
+            else { saveCurrentAnswers(); practiceState.index++; renderPracticeCard(); }
+            return;
+          }
+          if (e.key === ' ' || e.keyCode === 32 || e.code === 'Space') {
+            e.preventDefault();
+            if (appData.settings.voiceEnabled) speakCard();
+            else showToast('请先在设置中开启语音朗读');
+            return;
+          }
+          if (e.key === 'Enter' || e.keyCode === 13 || e.code === 'Enter') {
+            e.preventDefault();
+            checkMyAnswers();
+            return;
+          }
+        }
         return;
       }
     }
@@ -1403,6 +1428,81 @@ function switchTab(name) {
 }
 
 // ==================== 题库管理 ====================
+
+// ==================== 全局搜索 ====================
+var _globalSearchTimer = null;
+function doGlobalSearch() {
+  clearTimeout(_globalSearchTimer);
+  _globalSearchTimer = setTimeout(_doGlobalSearchReal, 200);
+}
+function _doGlobalSearchReal() {
+  var q = ($('globalSearchInput') || {}).value;
+  var resultsDiv = $('globalSearchResults');
+  var banksDiv = $('banksListContainer');
+  if (!resultsDiv || !banksDiv) return;
+  q = (q || '').trim();
+  if (!q) {
+    resultsDiv.style.display = 'none';
+    banksDiv.style.display = '';
+    return;
+  }
+  var results = [];
+  var banks = Object.values(appData.banks);
+  for (var i = 0; i < banks.length; i++) {
+    var bank = banks[i];
+    for (var j = 0; j < bank.cards.length; j++) {
+      var card = bank.cards[j];
+      var text = (card.question || '') + ' ' + (card.answer || '');
+      if (text.toLowerCase().indexOf(q.toLowerCase()) !== -1) {
+        results.push({ bankId: bank.id, bankName: bank.name, cardIndex: j, card: card });
+      }
+    }
+  }
+  if (!results.length) {
+    banksDiv.style.display = 'none';
+    resultsDiv.style.display = '';
+    resultsDiv.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-tertiary)"><div style="font-size:40px;margin-bottom:10px">🔍</div><div>没有找到包含 "<b>' + escapeHtml(q) + '</b>" 的题目</div></div>';
+    return;
+  }
+  banksDiv.style.display = 'none';
+  resultsDiv.style.display = '';
+  var html = '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px">找到 <b>' + results.length + '</b> 条结果</div>';
+  for (var i = 0; i < Math.min(results.length, 50); i++) {
+    var r = results[i];
+    var qHighlight = highlightMatch(r.card.question || '', q);
+    var aPreview = (r.card.answer || '').substring(0, 60);
+    if (r.card.answer && r.card.answer.length > 60) aPreview += '...';
+    html += '<div style="cursor:pointer;padding:12px 14px;margin-bottom:8px;background:var(--bg-card);border-radius:var(--radius-sm);border:1px solid var(--border)" onclick="navigateToSearchResult(\'' + r.bankId + '\', ' + r.cardIndex + ')">' +
+      '<div style="font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text)">' + qHighlight + '</div>' +
+      '<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px">' + escapeHtml(aPreview) + '</div>' +
+      '<div style="font-size:11px;color:var(--primary)">📚 ' + escapeHtml(r.bankName) + '</div>' +
+    '</div>';
+  }
+  if (results.length > 50) {
+    html += '<div style="text-align:center;font-size:12px;color:var(--text-tertiary);padding:8px">仅显示前 50 条，请输入更精确的关键词</div>';
+  }
+  resultsDiv.innerHTML = html;
+}
+function highlightMatch(text, query) {
+  var idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return escapeHtml(text);
+  var before = escapeHtml(text.substring(0, idx));
+  var match = escapeHtml(text.substring(idx, idx + query.length));
+  var after = escapeHtml(text.substring(idx + query.length));
+  return before + '<mark style="background:#fef08a;color:#854d0e;padding:0 2px;border-radius:2px">' + match + '</mark>' + after;
+}
+function navigateToSearchResult(bankId, cardIndex) {
+  var bank = appData.banks[bankId];
+  if (!bank) return;
+  // 先设 sessionStorage，让 renderBrowseStart 加载正确题库
+  sessionStorage.setItem('lastPracticeBank', bankId);
+  switchTab('browse');
+  // 覆盖为详情视图
+  browseState = { bankId: bankId, bankName: bank.name, cards: bank.cards, index: cardIndex, view: 'detail', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards };
+  renderBrowseDetail();
+  window.scrollTo(0, 0);
+}
+
 function renderBanks() {
   const c = $('banksContainer');
   if (!c) return;
@@ -1421,7 +1521,12 @@ function renderBanks() {
     return;
   }
 
-  c.innerHTML = banks.map((b, idx) => {
+  // 全局搜索栏
+  var totalCards = 0;
+  banks.forEach(function(b) { totalCards += b.cards.length; });
+  var searchHtml = '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
+  c.innerHTML = searchHtml;
+  c.innerHTML += banks.map((b, idx) => {
     const isFirst = idx === 0;
     const isLast = idx === banks.length - 1;
     return `<div class="bank-item" data-bank-id="${b.id}" data-bank-idx="${idx}">
@@ -1446,7 +1551,7 @@ function renderBanks() {
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + '</div>';
 }
 
 // ==================== 题库排序 ====================
@@ -1576,60 +1681,90 @@ function exportBankFull(id) {
 // ==================== 导入 ====================
 var _importFormat = 'auto';
 function showImportModal() {
-  const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'importModal';
-  ov.innerHTML = `<div class="modal"><div class="modal-header"><h2 class="modal-title">导入题库</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closeImportModal()">✕</button></div>
-    <div class="form-group"><label class="form-label">题库名称</label><input id="bankNameInput" type="text" placeholder="例如：生物第三章" style="padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);width:100%"></div>
-    <div class="form-group" style="position:relative"><label class="form-label">粘贴题目</label><button class="btn btn-ghost btn-sm" onclick="toggleTextareaExpand()" style="position:absolute;top:0;right:0;padding:2px 8px;font-size:14px" title="放大/缩小文本框">⛶</button><textarea id="importTextarea" placeholder="每行一题，用 | 分隔题目和答案&#10;&#10;示例：&#10;光合作用的场所是|叶绿体&#10;植物细胞的基本结构包括|细胞壁、细胞膜、细胞质、细胞核"></textarea></div>
-    <!-- 分开导入（可折叠） -->
-    <div style="border-top:2px dashed var(--border);padding-top:14px;margin-top:8px;margin-bottom:12px">
-      <button class="btn btn-ghost btn-block" onclick="toggleSplitImport()" style="justify-content:space-between;font-size:14px">
-        <span>📂 题目和答案分开粘贴</span><span id="splitImportArrow" style="font-size:18px;transition:transform .2s">▸</span>
-      </button>
-      <div id="splitImportSection" style="display:none;margin-top:12px">
-        <div class="form-group"><label class="form-label">📝 题目（一行一题）</label>
-          <textarea id="importQuestions" placeholder="在此粘贴所有题目...&#10;&#10;1. 光合作用的场所是&#10;2. 植物细胞的基本结构包括" style="min-height:80px"></textarea>
-          <div class="flex gap-6" style="margin-top:6px;flex-wrap:wrap">
-            <button class="btn btn-sm btn-ghost" onclick="pasteFromTextarea('importQuestions')">📋 粘贴</button>
-            <button class="btn btn-sm btn-ghost" onclick="copyFromTextarea('importQuestions')">📝 复制</button>
-            <button class="btn btn-sm btn-ghost" onclick="clearTextareaById('importQuestions')">🗑️ 清空</button>
-          </div>
-        </div>
-        <div class="form-group"><label class="form-label">✅ 答案（一行一答案）</label>
-          <textarea id="importAnswers" placeholder="在此粘贴所有答案...&#10;&#10;叶绿体&#10;细胞壁、细胞膜、细胞质、细胞核" style="min-height:80px"></textarea>
-          <div class="flex gap-6" style="margin-top:6px;flex-wrap:wrap">
-            <button class="btn btn-sm btn-ghost" onclick="pasteFromTextarea('importAnswers')">📋 粘贴</button>
-            <button class="btn btn-sm btn-ghost" onclick="copyFromTextarea('importAnswers')">📝 复制</button>
-            <button class="btn btn-sm btn-ghost" onclick="clearTextareaById('importAnswers')">🗑️ 清空</button>
-          </div>
-        </div>
-        <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px">两边的第1行配对为第1题，第2行配对为第2题，以此类推。如果也填写了上方的主文本框，则分开导入的内容会合并进去。</p>
-      </div>
-    </div>
-
-    <div class="text-center text-sm text-secondary mb-12">—— 或者上传文件 ——</div>
-    <div class="form-group"><input type="file" id="csvFileInput" accept=".csv,.txt,.md" style="display:none"><button class="btn btn-outline btn-block" onclick="document.getElementById('csvFileInput').click()">📁 选择 TXT / CSV / MD 文件</button></div>
-    <div class="form-group"><input type="file" id="wordFileInput" accept=".docx" style="display:none"><button class="btn btn-outline btn-block" id="wordImportBtn" onclick="document.getElementById('wordFileInput').click()">📄 选择 Word 文件 (.docx)</button></div>
-    <div class="form-group"><input type="file" id="pdfFileInput" accept=".pdf" style="display:none"><button class="btn btn-outline btn-block" id="pdfImportBtn" onclick="document.getElementById('pdfFileInput').click()">📑 选择 PDF 文件 (.pdf)</button></div>
-    <div class="flex gap-6 mb-12" style="flex-wrap:wrap"><button class="btn btn-sm btn-outline" onclick="cleanEmptyLines()">🧹 删除空行</button><button class="btn btn-sm btn-outline" onclick="cleanNumberPrefix()">🔢 去编号前缀</button><button class="btn btn-sm btn-outline" onclick="cleanMergeLines()">↔️ 合并断行</button><button class="btn btn-sm btn-outline" onclick="cleanHtmlTags()">🏷️ 去HTML标签</button></div>
-    <div class="form-group"><label class="form-label">识别格式</label>
-      <div class="chip-group" id="importFormatGroup" style="margin-bottom:0">
-        <span class="chip active" data-fmt="auto" onclick="selectImportFormat('auto', this)">🤖 自动检测</span>
-        <span class="chip" data-fmt="sep" onclick="selectImportFormat('sep', this)">📋 分隔符</span>
-        <span class="chip" data-fmt="jianda" onclick="selectImportFormat('jianda', this)">📝 简答题</span>
-        <span class="chip" data-fmt="qa" onclick="selectImportFormat('qa', this)">💬 Q&A</span>
-        <span class="chip" data-fmt="hashpct" onclick="selectImportFormat('hashpct', this)">🏷️ #%格式</span>
-      </div>
-      <p style="font-size:12px;color:var(--text-secondary);margin-top:8px" id="importFormatHint">自动识别粘贴内容的格式，推荐使用</p>
-      <p style="font-size:12px;color:var(--text-tertiary);margin-top:4px" id="importFormatExample"><code>题目|答案</code> 或 <code>题目：答案</code>，一行一题</p></div>
-    <div class="flex gap-10"><button class="btn btn-ghost flex-1" onclick="closeImportModal()">取消</button><button class="btn btn-primary flex-1" onclick="doImport()">预览 →</button></div></div>`;
+  var ov = document.createElement('div'); ov.id = 'importModal';
+  ov.style.cssText = 'display:block;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:150;overflow-y:auto;padding:16px;padding-bottom:100px';
+  ov.innerHTML = '<div class="flex-between mb-8" style="display:flex;justify-content:space-between;align-items:center">' +
+    '<h2 style="font-size:18px;margin:0">📋 导入题库</h2>' +
+    '<button class="btn btn-sm" style="background:var(--border);border:none;min-width:40px;padding:8px;border-radius:8px;cursor:pointer;font-size:16px" onclick="closeImportModal()">✕</button>' +
+    '</div>' +
+    '<div class="card" style="background:var(--bg-card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">' +
+    // 题库名称
+    '<div class="form-group" style="margin-bottom:14px"><label class="form-label" style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">题库名称</label>' +
+    '<input type="text" id="bankNameInput" placeholder="例如：生物第三章" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size)"></div>' +
+    // 内容格式
+    '<div class="form-group" style="margin-bottom:14px"><label class="form-label" style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">内容格式</label>' +
+    '<div class="chip-group mb-8" id="importFormatGroup">' +
+      '<span class="chip active" data-fmt="auto" onclick="selectImportFormat(\'auto\', this)">🤖 自动检测</span>' +
+      '<span class="chip" data-fmt="sep" onclick="selectImportFormat(\'sep\', this)">📋 分隔符</span>' +
+      '<span class="chip" data-fmt="jianda" onclick="selectImportFormat(\'jianda\', this)">📝 简答题</span>' +
+      '<span class="chip" data-fmt="qa" onclick="selectImportFormat(\'qa\', this)">💬 Q&A</span>' +
+      '<span class="chip" data-fmt="hashpct" onclick="selectImportFormat(\'hashpct\', this)">🏷️ #%格式</span>' +
+    '</div>' +
+    '<p style="font-size:12px;color:var(--text-secondary);margin-top:4px" id="importFormatHint">自动识别粘贴内容的格式，推荐使用</p></div>' +
+    // 题目内容
+    '<div class="form-group" style="margin-bottom:14px"><label class="form-label" style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">题目内容</label>' +
+    '<p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px" id="importFormatExample"><code>题目|答案</code> 或 <code>题目：答案</code>，一行一题</p>' +
+    '<textarea id="importTextarea" placeholder="每行一题，用 | 分隔题目和答案\n\n示例：\n光合作用的场所是|叶绿体\n植物细胞的基本结构包括|细胞壁、细胞膜、细胞质、细胞核" style="width:100%;min-height:180px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
+    // 按钮行：粘贴/上传/复制/清空
+    '<div style="display:flex;gap:8px;margin-top:6px">' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="pasteFromTextarea(\'importTextarea\')">📋 粘贴</button>' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="document.getElementById(\'csvFileInput\').click()">📂 上传</button>' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="copyFromTextarea(\'importTextarea\')">📝 复制</button>' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importTextarea\')">🗑 清空</button>' +
+    '</div>' +
+    // 格式话术 + 清洗工具行
+    '<div style="margin-top:6px">' +
+      '<button class="btn btn-sm" style="background:var(--primary-light);border:none;font-size:11px;width:100%;color:var(--primary);font-weight:600" onclick="copyFormatPrompt()">📋 复制格式话术（给AI用）</button>' +
+    '</div>' +
+    '<div style="display:flex;gap:6px;margin-top:6px">' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:11px;flex:1" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:11px;flex:1" onclick="cleanEmptyLines()">🧹 去空行</button>' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:11px;flex:1" onclick="cleanHtmlTags()">🏷️ 去HTML</button>' +
+    '</div></div>' +
+    // 分开导入（可折叠）
+    '<div style="border-top:2px dashed var(--border);padding-top:14px;margin-top:8px;margin-bottom:12px">' +
+      '<button class="btn btn-ghost btn-block" onclick="toggleSplitImport()" style="justify-content:space-between;font-size:14px;width:100%;display:flex;align-items:center;padding:8px 12px;border:none;background:transparent;color:var(--text);cursor:pointer">' +
+        '<span>📂 题目和答案分开粘贴</span><span id="splitImportArrow" style="font-size:18px;transition:transform .2s">▸</span>' +
+      '</button>' +
+      '<div id="splitImportSection" style="display:none;margin-top:12px">' +
+        '<div class="form-group" style="margin-bottom:12px"><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">📝 题目（一行一题）</label>' +
+          '<textarea id="importQuestions" placeholder="在此粘贴所有题目...\n\n1. 光合作用的场所是\n2. 植物细胞的基本结构包括" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
+          '<div style="display:flex;gap:8px;margin-top:6px;margin-bottom:4px">' +
+            '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="pasteFromTextarea(\'importQuestions\')">📋 粘贴</button>' +
+            '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="copyFromTextarea(\'importQuestions\')">📝 复制</button>' +
+            '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importQuestions\')">🗑 清空</button>' +
+            '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="document.getElementById(\'fileQuestionsInput\').click()">📂 上传</button>' +
+          '</div></div>' +
+        '<div class="form-group" style="margin-bottom:8px"><label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">✅ 答案（一行一答案）</label>' +
+          '<textarea id="importAnswers" placeholder="在此粘贴所有答案...\n\n叶绿体\n细胞壁、细胞膜、细胞质、细胞核" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
+          '<div style="display:flex;gap:8px;margin-top:6px">' +
+            '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="pasteFromTextarea(\'importAnswers\')">📋 粘贴</button>' +
+            '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="copyFromTextarea(\'importAnswers\')">📝 复制</button>' +
+            '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importAnswers\')">🗑 清空</button>' +
+            '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="document.getElementById(\'fileAnswersInput\').click()">📂 上传</button>' +
+          '</div></div>' +
+        '<p style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px">两边的第1行配对为第1题，第2行配对为第2题，以此类推。</p>' +
+      '</div>' +
+    '</div>' +
+    // 隐藏的文件输入
+    '<input type="file" id="csvFileInput" accept=".csv,.txt,.md" style="display:none">' +
+    '<input type="file" id="wordFileInput" accept=".docx" style="display:none">' +
+    '<input type="file" id="pdfFileInput" accept=".pdf" style="display:none">' +
+    '<input type="file" id="fileQuestionsInput" accept=".csv,.txt,.md" style="display:none">' +
+    '<input type="file" id="fileAnswersInput" accept=".csv,.txt,.md" style="display:none">' +
+    // 导入按钮
+    '<button class="btn btn-primary btn-block" onclick="doImport()" style="width:100%;margin-top:8px;padding:12px;font-size:16px;font-weight:600">📥 预览 →</button>' +
+    '</div>';
   document.body.appendChild(ov);
   document.getElementById('csvFileInput').onchange = handleFileImport;
   document.getElementById('wordFileInput').onchange = handleWordImport;
   document.getElementById('pdfFileInput').onchange = handlePdfImport;
-  setTimeout(() => { var el = $('bankNameInput'); if (el) el.focus(); }, 350);
+  document.getElementById('fileQuestionsInput').onchange = handleSplitFileImportQ;
+  document.getElementById('fileAnswersInput').onchange = handleSplitFileImportA;
+  setTimeout(function() { var el = document.getElementById('bankNameInput'); if (el) el.focus(); }, 350);
 }
 
-function closeImportModal() { const m = $('importModal'); if (m) m.remove(); }
+function closeImportModal() { var m = document.getElementById('importModal'); if (m) m.remove(); }
 
 function selectImportFormat(fmt, el) {
   _importFormat = fmt;
@@ -1687,6 +1822,24 @@ function clearTextareaById(id) {
   var ta = document.getElementById(id); if (!ta) return;
   if (!ta.value.trim()) return;
   ta.value = ''; showToast('已清空');
+}
+
+
+async function handleSplitFileImportQ(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var text = await file.text();
+  var ta = document.getElementById('importQuestions');
+  if (ta) ta.value = text;
+  showToast('题目文件已加载（' + text.length + ' 字符）');
+  e.target.value = '';
+}
+async function handleSplitFileImportA(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var text = await file.text();
+  var ta = document.getElementById('importAnswers');
+  if (ta) ta.value = text;
+  showToast('答案文件已加载（' + text.length + ' 字符）');
+  e.target.value = '';
 }
 
 async function handleFileImport(e) {
@@ -1822,6 +1975,16 @@ function toggleTextareaExpand() {
 		}
 
 	// 解析含【】挖空标记的文本
+
+function copyFormatPrompt() {
+  var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案\n3. 如果答案中需要挖空，用 @关键词@ 标记要挖掉的位置\n4. 如果有多行答案，在答案中用换行分隔\n5. 如有口诀，加在答案后面：题目|答案|口诀\n6. 也可用 # 标记题目、% 标记答案（多行答案每行一个%）\n\n【输出示例】\n光合作用的场所是哪里|叶绿体|光（光合）叶（叶绿体）\n植物细胞的结构包括什么|细胞壁\n细胞膜\n细胞质\n细胞核\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(prompt).then(function() { showToast('📋 格式话术已复制，可粘贴到豆包/AI使用'); });
+  } else {
+    showToast('⚠️ 复制失败，请手动复制');
+  }
+}
+
 function parseMbakText(rawText) {
   const lines = rawText.split(/\n/), cards = [];
   for (const line of lines) {
