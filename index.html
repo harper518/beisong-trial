@@ -1498,7 +1498,7 @@ function navigateToSearchResult(bankId, cardIndex) {
   sessionStorage.setItem('lastPracticeBank', bankId);
   switchTab('browse');
   // 覆盖为详情视图
-  browseState = { bankId: bankId, bankName: bank.name, cards: bank.cards, index: cardIndex, view: 'detail', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards };
+  browseState = { bankId: bankId, bankName: bank.name, cards: bank.cards, index: cardIndex, view: 'detail', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards, answersHidden: false };
   renderBrowseDetail();
   window.scrollTo(0, 0);
 }
@@ -3947,7 +3947,7 @@ function renderBrowseStart() {
   let bankId = sessionStorage.getItem('lastPracticeBank');
   if (!bankId || !appData.banks[bankId]) bankId = banks[0].id;
   const bank = appData.banks[bankId];
-  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards };
+  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards, answersHidden: false };
 
   const wrongCount = Object.keys(getWrongBook(bankId)).length;
   const favCount = bank.cards.filter(c => c.starred).length;
@@ -4026,7 +4026,7 @@ function changeBrowseBank() {
   const wrongCount = Object.keys(getWrongBook(bankId)).length;
   const favCount = bank.cards.filter(c => c.starred).length;
 	  const kjCount = bank.cards.filter(c => c.koujue).length;
-  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards };
+  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards, answersHidden: false };
   // 更新 chip 数量
   const chips = document.querySelectorAll('#browseFilterChips .chip');
   if (chips[1]) chips[1].textContent = '⭐ 收藏' + (favCount ? ' · ' + favCount : '');
@@ -4161,15 +4161,19 @@ function renderBrowseDetail() {
   const isWrong = card.id in wbDetail;
   const wrongDetail = wbDetail[card.id] || null;
 
+    const ansHidden = st.answersHidden;
   c.innerHTML = `<div>
     <div class="flex justify-between items-center mb-10">
       <button class="btn btn-ghost btn-sm" onclick="backToBrowseList()">← 目录</button>
       <span class="text-sm text-secondary">${cur} / ${total}</span>
-      <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleBrowseStar()">${card.starred ? '⭐' : '☆'}</button>
+      <div class="flex gap-8" style="align-items:center">
+        <button class="btn btn-ghost btn-sm" onclick="toggleBrowseAnswers()" style="padding:6px 8px;font-size:var(--font-size)" title="隐藏/显示答案">💐</button>
+        <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleBrowseStar()">${card.starred ? '⭐' : '☆'}</button>
+      </div>
     </div>
     <div style="line-height:2;font-size:var(--font-size-lg)">
       <div style="margin-bottom:12px;font-weight:500">${escNl(card.question)}</div>
-      ${wrongDetail && wrongDetail.wrongIndices ? renderWrongCardInteractive(card, wrongDetail) : (card.answer ? `<div style="color:var(--text-secondary)">${escNl(card.answer)}</div>` : '')}
+      ${ansHidden ? `<div style="line-height:1.9;color:var(--text-tertiary)">答案已隐藏，点击 💐 按钮显示</div>` : (wrongDetail && wrongDetail.wrongIndices ? renderWrongCardInteractive(card, wrongDetail) : (card.answer ? `<div style="color:var(--text-secondary)">${escNl(card.answer)}</div>` : ''))}
     </div>
     ${isWrong ? `<div class="text-center mt-10"><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeFromWrongBook('${card.id}')">🗑 移出错题本</button></div>` : ''}
     <div class="flex gap-8 mt-16">
@@ -4177,6 +4181,11 @@ function renderBrowseDetail() {
       <button class="btn btn-ghost flex-1" onclick="browseNext()"${st.index >= total - 1 ? ' disabled style="opacity:.4"' : ''}>下一题 →</button>
     </div>
   </div>`;
+}
+
+function toggleBrowseAnswers() {
+  browseState.answersHidden = !browseState.answersHidden;
+  renderBrowseDetail();
 }
 
 function backToBrowseList() {
