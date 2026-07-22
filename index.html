@@ -3267,16 +3267,16 @@ function renderCardWithBlanks(card, revealed, hideQ) {
   if (!a) return h;
   h += `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-weight:600;letter-spacing:.5px">── 填空区 ──</div>`;
 
+  // 用户主动隐藏 → 统一显示提示
+  if (practiceState.answersHidden) {
+    h += `<div style="line-height:1.9;color:var(--text-tertiary)">答案已隐藏，点击 💐 按钮显示</div>`;
+    return h;
+  }
+
   // 解决重叠空：分组后每组选一个
   const blanks = resolveBlanks(card);
   if (!blanks.length) {
-    if (revealed) {
-      h += `<div style="line-height:1.9">${escNl(a)}</div>`;
-    } else if (practiceState.answersHidden) {
-      h += `<div style="line-height:1.9;color:var(--text-tertiary)">答案已隐藏，点击 💐 按钮显示</div>`;
-    } else {
-      h += `<div style="line-height:1.9">${escNl(a)}</div>`;
-    }
+    h += `<div style="line-height:1.9">${escNl(a)}</div>`;
     return h;
   }
 
@@ -3289,7 +3289,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     if (revealed) {
       ah += `<span class="revealed-text">${escNl(b.text)}</span>`;
     } else {
-      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text)}" value="${escapeHtml(practiceState.answersHidden ? '' : saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
+      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text)}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
     }
     le = b.end;
   }
