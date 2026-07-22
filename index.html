@@ -3167,7 +3167,7 @@ function renderPracticeCard() {
 	      <button class="btn btn-ghost btn-sm" onclick="regenerateCurrentBlanks()" style="padding:6px 8px;font-size:var(--font-size)" title="换一批空">🔄</button>
       <div class="flex gap-4" style="margin-left:auto">
         <button class="btn btn-ghost btn-sm" onclick="toggleRevealCurrent()" style="padding:6px 8px;font-size:var(--font-size)" title="显示原文">✨</button>
-        <button class="btn btn-ghost btn-sm" id="btnToggleAllAnswers" onclick="toggleAllAnswers()" style="padding:6px 8px;font-size:var(--font-size)" title="隐藏/显示全部答案">${st.answersHidden ? '💐' : '👁️'}</button>
+        <button class="btn btn-ghost btn-sm" id="btnToggleAllAnswers" onclick="toggleAllAnswers()" style="padding:6px 8px;font-size:var(--font-size)" title="隐藏/显示全部答案">💐</button>
         ${hasKj ? `<button class="btn btn-ghost btn-sm" onclick="toggleKoujuePanel()" style="padding:6px 8px;font-size:var(--font-size);color:var(--primary)" title="口诀">💡</button>` : ''}
         ${hasVoice ? `<button class="btn btn-ghost btn-sm" onclick="speakCard()" style="padding:6px 8px;font-size:var(--font-size)" title="朗读">🔊</button>` : ''}
       </div>
@@ -3273,7 +3273,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     if (revealed) {
       h += `<div style="line-height:1.9">${escNl(a)}</div>`;
     } else {
-      h += `<div style="line-height:1.9;color:var(--text-tertiary)">答案已隐藏，点击 👁️ 按钮显示</div>`;
+      h += `<div style="line-height:1.9;color:var(--text-tertiary)">答案已隐藏，点击 💐 按钮显示</div>`;
     }
     return h;
   }
