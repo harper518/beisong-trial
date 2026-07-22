@@ -3317,6 +3317,7 @@ function resolveBlanks(card) {
 }
 
 function saveCurrentAnswers() {
+  if (practiceState.answersHidden) return; // 隐藏状态下不保存，避免空值覆盖已有答案
   const inputs = document.querySelectorAll('#cardText .blank-input');
   const ans = {};
   inputs.forEach(inp => {
