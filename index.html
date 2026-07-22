@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- © 2026 小阮 · 挖空背诵工具 · 小阮出品 -->
+<!-- © 2026 小阮 · 挖空背诵工具 · 试用 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"/>
@@ -8,7 +8,6 @@
 <meta name="apple-mobile-web-app-title" content="记忆填空"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" id="themeColorMeta" content="#f0fdfa"/>
-<link rel="manifest" href="manifest.json"/>
 <title>挖空背诵工具 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
@@ -191,6 +190,8 @@ input[type="text"],input[type="search"],textarea{user-select:text;-webkit-user-s
 .bank-item .actions{display:flex;gap:4px;flex-shrink:0}
 .bank-item .actions .btn-icon{width:36px;height:36px;padding:0;border-radius:50%;background:var(--bg-input);border:none;color:var(--text-secondary);font-size:var(--font-size);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--transition)}
 .bank-item .actions .btn-icon:active{background:var(--primary-soft);color:var(--primary)}
+.btn-sort{width:24px;height:20px;padding:0;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-tertiary);font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all var(--transition)}
+.btn-sort:active{background:var(--primary-soft);color:var(--primary)}
 
 /* ============ Empty State ============ */
 .empty{text-align:center;padding:56px 24px;color:var(--text-secondary)}
@@ -205,8 +206,10 @@ input[type="text"],input[type="search"],textarea{user-select:text;-webkit-user-s
 .chip.active{background:var(--primary-light);border-color:var(--primary);color:var(--primary);font-weight:700;box-shadow:0 0 0 3px rgba(8,145,178,.12)}
 
 /* ============ Forms ============ */
-textarea,select,input[type="number"]{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:var(--font-size);font-family:inherit;background:var(--bg-card);color:var(--text);transition:all var(--transition);-webkit-appearance:none}
-textarea:focus,select:focus,input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(8,145,178,.08)}
+textarea,input[type="number"]{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:var(--font-size);font-family:inherit;background:var(--bg-card);color:var(--text);transition:all var(--transition);-webkit-appearance:none}
+select{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:var(--font-size);font-family:inherit;background:var(--bg-card);color:var(--text);transition:all var(--transition)}
+textarea:focus,input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(8,145,178,.08)}
+select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(8,145,178,.08)}
 textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .form-group{margin-bottom:14px}
 .form-label{font-size:14px;font-weight:700;margin-bottom:8px;display:block;color:var(--text)}
@@ -325,7 +328,6 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 
 /* ============ Responsive ============ */
 @media(min-width:481px){
-  body{border-left:1px solid var(--border);border-right:1px solid var(--border)}
   .modal{border-radius:var(--radius);margin-bottom:20px;max-height:85dvh}
   .modal-overlay{align-items:center}
 }
@@ -343,6 +345,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   .browse-dir-item{padding:14px 18px}
 }
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
 </style>
 </head>
 <body>
@@ -357,6 +360,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
       <p class="text-sm text-secondary">📚 管理你的填空题和简答题</p>
     </div>
     <button class="btn btn-primary" onclick="showImportModal()" style="padding:10px 18px">＋ 导入</button>
+    <button class="btn btn-outline" onclick="showMergeModal()" style="padding:10px 18px">🔀 合并</button>
   </div>
   <div id="banksContainer"></div>
 </div>
@@ -371,6 +375,8 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 <!-- ====== 浏览页面 ====== -->
 <div class="page" id="page-browse"><div id="browseContainer"></div></div>
 
+<!-- ====== 错题本页面 ====== -->
+<div class="page" id="page-wrongbook"><div id="wrongbookContainer"></div></div>
 <!-- ====== 口诀页面 ====== -->
 <div class="page" id="page-koujue"><div id="koujueContainer"></div></div>
 
@@ -385,13 +391,13 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   <button class="tab-item active" data-tab="banks" onclick="switchTab('banks')"><span class="tab-icon">📚</span>题库</button>
   <button class="tab-item" data-tab="practice" onclick="switchTab('practice')"><span class="tab-icon">📝</span>做题</button>
   <button class="tab-item" data-tab="browse" onclick="switchTab('browse')"><span class="tab-icon">📖</span>浏览</button>
-  <button class="tab-item" data-tab="koujue" onclick="switchTab('koujue')"><span class="tab-icon">🧠</span>口诀</button>
+  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">❌</span>错题</button>
   <button class="tab-item" data-tab="settings" onclick="switchTab('settings')"><span class="tab-icon">⚙️</span>设置</button>
 </nav>
 
 <script>
 // ==================== 授权激活（本地验证） ====================
-const AUTH_CODES = ['5826', '6387', '37825'];
+const AUTH_CODES = ['5826'];
 const AUTH_MINUTES = 10;
 
 function getAuthData() {
@@ -417,18 +423,22 @@ function checkAuth() {
 function showAuthModal() {
   localStorage.removeItem('memorize_auth_data');
   let attempts = 0, locked = false;
-  const ov = document.createElement('div');
-  ov.className = 'modal-overlay';
+  // 隐藏所有页面内容，显示简洁验证页
+  var pages = document.querySelectorAll('.page');
+  for (var p = 0; p < pages.length; p++) pages[p].style.display = 'none';
+  var tabBar = document.querySelector('.tab-bar');
+  if (tabBar) tabBar.style.display = 'none';
+  var ov = document.createElement('div');
   ov.id = 'authModal';
-  ov.style.zIndex = '9999';
-  ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:340px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px">
-    <div style="text-align:center;font-size:48px;margin-bottom:12px">🔐</div>
-    <h3 style="text-align:center;margin-bottom:6px">授权验证</h3>
-    <p class="text-sm text-secondary" style="text-align:center;margin-bottom:16px">请输入授权密码，有效期 10 分钟</p>
-    <input type="number" id="authInput" placeholder="输入密码" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:20px;text-align:center;letter-spacing:6px">
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100dvh;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:9999;padding:20px';
+  ov.innerHTML = `<div style="width:100%;max-width:340px;text-align:center">
+    <div style="font-size:48px;margin-bottom:12px">🔐</div>
+    <h3 style="margin-bottom:6px;font-size:20px;font-weight:700;color:var(--text)">授权验证</h3>
+    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">请输入授权密码，有效期 10 分钟</p>
+    <input type="text" inputmode="numeric" id="authInput" placeholder="输入密码" autocomplete="off" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:20px;text-align:center;letter-spacing:6px">
     <p class="text-sm" id="authError" style="text-align:center;color:var(--danger);margin-top:10px;display:none"></p>
-    <button class="btn btn-primary btn-block mt-12" id="authBtn">验证</button>
-    <p class="text-sm text-secondary" style="text-align:center;margin-top:16px">请联系微信获取密码</p>
+    <button class="btn btn-primary btn-block mt-12" id="authBtn" style="margin-top:12px">验证</button>
+    <p style="color:var(--text-tertiary);font-size:13px;margin-top:16px">请联系微信获取密码</p>
   </div>`;
   document.body.appendChild(ov);
 
@@ -453,7 +463,11 @@ function showAuthModal() {
         permanent: true
       }));
       ov.remove();
-      initApp();
+      var pages2 = document.querySelectorAll('.page');
+      for (var q = 0; q < pages2.length; q++) pages2[q].style.display = '';
+      var tb2 = document.querySelector('.tab-bar');
+      if (tb2) tb2.style.display = '';
+      try { initApp(); } catch(e) { console.error('initApp error:', e); showFatalError(e.message || '初始化异常'); }
       return;
     }
 
@@ -468,7 +482,11 @@ function showAuthModal() {
         permanent: isLast
       }));
       ov.remove();
-      initApp();
+      var pages3 = document.querySelectorAll('.page');
+      for (var r = 0; r < pages3.length; r++) pages3[r].style.display = '';
+      var tb3 = document.querySelector('.tab-bar');
+      if (tb3) tb3.style.display = '';
+      try { initApp(); } catch(e) { console.error('initApp error:', e); showFatalError(e.message || '初始化异常'); }
       return;
     }
 
@@ -500,7 +518,7 @@ function showAuthModal() {
 
   btn.onclick = doAuth;
   input.addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); });
-  setTimeout(() => input.focus(), 400);
+  // 不自动聚焦，让用户手动点击输入框（移动端键盘需要用户手势才能弹出）
 }
 
 // ==================== localStorage 数据层 ====================
@@ -527,7 +545,18 @@ function getPresetData_7666() {
   return {
     banks: {
       'preset_edu': { id:'preset_edu', name:'教育学简答题（示例）', createdAt: Date.now(), updatedAt: Date.now(), cards: eduCards },
-      'preset_med': { id:'preset_med', name:'内科护理学简答题（示例）', createdAt: Date.now()+1000, updatedAt: Date.now()+1000, cards: medCards }
+      'preset_med': { id:'preset_med', name:'内科护理学简答题（示例）', createdAt: Date.now()+1000, updatedAt: Date.now()+1000, cards: medCards },
+      'preset_fanli': { id:'preset_fanli', name:'范例', createdAt: Date.now()+2000, updatedAt: Date.now()+2000, cards: [
+        { id:'f92', question:'92.简述贯彻说服教育法的要求。', answer:'（1）要有明确的目的性和针对性。\\n（2）要富有知识性和趣味性。\\n（3）注意时机，善于捕捉教育契机。\\n（4）以诚待人。', koujue:'地（目的性）震（针对性）知（知识性）趣（趣味性），奇迹（教育契机）成人', chapter:'教育学' },
+        { id:'f93', question:'93.简述贯彻榜样示范法的要求。', answer:'（1）选好学习的榜样。选好榜样是学习榜样的前提。我们应根据时代要求和学生实际情况，指导他们选择好学习的榜样，获得前进的明确方向和巨大动力。\\n（2）激起学生对榜样的敬慕之情。要使榜样能对学生产生激励作用，推动他们前进，就需要引导学生了解榜样。\\n（3）引导学生用榜样来调节行为，提高修养。要及时地把学生的情感、冲动引导到行动上来，把敬慕之情转化为道德行为和习惯，逐步巩固、加深这种情感。', koujue:'好（选好榜样）情（敬慕之情）行（调节行为）', chapter:'教育学' },
+        { id:'f94', question:'94.简述中学德育的途径。', answer:'（1）思想政治课与其他学科教学。\\n（2）社会实践活动。\\n（3）课外活动。\\n（4）共青团组织的活动。\\n（5）班会、校会、周会、晨会。\\n（6）班主任工作。', koujue:'一教（学科教学）二班（班会和班主任工作）三活', chapter:'教育学' },
+        { id:'f95', question:'95.简述班集体的发展阶段。', answer:'（1）组建阶段：学生初进学校，同学们尽管形式上同属一个班级，实际上是一个个孤立的个体。\\n（2）核心形成阶段：同学之间开始相互了解，在班主任的引导培养下，涌现出了一批积极分子。\\n（3）发展阶段：班集体已成为教育主体。多数学生无须外在监督，已能自己管理和教育自己。\\n（4）成熟阶段：班集体趋向成熟，学生积极参与班级活动，形成强有力的舆论和班风。', koujue:'组（组建阶段）合（核心形成阶段）法（发展阶段）术（成熟阶段）', chapter:'教育学' },
+        { id:'f96', question:'96.简述班集体形成标志。', answer:'（1）坚定正确的政治方向与明确的奋斗目标。\\n（2）健全的组织机构与坚强的领导核心。\\n（3）严格的规章制度与严明的组织纪律。\\n（4）正确的集体舆论与良好的班风。', koujue:'健全班风是组织的目标', chapter:'教育学' },
+        { id:'f97', question:'97.简述良好班集体的培养措施。', answer:'（1）确定班集体的发展目标。\\n（2）建立班集体的核心队伍。\\n（3）建立班集体的正常秩序。\\n（4）组织形式多样的教育活动。\\n（5）培养正确的舆论和良好的班风。', koujue:'目标（发展目标）核心（核心队伍），治（正常秩序）活（教育活动）班风', chapter:'教育学' },
+        { id:'f98', question:'98.简述班主任的个别教育工作。', answer:'班主任对优等生的个别教育工作：\\n（1）严格要求，防止自满。\\n（2）不断激励，提高抗挫折能力。\\n（3）消除嫉妒，公平竞争。\\n（4）发挥优势，带动全班。\\n口诀：严要求，常激励，消嫉妒，用优势\\n\\n班主任对中等生的个别教育工作：\\n（1）重视对中等生的教育。\\n（2）根据中等生的不同特点有的放矢地进行个别教育。\\n（3）给中等生创造充分展示自己才能的机会，增强他们的自信心。\\n口诀：重视个别（个别教育）与食（展示）材（才能）\\n\\n班主任对后进生的个别教育工作：\\n（1）关心热爱与严格要求相结合。\\n（2）培养和激发学习动机。\\n（3）善于发掘后进生身上的"闪光点"，增强其自信心和集体荣誉感。\\n（4）针对后进生的个别差异，因材施教。\\n（5）对后进生的教育要持之以恒。', koujue:'恒（持之以恒）心（关心热爱）才（因材施教）发（培养与激发）光（闪光点）', chapter:'教育学' },
+        { id:'f99', question:'99.简述维持课堂纪律的策略。', answer:'（1）建立有效的课堂规则。\\n（2）合理组织课堂教学。\\n（3）做好课堂监控。\\n（4）培养学生的自律品质。', koujue:'自（自律）建（课堂监控）贵（规则）族（合理组织）', chapter:'教育学' },
+        { id:'f100', question:'100.简述教师教学能力的结构。', answer:'（1）教学认知能力。教学认知能力主要是指教师对教学目标、教学任务、学习者的特点、某一具体内容的教学方法与策略的选择以及教学情境的分析和判断能力。\\n（2）教学设计能力。教学设计能力是指教师事先对课堂教学的目标、内容、方法等重要的教学因素进行周密而详细的计划和安排。\\n（3）教学操作能力。教学操作能力主要是指教师在实现教学目标的过程中解决具体教学问题的能力。\\n（4）教学监控能力。教学监控能力是指教师为了保证教学成功，达到预期的教学目标，而在教学的全过程中，将教学活动本身作为意识的对象，不断对其进行积极、主动的计划、检查、评价、反馈、控制和调节的能力。', koujue:'自（教学认知能力）己（教学设计能力）操（教学操作能力）控（教学监控能力）', chapter:'教育学' }
+      ] }
     },
     settings: { density:'low', darkMode:false, fontSize:16, voiceEnabled:false, voiceRate:0.9, voicePitch:1.0 },
     seqProgress: {}, favorites: {}, wrongBooks: {}
@@ -535,14 +564,60 @@ function getPresetData_7666() {
 }
 
 function loadData() {
-  try { const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); if (d) return Object.assign({ banks:{}, settings:{}, seqProgress:{}, favorites:{}, wrongBooks:{} }, d); }
-  catch(e) {}
-  return getPresetData_7666();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return getPresetData_7666();
+    const d = JSON.parse(raw);
+    // 数据结构校验：防止损坏数据导致后续崩溃
+    if (!d || typeof d !== 'object') return getPresetData_7666();
+    if (!d.banks || typeof d.banks !== 'object') d.banks = {};
+    if (!d.settings || typeof d.settings !== 'object') d.settings = {};
+    if (!d.seqProgress || typeof d.seqProgress !== 'object') d.seqProgress = {};
+    if (!d.favorites || typeof d.favorites !== 'object') d.favorites = {};
+    if (!d.wrongBooks || typeof d.wrongBooks !== 'object') d.wrongBooks = {};
+    // 校验每个题库的 cards 是数组，防止后续 .cards.length/.cards.forEach 崩溃
+    if (d.banks) {
+      for (const bid of Object.keys(d.banks)) {
+        const b = d.banks[bid];
+        if (!b || typeof b !== 'object') { delete d.banks[bid]; continue; }
+        if (!Array.isArray(b.cards)) b.cards = [];
+        // 校验每张卡是对象
+        b.cards = b.cards.filter(function(c) { return c && typeof c === 'object'; });
+      }
+    }
+    return Object.assign({ banks:{}, settings:{}, seqProgress:{}, favorites:{}, wrongBooks:{} }, d);
+  }
+  catch(e) {
+    console.error('loadData error, using preset:', e);
+    return getPresetData_7666();
+  }
 }
 
-function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function saveData(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(e) {
+    console.error('saveData error:', e);
+  }
+}
+let _debouncedSave = null;
+function debouncedSaveData(data) { clearTimeout(_debouncedSave); _debouncedSave = setTimeout(() => saveData(data), 200); }
 
 let appData = loadData();
+
+// 确保预设题库永远存在（防止数据损坏导致空页面）
+(function() {
+  var preset = getPresetData_7666();
+  if (preset && preset.banks) {
+    var keys = Object.keys(preset.banks);
+    for (var i = 0; i < keys.length; i++) {
+      var bid = keys[i];
+      if (!appData.banks[bid]) {
+        appData.banks[bid] = preset.banks[bid];
+      }
+    }
+  }
+})();
 
 function getSetting(key, defVal) {
   if (appData.settings[key] === undefined) { appData.settings[key] = defVal; saveData(appData); }
@@ -552,6 +627,22 @@ function getSetting(key, defVal) {
 function saveSetting(key, value) { appData.settings[key] = value; saveData(appData); applySettings(); }
 
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,8); }
+
+function restorePresetBanks() {
+  var preset = getPresetData_7666();
+  if (preset && preset.banks) {
+    var keys = Object.keys(preset.banks);
+    for (var i = 0; i < keys.length; i++) {
+      var bid = keys[i];
+      if (!appData.banks[bid]) {
+        appData.banks[bid] = preset.banks[bid];
+      }
+    }
+    saveData(appData);
+    renderBanks();
+    showToast('✅ 预设题库已恢复');
+  }
+}
 
 // ==================== 自动挖空算法 ====================
 const STOP_WORDS = new Set(['的','了','是','在','和','与','或','对','从','到','等','这','那','其','之','也','就','都','但','而','且','所','被','把','让','向','同','及','以及','着','过','可以','能够','需要','应该','必须','可能','已经','正在','将要','没有','不是','什么','怎么','怎样','如何','为什么','哪个','哪里','因为','所以','虽然','但是','如果','即使','除非','无论','不管','进行','使用','通过','根据','关于','对于','由于','为了','一个','一种','这个','这种','一些','这些','那些','每个','第一','第二','第三','首先','其次','最后','然后','接着','方面','部分','情况','过程','结果','作用','功能','特点','具有','形成','产生','发生','发展','变化','包括','包含','主要','重要','基本','一般','特别','非常','比较','更加','一定','所有','任何','不同','相同','之间','之中','之后','之前','以内','以外','以上','以下','不能','不会','不可','不再','也是','就有','都会','也可','是指','称为','叫做','属于','用来','用以','用于','作为','其中','其他','其它','各自','某些','有的','有些','我国','人们','我们','他们','你们','它们','当','并','则','以','可','能','会','要','有','无']);
@@ -667,6 +758,32 @@ function autoGenerateBlanks(cards, density, seed) {
     const ft = q + '\n' + a;
     const answerStart = q.length + 1;
     if (!a) return { ...card, fullText: ft, blanks: [] };
+
+    // 🏷️ 手动挖空：检测 @...@ 标记
+    const atMatches = a.match(/@/g);
+    if (atMatches && atMatches.length >= 2 && atMatches.length % 2 === 0) {
+      let blanks = [];
+      const re = /@([^@]+)@/g;
+      let m;
+      while ((m = re.exec(a)) !== null) {
+        blanks.push({ text: m[1], isAnswer: true });
+      }
+      // 去除 @ 符号（仅去除配对@...@中的@），构建干净文本后重新定位
+      const cleanA = a.replace(/@([^@]+)@/g, '$1');
+      const cleanFt = q + '\n' + cleanA;
+      let searchFrom = answerStart;
+      for (const b of blanks) {
+        const idx = cleanA.indexOf(b.text, searchFrom - answerStart);
+        if (idx >= 0) {
+          b.start = answerStart + idx;
+          b.end = answerStart + idx + b.text.length;
+          searchFrom = answerStart + idx + b.text.length;
+        }
+        // 定位失败则跳过，避免生成幽灵空格
+      }
+      blanks = blanks.filter(b => b.start !== undefined);
+      return { ...card, fullText: cleanFt, blanks: blanks };
+    }
 
     const pointTexts = splitIntoPoints(a);
     if (!pointTexts.length) return { ...card, fullText: ft, blanks: [] };
@@ -832,9 +949,71 @@ function isJianDaFormat(rawText) {
   return kj >= 2 && num >= 3;
 }
 
+function isHashPctFormat(rawText) {
+  const lines = rawText.split(/\n/).filter(l => l.trim());
+  let hashCount = 0, pctCount = 0;
+  for (const line of lines) {
+    if (/^#\\s*\\S/.test(line)) hashCount++;
+    if (/^%\\s*\\S/.test(line)) pctCount++;
+  }
+  return hashCount >= 1 && pctCount >= 1;
+}
+
+function parseHashPctText(rawText) {
+  const lines = rawText.split(/\n/), cards = [];
+  let current = null, orphanPct = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    if (/^#\\s*\\S/.test(line)) {
+      if (current && current.question) cards.push(current);
+      current = { question: line.replace(/^#\\s*/, "").trim(), answer: "", koujue: "" };
+    } else if (/^%\\s*\\S/.test(line)) {
+      if (current) {
+        current.answer += (current.answer ? "\n" : "") + line.replace(/^%\\s*/, "").trim();
+      } else {
+        orphanPct++;
+      }
+    } else if (current) {
+      current.answer += (current.answer ? "\n" : "") + line;
+    }
+  }
+  if (current && current.question) cards.push(current);
+  if (orphanPct > 0) showToast('⚠️ 有 ' + orphanPct + ' 行%开头的内容出现在题目之前，已被忽略');
+  return cards;
+}
+
 // ==================== 工具函数 ====================
 function $(id) { return document.getElementById(id); }
 function escapeHtml(s) { if (!s) return ''; return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function showFatalError(msg) {
+  // 显示致命错误恢复界面，确保用户不会卡在死页
+  try {
+    // 先清除可能存在的旧错误界面
+    var oldErr = document.getElementById('fatalError');
+    if (oldErr) oldErr.remove();
+    var ov = document.createElement('div');
+    ov.id = 'fatalError';
+    ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:99999;display:flex;align-items:center;justify-content:center;font-family:sans-serif;overflow:auto;-webkit-overflow-scrolling:touch';
+    ov.innerHTML = '<div style="text-align:center;padding:24px;max-width:360px">'
+      + '<div style="font-size:48px;margin-bottom:12px">⚠️</div>'
+      + '<h2 style="margin-bottom:8px;color:#e91e63">页面出了点问题</h2>'
+      + '<p style="color:#666;font-size:14px;margin-bottom:8px">' + (msg || '初始化失败，可能是数据损坏或浏览器兼容问题') + '</p>'
+      + '<p style="color:#999;font-size:12px;margin-bottom:20px">可尝试以下方法恢复</p>'
+      + '<button onclick="try{localStorage.removeItem(\'' + STORAGE_KEY + '\');}catch(e){}location.reload()" style="display:block;width:100%;padding:12px;margin-bottom:8px;background:#e91e63;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer">🔄 重置数据并刷新</button>'
+      + '<button onclick="location.reload()" style="display:block;width:100%;padding:12px;margin-bottom:8px;background:#f0f0f0;color:#333;border:1px solid #ddd;border-radius:8px;font-size:16px;cursor:pointer">🔁 直接刷新</button>'
+      + '<p style="color:#999;font-size:11px;margin-top:12px">重置会清空所有数据，刷新保留数据再试一次</p>'
+      + '</div>';
+    document.body.appendChild(ov);
+  } catch(e2) {
+    try {
+      document.body.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>⚠️ 页面错误</h2><p>' + (msg||'') + '</p><p style="font-size:12px;color:#999">请尝试清除浏览器数据后重新打开</p></div>';
+    } catch(e3) {
+      // 最后的手段
+      document.write('<html><body style="font-family:sans-serif;padding:40px;text-align:center"><h2>⚠️ 页面错误</h2><p>请清除浏览器数据后重新打开</p></body></html>');
+    }
+  }
+}
 function escNl(s) { return escapeHtml(s).replace(/\n/g, '<br>').replace(/\\n/g, '<br>'); }
 function shuffle(a) { const arr = [...a]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 function fmtDate(ts) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -868,7 +1047,89 @@ function copyExportContent(btn) {
   }
   ov.remove();
 }
-function showToast(msg) { const c = $('toastContainer'), t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; c.appendChild(t); setTimeout(() => t.remove(), 2300); }
+function showToast(msg) { const c = $('toastContainer'); if (!c) return; const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; c.appendChild(t); setTimeout(function() { t.remove(); }, 2300); }
+
+// iPad 友好的题库选择弹窗（替代原生 select）
+var _bankPickerCallback = null;
+function showBankPicker(currentId, onPick) {
+  var banks = Object.values(appData.banks).sort(function(a, b) { return (a.order != null ? a.order : a.createdAt) - (b.order != null ? b.order : b.createdAt); });
+  _bankPickerCallback = onPick;
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:400px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;max-height:70dvh;overflow-y:auto"><h3 style="margin-bottom:4px;font-size:18px">📚 选择题库</h3><p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">点击选择一个题库</p>';
+  for (var i = 0; i < banks.length; i++) {
+    var b = banks[i];
+    var isActive = b.id === currentId;
+    html += '<div class="bank-item" style="cursor:pointer;margin-bottom:6px;' + (isActive ? 'border:2px solid var(--primary);background:var(--primary-light)' : '') + '" onclick="var cb=_bankPickerCallback;this.closest(\'.modal-overlay\').remove();if(cb)cb(\'' + b.id + '\')"><div class="info"><div class="name">' + escapeHtml(b.name) + '</div><div class="meta">' + b.cards.length + ' 题</div></div></div>';
+  }
+  html += '</div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) { ov.remove(); _bankPickerCallback = null; } });
+}
+
+// 朗读声音弹窗（代替原生 select，避免 iPad 旋转）
+var _availableVoices = [];
+function showVoicePicker() {
+  var currentVal = document.getElementById('voiceSelect').value;
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:400px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;max-height:70dvh;overflow-y:auto"><h3 style="margin-bottom:4px;font-size:18px">🎙️ 选择朗读声音</h3><p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">点击选择一个声音</p>';
+  // 自动选择选项
+  var isActive = currentVal === '';
+  html += '<div style="cursor:pointer;padding:10px 12px;margin-bottom:6px;border-radius:8px;' + (isActive ? 'border:2px solid var(--primary);background:var(--primary-light);font-weight:600' : 'border:2px solid var(--border)') + '" onclick="updateVoiceName(\'\');this.closest(\'.modal-overlay\').remove()">自动选择</div>';
+  for (var i = 0; i < _availableVoices.length; i++) {
+    var v = _availableVoices[i];
+    isActive = v.name === currentVal;
+    html += '<div style="cursor:pointer;padding:10px 12px;margin-bottom:6px;border-radius:8px;' + (isActive ? 'border:2px solid var(--primary);background:var(--primary-light);font-weight:600' : 'border:2px solid var(--border)') + '" onclick="updateVoiceName(\'' + v.name.replace(/"/g, '&quot;').replace(/'/g, "\\'") + '\');this.closest(\'.modal-overlay\').remove()">' + escapeHtml(v.name) + ' <span style="color:var(--text-tertiary);font-size:12px">' + escapeHtml(v.lang) + '</span></div>';
+  }
+  html += '</div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
+
+// 朗读模式弹窗（代替原生 select，避免 iPad 旋转）
+function showReadModePicker() {
+  var currentVal = document.getElementById('readModeSelect').value;
+  var modes = [
+    {value:'once', label:'仅读一遍'},
+    {value:'loop', label:'循环朗读'},
+    {value:'auto-next', label:'自动下一题'},
+    {value:'three-times', label:'每题三遍'}
+  ];
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:400px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;max-height:70dvh;overflow-y:auto"><h3 style="margin-bottom:4px;font-size:18px">🔊 朗读模式</h3><p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">点击选择一个模式</p>';
+  for (var i = 0; i < modes.length; i++) {
+    var m = modes[i];
+    var isActive = m.value === currentVal;
+    html += '<div style="cursor:pointer;padding:10px 12px;margin-bottom:6px;border-radius:8px;' + (isActive ? 'border:2px solid var(--primary);background:var(--primary-light);font-weight:600' : 'border:2px solid var(--border)') + '" onclick="updateReadMode(\'' + m.value + '\');this.closest(\'.modal-overlay\').remove()">' + m.label + '</div>';
+  }
+  html += '</div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
+
+// 口诀页题库选择弹窗（代替原生 select，避免 iPad 旋转）
+function showKjBankPicker() {
+  var currentVal = document.getElementById('kjBankSelect').value;
+  var banks = Object.values(appData.banks).sort(function(a, b) { return (a.order != null ? a.order : a.createdAt) - (b.order != null ? b.order : b.createdAt); });
+  var allKjBanks = [];
+  for (var i = 0; i < banks.length; i++) {
+    var kjCards = banks[i].cards.filter(function(x) { return x.koujue; });
+    if (kjCards.length) allKjBanks.push({ bankId: banks[i].id, bankName: banks[i].name, cards: kjCards });
+  }
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:400px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;max-height:70dvh;overflow-y:auto"><h3 style="margin-bottom:4px;font-size:18px">💡 选择口诀库</h3><p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">点击选择一个题库</p>';
+  for (var i = 0; i < allKjBanks.length; i++) {
+    var b = allKjBanks[i];
+    var isActive = b.bankId === currentVal;
+    html += '<div style="cursor:pointer;padding:10px 12px;margin-bottom:6px;border-radius:8px;' + (isActive ? 'border:2px solid var(--primary);background:var(--primary-light);font-weight:600' : 'border:2px solid var(--border)') + '" onclick="var sel=document.getElementById(\'kjBankSelect\');sel.value=\'' + b.bankId + '\';this.closest(\'.modal-overlay\').remove();kjCategoryFilter=null;renderKoujueCards()">' + escapeHtml(b.bankName) + ' <span style="color:var(--text-tertiary);font-size:12px">' + b.cards.length + ' 条</span></div>';
+  }
+  html += '</div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
 
 function fuzzyMatch(u, a) {
   if (!u && !a) return true;
@@ -903,15 +1164,21 @@ let hideQuestionStart = false;
 
 // ==================== 初始化 ====================
 function init() {
-  // 先加载外观设置，让授权弹窗也跟随暗色/字体
-  getSetting('darkMode', false);
-  getSetting('fontSize', 16);
-  applySettings();
-  if (!checkAuth()) { showAuthModal(); return; }
-  initApp();
+  try {
+    // 先加载外观设置，让授权弹窗也跟随暗色/字体
+    getSetting('darkMode', false);
+    getSetting('fontSize', 16);
+    applySettings();
+    if (!checkAuth()) { showAuthModal(); return; }
+    initApp();
+  } catch(e) {
+    console.error('Init error:', e);
+    showFatalError(e.message || '初始化异常');
+  }
 }
 
 function initApp() {
+  try {
   // 试用版：每30秒检查授权是否过期
   if (!isPermanentAuth()) {
     setInterval(() => { if (!checkAuth()) { location.reload(); } }, 30000);
@@ -935,41 +1202,108 @@ function initApp() {
     if (dx > dy && dx > 20) e.preventDefault();
   }, { passive: false });
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && document.activeElement?.classList.contains('blank-input')) {
-      e.preventDefault();
-      saveCurrentAnswers();
-      const card = practiceState.cards[practiceState.index];
-      const ua = practiceState.answers[card.id] || {};
-      const inputs = [...document.querySelectorAll('.blank-input')];
-      const curIdx = inputs.indexOf(document.activeElement);
-      // 先检查是否全填了
-      let allFilled = true;
-      for (const inp of inputs) {
-        const bidx = parseInt(inp.dataset.bidx);
-        if (!(ua[bidx] || '').trim()) { allFilled = false; break; }
-      }
-      if (allFilled) {
-        checkMyAnswers();
-        document.activeElement.blur();
-        return;
-      }
-      // 从当前位置往后找第一个没填的
-      for (let i = curIdx + 1; i < inputs.length; i++) {
-        const bidx = parseInt(inputs[i].dataset.bidx);
-        if (!(ua[bidx] || '').trim()) { inputs[i].focus(); return; }
-      }
-      // 后面都有了，从头找第一个没填的
-      for (let i = 0; i < curIdx; i++) {
-        const bidx = parseInt(inputs[i].dataset.bidx);
-        if (!(ua[bidx] || '').trim()) { inputs[i].focus(); return; }
-      }
-    }
+  // 跟踪最后聚焦的挖空输入框（移动端键盘有时会在Enter前先失焦）
+  var _lastBlankInput = null;
+  document.addEventListener('focusin', function(e) {
+    if (e.target && e.target.classList.contains('blank-input')) _lastBlankInput = e.target;
   });
 
+  function handleBlankEnter(e) {
+    var activeEl = document.activeElement;
+    // 如果当前焦点不在输入框上，用上次跟踪的
+    if (!activeEl || !activeEl.classList.contains('blank-input')) {
+      if (_lastBlankInput && document.body.contains(_lastBlankInput)) {
+        activeEl = _lastBlankInput;
+      } else {
+        return;
+      }
+    }
+    if (e.key === 'Enter' || e.keyCode === 13 || e.code === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      // 练习模式：先用 saveCurrentAnswers 保存
+      if (practiceState && practiceState.cards) {
+        saveCurrentAnswers();
+      }
+      // 找当前输入框所在容器内的所有同类输入框
+      var container = activeEl.closest('#cardText, [id^="wrongBlanks_"]');
+      if (!container) container = activeEl.parentElement;
+      var inputs = Array.prototype.slice.call(container.querySelectorAll('.blank-input'));
+      var curIdx = inputs.indexOf(activeEl);
+      if (curIdx < 0) { activeEl.blur(); return; }
+
+      // 检查是否全填了（仅练习模式需要检查答案）
+      if (practiceState && practiceState.cards) {
+        var card = practiceState.cards[practiceState.index];
+        var ua = practiceState.answers[card.id] || {};
+        var allFilled = true;
+        for (var i = 0; i < inputs.length; i++) {
+          var bidx = parseInt(inputs[i].dataset.bidx);
+          if (bidx >= 0 && !(ua[bidx] || '').trim()) { allFilled = false; break; }
+        }
+        if (allFilled) {
+          checkMyAnswers();
+          if (activeEl) activeEl.blur();
+          return;
+        }
+      }
+
+      // 跳到下一个空（先往后找，再从头找）
+      var target = -1;
+      for (var i = curIdx + 1; i < inputs.length; i++) {
+        if (!inputs[i].value.trim()) { target = i; break; }
+      }
+      if (target === -1) {
+        for (var i = 0; i < curIdx; i++) {
+          if (!inputs[i].value.trim()) { target = i; break; }
+        }
+      }
+      // 如果全填了且不是练习模式，直接 blur
+      if (target === -1) {
+        activeEl.blur();
+      } else {
+        // 移动端 setTimeout 确保焦点切换可靠
+        setTimeout(function() { inputs[target].focus(); }, 10);
+      }
+    }
+  }
+  document.addEventListener('keydown', handleBlankEnter);
+  document.addEventListener('keypress', handleBlankEnter);
+
+  // 首次打开检测：如果完全没数据，提示文件位置注意事项
+  const banksExist = Object.keys(appData.banks).length > 0;
+  const hasAnyData = banksExist || localStorage.getItem(STORAGE_KEY);
+  const seenTip = sessionStorage.getItem('memorize_location_tip');
+  if (!hasAnyData && !seenTip) {
+    sessionStorage.setItem('memorize_location_tip', '1');
+    setTimeout(() => {
+      showToast('💡 提示：数据随浏览器存储，请将文件放在固定位置使用，移动位置可能导致之前的数据看不到');
+    }, 800);
+  }
+
   switchTab('banks');
+  } catch(e) {
+    console.error('initApp error:', e);
+    showFatalError(e.message || '初始化异常');
+  }
 }
-document.addEventListener('DOMContentLoaded', init);
+
+// 全局错误捕获：防止页面变死页
+window.onerror = function(msg, url, line, col, err) {
+  try {
+    // 忽略一些不影响功能的错误
+    if (msg && (msg.indexOf('Script error') >= 0 || msg.indexOf('ResizeObserver') >= 0)) return;
+    showFatalError((msg || '未知错误') + ' (行:' + line + ')');
+  } catch(e) {}
+};
+window.addEventListener('unhandledrejection', function(e) {
+  try {
+    console.error('Unhandled rejection:', e.reason);
+    // Promise 异常一般不影响交互，只记录不弹窗
+  } catch(ex) {}
+});
+
+init();
 
 function applySettings() {
   const s = appData.settings;
@@ -1011,42 +1345,92 @@ function switchTab(name) {
     }
   }
   else if (name === 'browse') renderBrowseStart();
-  else if (name === 'koujue') renderKoujueStart();
+  else if (name === 'wrongbook') renderWrongBookStart();
   else if (name === 'settings') { renderSettings(); setTimeout(loadVoices, 300); }
 }
 
 // ==================== 题库管理 ====================
 function renderBanks() {
   const c = $('banksContainer');
-  const banks = Object.values(appData.banks).sort((a, b) => b.createdAt - a.createdAt);
+  if (!c) return;
+  if (!appData.banks || typeof appData.banks !== 'object') appData.banks = {};
+  // 按 order 排序（没有 order 的默认用 createdAt）
+  const banks = Object.values(appData.banks).sort((a, b) => {
+    const aOrder = a.order != null ? a.order : a.createdAt;
+    const bOrder = b.order != null ? b.order : b.createdAt;
+    return aOrder - bOrder;
+  });
+  // 确保都有 order
+  banks.forEach((b, i) => { if (b.order == null) b.order = b.createdAt; });
 
   if (!banks.length) {
-    c.innerHTML = `<div class="empty"><span class="icon">📚</span><h3>还没有题库</h3><p>点击右上角「＋ 导入」<br>粘贴文本或上传文件开始使用</p></div>`;
+    c.innerHTML = `<div class="empty"><span class="icon">📚</span><h3>还没有题库</h3><p>点击右上角「＋ 导入」粘贴文本或上传文件开始使用</p><button class="btn btn-primary" onclick="restorePresetBanks()" style="margin-top:16px;padding:10px 20px">🔄 恢复预设题库</button></div>`;
     return;
   }
 
-  c.innerHTML = banks.map(b => {
-    const starCount = b.cards.filter(x => x.starred).length;
-    const wrongCount = Object.keys(getWrongBook(b.id)).length;
-    return `<div class="bank-item" onclick="event.stopPropagation()">
-      <div class="info" onclick="startPracticeSetup('${b.id}')">
-        <div class="name" onclick="event.stopPropagation();renameBankPrompt(this, '${b.id}')" title="点击修改名称" style="cursor:pointer">${escapeHtml(b.name)}</div>
-        <div class="meta">
-          <span>${b.cards.length} 题</span>
-          <span>·</span>
-          <span>${fmtDate(b.createdAt)}</span>
-          ${starCount ? `<span>· ⭐${starCount}</span>` : ''}
-          ${wrongCount ? `<span style="color:var(--danger)">· ❌${wrongCount}</span>` : ''}
+  c.innerHTML = banks.map((b, idx) => {
+    const isFirst = idx === 0;
+    const isLast = idx === banks.length - 1;
+    return `<div class="bank-item" data-bank-id="${b.id}" data-bank-idx="${idx}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="info" onclick="startPracticeSetup('${b.id}')" style="flex:1;min-width:0">
+          <div class="name" onclick="event.stopPropagation();renameBankPrompt(this, '${b.id}')" title="点击修改名称" style="cursor:pointer">${escapeHtml(b.name)}</div>
+          <div class="meta">
+            <span>${b.cards.length} 题</span>
+            <span>·</span>
+            <span>${fmtDate(b.createdAt)}</span>
+            <span style="margin-left:8px;display:inline-flex;gap:2px">
+              <button class="btn-sort" onclick="event.stopPropagation();event.preventDefault();moveBankUp('${b.id}')"${isFirst ? ' disabled style="opacity:.2"' : ''} title="上移">←</button>
+              <button class="btn-sort" onclick="event.stopPropagation();event.preventDefault();moveBankDown('${b.id}')"${isLast ? ' disabled style="opacity:.2"' : ''} title="下移">→</button>
+            </span>
+          </div>
         </div>
-      </div>
-      <div class="actions">
-        <button class="btn-icon" onclick="event.stopPropagation();editBank('${b.id}')" title="编辑挖空">✏️</button>
-        <button class="btn-icon" onclick="event.stopPropagation();exportBank('${b.id}')" title="导出文本">📤</button>
-        <button class="btn-icon" onclick="event.stopPropagation();exportBankFull('${b.id}')" title="导出含挖空">💾</button>
-        <button class="btn-icon" onclick="event.stopPropagation();deleteBankConfirm('${b.id}')" title="删除">🗑️</button>
+        <div class="actions" style="flex-shrink:0">
+          <button class="btn-icon" onclick="event.stopPropagation();editBank('${b.id}')" title="编辑挖空">✏️</button>
+          <button class="btn-icon" onclick="event.stopPropagation();exportBank('${b.id}')" title="导出文本">📤</button>
+          <button class="btn-icon" onclick="event.stopPropagation();exportBankFull('${b.id}')" title="导出含挖空">💾</button>
+          <button class="btn-icon" onclick="event.stopPropagation();deleteBankConfirm('${b.id}')" title="删除">🗑️</button>
+        </div>
       </div>
     </div>`;
   }).join('');
+}
+
+// ==================== 题库排序 ====================
+function moveBankUp(bankId) {
+  const banks = Object.values(appData.banks).sort((a, b) => {
+    const aOrder = a.order != null ? a.order : a.createdAt;
+    const bOrder = b.order != null ? b.order : b.createdAt;
+    return aOrder - bOrder;
+  });
+  const idx = banks.findIndex(b => b.id === bankId);
+  if (idx <= 0) return;
+  // 交换 order
+  const a = banks[idx], b = banks[idx - 1];
+  const aOrder = a.order != null ? a.order : a.createdAt;
+  const bOrder = b.order != null ? b.order : b.createdAt;
+  a.order = bOrder;
+  b.order = aOrder;
+  saveData(appData);
+  renderBanks();
+}
+
+function moveBankDown(bankId) {
+  const banks = Object.values(appData.banks).sort((a, b) => {
+    const aOrder = a.order != null ? a.order : a.createdAt;
+    const bOrder = b.order != null ? b.order : b.createdAt;
+    return aOrder - bOrder;
+  });
+  const idx = banks.findIndex(b => b.id === bankId);
+  if (idx < 0 || idx >= banks.length - 1) return;
+  // 交换 order
+  const a = banks[idx], b = banks[idx + 1];
+  const aOrder = a.order != null ? a.order : a.createdAt;
+  const bOrder = b.order != null ? b.order : b.createdAt;
+  a.order = bOrder;
+  b.order = aOrder;
+  saveData(appData);
+  renderBanks();
 }
 
 function renameBankPrompt(el, id) {
@@ -1146,14 +1530,14 @@ function showImportModal() {
     <div class="form-group"><input type="file" id="wordFileInput" accept=".docx" style="display:none"><button class="btn btn-outline btn-block" id="wordImportBtn" onclick="document.getElementById('wordFileInput').click()">📄 选择 Word 文件 (.docx)</button></div>
     <div class="form-group"><input type="file" id="pdfFileInput" accept=".pdf" style="display:none"><button class="btn btn-outline btn-block" id="pdfImportBtn" onclick="document.getElementById('pdfFileInput').click()">📑 选择 PDF 文件 (.pdf)</button></div>
     <div class="flex gap-6 mb-12" style="flex-wrap:wrap"><button class="btn btn-sm btn-outline" onclick="cleanEmptyLines()">🧹 删除空行</button><button class="btn btn-sm btn-outline" onclick="cleanNumberPrefix()">🔢 去编号前缀</button><button class="btn btn-sm btn-outline" onclick="cleanMergeLines()">↔️ 合并断行</button><button class="btn btn-sm btn-outline" onclick="cleanHtmlTags()">🏷️ 去HTML标签</button></div>
-    <div class="form-group"><label class="form-label">识别格式</label><select id="importFormat" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size)"><option value="auto">🤖 自动检测（推荐）</option><option value="sep">📋 分隔符格式（| ： → = 等）</option><option value="jianda">📝 简答题格式（编号+口诀）</option><option value="qa">💬 Q&A格式（问/答 标记）</option></select></div>
+    <div class="form-group"><label class="form-label">识别格式</label><select id="importFormat" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size)"><option value="auto">🤖 自动检测（推荐）</option><option value="sep">📋 分隔符格式（| ： → = 等）</option><option value="jianda">📝 简答题格式（编号+口诀）</option><option value="qa">💬 Q&A格式（问/答 标记）</option><option value="hashpct">🏷️ #%格式（#题目 %答案）</option></select></div>
     <div class="form-hint mb-16">💡 支持的分隔符：<b>|</b> <b>：</b> <b>:</b> <b>→</b> <b>=</b> <b>——</b> <b>-</b> <b>~</b> <b>Tab</b>。也支持简答题和 Q&A 格式。</div>
     <div class="flex gap-10"><button class="btn btn-ghost flex-1" onclick="closeImportModal()">取消</button><button class="btn btn-primary flex-1" onclick="doImport()">预览 →</button></div></div>`;
   document.body.appendChild(ov);
   document.getElementById('csvFileInput').onchange = handleFileImport;
   document.getElementById('wordFileInput').onchange = handleWordImport;
   document.getElementById('pdfFileInput').onchange = handlePdfImport;
-  setTimeout(() => $('bankNameInput')?.focus(), 350);
+  setTimeout(() => { var el = $('bankNameInput'); if (el) el.focus(); }, 350);
 }
 
 function closeImportModal() { const m = $('importModal'); if (m) m.remove(); }
@@ -1298,7 +1682,7 @@ function doImport() {
   if (!name) { showToast('请输入题库名称'); return; }
   if (!raw) { showToast('请粘贴题目或上传文件'); return; }
 
-  const format = $('importFormat')?.value || 'auto';
+  var _fmtEl = $('importFormat'); const format = (_fmtEl ? _fmtEl.value : null) || 'auto';
   let cards, hasBlanks = false;
 
   if (format === 'sep') {
@@ -1307,6 +1691,8 @@ function doImport() {
     cards = parseJianDaText(raw); showToast('简答题格式');
   } else if (format === 'qa') {
     cards = parseQAText(raw); showToast('Q&A 格式');
+  } else if (format === 'hashpct') {
+    cards = parseHashPctText(raw); showToast('#%格式');
   } else {
     // 自动检测
     const lines = raw.split(/\n/).filter(l => l.trim());
@@ -1330,6 +1716,7 @@ function doImport() {
     else if (sepRatio > 0.6) { cards = parseImportText(raw); showToast('分隔符格式'); }
     else if (isJianDaFormat(raw)) { cards = parseJianDaText(raw); showToast('简答题格式'); }
     else if (isQAFormat(raw)) { cards = parseQAText(raw); showToast('Q&A 格式'); }
+    else if (isHashPctFormat(raw)) { cards = parseHashPctText(raw); showToast('#%格式'); }
     else { cards = parseImportText(raw); }
   }
 
@@ -1356,9 +1743,9 @@ let previewData = null;
 function showImportPreview(name, cards) {
   const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'previewModal';
   // 保留编辑模式信息
-  const editId = previewData?.editBankId;
-  const wasSingle = previewData?._singleCardEdit;
-  const cardIdx = previewData?._cardIdx;
+  const editId = previewData ? previewData.editBankId : undefined;
+  const wasSingle = previewData ? previewData._singleCardEdit : undefined;
+  const cardIdx = previewData ? previewData._cardIdx : undefined;
   previewData = { name, cards, mode: 'manual', editBankId: editId };
   if (wasSingle) { previewData._singleCardEdit = true; previewData._cardIdx = cardIdx; }
 
@@ -1370,6 +1757,12 @@ function showImportPreview(name, cards) {
       <span class="chip" data-mode="auto" onclick="switchPreviewMode('auto', this)">🤖 系统自动</span>
     </div>
     <p class="text-sm text-secondary mb-12" id="previewModeHint">👆 点击答案中的字选中挖空，连续的字自动合并。保存后可继续第二轮挖空。</p>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="previewJumpRow">
+      <span style="font-size:12px;color:var(--text-secondary)">🔍 跳转到第</span>
+      <input type="number" id="previewJumpInput" min="1" placeholder="1" style="width:56px;padding:4px 8px;border:2px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;text-align:center" onkeydown="if(event.key==='Enter')jumpToPreviewCard()">
+      <span style="font-size:12px;color:var(--text-secondary)">/ ${cards.length} 题</span>
+      <button class="btn btn-sm btn-ghost" onclick="jumpToPreviewCard()" style="padding:4px 10px;font-size:12px">跳转</button>
+    </div>
     <div id="previewCards"></div>
     </div>
     <div class="flex gap-10" style="padding:14px 0 0;flex-shrink:0">
@@ -1439,8 +1832,25 @@ function renderPreviewCards() {
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
     html += `<div class="preview-card" data-idx="${i}">
-      <div class="text-sm text-secondary mb-6">第 ${i + 1} 题 · ${escapeHtml(card.question.replace(/^[\d\.\、\s]+/, '').substring(0, 30))}</div>
-      ${card.koujue ? `<div class="text-sm mb-6" style="color:var(--primary)">🧠 ${escapeHtml(card.koujue)}</div>` : ''}`;
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div class="text-sm text-secondary mb-6">第 ${i + 1} 题 · ${escapeHtml(card.question.replace(/^[\d\.\、\s]+/, '').substring(0, 30))}</div>
+          ${card.koujue ? `<div class="text-sm mb-6" style="color:var(--primary)">💡 ${escapeHtml(card.koujue)}</div>` : ''}
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleEditPreviewCard(${i})" style="padding:2px 8px;font-size:12px;flex-shrink:0;margin-left:8px" title="编辑题目">✏️</button>
+      </div>
+      ${card._editing ? `<div id="editPanel-${i}" style="background:var(--bg);border:2px solid var(--primary);border-radius:10px;padding:12px;margin-bottom:10px">
+        <label style="font-size:12px;color:var(--text-secondary)">题目</label>
+        <textarea id="editPQ-${i}" style="width:100%;min-height:50px;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:13px;resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="2">${escapeHtml(card.question)}</textarea>
+        <label style="font-size:12px;color:var(--text-secondary)">答案</label>
+        <textarea id="editPA-${i}" style="width:100%;min-height:60px;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:13px;resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="2">${escapeHtml(card.answer)}</textarea>
+        <label style="font-size:12px;color:var(--text-secondary)">💡 口诀（可选）</label>
+        <input id="editPKj-${i}" value="${escapeHtml(card.koujue || '')}" placeholder="例如：全（全民化）民（民主化）" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:13px;margin-bottom:10px;font-family:inherit">
+        <div class="flex gap-8" style="justify-content:flex-end">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();cancelEditPreviewCard(${i})">取消</button>
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();saveEditPreviewCard(${i})">💾 保存</button>
+        </div>
+      </div>` : ''}`;
 
     if (mode === 'manual') {
       html += `<div style="position:relative"><div class="preview-answer" id="pv-answer-${i}">${renderAnswerChars(card, i)}</div><button class="btn btn-sm" onclick="saveCardSelection(${i})" style="position:absolute;left:-8px;top:50%;transform:translate(-100%,-50%);opacity:.35;font-size:18px;padding:4px 6px;min-height:auto;background:transparent;border:none;cursor:pointer;line-height:1" title="保存选中（回车）">💾</button></div>
@@ -1460,6 +1870,7 @@ function renderPreviewCards() {
   container.innerHTML = html;
 }
 
+let _wasDragging = false, _touchJustHappened = 0;
 function renderAnswerChars(card, idx) {
   const a = card.answer || '';
   if (!a) return '<span style="color:var(--text-tertiary)">（无答案）</span>';
@@ -1475,6 +1886,7 @@ function renderAnswerChars(card, idx) {
     onmouseleave="mouseSelectEnd(${idx})">`;
   for (let i = 0; i < a.length; i++) {
     const ch = a[i];
+    if (ch === '\\' && a[i+1] === 'n') { h += '<span style="opacity:.2">↵</span>'; i++; continue; }
     if (ch === '\n') { h += '<span style="opacity:.2">↵</span>'; continue; }
     if (/\s/.test(ch)) { h += ' '; continue; }
     if (saved[i]) {
@@ -1500,7 +1912,7 @@ function swipeSelectStart(e, idx) {
   swipeSelectMode = null;
   const card = previewData.cards[idx];
   const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-  const ci = el?.dataset?.ci;
+  const ci = (el && el.dataset ? el.dataset.ci : undefined);
   if (ci == null) return;
   const charIdx = parseInt(ci);
   const isSaved = card._savedChars && card._savedChars[charIdx];
@@ -1519,7 +1931,7 @@ function swipeSelectMove(e, idx) {
     swipeSelectMode.started = true;
     if (!swipeSelectMode.removing) {
       const el0 = document.elementFromPoint(swipeStartX, swipeStartY);
-      const ci0 = el0?.dataset?.ci;
+      const ci0 = (el0 && el0.dataset ? el0.dataset.ci : undefined);
       if (ci0 != null) toggleImportChar(idx, parseInt(ci0));
     }
   }
@@ -1531,7 +1943,7 @@ function swipeSelectMove(e, idx) {
     const px = Math.round(_lastTouchX + (tx - _lastTouchX) * t);
     const py = Math.round(_lastTouchY + (ty - _lastTouchY) * t);
     const el = document.elementFromPoint(px, py);
-    const ci = el?.dataset?.ci;
+    const ci = (el && el.dataset ? el.dataset.ci : undefined);
     if (ci == null) continue;
     const charIdx = parseInt(ci);
     if (swipeSelectMode.removing) {
@@ -1550,7 +1962,7 @@ function swipeSelectEnd(idx) {
   if (swipeSelectMode && !swipeSelectMode.started && !swipeSelectMode.removing) {
     const card = previewData.cards[idx];
     const el = document.elementFromPoint(swipeStartX, swipeStartY);
-    const ci = el?.dataset?.ci;
+    const ci = (el && el.dataset ? el.dataset.ci : undefined);
     if (ci != null) {
       const charIdx = parseInt(ci);
       if (!(card._savedChars && card._savedChars[charIdx])) {
@@ -1562,13 +1974,13 @@ function swipeSelectEnd(idx) {
 }
 
 // 鼠标选择（桌面端）：mousedown 即时响应，拖动连续选中
-let _wasDragging = false, _lastX = 0, _lastY = 0;
+let _lastX = 0, _lastY = 0;
 function mouseSelectStart(e, idx) {
   if (Date.now() - _touchJustHappened < 500) return; // 移动端刚摸过，跳过鼠标事件
   swipeStartX = _lastX = e.clientX; swipeStartY = _lastY = e.clientY;
   _wasDragging = true; // 阻止后续 onclick 重复触发
   const el = document.elementFromPoint(e.clientX, e.clientY);
-  const ci = el?.dataset?.ci;
+  const ci = (el && el.dataset ? el.dataset.ci : undefined);
   if (ci == null) { swipeSelectMode = null; return; }
   const charIdx = parseInt(ci);
   const card = previewData.cards[idx];
@@ -1591,7 +2003,7 @@ function mouseSelectMove(e, idx) {
     const px = Math.round(_lastX + (e.clientX - _lastX) * t);
     const py = Math.round(_lastY + (e.clientY - _lastY) * t);
     const el = document.elementFromPoint(px, py);
-    const ci = el?.dataset?.ci;
+    const ci = (el && el.dataset ? el.dataset.ci : undefined);
     if (ci == null) continue;
     const charIdx = parseInt(ci);
     if (swipeSelectMode.removing) {
@@ -1606,7 +2018,6 @@ function mouseSelectMove(e, idx) {
 }
 function mouseSelectEnd(idx) { swipeSelectMode = null; _wasDragging = false; }
 
-let _touchJustHappened = 0;
 function toggleImportChar(idx, charIdx) {
   const card = previewData.cards[idx];
   previewData._activeIdx = idx;
@@ -1830,8 +2241,94 @@ function closePreviewModal() {
   }
 }
 
+// ==================== 预览跳转 & 编辑 ====================
+function jumpToPreviewCard() {
+  const input = document.getElementById('previewJumpInput');
+  if (!input || !previewData) return;
+  let n = parseInt(input.value);
+  if (isNaN(n) || n < 1) n = 1;
+  if (n > previewData.cards.length) n = previewData.cards.length;
+  input.value = n;
+  const cards = document.querySelectorAll('.preview-card');
+  if (cards[n - 1]) {
+    cards[n - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // 高亮闪烁
+    cards[n - 1].style.boxShadow = '0 0 0 3px var(--primary)';
+    setTimeout(() => { cards[n - 1].style.boxShadow = ''; }, 1500);
+  }
+}
+
+function toggleEditPreviewCard(idx) {
+  if (!previewData || !previewData.cards[idx]) return;
+  previewData.cards[idx]._editing = !previewData.cards[idx]._editing;
+  renderPreviewCards();
+  // 滚动到编辑面板
+  setTimeout(() => {
+    const panel = document.getElementById('editPanel-' + idx);
+    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
+
+function cancelEditPreviewCard(idx) {
+  if (!previewData || !previewData.cards[idx]) return;
+  previewData.cards[idx]._editing = false;
+  renderPreviewCards();
+}
+
+function saveEditPreviewCard(idx) {
+  if (!previewData || !previewData.cards[idx]) return;
+  const card = previewData.cards[idx];
+  var _eQ=document.getElementById('editPQ-'+idx);const newQ=_eQ&&_eQ.value!=null?_eQ.value.trim():undefined;
+  var _eA=document.getElementById('editPA-'+idx);const newA=_eA&&_eA.value!=null?_eA.value.trim():undefined;
+  var _eK=document.getElementById('editPKj-'+idx);const newKj=_eK&&_eK.value!=null?_eK.value.trim():undefined;
+
+  if (!newQ) { showToast('题目不能为空'); return; }
+  if (!newA) { showToast('答案不能为空'); return; }
+
+  const ansChanged = newA !== card.answer;
+  const qChanged = newQ !== card.question;
+  card.question = newQ;
+  card.answer = newA;
+  card.koujue = newKj || '';
+  card.fullText = card.question + '\n' + card.answer;
+
+  // 答案或题目变了，清除挖空选择（偏移量已过期）
+  if (ansChanged || qChanged) {
+    card._charSelected = {};
+    card._savedChars = {};
+    card.blanks = [];
+  }
+
+  card._editing = false;
+  renderPreviewCards();
+  showToast('已保存');
+}
+
 function confirmImport() {
   if (!previewData) return;
+  // 试用版（非永久授权）不允许导入
+  if (!isPermanentAuth()) {
+    showToast('试用版不支持导入，请输入永久密码后重试');
+    closePreviewModal();
+    return;
+  }
+  // 单题编辑模式（从刷题页进入）
+  if (previewData._singleCardEdit) {
+    const edited = previewData.cards[0];
+    delete edited._charSelected; delete edited._savedChars; delete edited._autoBlanks;
+    practiceState.cards[previewData._cardIdx] = edited;
+    practiceState.revealed.delete(edited.id);
+    delete practiceState.answers[edited.id];
+    const bank = appData.banks[practiceState.bankId];
+    if (bank) {
+      const orig = bank.cards.find(x => x.id === edited.id);
+      if (orig) { orig.blanks = edited.blanks; orig.fullText = edited.fullText; orig._manualBlanks = edited._manualBlanks; }
+      saveData(appData);
+    }
+    previewData = null; const m = $('previewModal'); if (m) m.remove();
+    renderPracticeCard();
+    return;
+  }
   const { name, cards, mode, editBankId } = previewData;
   const cleaned = cards.map(c => {
     delete c._charSelected; delete c._savedChars;
@@ -1861,6 +2358,93 @@ function confirmImport() {
     previewData = null; const m = $('previewModal'); if (m) m.remove();
     showToast(`导入成功！${cleaned.length} 题`);
   }
+  renderBanks();
+}
+
+// 合并弹窗题库选择（代替原生 select，避免 iPad 旋转）
+function showMergeBankPicker(which) {
+  var selId = which === 'src' ? 'mergeSrc' : 'mergeDst';
+  var btnId = which === 'src' ? 'mergeSrcBtn' : 'mergeDstBtn';
+  var currentVal = document.getElementById(selId).value;
+  var banks = Object.values(appData.banks).sort(function(a, b) { return (a.order != null ? a.order : a.createdAt) - (b.order != null ? b.order : b.createdAt); });
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var title = which === 'src' ? '源' : '目标';
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:400px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;max-height:70dvh;overflow-y:auto"><h3 style="margin-bottom:4px;font-size:18px">📚 选择' + title + '题库</h3><p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">点击选择一个题库</p>';
+  for (var i = 0; i < banks.length; i++) {
+    var b = banks[i];
+    var isActive = b.id === currentVal;
+    var style = 'cursor:pointer;padding:10px 12px;margin-bottom:6px;border-radius:8px;' + (isActive ? 'border:2px solid var(--primary);background:var(--primary-light);font-weight:600' : 'border:2px solid var(--border)');
+    html += '<div style="' + style + '" class="merge-bank-pick-item" data-bank-id="' + b.id + '" data-bank-name="' + escapeHtml(b.name) + '" data-bank-count="' + b.cards.length + '" data-sel-id="' + selId + '" data-btn-id="' + btnId + '">' + escapeHtml(b.name) + ' <span style="color:var(--text-tertiary);font-size:12px">' + b.cards.length + ' 题</span></div>';
+  }
+  html += '</div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  // 事件委托：点击题库项
+  ov.addEventListener('click', function(e) {
+    var item = e.target.closest('.merge-bank-pick-item');
+    if (item) {
+      var bankId = item.getAttribute('data-bank-id');
+      var bankName = item.getAttribute('data-bank-name');
+      var bankCount = item.getAttribute('data-bank-count');
+      var targetSelId = item.getAttribute('data-sel-id');
+      var targetBtnId = item.getAttribute('data-btn-id');
+      var sel = document.getElementById(targetSelId);
+      if (sel) sel.value = bankId;
+      var btn = document.getElementById(targetBtnId);
+      if (btn) btn.textContent = bankName + ' （' + bankCount + '题） ▾';
+      ov.remove();
+      return;
+    }
+    if (e.target === ov) ov.remove();
+  });
+}
+
+// ==================== 合并题库 ====================
+function showMergeModal() {
+  const banks = Object.values(appData.banks).sort((a, b) => b.createdAt - a.createdAt);
+  if (banks.length < 2) { showToast('至少需要两个题库才能合并'); return; }
+  const opts = banks.map(b => '<option value="' + b.id + '">' + escapeHtml(b.name) + '（' + b.cards.length + '题）</option>').join('');
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  ov.innerHTML = '<div class="modal" style="max-width:360px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px 18px;border-radius:var(--radius)"><h3 style="margin-bottom:16px;font-size:17px">🔀 合并题库</h3><div style="margin-bottom:12px"><div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">将 A 题库合并到 B 题库</div><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">A 的所有题目会移入 B，A 将被删除</div><div style="margin-bottom:8px"><label style="font-size:13px;font-weight:600">A（源题库）</label><input type="hidden" id="mergeSrc" value="' + banks[0].id + '"><button class="btn btn-ghost btn-sm" id="mergeSrcBtn" onclick="showMergeBankPicker(&#39;src&#39;)" style="width:100%;padding:8px;margin-top:4px;text-align:left;font-size:13px">' + escapeHtml(banks[0].name) + ' （' + banks[0].cards.length + '题） ▾</button></div><div style="margin-bottom:12px"><label style="font-size:13px;font-weight:600">B（目标题库）</label><input type="hidden" id="mergeDst" value="' + banks[1].id + '"><button class="btn btn-ghost btn-sm" id="mergeDstBtn" onclick="showMergeBankPicker(&#39;dst&#39;)" style="width:100%;padding:8px;margin-top:4px;text-align:left;font-size:13px">' + escapeHtml(banks[1].name) + ' （' + banks[1].cards.length + '题） ▾</button></div></div><div class="flex gap-10"><button class="btn btn-ghost flex-1" id="mergeCancel">取消</button><button class="btn btn-primary flex-1" id="mergeConfirm">确认合并</button></div></div>';
+  document.body.appendChild(ov);
+  ov.querySelector('#mergeCancel').onclick = () => ov.remove();
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  ov.querySelector('#mergeConfirm').onclick = () => {
+    const srcId = ov.querySelector('#mergeSrc').value;
+    const dstId = ov.querySelector('#mergeDst').value;
+    if (!srcId || !dstId) { showToast('请选择两个题库'); return; }
+    if (srcId === dstId) { showToast('不能合并到同一个题库'); return; }
+    executeMerge(srcId, dstId);
+    ov.remove();
+  };
+}
+
+function executeMerge(srcId, dstId) {
+  const src = appData.banks[srcId];
+  const dst = appData.banks[dstId];
+  if (!src || !dst) return;
+  const count = src.cards.length;
+  const idMap = {}; // 旧ID→新ID映射，保证错题本正确迁移
+  for (const card of src.cards) {
+    const oldId = card.id;
+    card.id = generateId(); // 避免ID冲突
+    idMap[oldId] = card.id;
+    dst.cards.push(card);
+  }
+  dst.updatedAt = Date.now();
+  // 合并错题本（使用ID映射保留错题记录）
+  const srcWb = getWrongBook(srcId);
+  const dstWb = getWrongBook(dstId);
+  for (const [cid, detail] of Object.entries(srcWb)) {
+    const newCid = idMap[cid];
+    if (newCid) dstWb[newCid] = detail;
+  }
+  // 删除源题库
+  delete appData.banks[srcId];
+  delete appData.seqProgress[srcId];
+  delete appData.wrongBooks[srcId];
+  saveData(appData);
+  showToast('已合并！' + count + ' 题从「' + src.name + '」移入「' + dst.name + '」');
   renderBanks();
 }
 
@@ -1901,7 +2485,11 @@ function renderPracticeSetup() {
     <div class="card" style="padding:20px">
       <div class="form-group">
         <label class="form-label">📚 选择题库</label>
-        <select id="bankSelect" onchange="onBankChange()" style="padding:12px 14px">${opts}</select>
+        <input type="hidden" id="bankSelect" value="${lastBank || (banks[0] && banks[0].id) || ''}">
+        <button class="btn btn-outline btn-block" onclick="showBankPicker(document.getElementById('bankSelect').value, function(bid){document.getElementById('bankSelect').value=bid;sessionStorage.setItem('lastPracticeBank',bid);onBankChange()})" style="justify-content:space-between;text-align:left">
+          <span id="bankSelectLabel">${lastBank && appData.banks[lastBank] ? escapeHtml(appData.banks[lastBank].name) + '（' + appData.banks[lastBank].cards.length + ' 题）' : (banks[0] ? escapeHtml(banks[0].name) + '（' + banks[0].cards.length + ' 题）' : '请选择题库')}</span>
+          <span style="font-size:18px">▾</span>
+        </button>
         <div id="categoryFilter" style="margin-top:10px"></div>
         <div id="categoryFilterHint" style="font-size:12px;color:var(--text-tertiary);margin-top:4px"></div>
       </div>
@@ -2132,6 +2720,25 @@ function startPractice() {
     selected = shuffle([...pool]).slice(0, count);
   }
 
+  // 间隔重复 & 错题优先排序
+  const wb = getWrongBook(bankId);
+  const now = Date.now();
+  let dueCount = 0, wrongCount = 0;
+  selected.forEach(c => {
+    if (c.srNextReview && c.srNextReview <= now) dueCount++;
+    if (c.id in wb) wrongCount++;
+  });
+  selected.sort((a, b) => {
+    // 1. 到期复习优先
+    const aDue = a.srNextReview && a.srNextReview <= now ? 1 : 0;
+    const bDue = b.srNextReview && b.srNextReview <= now ? 1 : 0;
+    if (aDue !== bDue) return bDue - aDue;
+    // 2. 错题其次
+    const aWrong = (a.id in wb) ? 1 : 0;
+    const bWrong = (b.id in wb) ? 1 : 0;
+    return bWrong - aWrong;
+  });
+
   const qh = new Set();
   if (hideQuestionStart) { for (const c of selected) qh.add(c.id); }
   practiceState = {
@@ -2140,13 +2747,25 @@ function startPractice() {
     mode: drawMode,
     answers: {}, revealed: new Set(),
     questionHidden: qh, koujueExpanded: {},
-    total: selected.length
+    total: selected.length,
+    _streak: 0
   };
 
   $('practiceSetup').style.display = 'none';
   $('practiceResult').style.display = 'none';
   $('practiceActive').style.display = 'block';
   renderPracticeCard();
+
+  // 间隔重复提醒
+  if (dueCount > 0) {
+    setTimeout(() => {
+      showToast('📅 今日待复习 ' + dueCount + ' 题，已优先排在前面' + (wrongCount > dueCount ? '，还有 ' + (wrongCount - dueCount) + ' 道错题' : ''));
+    }, 600);
+  } else if (wrongCount > 0) {
+    setTimeout(() => {
+      showToast('❌ ' + wrongCount + ' 道错题已优先排在前面');
+    }, 600);
+  }
 }
 
 // ==================== 做题 - 卡片渲染 ====================
@@ -2184,8 +2803,8 @@ function renderPracticeCard() {
       <button class="btn btn-ghost btn-sm" onclick="editCurrentCardBlanks()" style="padding:6px 8px;font-size:var(--font-size)" title="手动挖空">🐑</button>
 	      <button class="btn btn-ghost btn-sm" onclick="regenerateCurrentBlanks()" style="padding:6px 8px;font-size:var(--font-size)" title="换一批空">🔄</button>
       <div class="flex gap-4" style="margin-left:auto">
-        <button class="btn btn-ghost btn-sm" onclick="toggleRevealCurrent()" style="padding:6px 8px;font-size:var(--font-size)" title="显示原文">💡</button>
-        ${hasKj ? `<button class="btn btn-ghost btn-sm" onclick="toggleKoujuePanel()" style="padding:6px 8px;font-size:var(--font-size);color:var(--primary)" title="口诀">🧠</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="toggleRevealCurrent()" style="padding:6px 8px;font-size:var(--font-size)" title="显示原文">✨</button>
+        ${hasKj ? `<button class="btn btn-ghost btn-sm" onclick="toggleKoujuePanel()" style="padding:6px 8px;font-size:var(--font-size);color:var(--primary)" title="口诀">💡</button>` : ''}
         ${hasVoice ? `<button class="btn btn-ghost btn-sm" onclick="speakCard()" style="padding:6px 8px;font-size:var(--font-size)" title="朗读">🔊</button>` : ''}
       </div>
     </div>
@@ -2300,7 +2919,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     if (revealed) {
       ah += `<span class="revealed-text">${escNl(b.text)}</span>`;
     } else {
-      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text)}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
+      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text)}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
     }
     le = b.end;
   }
@@ -2413,7 +3032,7 @@ function renderWrongCardInteractive(card, wrongDetail) {
     html += (a.substring(le, bk.start)).replace(/\n/g, '<br>');
     var isWr = wi.indexOf(k) >= 0;
     var brd = isWr ? 'var(--danger)' : 'var(--success)';
-    html += '<input type="text" class="blank-input" id="wbi_' + cid + '_' + k + '" data-ans="' + bk.text.replace(/"/g,'&quot;') + '" style="border-color:' + brd + ';width:80px" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
+    html += '<input type="text" class="blank-input" id="wbi_' + cid + '_' + k + '" data-ans="' + bk.text.replace(/"/g,'&quot;') + '" style="border-color:' + brd + ';width:80px" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">';
     le = bk.end;
   }
   html += (a.substring(le)).replace(/\n/g, '<br>');
@@ -2425,20 +3044,35 @@ function renderWrongCardInteractive(card, wrongDetail) {
 }
 
 function toggleWrongAnswers(cardId, count) {
-  var btn = document.getElementById('wrongBtn_' + cardId);
+  var btn = document.getElementById("wrongBtn_" + cardId);
   if (!btn) return;
-  var revealing = btn.textContent.indexOf('显示') >= 0;
+  var revealing = btn.textContent.indexOf("显示") >= 0;
   for (var i = 0; i < count; i++) {
-    var inp = document.getElementById('wbi_' + cardId + '_' + i);
+    var inp = document.getElementById("wbi_" + cardId + "_" + i);
     if (inp) {
       if (revealing) {
-        inp.value = inp.dataset.ans || '';
+        var ans = inp.dataset.ans || "";
+        inp.value = ans;
+        inp.style.borderColor = "transparent";
+        inp.style.color = "var(--success)";
+        inp.style.fontWeight = "600";
+        inp.readOnly = true;
+        inp.style.width = "auto";
+        inp.style.minWidth = "80px";
+        inp.size = Math.max(ans.length, 4);
       } else {
-        inp.value = '';
+        inp.value = "";
+        inp.style.borderColor = "";
+        inp.style.color = "";
+        inp.style.fontWeight = "";
+        inp.readOnly = false;
+        inp.style.width = "80px";
+        inp.style.minWidth = "";
+        inp.removeAttribute("size");
       }
     }
   }
-  btn.textContent = revealing ? '隐藏答案' : '显示答案';
+  btn.textContent = revealing ? "隐藏答案" : "显示答案";
 }
 
 function applyCheckToInputs(card) {
@@ -2464,6 +3098,47 @@ function applyCheckToInputs(card) {
     const wb = getWrongBook(practiceState.bankId);
     wb[card.id] = { wrongIndices: wrongIndices, wrongAnswers: wrongAnswers };
     saveData(appData);
+  }
+
+  // 间隔重复追踪
+  const bank = appData.banks[practiceState.bankId];
+  const bankCard = bank ? bank.cards.find(c => c.id === card.id) : null;
+  if (bankCard) {
+    if (hasWrong) {
+      // 答错：设置明天复习，stage 保持不变或设为1
+      bankCard.srStage = bankCard.srStage || 1;
+      bankCard.srNextReview = Date.now() + 86400000; // 1天后
+    } else if (bankCard.srStage && bankCard.srStage > 0) {
+      // 之前错过，这次全对：晋级
+      const intervals = [0, 86400000, 172800000, 345600000, 604800000]; // 0, 1d, 2d, 4d, 7d
+      bankCard.srStage = Math.min(5, bankCard.srStage + 1);
+      if (bankCard.srStage >= 5) {
+        bankCard.srNextReview = null; // 已掌握，不再强制复习
+        bankCard.srStage = 0; // 重置
+      } else {
+        bankCard.srNextReview = Date.now() + intervals[bankCard.srStage];
+      }
+    }
+    saveData(appData);
+  }
+
+  // 🔥 连续答对 & 🎰 随机幸运
+  if (!hasWrong) {
+    practiceState._streak = (practiceState._streak || 0) + 1;
+    // 连续答对彩蛋
+    const streakMilestones = [5, 10, 15, 20, 30, 50];
+    if (streakMilestones.includes(practiceState._streak)) {
+      const emojis = {5:'🔥',10:'💥',15:'⚡',20:'🌟',30:'💎',50:'👑'};
+      showToast(emojis[practiceState._streak] + ' 完美连击！×' + practiceState._streak);
+    }
+    // 随机幸运题：~12% 概率
+    if (Math.random() < 0.12) {
+      appData.unicorns = (appData.unicorns || 0) + 2;
+      saveData(appData);
+      showToast('🍀 幸运题！额外获得 +2 🦄');
+    }
+  } else {
+    practiceState._streak = 0;
   }
 }
 function toggleRevealCurrent() {
@@ -2574,25 +3249,6 @@ function editCurrentCardBlanks() {
   copy._autoBlanks = null;
   previewData = { name: "单题编辑", cards: [copy], mode: "manual", _singleCardEdit: true, _cardIdx: practiceState.index };
   showImportPreview("单题编辑", [copy]);
-  const origConfirm = confirmImport;
-  confirmImport._origSingleCard = origConfirm;
-  confirmImport = function() {
-    if (!previewData || !previewData._singleCardEdit) { confirmImport = confirmImport._origSingleCard || origConfirm; return confirmImport(); }
-    const edited = previewData.cards[0];
-    delete edited._charSelected; delete edited._savedChars; delete edited._autoBlanks;
-    practiceState.cards[previewData._cardIdx] = edited;
-    practiceState.revealed.delete(edited.id);
-    delete practiceState.answers[edited.id];
-    const bank = appData.banks[practiceState.bankId];
-    if (bank) {
-      const c = bank.cards.find(x => x.id === edited.id);
-      if (c) { c.blanks = edited.blanks; c.fullText = edited.fullText; c._manualBlanks = edited._manualBlanks; }
-      saveData(appData);
-    }
-    previewData = null; const m = $('previewModal'); if (m) m.remove();
-    confirmImport = origConfirm;
-    renderPracticeCard();
-  };
 }
 
 function hasOverlappingBlanks(card) {
@@ -2706,7 +3362,8 @@ function showPracticeResult() {
   // 更新顺序进度
   if (st.mode === 'sequential') {
     const pos = getSeqProgress(st.bankId);
-    appData.seqProgress[st.bankId] = Math.min(pos + total, bank?.cards.length || 0);
+        const filteredLen = getFilteredCards(bank).length;
+    appData.seqProgress[st.bankId] = Math.min(pos + total, filteredLen || (bank && bank.cards ? bank.cards.length : 0) || 0);
   }
   // 更新随机不重复的已完成集
   if (st.mode === 'random-norepeat') {
@@ -2731,6 +3388,15 @@ function showPracticeResult() {
 
   // 练习轮次计数
   appData.roundCount = (appData.roundCount || 0) + 1;
+  // 🦄 印章累积
+  appData.unicorns = (appData.unicorns || 0) + total;
+
+  // 📊 每日统计
+  if (!appData.dailyStats) appData.dailyStats = {};
+  const today = new Date().toISOString().slice(0, 10);
+  if (!appData.dailyStats[today]) appData.dailyStats[today] = { cards: 0, unicorns: 0 };
+  appData.dailyStats[today].cards += total;
+  appData.dailyStats[today].unicorns += total;
   saveData(appData);
 
   const rc = $('practiceResult');
@@ -2739,6 +3405,8 @@ function showPracticeResult() {
     <div style="font-size:48px;margin-bottom:8px">✅</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px">本轮完成</div>
     <div class="text-sm text-secondary">共 ${total} 题 · ${escapeHtml(st.bankName)}</div>
+    <div style="margin-top:14px;font-size:28px;letter-spacing:2px">${'🦄'.repeat(Math.min(total, 20))}</div>
+    <div style="font-size:14px;color:var(--text-secondary);margin-top:4px">本轮获得 <b style="color:var(--primary);font-size:18px">${total}</b> 个印章</div>
     <div class="flex gap-8 flex-wrap justify-center mt-16">
       <button class="btn btn-primary btn-sm" onclick="retrySameSettings()">▶ 再来一轮</button>
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()">🔄 重新设置</button>
@@ -2752,6 +3420,175 @@ function showPracticeResult() {
   if (appData.roundCount % 5 === 0) {
     setTimeout(() => showToast('📋 已练习 ' + appData.roundCount + ' 轮，记得备份数据哦'), 1500);
   }
+
+  // 📊 周日弹出每周回顾
+  if (new Date().getDay() === 0) {
+    showWeeklyReview();
+  }
+}
+
+function showWeeklyReview() {
+  const ds = appData.dailyStats || {};
+  const now = new Date();
+  const getWeekRange = (offset) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - d.getDay() + offset); // Sunday-based
+    const start = new Date(d);
+    start.setDate(start.getDate() - (offset ? 0 : 7));
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    return { start, end };
+  };
+  const fmtD = d => d.toISOString().slice(0, 10);
+
+  const thisWeek = getWeekRange(0);
+  const lastWeek = getWeekRange(-7);
+
+  let thisCards = 0, thisUnicorns = 0, thisDays = 0;
+  let lastCards = 0, lastUnicorns = 0;
+
+  for (let d = new Date(thisWeek.start); d <= thisWeek.end; d.setDate(d.getDate() + 1)) {
+    const key = fmtD(d);
+    if (ds[key]) { thisCards += ds[key].cards; thisUnicorns += ds[key].unicorns; thisDays++; }
+  }
+  for (let d = new Date(lastWeek.start); d <= lastWeek.end; d.setDate(d.getDate() + 1)) {
+    const key = fmtD(d);
+    if (ds[key]) { lastCards += ds[key].cards; lastUnicorns += ds[key].unicorns; }
+  }
+
+  const diff = thisCards - lastCards;
+  let compareMsg = '';
+  if (lastCards === 0 && thisCards > 0) compareMsg = '这是你的第一周，好的开始！';
+  else if (diff > 0) compareMsg = '比上周多了 <b>' + diff + '</b> 题，进步明显！📈';
+  else if (diff < 0) compareMsg = '比上周少了 <b>' + Math.abs(diff) + '</b> 题，下周加油！💪';
+  else compareMsg = '和上周持平，保持稳定！✊';
+
+  const msg = '<div style="text-align:center;line-height:2">' +
+    '<div style="font-size:40px;margin-bottom:8px">📊</div>' +
+    '<div style="font-size:18px;font-weight:800;margin-bottom:12px">本周回顾</div>' +
+    '<div>📝 刷了 <b>' + thisCards + '</b> 题</div>' +
+    '<div>🦄 获得 <b>' + thisUnicorns + '</b> 个印章</div>' +
+    '<div>🔥 练习 <b>' + thisDays + '</b> 天</div>' +
+    '<div style="margin-top:8px;color:var(--text-secondary)">' + compareMsg + '</div>' +
+    '</div>';
+
+  setTimeout(() => showInfoModal('每周回顾', msg, '继续加油！🎉'), 2000);
+}
+
+function showInfoModal(title, htmlMsg, btnText) {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  ov.innerHTML = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:330px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px"><h3 style="margin-bottom:8px;font-size:17px">' + escapeHtml(title) + '</h3><div style="color:var(--text-secondary);margin-bottom:22px;font-size:14px">' + htmlMsg + '</div><button class="btn btn-primary btn-block">' + escapeHtml(btnText || '知道了') + '</button></div>';
+  document.body.appendChild(ov);
+  ov.querySelector('button').onclick = () => ov.remove();
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+}
+
+const MANUALS = {
+  full: { title: '📖 超详细说明书', content: `<div style="max-height:65vh;overflow-y:auto;line-height:1.9">
+<div style="font-weight:700;color:var(--primary)">▎题库</div>
+<div>• <b>导入</b>：粘贴文本，格式 <code>题目 答案</code>（空格/换行分隔），或上传 .txt 文件</div>
+<div style="color:#e91e63">• <b>🆕 #%格式导入</b>：题目前加 <code>#</code>、答案前加 <code>%</code>，多行答案每行一个 <code>%</code>，系统自动配对识别</div><div style="margin:4px 0 4px 20px;padding:8px 12px;background:var(--bg-input);border-radius:6px;font-size:13px;line-height:1.7">📝 <b>例子：</b><br><code style="color:#e91e63">#</code>光合作用的场所是哪里<br><code style="color:#e91e63">%</code>叶绿体<br><br><code style="color:#e91e63">#</code>植物细胞的结构包括什么<br><code style="color:#e91e63">%</code>细胞壁<br><code style="color:#e91e63">%</code>细胞膜<br><code style="color:#e91e63">%</code>细胞质<br><code style="color:#e91e63">%</code>细胞核</div>
+<div>• <b>手动挖空</b>：答案中写 <code>@关键词@</code> 标记要挖掉的位置，系统自动识别，不依赖自动生成</div>
+<div>• <b>排序</b>：题库卡片上的 <b>← →</b> 按钮调整题库前后顺序</div>
+<div>• <b>导出</b>：✏️编辑 / 📤导出纯文本 / 💾导出含挖空标记（方便再次导入）</div>
+
+<div style="font-weight:700;margin-top:12px;color:var(--primary)">▎刷题</div>
+<div>• 三种模式：<b>随机不重复</b>（推荐）/ 随机可重复 / 顺序</div>
+<div>• 填完所有空<b>自动诊断</b>；按<b>回车键</b>也可手动诊断</div>
+<div>• 密度切换：<b>低</b>=每点1空好背 / <b>高</b>=多空挑战，做题中随时可调</div>
+<div>• ⭐ 收藏题目、💡 查看口诀、🗑 删除题目，做题中随时可用</div>
+<div>• 点答题卡<b>左边缘</b>回上一题、<b>右边缘</b>去下一题（不挡填空框）</div>
+
+<div style="font-weight:700;margin-top:12px;color:var(--primary)">▎复习</div>
+<div>• <b>错题本</b>：答错自动进入，底部「错题」标签可复习重做；答对可从错题本移除</div>
+<div>• <b>间隔重复</b>：错题第2天自动排前面；连续全对晋级（1天→2天→4天→7天→✅掌握）</div>
+<div>• <b>收藏</b>：可按题目 / 口诀 / 错题三个子分类筛选，搜索框快速查找</div>
+
+<div style="font-weight:700;margin-top:12px;color:var(--primary)">▎激励</div>
+<div>• 🦄 印章：做一题得一印章，设置页看累计 + 里程碑鼓励语</div>
+<div>• 🔥 连击：连续答对5/10/15/20/30/50题弹出彩蛋</div>
+<div>• 🍀 幸运题：约12%概率答对额外 +2🦄</div>
+<div>• 📊 周回顾：周日刷完弹出本周统计，和上周对比</div>
+
+<div style="font-weight:700;margin-top:12px;color:var(--primary)">▎设置</div>
+<div>• 暗色模式 + 8种主题色 + 字体大小可调</div>
+<div>• 语音朗读：可选声音、语速（0.5-2x）、模式（单遍/循环/自动下一题/每题三遍）</div>
+<div>• 📋 复制备份码 / 📥 粘贴恢复 — 换设备必备</div>
+
+<div style="font-weight:700;margin-top:12px;color:var(--danger)">▎⚠️ 注意</div>
+<div>1. 数据存在浏览器 localStorage，清缓存/卸载浏览器/隐私模式会<b>丢失数据</b></div>
+<div>2. 务必定期 <b>复制备份码</b> 保存到安全地方（微信收藏/备忘录）</div>
+<div>3. 换手机/换浏览器：粘贴备份码一键恢复</div>
+<div>4. 试用密码 <code>5826</code> 可体验但不能导入；永久密码找 <b>小红书2750492576（说明购买永久）低价</b></div>
+<div>5. 导入前先备份！导入直接写入题库不可撤销</div>
+<div>6. 同一存储键 <b>不同版本共享数据</b>，更新 HTML 版本内容不丢</div>
+<div>7. 导入文本如果含 <b>tab/特殊空白符</b> 可能导致拆分异常，建议用空格分隔</div>
+
+<div style="font-weight:700;margin-top:12px;color:var(--success)">▎💡 小技巧</div>
+<div>• 睡前暗色模式 + 低亮度刷题，护眼且记忆效果好</div>
+<div>• <b>口诀</b> 辅助记忆：关键字点击展开查看完整版</div>
+<div>• 低密度适合初学、高密度适合考前冲刺</div>
+<div>• 错题本定期清零：设置 → 清空错题本</div>
+<div>• 用 <code>@答案@</code> 手动标空比自动挖空更精准</div>
+<div>• 用 <b>← →</b> 把常用题库排最上面</div>
+<div>• 每天刷几轮凑连击，印章积少成多</div>
+</div>`},
+
+  simple: { title: '📋 简约说明书', content: `<div style="line-height:2">
+<div><b>导入</b>：粘贴「题目 答案」或上传 .txt；<span style="color:#e91e63">🆕 支持 <code>#题目</code> <code>%答案</code> 格式，例：<code>#光合作用</code> → <code>%叶绿体</code></span></div>
+<div><b>手动挖空</b>：答案中写 <code>@关键词@</code> 标记要挖的位置</div>
+<div><b>刷题</b>：填完自动诊断，回车手动诊断，⭐收藏 💡口诀</div>
+<div><b>错题</b>：答错自动进错题本，底部标签可复习</div>
+<div><b>印章</b>：做一题得一🦄，设置页查看</div>
+<div><b>备份</b>：设置 → 复制备份码 → 粘贴到别处保存</div>
+<div><b>密码</b>：试用 <code>5826</code>，永久找 <b>小红书2750492576（说明购买永久）低价</b></div>
+</div>`},
+
+  warn: { title: '⚠️ 注意点说明书', content: `<div style="line-height:2">
+<div>1. 数据在浏览器 localStorage，清缓存/卸载浏览器/<b>隐私模式会丢</b></div>
+<div>2. <b>定期复制备份码</b>保存，换设备粘贴恢复</div>
+<div>3. 试用密码 <b>5826</b>，可体验不能导入；永久密码找 <b>小红书2750492576（说明购买永久）低价</b></div>
+<div>4. 导入前先备份，导入不可撤销</div>
+<div>5. 更新 HTML 版本数据不丢（同存储键），放心替换文件</div>
+<div>6. 导入文本含 tab 或特殊空白可能导致拆分异常</div>
+<div>7. 用 <code>@关键词@</code> 标注可跳过自动挖空，手动控制挖空位置</div>
+<div style="color:#e91e63">8. 🆕 导入支持 <code>#题目</code> <code>%答案</code> 格式，多行答案每行一个%</div>
+</div>`},
+
+  key: { title: '⭐ 重点说明书', content: `<div style="line-height:2">
+<div>🔑 <b>核心操作</b></div>
+<div>• 导入：粘贴文本 → 预览 → 确认导入</div>
+<div style="color:#e91e63">• 🆕 支持 <code>#</code> 标题目、<code>%</code> 标答案的导入格式（例：<code>#题目</code> <code>%答案1</code> <code>%答案2</code>）</div>
+<div>• 刷题：选题库 → 设题数 → 开始 → 填空 → 自动诊断</div>
+<div>• 复习：错题本 + 收藏分类筛选</div>
+<div>• 备份：设置 → 复制备份码 → 存到微信/备忘录</div>
+<div style="margin-top:8px">🦄 <b>激励</b></div>
+<div>• 印章累计 + 里程碑 / 连击彩蛋 / 幸运题 +2 / 周日周报</div>
+<div style="margin-top:8px">✏️ <b>手动挖空</b></div>
+<div>• 答案中写 <code>@要挖的词@</code>，导入时自动识别</div>
+<div style="margin-top:8px">🔐 <b>密码</b></div>
+<div>• 试用 <code>5826</code> / 永久找 <b>小红书2750492576（说明购买永久）低价</b></div>
+</div>`}
+};
+
+function showManualMenu() {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  ov.innerHTML = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:300px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px 16px"><h3 style="margin-bottom:16px;font-size:16px;text-align:center">📖 选择说明书</h3>' +
+    Object.entries(MANUALS).map(([k, v]) => '<button class="btn btn-outline btn-block" style="margin-bottom:8px;text-align:left;font-size:14px">' + v.title + '</button>').join('') +
+    '<button class="btn btn-ghost btn-block" style="font-size:13px">取消</button></div>';
+  document.body.appendChild(ov);
+  const btns = ov.querySelectorAll('.btn-outline');
+  const keys = Object.keys(MANUALS);
+  btns.forEach((btn, i) => {
+    btn.onclick = () => { ov.remove(); showManual(keys[i]); };
+  });
+  ov.querySelector('.btn-ghost').onclick = () => ov.remove();
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+}
+
+function showManual(type) {
+  const m = MANUALS[type];
+  if (m) showInfoModal(m.title, m.content, '知道了');
 }
 
 function retrySameSettings() {
@@ -2760,17 +3597,18 @@ function retrySameSettings() {
   if (!bank) return;
   const count = practiceState.total;
   let selected;
+  const filteredCards = getFilteredCards(bank);
   if (practiceState.mode === 'sequential') {
     const pos = getSeqProgress(bankId);
-    if (pos >= bank.cards.length) {
+    if (pos >= filteredCards.length) {
       appData.seqProgress[bankId] = 0;
       saveData(appData);
-      selected = [...bank.cards.slice(0, count)];
+      selected = [...filteredCards.slice(0, count)];
     } else {
-      selected = [...bank.cards.slice(pos, Math.min(pos + count, bank.cards.length))];
+      selected = [...filteredCards.slice(pos, Math.min(pos + count, filteredCards.length))];
     }
   } else {
-    selected = shuffle(bank.cards).slice(0, count);
+    selected = shuffle(filteredCards).slice(0, count);
   }
   const qh = new Set();
   if (hideQuestionStart) { for (const c of selected) qh.add(c.id); }
@@ -2803,30 +3641,72 @@ function renderBrowseStart() {
   let bankId = sessionStorage.getItem('lastPracticeBank');
   if (!bankId || !appData.banks[bankId]) bankId = banks[0].id;
   const bank = appData.banks[bankId];
-  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', _filteredCards: bank.cards };
+  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards };
 
   const wrongCount = Object.keys(getWrongBook(bankId)).length;
   const favCount = bank.cards.filter(c => c.starred).length;
+	  const kjCount = bank.cards.filter(c => c.koujue).length;
 
   c.innerHTML = `<div class="flex justify-between items-center mb-10">
     <h1 style="font-size:20px;font-weight:800">📖 目录</h1>
-    <select id="browseBankSelect" style="width:auto;min-width:130px;padding:8px 10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px" onchange="changeBrowseBank()">
-      ${banks.map(b => `<option value="${b.id}"${b.id === bankId ? ' selected' : ''}>${escapeHtml(b.name)}</option>`).join('')}
-    </select>
+    <input type="hidden" id="browseBankSelect" value="${bankId}">
+    <button class="btn btn-ghost btn-sm" onclick="showBankPicker(document.getElementById('browseBankSelect').value, function(bid){document.getElementById('browseBankSelect').value=bid;var bk=appData.banks[bid];if(bk){sessionStorage.setItem('lastPracticeBank',bid);changeBrowseBank()}})" style="font-size:13px">
+      ${escapeHtml(bank.name)} ▾
+    </button>
+  </div>
+  <div style="margin-bottom:10px">
+    <input type="search" id="browseSearchInput" placeholder="🔍 搜索题目..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doBrowseSearch()">
   </div>
   <div class="chip-group mb-12" id="browseFilterChips">
     <span class="chip active" data-filter="all" onclick="setBrowseFilter('all', this)">全部</span>
     <span class="chip" data-filter="star" onclick="setBrowseFilter('star', this)">⭐ 收藏${favCount ? ' · '+favCount : ''}</span>
-    <span class="chip" data-filter="wrong" onclick="setBrowseFilter('wrong', this)">❌ 错题${wrongCount ? ' · '+wrongCount : ''}</span>
+    
+	    <span class="chip" data-filter="koujue" onclick="setBrowseFilter('koujue', this)">💡 口诀${kjCount ? ' · '+kjCount : ''}</span>
   </div>
-  <div id="browseActive"></div>`;
+  <div class="chip-group mb-12" id="browseStarSubChips" style="display:none;flex-wrap:nowrap;overflow-x:auto">
+      <span class="chip active" data-sub="all" onclick="setStarSubFilter('all', this)">全部</span>
+      <span class="chip" data-sub="question" onclick="setStarSubFilter('question', this)">📝 题目</span>
+      <span class="chip" data-sub="koujue" onclick="setStarSubFilter('koujue', this)">💡 口诀</span>
+      <span class="chip" data-sub="wrong" onclick="setStarSubFilter('wrong', this)">❌ 错题</span>
+    </div>
+    <div id="browseActive"></div>`;
   renderBrowseList();
 }
 
 function setBrowseFilter(filter, el) {
   browseState.filter = filter;
+  browseState.starSub = 'all';
+  browseState.searchQuery = '';
+  const si = document.getElementById('browseSearchInput');
+  if (si) si.value = '';
   document.querySelectorAll('#browseFilterChips .chip').forEach(c => c.classList.remove('active'));
   if (el) el.classList.add('active');
+  // 收藏子分类：显示/隐藏
+  const subChips = document.getElementById('browseStarSubChips');
+  if (subChips) {
+    subChips.style.display = filter === 'star' ? '' : 'none';
+    if (filter === 'star') {
+      subChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      const allChip = subChips.querySelector('[data-sub="all"]');
+      if (allChip) allChip.classList.add('active');
+    }
+  }
+  renderBrowseList();
+}
+
+function setStarSubFilter(sub, el) {
+  browseState.starSub = sub;
+  const subChips = document.getElementById('browseStarSubChips');
+  if (subChips) {
+    subChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+  renderBrowseList();
+}
+
+function doBrowseSearch() {
+  const input = document.getElementById('browseSearchInput');
+  browseState.searchQuery = input ? input.value.trim().toLowerCase() : '';
   renderBrowseList();
 }
 
@@ -2834,13 +3714,22 @@ function changeBrowseBank() {
   const bankId = document.getElementById('browseBankSelect').value;
   const bank = appData.banks[bankId];
   if (!bank) return;
+  // 清空搜索
+  const searchInput = document.getElementById('browseSearchInput');
+  if (searchInput) searchInput.value = '';
   const wrongCount = Object.keys(getWrongBook(bankId)).length;
   const favCount = bank.cards.filter(c => c.starred).length;
-  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', _filteredCards: bank.cards };
+	  const kjCount = bank.cards.filter(c => c.koujue).length;
+  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards };
   // 更新 chip 数量
   const chips = document.querySelectorAll('#browseFilterChips .chip');
   if (chips[1]) chips[1].textContent = '⭐ 收藏' + (favCount ? ' · ' + favCount : '');
-  if (chips[2]) chips[2].textContent = '❌ 错题' + (wrongCount ? ' · ' + wrongCount : '');
+  if (chips[2]) chips[2].textContent = '💡 口诀' + (kjCount ? ' · ' + kjCount : '');
+  // 重置所有 chip 的 active 类到"全部"
+  chips.forEach(function(c) { c.classList.remove('active'); });
+  if (chips[0]) chips[0].classList.add('active');
+  var subChips = document.getElementById('browseStarSubChips');
+  if (subChips) subChips.style.display = 'none';
   renderBrowseList();
 }
 
@@ -2852,10 +3741,31 @@ function renderBrowseList() {
   // 筛选
   let cards = st.cards;
   const wbBrowse = getWrongBook(st.bankId);
-  if (st.filter === 'star') cards = cards.filter(c => c.starred);
+  if (st.filter === 'star') {
+    cards = cards.filter(c => c.starred);
+    // 收藏子分类
+    if (st.starSub === 'question') cards = cards.filter(c => !c.koujue && !(c.id in wbBrowse));
+    else if (st.starSub === 'koujue') cards = cards.filter(c => c.koujue);
+    else if (st.starSub === 'wrong') cards = cards.filter(c => c.id in wbBrowse);
+  }
   if (st.filter === 'wrong') cards = cards.filter(c => c.id in wbBrowse);
+			  if (st.filter === 'koujue') cards = cards.filter(c => c.koujue);
+  // 搜索过滤
+  if (st.searchQuery) {
+    cards = cards.filter(c => (c.question || '').toLowerCase().includes(st.searchQuery) || (c.answer || '').toLowerCase().includes(st.searchQuery));
+  }
   if (!cards.length) {
-    c.innerHTML = `<div class="empty"><p>${st.filter === 'wrong' ? '暂无错题，做题时诊断后自动收集' : st.filter === 'star' ? '暂无收藏' : '题库为空'}</p></div>`;
+    let emptyMsg = '题库为空';
+    if (st.searchQuery) emptyMsg = '未找到匹配"'+escapeHtml(st.searchQuery)+'"的题目';
+    else if (st.filter === 'wrong') emptyMsg = '暂无错题，做题时诊断后自动收集';
+    else if (st.filter === 'koujue') emptyMsg = '暂无口诀';
+    else if (st.filter === 'star') {
+      if (st.starSub === 'question') emptyMsg = '收藏中没有此类题目';
+      else if (st.starSub === 'koujue') emptyMsg = '收藏中没有带口诀的题目';
+      else if (st.starSub === 'wrong') emptyMsg = '收藏中没有错题';
+      else emptyMsg = '暂无收藏';
+    }
+    c.innerHTML = '<div class="empty"><p>' + emptyMsg + '</p></div>';
     return;
   }
 
@@ -2870,19 +3780,58 @@ function renderBrowseList() {
   st._filteredCards = cards.map(c => ({ ...c, _idx: st.cards.indexOf(c) }));
 
   let html = '';
-  for (const [chapter, list] of Object.entries(groups)) {
-    if (chapter) html += `<div class="section-title" style="margin-top:12px">${escapeHtml(chapter)} · ${list.length} 题</div>`;
-    for (const card of list) {
-      const qText = card.question.replace(/^[\d\.\、\s]+/, '').substring(0, 35);
-      html += `<div class="browse-dir-item" onclick="openBrowseDetail(${card._idx})">
-        <span style="font-size:11px;color:var(--text-tertiary);min-width:28px">${card._idx + 1}</span>
-        <span style="flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(qText)}</span>
-        <span style="font-size:20px;flex-shrink:0;cursor:pointer;padding:6px 10px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center" onclick="event.stopPropagation();toggleBrowseStarFromList(${card._idx})">${card.starred ? '⭐' : '☆'}</span>
-      </div>`;
+  if (st.filter === 'koujue') {
+    // 口诀卡片格式（带收藏和修改）
+    for (const [chapter, list] of Object.entries(groups)) {
+      if (chapter) html += '<div class="section-title" style="margin-top:12px">' + escapeHtml(chapter) + ' · ' + list.length + ' 条</div>';
+      for (const card of list) {
+        const parsed = typeof parseKoujue === 'function' ? parseKoujue(card.koujue || '') : [];
+        const keywordsOnly = parsed.map(p => escapeHtml(p.char)).join(' ');
+        html += '<div class="kj-card" id="kjb-' + card.id + '">';
+        html += '<div class="kj-mnemonic" style="display:flex;justify-content:space-between;align-items:flex-start">';
+        html += '<span style="flex:1">' + (keywordsOnly || escapeHtml(card.koujue || '')) + '</span>';
+        html += '<span style="display:flex;gap:4px;flex-shrink:0">';
+        html += '<span style="font-size:20px;cursor:pointer;padding:2px 6px;min-width:36px;display:inline-flex;align-items:center;justify-content:center" onclick="event.stopPropagation();toggleBrowseStarFromList(' + card._idx + ')">' + (card.starred ? '⭐' : '☆') + '</span>';
+        html += '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editKoujueBrowse(this)" data-cid="' + card.id + '" style="padding:2px 6px;font-size:12px;opacity:.4" title="编辑口诀">✏️</button>';
+        html += '</span></div>';
+        html += '<div class="kj-meaning" id="kjb-mean-' + card.id + '">';
+        html += '<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:6px">' + escapeHtml(card.question.replace(/^[\d\.\、\s]+/, '')) + '</div>';
+        html += parsed.map(p => '<span class="kj-char">' + escapeHtml(p.char) + '</span><span class="kj-desc">（' + escapeHtml(p.desc) + '）</span>').join(' ');
+        html += '</div>';
+        html += '</div>';
+      }
+    }
+  } else {
+    // 普通列表格式
+    for (const [chapter, list] of Object.entries(groups)) {
+      if (chapter) html += '<div class="section-title" style="margin-top:12px">' + escapeHtml(chapter) + ' · ' + list.length + ' 题</div>';
+      for (const card of list) {
+        const qText = card.question.replace(/^[\d\.\、\s]+/, '').substring(0, 35);
+        html += '<div class="browse-dir-item" onclick="openBrowseDetail(' + card._idx + ')">';
+        html += '<span style="font-size:11px;color:var(--text-tertiary);min-width:28px">' + (card._idx + 1) + '</span>';
+        html += '<span style="flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(qText) + '</span>';
+        html += '<span style="font-size:20px;flex-shrink:0;cursor:pointer;padding:6px 10px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center" onclick="event.stopPropagation();toggleBrowseStarFromList(' + card._idx + ')">' + (card.starred ? '⭐' : '☆') + '</span>';
+        html += '</div>';
+      }
     }
   }
 
   c.innerHTML = html;
+
+  // 口诀卡片点击展开事件
+  if (st.filter === 'koujue') {
+    cards.forEach(card => {
+      const el = document.getElementById('kjb-' + card.id);
+      const meanEl = document.getElementById('kjb-mean-' + card.id);
+      if (el && meanEl) {
+        el.onclick = () => {
+          const showing = meanEl.classList.contains('show');
+          document.querySelectorAll('#browseActive .kj-meaning.show').forEach(m => m.classList.remove('show'));
+          if (!showing) meanEl.classList.add('show');
+        };
+      }
+    });
+  }
 }
 
 function openBrowseDetail(idx) {
@@ -2969,13 +3918,59 @@ function toggleBrowseStar() {
   renderBrowseDetail();
 }
 
+// ==================== 浏览口诀编辑 ====================
+function editKoujueBrowse(el) {
+  const cardId = el.dataset.cid;
+  if (!cardId) return;
+  let card = null;
+  for (const b of Object.values(appData.banks)) {
+    const c = b.cards.find(x => x.id === cardId);
+    if (c) { card = c; break; }
+  }
+  if (!card) return;
+
+  const cardEl = document.getElementById('kjb-' + cardId);
+  if (!cardEl) return;
+
+  cardEl.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' +
+    '<textarea id="kjbEditTextarea" style="width:100%;min-height:60px;padding:8px;border:2px solid var(--primary);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" rows="2">' + escapeHtml(card.koujue || '') + '</textarea>' +
+    '<div class="flex gap-8" style="justify-content:flex-end">' +
+    '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();cancelEditKoujueBrowse()">取消</button>' +
+    '<button class="btn btn-primary btn-sm" data-cid="' + cardId + '" onclick="event.stopPropagation();saveKoujueBrowse(this.dataset.cid)">保存</button>' +
+    '</div></div>';
+  cardEl.onclick = null;
+}
+
+function cancelEditKoujueBrowse() {
+  renderBrowseList();
+}
+
+function saveKoujueBrowse(cardId) {
+  const ta = document.getElementById('kjbEditTextarea');
+  if (!ta) return;
+  const newKj = ta.value.trim();
+
+  let card = null;
+  for (const b of Object.values(appData.banks)) {
+    const c = b.cards.find(x => x.id === cardId);
+    if (c) { card = c; break; }
+  }
+  if (!card) return;
+
+  card.koujue = newKj;
+  saveData(appData);
+  showToast('口诀已保存');
+  renderBrowseList();
+}
+
+
 // ==================== 口诀模式 ====================
 function renderKoujueStart() {
   const c = $('koujueContainer');
   const banks = Object.values(appData.banks).sort((a, b) => b.createdAt - a.createdAt);
 
   if (!banks.length) {
-    c.innerHTML = `<div class="empty"><span class="icon">🧠</span><h3>还没有题库</h3><p>请先导入含口诀的简答题文件</p></div>`;
+    c.innerHTML = `<div class="empty"><span class="icon">💡</span><h3>还没有题库</h3><p>请先导入含口诀的简答题文件</p></div>`;
     return;
   }
 
@@ -2989,15 +3984,13 @@ function renderKoujueStart() {
   }
 
   if (!allKjBanks.length) {
-    c.innerHTML = `<div class="empty"><span class="icon">🧠</span><h3>当前没有口诀</h3><p>导入含「口诀」格式的简答题文件即可<br>格式：<code>口诀：全（全民化）民（民主化）</code></p></div>`;
+    c.innerHTML = `<div class="empty"><span class="icon">💡</span><h3>当前没有口诀</h3><p>导入含「口诀」格式的简答题文件即可<br>格式：<code>口诀：全（全民化）民（民主化）</code></p></div>`;
     return;
   }
 
   c.innerHTML = `<div class="flex justify-between items-center mb-16">
     <h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em">口诀背诵</h1>
-    <select id="kjBankSelect" style="width:auto;min-width:150px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" onchange="kjCategoryFilter=null;renderKoujueCards()">
-      ${allKjBanks.map(b => `<option value="${b.bankId}"${b.bankId === bankId ? ' selected' : ''}>${escapeHtml(b.bankName)} (${b.cards.length}条)</option>`).join('')}
-    </select>
+    <input type="hidden" id="kjBankSelect" value="${bankId}"><button class="btn btn-ghost btn-sm" onclick="showKjBankPicker()" style="font-size:14px;padding:10px 14px;min-width:150px;white-space:nowrap">${escapeHtml(allKjBanks.find(function(b){return b.bankId===bankId})?.bankName || '')} (${(allKjBanks.find(function(b){return b.bankId===bankId})?.cards.length || 0)}条) ▾</button>
   </div>
   <div id="kjCategoryFilter" style="margin-bottom:12px"></div>
   <div id="kjCategoryHint" style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px"></div>
@@ -3174,6 +4167,90 @@ function saveKoujue(cardId) {
   renderKoujueCards();
 }
 
+// ==================== 错题本 ====================
+function renderWrongBookStart() {
+  const c = $('wrongbookContainer');
+  const banks = Object.values(appData.banks).sort((a,b) => b.createdAt - a.createdAt);
+
+  const banksWithWrong = [];
+  banks.forEach(b => {
+    const wb = getWrongBook(b.id);
+    const wrongIds = Object.keys(wb).filter(id => wb[id] && wb[id].wrongIndices && wb[id].wrongIndices.length > 0);
+    if (wrongIds.length) banksWithWrong.push({ bank: b, wrongIds, wb });
+  });
+
+  if (!banksWithWrong.length) {
+    c.innerHTML = '<div class="empty"><span class="icon">❌</span><h3>暂无错题</h3><p>做题时诊断后自动收集错题</p></div>';
+    return;
+  }
+
+  let currentBankId = sessionStorage.getItem('wrongbookBank');
+  if (!currentBankId || !appData.banks[currentBankId] || !Object.keys(getWrongBook(currentBankId)).length) {
+    currentBankId = banksWithWrong[0].bank.id;
+  }
+  let currentData = banksWithWrong.find(b => b.bank.id === currentBankId);
+  if (!currentData) currentData = banksWithWrong[0];
+  currentBankId = currentData.bank.id;
+  sessionStorage.setItem('wrongbookBank', currentBankId);
+
+  const wrongCards = [];
+  currentData.wrongIds.forEach(id => {
+    const card = currentData.bank.cards.find(x => x.id === id);
+    if (card) wrongCards.push({ card, wrongDetail: currentData.wb[id] || {} });
+  });
+
+  const groups = {};
+  wrongCards.forEach(item => {
+    const ch = item.card.chapter || '未分类';
+    if (!groups[ch]) groups[ch] = [];
+    groups[ch].push(item);
+  });
+
+  let html = '<div class="flex justify-between items-center mb-16">';
+  html += '<h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em">错题本</h1>';
+  html += '<input type="hidden" id="wrongbookBankSelect" value="' + currentBankId + '">';
+  var curBankName = currentData ? currentData.bank.name : '选择题库';
+  html += '<button class="btn btn-ghost btn-sm" onclick="showBankPicker(document.getElementById(\'wrongbookBankSelect\').value, function(bid){document.getElementById(\'wrongbookBankSelect\').value=bid;sessionStorage.setItem(\'wrongbookBank\',bid);changeWrongBookBank()})" style="font-size:13px">' + escapeHtml(curBankName) + ' (' + currentData.wrongIds.length + '题) ▾</button></div>';
+
+  for (const chapter in groups) {
+    html += '<div class="section-title">' + escapeHtml(chapter) + ' · ' + groups[chapter].length + ' 题</div>';
+    groups[chapter].forEach(item => {
+      const card = item.card;
+      html += '<div class="card" style="margin-bottom:10px;padding:14px 16px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px">';
+      html += '<div style="font-weight:500;line-height:1.8;font-size:var(--font-size);flex:1">' + escNl(card.question) + '</div>';
+      html += '<button class="btn btn-ghost btn-sm" style="color:var(--danger);flex-shrink:0;font-size:14px;padding:6px 8px;min-height:36px;min-width:36px;align-self:center" data-card-id="' + card.id + '" onclick="removeFromWrongBookPage(this.dataset.cardId)">🗑</button>';
+      html += '</div>';
+      if (card.koujue) {
+        html += '<div style="font-size:12px;color:var(--primary);margin-bottom:4px;font-weight:600;cursor:pointer" onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'\':\'none\'">💡 口诀（点击查看）</div>';
+        html += '<div style="font-size:12px;color:var(--primary);margin-bottom:4px;line-height:1.8;display:none">' + escapeHtml(card.koujue) + '</div>';
+      }
+      html += renderWrongCardInteractive(card, item.wrongDetail);
+      html += '</div>';
+    });
+  }
+
+  c.innerHTML = html;
+}
+
+function changeWrongBookBank() {
+  const sel = document.getElementById('wrongbookBankSelect');
+  if (!sel) return;
+  sessionStorage.setItem('wrongbookBank', sel.value);
+  renderWrongBookStart();
+}
+
+function removeFromWrongBookPage(cardId) {
+  const bankId = sessionStorage.getItem('wrongbookBank');
+  if (!bankId) return;
+  const wb = getWrongBook(bankId);
+  delete wb[cardId];
+  saveData(appData);
+  showToast('已移出错题本');
+  renderWrongBookStart();
+}
+
+
 // ==================== 设置 ====================
 function renderSettings() {
   const c = $('settingsContainer');
@@ -3183,8 +4260,25 @@ function renderSettings() {
   c.innerHTML = `<div class="section"><div class="section-title">数据管理</div>
     <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">
       <button class="btn btn-outline btn-block" onclick="copyBackup()">📋 复制备份码</button>
-      <button class="btn btn-outline btn-block" onclick="showRestorePrompt()">📥 粘贴备份码恢复</button>
+      <button class="btn btn-outline btn-block" id="restoreToggleBtn" onclick="toggleRestoreSection()">📥 粘贴备份码恢复</button>
+      <div id="restoreSection" style="display:none;margin-top:12px;padding:14px;background:var(--bg-input);border-radius:10px">
+        <textarea id="restoreTextarea" placeholder="在此粘贴之前复制的备份码..." style="width:100%;min-height:100px;font-size:13px;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text)"></textarea>
+        <div class="flex gap-8 mt-12">
+          <button class="btn btn-ghost flex-1" onclick="toggleRestoreSection()">取消</button>
+          <button class="btn btn-primary flex-1" onclick="doRestore()">恢复</button>
+        </div>
+      </div>
       <button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空错题本</button>
+    </div></div>
+
+  <div class="section"><div class="section-title">🦄 我的印章</div>
+    <div class="unicorn-stats" style="text-align:center;padding:16px 0">
+      <div style="letter-spacing:3px;line-height:1.4;word-break:break-all" id="unicornHerd"></div>
+      <div style="font-size:15px;color:var(--text-secondary);margin-top:8px">
+        累计获得 <b style="color:var(--primary);font-size:22px">${(appData.unicorns || 0)}</b> 个印章
+      </div>
+      <div style="font-size:13px;color:var(--text-tertiary);margin-top:4px" id="unicornMilestone"></div>
+      <div style="font-size:12px;color:var(--text-tertiary);margin-top:8px">累计练习 <b>${appData.roundCount || 0}</b> 轮</div>
     </div></div>
 
   <div class="section"><div class="section-title">挖空设置</div>
@@ -3198,14 +4292,9 @@ function renderSettings() {
     <div class="setting-item"><div><div class="setting-label">语音朗读</div><div class="setting-desc">使用手机 TTS 朗读，再次点击暂停</div></div>
       <label class="toggle"><input type="checkbox" id="voiceToggle"${s.voiceEnabled ? ' checked' : ''} onchange="saveSetting('voiceEnabled', this.checked)"><span class="slider"></span></label></div>
     <div class="setting-item"><div><div class="setting-label">朗读声音</div><div class="setting-desc" id="voiceNameVal">${s.voiceName || '自动选择'}</div></div>
-      <select class="text-sm" id="voiceSelect" style="width:auto;min-width:120px;padding:6px 10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px" onchange="updateVoiceName(this.value)"><option value="">自动选择</option></select></div>
+      <input type="hidden" id="voiceSelect" value="${s.voiceName || ''}"><button class="btn btn-ghost btn-sm" id="voicePickBtn" onclick="showVoicePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">${s.voiceName || '自动选择'} ▾</button></div>
     <div class="setting-item"><div><div class="setting-label">朗读模式</div><div class="setting-desc" id="readModeVal">${{once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']}</div></div>
-      <select id="readModeSelect" style="width:auto;min-width:120px;padding:6px 10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px" onchange="updateReadMode(this.value)">
-        <option value="once"${(s.readMode||'once')==='once'?' selected':''}>仅读一遍</option>
-        <option value="loop"${s.readMode==='loop'?' selected':''}>循环朗读</option>
-        <option value="auto-next"${s.readMode==='auto-next'?' selected':''}>自动下一题</option>
-        <option value="three-times"${s.readMode==='three-times'?' selected':''}>每题三遍</option>
-      </select></div>
+      <input type="hidden" id="readModeSelect" value="${s.readMode||'once'}"><button class="btn btn-ghost btn-sm" id="readModePickBtn" onclick="showReadModePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">${{once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']} ▾</button></div>
     <div class="setting-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc" id="rateVal">${s.voiceRate || 0.9}x</div></div>
       <div style="width:140px"><input type="range" min="0.5" max="2" value="${s.voiceRate || 0.9}" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>
     <div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">${s.voicePitch || 1.0}x</div></div>
@@ -3220,10 +4309,51 @@ function renderSettings() {
       <div class="flex items-center gap-8" style="width:140px"><span style="font-size:13px">A</span><input type="range" min="14" max="24" value="${s.fontSize}" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))"><span style="font-size:18px;font-weight:700">A</span></div></div></div>
 
   <div class="section"><div class="section-title">关于</div>
+
+    <div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc"></div></div><div style="display:flex;align-items:center">→</div></div>
     <div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div>
-    <div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>
-    <div class="setting-item" style="cursor:pointer" onclick="addToDesktop()"><div><div class="setting-label">💻 添加到桌面</div><div class="setting-desc">下载桌面快捷方式，双击即可打开</div></div><div style="display:flex;align-items:center">↓</div></div>
+    <div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:#e91e63">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:#e91e63">→</div></div>
 	    <div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div></div>`;
+  loadVoices();
+  renderUnicornHerd();
+}
+
+function renderUnicornHerd() {
+  const total = appData.unicorns || 0;
+  const herdEl = document.getElementById("unicornHerd");
+  const msEl = document.getElementById("unicornMilestone");
+  if (!herdEl) return;
+  if (total === 0) {
+    herdEl.innerHTML = "<span style=\"color:var(--text-tertiary);font-size:14px\">还没有印章，快去刷题吧！</span>";
+  } else if (total >= 100) {
+    herdEl.style.fontSize = "";
+    herdEl.innerHTML = "<span style=\"font-size:48px;font-weight:800;color:var(--primary)\">🦄 × " + total + "</span>";
+  } else {
+    var size = total <= 9 ? 36 : total <= 29 ? 20 : 14;
+    var herd = "";
+    for (var i = 0; i < total; i++) {
+      herd += "🦄";
+      if ((i + 1) % 10 === 0 && i + 1 < total) herd += " ";
+    }
+    herdEl.style.fontSize = size + "px";
+    herdEl.innerHTML = herd;
+  }
+  if (msEl) {
+    const milestones = [
+      [1, "🎉 第一枚印章！坚持下去"],
+      [10, "🌟 已经10个印章了，渐入佳境"],
+      [30, "🔥 30个印章！你是个狠人"],
+      [50, "💪 50印章达成，记忆力在变强"],
+      [100, "👑 百章大师，所向披靡"],
+      [200, "🏆 200印章，传说级的坚持"],
+      [500, "🐉 500印章！你是记忆之王"]
+    ];
+    let msg = "";
+    for (const [n, m] of milestones) {
+      if (total >= n) msg = m;
+    }
+    msEl.textContent = msg;
+  }
 }
 
 function addToDesktop() {
@@ -3265,9 +4395,9 @@ function updateDensitySetting(val, el) {
   if (el) el.classList.add('active');
 }
 
-function updateFontSize(val) { saveSetting('fontSize', val); document.getElementById('fontVal').textContent = val + 'px'; }
-function updateVoiceRate(val) { saveSetting('voiceRate', val); document.getElementById('rateVal').textContent = val + 'x'; }
-function updateVoicePitch(val) { saveSetting('voicePitch', val); document.getElementById('pitchVal').textContent = val + 'x'; }
+function updateFontSize(val) { appData.settings.fontSize = val; applySettings(); debouncedSaveData(appData); document.getElementById('fontVal').textContent = val + 'px'; }
+function updateVoiceRate(val) { appData.settings.voiceRate = val; applySettings(); debouncedSaveData(appData); document.getElementById('rateVal').textContent = val + 'x'; }
+function updateVoicePitch(val) { appData.settings.voicePitch = val; applySettings(); debouncedSaveData(appData); document.getElementById('pitchVal').textContent = val + 'x'; }
 function updateVoiceName(val) {
   saveSetting('voiceName', val || '');
   document.getElementById('voiceNameVal').textContent = val || '自动选择';
@@ -3291,33 +4421,34 @@ function loadVoices() {
     setTimeout(() => { if (window.speechSynthesis) loadVoices(); }, 200);
     return;
   }
-  const sel = document.getElementById('voiceSelect');
-  if (!sel) return;
-  // 清空旧选项（保留第一个"自动选择"）
-  while (sel.options.length > 1) sel.remove(1);
-  const keep = ['婷婷', 'Sandy', 'sandy', 'Alex'];
-  const filtered = voices.filter(v => keep.some(k => v.name.includes(k)));
-  for (const v of filtered) {
-    const opt = document.createElement('option');
-    opt.value = v.name; opt.textContent = v.name + ' (' + v.lang + ')';
-    if (v.name === appData.settings.voiceName) opt.selected = true;
-    sel.appendChild(opt);
-  }
+  // 存储到全局数组，供 showVoicePicker 弹窗使用
+  const zhVoices = voices.filter(v => v.lang.startsWith("zh"));
+  _availableVoices = zhVoices.length ? zhVoices : voices;
 }
 
 async function makeBackupCode() {
-  const json = JSON.stringify(appData);
-  // 尝试 gzip 压缩（减小 80-90%）
+  // 深拷贝并精简：删除可重建的冗余字段，缩小备份码
+  const copy = JSON.parse(JSON.stringify(appData));
+  for (const b of Object.values(copy.banks || {})) {
+    for (const card of b.cards || []) {
+      delete card.fullText;       // = question + '\n' + answer，可重建
+      delete card._charSelected;  // 编辑中间态，无需备份
+      delete card._savedChars;
+      delete card._autoBlanks;
+    }
+  }
+  const json = JSON.stringify(copy);
+  // deflate-raw 压缩（比 gzip 略小，去掉 gzip 头尾）
   if (typeof CompressionStream !== 'undefined') {
     try {
       const blob = new Blob([json]);
-      const cs = new CompressionStream('gzip');
+      const cs = new CompressionStream('deflate-raw');
       const stream = blob.stream().pipeThrough(cs);
       const compressed = await new Response(stream).blob();
       const bytes = new Uint8Array(await compressed.arrayBuffer());
       let bin = '';
       for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-      return 'Z' + btoa(bin);
+      return 'D' + btoa(bin);
     } catch(e) {}
   }
   // 不支持压缩时用原始 base64
@@ -3330,14 +4461,18 @@ async function makeBackupCode() {
 async function copyBackup() {
   if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   try {
+    showToast('正在生成备份码...');
     const code = await makeBackupCode();
-    showBackupModal(code);
-    // 同时尝试自动复制
+    // 直接复制，不弹窗
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(code).then(function() {
-        showToast('备份码已自动复制');
-      }).catch(function() {});
+      try {
+        await navigator.clipboard.writeText(code);
+        showToast('✅ 备份码已复制到剪贴板（' + code.length + '字符）');
+        return;
+      } catch(e) {}
     }
+    // 兜底：fallback 到旧版弹窗
+    showBackupModal(code);
   } catch(e) { showToast('导出失败'); }
 }
 
@@ -3369,21 +4504,22 @@ function copyBackupCode() {
   }
 }
 
-function showRestorePrompt() {
-  const ov = document.createElement('div'); ov.className = 'modal-overlay';
-  ov.innerHTML = `<div class="modal" style="border-radius:var(--radius);max-width:380px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px">
-    <h3 style="margin-bottom:10px">📥 粘贴备份码</h3>
-    <textarea id="restoreTextarea" placeholder="在此粘贴之前复制的备份码..." style="width:100%;min-height:100px;font-size:13px;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text)"></textarea>
-    <div class="flex gap-8 mt-12">
-      <button class="btn btn-ghost flex-1" onclick="this.closest('.modal-overlay').remove()">取消</button>
-      <button class="btn btn-primary flex-1" onclick="doRestore(this)">恢复</button>
-    </div>
-  </div>`;
-  document.body.appendChild(ov);
-  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+function toggleRestoreSection() {
+  const sec = document.getElementById('restoreSection');
+  const btn = document.getElementById('restoreToggleBtn');
+  if (!sec || !btn) return;
+  const showing = sec.style.display !== 'none';
+  sec.style.display = showing ? 'none' : 'block';
+  if (!showing) {
+    // 展开时聚焦输入框
+    setTimeout(function() {
+      var ta = document.getElementById('restoreTextarea');
+      if (ta) ta.focus();
+    }, 100);
+  }
 }
 
-async function doRestore(btn) {
+async function doRestore() {
   const code = document.getElementById('restoreTextarea').value.trim();
   if (!code) { showToast('请粘贴备份码'); return; }
   try {
@@ -3394,10 +4530,11 @@ async function doRestore(btn) {
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
 
     let json;
-    if (prefix === 'Z' && typeof DecompressionStream !== 'undefined') {
-      // gzip 压缩的备份码
+    if ((prefix === 'Z' || prefix === 'D') && typeof DecompressionStream !== 'undefined') {
+      // 压缩的备份码（Z=gzip旧版，D=deflate-raw新版）
+      const format = prefix === 'D' ? 'deflate-raw' : 'gzip';
       try {
-        const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+        const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format));
         json = await new Response(stream).text();
       } catch(e) { json = new TextDecoder().decode(bytes); }
     } else {
@@ -3407,6 +4544,12 @@ async function doRestore(btn) {
 
     const data = JSON.parse(json);
     if (!data.banks) { showToast('备份码无效'); return; }
+    // 恢复后重建 fullText（备份中已精简掉）
+    for (const b of Object.values(data.banks || {})) {
+      for (const card of b.cards || []) {
+        if (!card.fullText) card.fullText = (card.question || '') + '\n' + (card.answer || '');
+      }
+    }
     appData = data;
     saveData(appData);
     showToast('恢复成功！');
