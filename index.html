@@ -2017,7 +2017,9 @@ function doImport() {
   // 将字面量 \n 转为真正的换行符
   raw = raw.replace(/\\n/g, '\n');
   if (!name) { showToast('请输入题库名称'); return; }
-  if (!raw) { showToast('请粘贴题目或上传文件'); return; }
+  var qSplitCheck = ($('importQuestions')?.value || '').trim().replace(/\\n/g, '\n');
+  var aSplitCheck = ($('importAnswers')?.value || '').trim().replace(/\\n/g, '\n');
+  if (!raw && !(qSplitCheck && aSplitCheck)) { showToast('请粘贴题目或上传文件'); return; }
 
   const format = _importFormat || 'auto';
   let cards, hasBlanks = false;
