@@ -2842,7 +2842,8 @@ function jumpToProblemCard(direction) {
   // 自动跳转到目标所在页
   var pageSize = 20;
   var targetPage = Math.floor(target / pageSize);
-  if (_previewPage !== targetPage) {
+  var needPageSwitch = _previewPage !== targetPage;
+  if (needPageSwitch) {
     _previewPage = targetPage;
     renderPreviewCards();
   }
@@ -2853,7 +2854,7 @@ function jumpToProblemCard(direction) {
       el.style.boxShadow = '0 0 0 3px var(--warning)';
       setTimeout(function() { el.style.boxShadow = ''; }, 1500);
     }
-  }, targetPage !== _previewPage ? 150 : 0);
+  }, needPageSwitch ? 150 : 50);
   showToast('已跳到第 ' + (target + 1) + ' 题');
 }
 
@@ -3024,19 +3025,27 @@ function closePreviewModal() {
 
 // ==================== 预览跳转 & 编辑 ====================
 function jumpToPreviewCard() {
-  const input = document.getElementById('previewJumpInput');
+  var input = document.getElementById('previewJumpInput');
   if (!input || !previewData) return;
-  let n = parseInt(input.value);
+  var n = parseInt(input.value);
   if (isNaN(n) || n < 1) n = 1;
   if (n > previewData.cards.length) n = previewData.cards.length;
   input.value = n;
-  const cards = document.querySelectorAll('.preview-card');
-  if (cards[n - 1]) {
-    cards[n - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // 高亮闪烁
-    cards[n - 1].style.boxShadow = '0 0 0 3px var(--primary)';
-    setTimeout(() => { cards[n - 1].style.boxShadow = ''; }, 1500);
+  var idx = n - 1;
+  var pageSize = 20;
+  var targetPage = Math.floor(idx / pageSize);
+  if (_previewPage !== targetPage) {
+    _previewPage = targetPage;
+    renderPreviewCards();
   }
+  setTimeout(function() {
+    var el = document.getElementById('previewCard-' + idx);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.boxShadow = '0 0 0 3px var(--primary)';
+      setTimeout(function() { el.style.boxShadow = ''; }, 1500);
+    }
+  }, _previewPage !== targetPage ? 150 : 50);
 }
 
 function toggleEditPreviewCard(idx) {
