@@ -367,6 +367,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   .btn, .chip, .tab-item, .bank-item, .setting-item { min-height: 44px; }
   .color-dot { min-height: 30px; min-width: 30px; }
   .btn-sm { min-height: 36px; }
+  .desktop-only { display: none !important; }
 }
 
 </style>
@@ -1797,7 +1798,7 @@ function showImportModal() {
     '<div class="flex gap-6 mt-6" style="align-items:center">' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanEmptyLines()">🧹 去空行</button>' +
-      '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="pasteRichText()">📋 富文本</button>' +
+      '<button class="btn btn-sm desktop-only" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="pasteRichText()">📋 富文本</button>' +
       '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="document.getElementById(\'wordFileInput\').click()">📄 Word</button>' +
       '<span style="flex:1"></span>' +
       '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="precheckImport()">🔍 预检</button>' +
