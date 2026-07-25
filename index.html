@@ -2071,24 +2071,25 @@ function parseMbakText(rawText) {
 function doImport() {
   const name = $('bankNameInput').value.trim();
   var raw = $('importTextarea').value.trim();
-  // 将字面量 \n 转为真正的换行符
+  // 统一换行符：\r\n → \n，\r → \n，然后字面量 \n → 真正换行
+  raw = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   raw = raw.replace(/\\n/g, '\n');
   if (!name) { showToast('请输入题库名称'); return; }
-  var qSplitCheck = ($('importQuestions')?.value || '').trim().replace(/\\n/g, '\n');
-  var aSplitCheck = ($('importAnswers')?.value || '').trim().replace(/\\n/g, '\n');
+  var qSplitCheck = ($('importQuestions')?.value || '').trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\\n/g, '\n');
+  var aSplitCheck = ($('importAnswers')?.value || '').trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\\n/g, '\n');
   if (!raw && !(qSplitCheck && aSplitCheck)) { showToast('请粘贴题目或上传文件'); return; }
 
-  const format = _importFormat || 'auto';
+  var format = _importFormat || 'auto';
   let cards, hasBlanks = false;
 
   if (format === 'sep') {
     cards = parseImportText(raw);
   } else if (format === 'jianda') {
-    cards = parseJianDaText(raw); showToast('简答题格式');
+    cards = parseJianDaText(raw);
   } else if (format === 'qa') {
-    cards = parseQAText(raw); showToast('Q&A 格式');
+    cards = parseQAText(raw);
   } else if (format === 'hashpct') {
-    cards = parseHashPctText(raw); showToast('#%格式');
+    cards = parseHashPctText(raw);
   } else {
     // 自动检测
     const lines = raw.split(/\n/).filter(l => l.trim());
@@ -2120,8 +2121,8 @@ function doImport() {
   var qSplit = ($('importQuestions')?.value || '').trim();
   var aSplit = ($('importAnswers')?.value || '').trim();
   if (qSplit && aSplit) {
-    qSplit = qSplit.replace(/\\n/g, '\n');
-    aSplit = aSplit.replace(/\\n/g, '\n');
+    qSplit = qSplit.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\\n/g, '\n');
+    aSplit = aSplit.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\\n/g, '\n');
     var qLines = qSplit.split(/\n/).filter(function(l) { return l.trim(); });
     var aLines = aSplit.split(/\n/).filter(function(l) { return l.trim(); });
     var minLen = Math.min(qLines.length, aLines.length);
@@ -2140,6 +2141,17 @@ function doImport() {
   }
 
   if (!cards.length) { showToast('未能解析题目，请检查格式'); return; }
+
+  // 诊断：显示解析结果统计
+  var firstCard = cards[0];
+  var firstAnswerLines = (firstCard.answer || '').split('\n').filter(function(l) { return l.trim(); }).length;
+  var fmtLabel = format === 'auto' ? '🤖自动' : (format === 'jianda' ? '📝简答' : (format === 'sep' ? '📋分隔' : format));
+  console.log('[导入诊断] 格式:' + fmtLabel + ' 题目数:' + cards.length + ' 第1题答案行数:' + firstAnswerLines + ' 答案长度:' + (firstCard.answer || '').length + ' 原文长度:' + raw.length);
+  console.log('[导入诊断] 第1题答案前200字:', (firstCard.answer || '').substring(0, 200));
+  showToast('解析：' + cards.length + '题 · 第1题' + firstAnswerLines + '个要点 · 格式：' + fmtLabel);
+  if (cards.length <= 2 && raw.length > 500) {
+    alert('⚠️ 诊断：原文' + raw.length + '字却只解析出' + cards.length + '题，可能格式识别有误。\\n\\n原文前300字：\\n' + raw.substring(0, 300));
+  }
 
   cards = cards.map(c => {
     c.question = (c.question || '').trim();
@@ -2242,6 +2254,7 @@ function renderPreviewCards() {
         <div style="flex:1">
           <div class="text-sm text-secondary mb-6">第 ${i + 1} 题 · ${escapeHtml(card.question.replace(/^[\d\.\、\s]+/, '').substring(0, 30))}</div>
           ${card.koujue ? `<div class="text-sm mb-6" style="color:var(--primary)">💡 ${escapeHtml(card.koujue)}</div>` : ''}
+          <div class="text-sm mb-6" style="color:var(--text-tertiary);font-size:11px">📝 答案${(card.answer||'').split('\n').filter(l=>l.trim()).length}行 · ${(card.answer||'').length}字</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleEditPreviewCard(${i})" style="padding:2px 8px;font-size:12px;flex-shrink:0;margin-left:8px" title="编辑题目">✏️</button>
       </div>
