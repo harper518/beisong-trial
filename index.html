@@ -1794,12 +1794,14 @@ function showImportModal() {
       '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="copyFromTextarea(\'importTextarea\')">📝 复制</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importTextarea\')">🗑 清空</button>' +
     '</div>' +
-    '<div class="flex gap-6 mt-6" style="align-items:center;flex-wrap:wrap">' +
+    '<div class="flex gap-6 mt-6" style="align-items:center">' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanEmptyLines()">🧹 去空行</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanHtmlTags()">🏷️ 去HTML</button>' +
       '<span style="flex:1"></span>' +
-      '<button class="btn btn-sm" style="background:var(--primary-light);border:none;font-size:11px;color:var(--primary);font-weight:600" onclick="copyFormatPrompt()">🤖 AI格式话术</button>' +
+    '</div>' +
+    '<div style="margin-top:6px">' +
+      '<button class="btn btn-sm" style="background:var(--primary-light);border:none;font-size:11px;width:100%;color:var(--primary);font-weight:600" onclick="copyFormatPrompt()">📋 复制格式话术（给AI用）</button>' +
     '</div></div>' +
     '<div style="border-top:2px dashed var(--border);padding-top:14px;margin-top:12px;margin-bottom:12px">' +
       '<p style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)">📂 或：题目和答案分开粘贴</p>' +
