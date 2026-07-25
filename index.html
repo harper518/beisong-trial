@@ -363,6 +363,12 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 }
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
+@media (pointer: coarse) {
+  .btn, .chip, .tab-item, .bank-item, .setting-item { min-height: 44px; }
+  .color-dot { min-height: 30px; min-width: 30px; }
+  .btn-sm { min-height: 36px; }
+}
+
 </style>
 </head>
 <body>
@@ -1540,7 +1546,7 @@ function renderBanks() {
       <div class="info" onclick="startPracticeSetup('${b.id}')" style="flex:1;min-width:0;cursor:pointer">
         <div class="name" onclick="event.stopPropagation();renameBankPrompt(this, '${b.id}')" title="点击修改名称" style="cursor:pointer">${escapeHtml(b.name)}</div>
         <div class="meta">
-          ${b.cards.length} 题 | ${fmtDate(b.createdAt)}
+          ${b.cards.length} 题${(() => { var wb = appData.wrongBooks && appData.wrongBooks[b.id]; var wc = 0; if (wb) { if (Array.isArray(wb)) wc = wb.length; else wc = Object.keys(wb).length; } return wc > 0 ? " | 错题 " + wc : ""; })()} | ${fmtDate(b.createdAt)}
           <span style="margin-left:8px;display:inline-flex;gap:2px">
             <button type="button" class="btn-sort" onclick="event.stopPropagation();event.preventDefault();moveBankUp('${b.id}')"${isFirst ? ' disabled' : ''} title="上移">↑</button>
             <button type="button" class="btn-sort" onclick="event.stopPropagation();event.preventDefault();moveBankDown('${b.id}')"${isLast ? ' disabled' : ''} title="下移">↓</button>
@@ -1706,36 +1712,37 @@ function showImportModal() {
     '<textarea id="importTextarea" placeholder="每行一题，用 | 分隔\n\n示例：\n光合作用场所是|【叶绿体】|光→叶\n植物细胞结构包括|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同" style="width:100%;min-height:180px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
     '<div class="flex gap-8 mt-6">' +
       '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importTextarea\')">📋 粘贴</button>' +
-      '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'csvFileInput\').click()">📂 上传文件</button>' +
+      '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'csvFileInput\').click()">📂 上传</button>' +
+      '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="copyFromTextarea(\'importTextarea\')">📝 复制</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importTextarea\')">🗑 清空</button>' +
     '</div>' +
-    '<div class="flex gap-6 mt-6" style="align-items:center">' +
+    '<div class="flex gap-6 mt-6" style="align-items:center;flex-wrap:wrap">' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanEmptyLines()">🧹 去空行</button>' +
+      '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanHtmlTags()">🏷️ 去HTML</button>' +
       '<span style="flex:1"></span>' +
-      '<a style="font-size:11px;color:var(--text-tertiary);cursor:pointer;white-space:nowrap;text-decoration:none" onclick="copyFormatPrompt()">🤖 AI格式话术</a>' +
+      '<button class="btn btn-sm" style="background:var(--primary-light);border:none;font-size:11px;color:var(--primary);font-weight:600" onclick="copyFormatPrompt()">🤖 AI格式话术</button>' +
     '</div></div>' +
-    '<div style="border-top:2px dashed var(--border);padding-top:14px;margin-top:8px;margin-bottom:12px">' +
-      '<button class="btn btn-ghost btn-block" onclick="toggleSplitImport()" style="justify-content:space-between;font-size:14px;width:100%;display:flex;align-items:center;padding:8px 12px;border:none;background:transparent;color:var(--text);cursor:pointer">' +
-        '<span>📂 题目和答案分开粘贴</span><span id="splitImportArrow" style="font-size:18px;transition:transform .2s">▸</span>' +
-      '</button>' +
-      '<div id="splitImportSection" style="display:none;margin-top:12px">' +
-        '<div class="form-group mb-10"><label class="form-label">📝 题目（一行一题）</label>' +
-          '<textarea id="importQuestions" placeholder="1. 光合作用的场所是\n2. 植物细胞的基本结构包括" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
-          '<div class="flex gap-8 mt-6 mb-6">' +
-            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importQuestions\')">📋 粘贴</button>' +
-            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'fileQuestionsInput\').click()">📂 上传</button>' +
-            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importQuestions\')">🗑 清空</button>' +
-          '</div></div>' +
-        '<div class="form-group mb-8"><label class="form-label">✅ 答案（一行一答案）</label>' +
-          '<textarea id="importAnswers" placeholder="叶绿体\n细胞壁、细胞膜、细胞质、细胞核" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
-          '<div class="flex gap-8 mt-6">' +
-            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importAnswers\')">📋 粘贴</button>' +
-            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'fileAnswersInput\').click()">📂 上传</button>' +
-            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importAnswers\')">🗑 清空</button>' +
-          '</div></div>' +
-        '<p style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px">两边的第1行配对为第1题，第2行配对为第2题，以此类推。</p>' +
-      '</div>' +
+    '<div style="border-top:2px dashed var(--border);padding-top:14px;margin-top:12px;margin-bottom:12px">' +
+      '<p style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)">📂 或：题目和答案分开粘贴</p>' +
+      '<p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">如果题目和答案分别在两个地方，分别粘贴到下面两个框，自动按顺序合并。</p>' +
+      '<div class="form-group mb-10"><label class="form-label">📝 题目（一行一题）</label>' +
+        '<textarea id="importQuestions" placeholder="1. 光合作用的场所是\n2. 植物细胞的基本结构包括" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
+        '<div class="flex gap-8 mt-6 mb-6">' +
+          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importQuestions\')">📋 粘贴</button>' +
+          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'fileQuestionsInput\').click()">📂 上传</button>' +
+          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="copyFromTextarea(\'importQuestions\')">📝 复制</button>' +
+          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importQuestions\')">🗑 清空</button>' +
+        '</div></div>' +
+      '<div class="form-group mb-8"><label class="form-label">✅ 答案（一行一答案）</label>' +
+        '<textarea id="importAnswers" placeholder="叶绿体\n细胞壁、细胞膜、细胞质、细胞核" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
+        '<div class="flex gap-8 mt-6">' +
+          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importAnswers\')">📋 粘贴</button>' +
+          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'fileAnswersInput\').click()">📂 上传</button>' +
+          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="copyFromTextarea(\'importAnswers\')">📝 复制</button>' +
+          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importAnswers\')">🗑 清空</button>' +
+        '</div></div>' +
+      '<p style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px">两边的第1行配对为第1题，第2行配对为第2题，以此类推。</p>' +
     '</div>' +
     '<button class="btn btn-primary btn-block mt-8" onclick="doImport()">📥 预览 →</button>' +
     '</div>'
@@ -4485,59 +4492,225 @@ function removeFromWrongBookPage(cardId) {
 
 
 // ==================== 设置 ====================
+// ====== 分享/导出备份 ======
+async function shareBackupCode() {
+  try {
+    showToast('正在生成备份码...');
+    var data = JSON.parse(JSON.stringify(appData));
+    var code = await makeBackupCode(JSON.stringify(data));
+    var today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    var textToShare = '挖空背诵工具 - 进度备份 ' + today + '\n\n' + code + '\n\n📌 使用方法：复制全部内容 → 打开工具设置页 → 粘贴备份码恢复';
+    if (navigator.canShare && navigator.canShare({ text: textToShare })) {
+      try {
+        await navigator.share({ text: textToShare, title: '挖空背诵备份 - ' + today });
+        appData.settings.lastBackup = Date.now();
+        saveData(appData);
+        showToast('✅ 备份码已分享');
+        return;
+      } catch (err) { if (err.name === 'AbortError') return; }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(code);
+        appData.settings.lastBackup = Date.now();
+        saveData(appData);
+        showToast('📋 分享不支持，已改为复制到剪贴板');
+      } catch(e) { showToast('复制失败'); }
+    } else { showToast('复制失败'); }
+  } catch(e) { showToast('导出失败'); }
+}
+
+async function shareBackupFile() {
+  try {
+    var data = JSON.parse(JSON.stringify(appData));
+    var json = JSON.stringify(data);
+    var today = new Date().toISOString().slice(0, 10);
+    var filename = '挖空背诵备份_' + today + '.json';
+    var blob = new Blob([json], { type: 'application/json' });
+    var file = new File([blob], filename, { type: 'application/json' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: '挖空背诵数据备份', text: '挖空背诵工具数据备份 - ' + today });
+        appData.settings.lastBackup = Date.now();
+        saveData(appData);
+        showToast('✅ 分享成功');
+        return;
+      } catch (err) { if (err.name === 'AbortError') return; }
+    }
+    // Fallback: 下载 JSON
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    appData.settings.lastBackup = Date.now();
+    saveData(appData);
+    showToast('✅ 已下载 ' + filename);
+  } catch(e) { showToast('导出失败'); }
+}
+
+function restoreFromJsonFile(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var backup = JSON.parse(e.target.result);
+      if (!backup.banks) { showToast('❌ 无效的备份文件（缺少题库数据）'); return; }
+      if (!confirm('将用此备份完全替换当前所有数据（题库、进度、设置），确定继续吗？')) return;
+      if (!backup.settings) backup.settings = { density: 'low', darkMode: false, fontSize: 16 };
+      if (!backup.seqProgress) backup.seqProgress = {};
+      if (!backup.favorites) backup.favorites = {};
+      if (!backup.wrongBooks) backup.wrongBooks = {};
+      appData = backup;
+      saveData(appData);
+      applySettings();
+      renderBanks();
+      renderSettings();
+      updateBadges();
+      switchTab('banks');
+      showToast('✅ 数据已全部恢复');
+    } catch(err) { showToast('❌ 文件格式错误，无法解析'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
 function renderSettings() {
   const c = $('settingsContainer');
+  if (!c) return;
   const s = appData.settings;
   const density = s.density || 'low';
 
-  c.innerHTML = `<div class="section"><div class="section-title">数据管理</div>
-    <div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">
-      <button class="btn btn-outline btn-block" onclick="copyBackup()">📋 复制备份码</button>
-      <button class="btn btn-outline btn-block" id="restoreToggleBtn" onclick="toggleRestoreSection()">📥 粘贴备份码恢复</button>
-      <div id="restoreSection" style="display:none;margin-top:12px;padding:14px;background:var(--bg-input);border-radius:10px">
-        <textarea id="restoreTextarea" placeholder="在此粘贴之前复制的备份码..." style="width:100%;min-height:100px;font-size:13px;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text)"></textarea>
-        <div class="flex gap-8 mt-12">
-          <button class="btn btn-ghost flex-1" onclick="toggleRestoreSection()">取消</button>
-          <button class="btn btn-primary flex-1" onclick="doRestore()">恢复</button>
-        </div>
-      </div>
-      <button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空错题本</button>
-    </div></div>
+  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', rose: '玫红', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿' };
+  var colors = ['teal', 'purple', 'blue', 'rose', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage'];
+  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', rose: '#e11d48', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b' };
 
+  c.innerHTML = '<div class="section"><div class="section-title">数据管理</div>' +
+    '<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">' +
+      '<button class="btn btn-primary btn-block" onclick="shareBackupFile()" style="font-size:15px">📤 分享/导出备份文件</button>' +
+      '<div style="font-size:12px;color:var(--text-tertiary);text-align:center;margin:-4px 0 4px">📱 手机直接分享到微信/QQ/存文件 &nbsp;|&nbsp; 💻 电脑自动下载</div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button class="btn btn-outline" style="flex:1" onclick="copyBackup()">📋 复制备份码</button>' +
+        '<button class="btn btn-outline" style="flex:1" onclick="shareBackupCode()">📤 分享备份码</button>' +
+      '</div>' +
+      '<button class="btn btn-outline btn-block" id="restoreToggleBtn" onclick="toggleRestoreSection()">📥 粘贴备份码恢复</button>' +
+      '<div id="restoreSection" style="display:none;margin-top:12px;padding:14px;background:var(--bg-input);border-radius:10px">' +
+        '<textarea id="restoreTextarea" placeholder="在此粘贴之前复制的备份码..." style="width:100%;min-height:100px;font-size:13px;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text)"></textarea>' +
+        '<div class="flex gap-8 mt-12">' +
+          '<button class="btn btn-ghost flex-1" onclick="toggleRestoreSection()">取消</button>' +
+          '<button class="btn btn-primary flex-1" onclick="doRestore()">恢复</button>' +
+        '</div>' +
+        '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);text-align:center">' +
+          '<span style="font-size:12px;color:var(--text-tertiary)">或直接上传备份文件</span>' +
+          '<label class="btn btn-outline btn-block" style="margin-top:6px;cursor:pointer;display:block;text-align:center;min-height:38px;line-height:38px;padding:0">📂 上传 JSON 备份文件<input type="file" accept=".json" onchange="restoreFromJsonFile(this)" style="display:none"></label>' +
+        '</div>' +
+      '</div>' +
+      '<button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空错题本</button>' +
+    '</div></div>' +
 
-  <div class="section"><div class="section-title">挖空设置</div>
-    <div class="setting-item"><div><div class="setting-label">默认挖空密度</div><div class="setting-desc">每道题的挖空数量，做题时随时可调</div></div>
-      <div class="segmented" id="settingsDensity">
-        <button class="seg${density === 'low' ? ' active' : ''}" data-v="low" onclick="updateDensitySetting('low', this)">低</button>
-        <button class="seg${density === 'high' ? ' active' : ''}" data-v="high" onclick="updateDensitySetting('high', this)">高</button>
-      </div></div></div>
+    // 📊 存储状态
+    (function() {
+      var storageJson = localStorage.getItem('memorize_v2_trial_7666') || '';
+      var storageBytes = storageJson.length * 2;
+      var storageKB = storageBytes / 1024;
+      var storageMB = storageBytes / (1024 * 1024);
+      var storageMax = 5;
+      var storagePercent = Math.min(100, Math.round((storageMB / storageMax) * 100));
+      var bankCount = Object.keys(appData.banks || {}).length;
+      var totalQ = 0, totalW = 0;
+      Object.values(appData.banks || {}).forEach(function(b) { totalQ += (b.cards || []).length; });
+      Object.values(appData.wrongBooks || {}).forEach(function(w) {
+        if (Array.isArray(w)) totalW += w.length; else totalW += Object.keys(w).length;
+      });
 
-  <div class="section"><div class="section-title">语音</div>
-    <div class="setting-item"><div><div class="setting-label">语音朗读</div><div class="setting-desc">使用手机 TTS 朗读，再次点击暂停</div></div>
-      <label class="toggle"><input type="checkbox" id="voiceToggle"${s.voiceEnabled ? ' checked' : ''} onchange="saveSetting('voiceEnabled', this.checked)"><span class="slider"></span></label></div>
-    <div class="setting-item"><div><div class="setting-label">朗读声音</div><div class="setting-desc" id="voiceNameVal">${s.voiceName || '自动选择'}</div></div>
-      <input type="hidden" id="voiceSelect" value="${s.voiceName || ''}"><button class="btn btn-ghost btn-sm" id="voicePickBtn" onclick="showVoicePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">${s.voiceName || '自动选择'} ▾</button></div>
-    <div class="setting-item"><div><div class="setting-label">朗读模式</div><div class="setting-desc" id="readModeVal">${{once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']}</div></div>
-      <input type="hidden" id="readModeSelect" value="${s.readMode||'once'}"><button class="btn btn-ghost btn-sm" id="readModePickBtn" onclick="showReadModePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">${{once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']} ▾</button></div>
-    <div class="setting-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc" id="rateVal">${s.voiceRate || 0.9}x</div></div>
-      <div style="width:140px"><input type="range" min="0.5" max="2" value="${s.voiceRate || 0.9}" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>
-    <div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">${s.voicePitch || 1.0}x</div></div>
-      <div style="width:140px"><input type="range" min="0.5" max="2" value="${s.voicePitch || 1.0}" step="0.1" oninput="updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div>
+      var barColor = storagePercent > 80 ? '#e74c3c' : storagePercent > 50 ? '#e67e22' : 'var(--primary)';
+      var sizeInfo = storageMB >= 1 ? storageMB.toFixed(1) + ' MB' : storageKB.toFixed(0) + ' KB';
+      var statusText = storagePercent > 90 ? '⚠️ 即将用满，建议导出备份后清理'
+        : storagePercent > 70 ? '⚡ 使用中，建议定期备份'
+        : '✅ 空间充裕';
 
-  <div class="section"><div class="section-title">外观</div>
-    <div class="setting-item"><div><div class="setting-label">夜间模式</div><div class="setting-desc">暗色主题，夜间刷题更护眼</div></div>
-      <label class="toggle"><input type="checkbox" id="darkToggle"${s.darkMode ? ' checked' : ''} onchange="saveSetting('darkMode', this.checked)"><span class="slider"></span></label></div>
-    <div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">${({teal:'青绿',purple:'浅紫',blue:'浅蓝',rose:'玫红',pink:'粉色',green:'浅绿',yellow:'浅黄',bw:'黑白',cream:'护眼·米黄',sage:'护眼·豆沙绿'})[s.color||'teal']}</div></div>
-      <div class="color-dots"><span class="color-dot${(s.color||'teal')==='teal'?' active':''}" style="background:#0891b2" onclick="saveThemeColor('teal')"></span><span class="color-dot${s.color==='purple'?' active':''}" style="background:#9333ea" onclick="saveThemeColor('purple')"></span><span class="color-dot${s.color==='blue'?' active':''}" style="background:#3b82f6" onclick="saveThemeColor('blue')"></span><span class="color-dot${s.color==='rose'?' active':''}" style="background:#e11d48" onclick="saveThemeColor('rose')"></span><span class="color-dot${s.color==='pink'?' active':''}" style="background:#ec4899" onclick="saveThemeColor('pink')"></span><span class="color-dot${s.color==='green'?' active':''}" style="background:#22c55e" onclick="saveThemeColor('green')"></span><span class="color-dot${s.color==='yellow'?' active':''}" style="background:#eab308" onclick="saveThemeColor('yellow')"></span><span class="color-dot${s.color==='cream'?' active':''}" style="background:#c8965c" onclick="saveThemeColor('cream')"></span><span class="color-dot${s.color==='sage'?' active':''}" style="background:#6b9e6b" onclick="saveThemeColor('sage')"></span><span class="color-dot${s.color==='bw'?' active':''}" style="background:#555" onclick="saveThemeColor('bw')"></span></div></div>
-    <div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">${s.fontSize}px</div></div>
-      <div class="flex items-center gap-8" style="width:140px"><span style="font-size:13px">A</span><input type="range" min="14" max="24" value="${s.fontSize}" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))"><span style="font-size:18px;font-weight:700">A</span></div></div></div>
+      var lastBackup = (appData.settings || {}).lastBackup;
+      var backupDays = lastBackup ? Math.floor((Date.now() - lastBackup) / 86400000) : null;
+      var backupWarn = '';
+      if (backupDays === null) {
+        backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;color:#856404">⚠️ 尚未备份过！建议立即导出备份</div>';
+      } else if (backupDays > 30) {
+        backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#ffe0e0;border:1px solid #e74c3c;border-radius:6px;font-size:12px;color:#a33">🔴 已 <b>' + backupDays + ' 天</b>未备份！数据风险极高，请立即备份</div>';
+      } else if (backupDays > 7) {
+        backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;color:#856404">🟡 已 <b>' + backupDays + ' 天</b>未备份，建议尽快导出</div>';
+      } else if (backupDays > 0) {
+        backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;font-size:12px;color:#2e7d32">🟢 ' + backupDays + ' 天前备份过，状态良好</div>';
+      } else {
+        backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;font-size:12px;color:#2e7d32">✅ 今天已备份</div>';
+      }
 
-  <div class="section"><div class="section-title">关于</div>
+      return '<div class="section"><div class="section-title">📊 存储状态</div>' +
+        '<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
+            '<span style="font-size:14px;font-weight:600">' + statusText + '</span>' +
+            '<span style="font-size:13px;color:var(--text-secondary)">' + sizeInfo + ' / ' + storageMax + ' MB</span>' +
+          '</div>' +
+          '<div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden">' +
+            '<div style="height:100%;width:' + storagePercent + '%;background:' + barColor + ';border-radius:5px;transition:width .3s"></div>' +
+          '</div>' +
+          backupWarn +
+          '<div style="display:flex;gap:10px;margin-top:4px">' +
+            '<div style="flex:1;background:var(--bg-input);border-radius:8px;padding:10px;text-align:center">' +
+              '<div style="font-size:22px;font-weight:700;color:var(--primary)">' + bankCount + '</div>' +
+              '<div style="font-size:11px;color:var(--text-tertiary)">个题库</div>' +
+            '</div>' +
+            '<div style="flex:1;background:var(--bg-input);border-radius:8px;padding:10px;text-align:center">' +
+              '<div style="font-size:22px;font-weight:700;color:var(--primary)">' + totalQ + '</div>' +
+              '<div style="font-size:11px;color:var(--text-tertiary)">道题目</div>' +
+            '</div>' +
+            '<div style="flex:1;background:var(--bg-input);border-radius:8px;padding:10px;text-align:center">' +
+              '<div style="font-size:22px;font-weight:700;color:' + (totalW > 0 ? '#e74c3c' : 'var(--text-tertiary)') + '">' + totalW + '</div>' +
+              '<div style="font-size:11px;color:var(--text-tertiary)">道错题</div>' +
+            '</div>' +
+          '</div>' +
+        '</div></div>';
+    })() +
 
-    <div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc"></div></div><div style="display:flex;align-items:center">→</div></div>
-    <div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div>
-    <div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:#e91e63">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:#e91e63">→</div></div>
-	    <div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div></div>`;
+    '<div class="section"><div class="section-title">挖空设置</div>' +
+      '<div class="setting-item"><div><div class="setting-label">默认挖空密度</div><div class="setting-desc">每道题的挖空数量，做题时随时可调</div></div>' +
+        '<div class="segmented" id="settingsDensity">' +
+          '<button class="seg' + (density === 'low' ? ' active' : '') + '" data-v="low" onclick="updateDensitySetting(\'low\', this)">低</button>' +
+          '<button class="seg' + (density === 'high' ? ' active' : '') + '" data-v="high" onclick="updateDensitySetting(\'high\', this)">高</button>' +
+        '</div></div></div>' +
+
+    '<div class="section"><div class="section-title">语音</div>' +
+      '<div class="setting-item"><div><div class="setting-label">语音朗读</div><div class="setting-desc">使用手机 TTS 朗读，再次点击暂停</div></div>' +
+        '<label class="toggle"><input type="checkbox" id="voiceToggle"' + (s.voiceEnabled ? ' checked' : '') + ' onchange="saveSetting(\'voiceEnabled\', this.checked)"><span class="slider"></span></label></div>' +
+      '<div class="setting-item"><div><div class="setting-label">朗读声音</div><div class="setting-desc" id="voiceNameVal">' + (s.voiceName || '自动选择') + '</div></div>' +
+        '<input type="hidden" id="voiceSelect" value="' + (s.voiceName || '') + '"><button class="btn btn-ghost btn-sm" id="voicePickBtn" onclick="showVoicePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">' + (s.voiceName || '自动选择') + ' ▾</button></div>' +
+      '<div class="setting-item"><div><div class="setting-label">朗读模式</div><div class="setting-desc" id="readModeVal">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + '</div></div>' +
+        '<input type="hidden" id="readModeSelect" value="' + (s.readMode||'once') + '"><button class="btn btn-ghost btn-sm" id="readModePickBtn" onclick="showReadModePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + ' ▾</button></div>' +
+      '<div class="setting-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc" id="rateVal">' + (s.voiceRate || 0.9) + 'x</div></div>' +
+        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voiceRate || 0.9) + '" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">' + (s.voicePitch || 1.0) + 'x</div></div>' +
+        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voicePitch || 1.0) + '" step="0.1" oninput="updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div>' +
+
+    '<div class="section"><div class="section-title">外观</div>' +
+      '<div class="setting-item"><div><div class="setting-label">夜间模式</div><div class="setting-desc">暗色主题，夜间刷题更护眼</div></div>' +
+        '<label class="toggle"><input type="checkbox" id="darkToggle"' + (s.darkMode ? ' checked' : '') + ' onchange="saveSetting(\'darkMode\', this.checked)"><span class="slider"></span></label></div>' +
+      '<div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">' + (colorNames[s.color||'teal']) + '</div></div>' +
+        '<div class="color-dots">' +
+          colors.map(function(clr) {
+            return '<span class="color-dot' + (s.color === clr ? ' active' : '') + '" style="background:' + colorBgs[clr] + '" onclick="saveThemeColor(\'' + clr + '\')"></span>';
+          }).join('') +
+        '</div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">' + s.fontSize + 'px</div></div>' +
+        '<div style="display:flex;align-items:center;gap:6px;min-width:120px;flex:1;max-width:180px"><span style="font-size:12px;flex-shrink:0">A</span><input type="range" min="14" max="24" value="' + s.fontSize + '" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))" style="flex:1;min-width:0"><span style="font-size:16px;font-weight:700;flex-shrink:0">A</span></div></div>' +
+    '</div>' +
+
+    '<div class="section"><div class="section-title">关于</div>' +
+      '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div>' +
+      '<div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>' +
+      '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
+    '</div>';
   loadVoices();
 }
 
