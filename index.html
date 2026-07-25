@@ -1779,14 +1779,8 @@ function showImportModal() {
     '<div class="form-group mb-10"><label class="form-label">题库名称</label>' +
     '<input type="text" id="bankNameInput" placeholder="例如：生物第三章" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size)"></div>' +
     '<div class="form-group mb-10"><label class="form-label">内容格式</label>' +
-    '<div class="chip-group mb-8" id="importFormatGroup">' +
-      '<span class="chip active" data-fmt="auto" onclick="selectImportFormat(\'auto\', this)">🤖 自动检测</span>' +
-      '<span class="chip" data-fmt="sep" onclick="selectImportFormat(\'sep\', this)">📋 分隔符</span>' +
-      '<span class="chip" data-fmt="jianda" onclick="selectImportFormat(\'jianda\', this)">📝 简答题</span>' +
-    '</div>' +
-    '<p class="form-hint" id="importFormatHint">自动识别粘贴内容的格式，推荐使用</p></div>' +
     '<div class="form-group mb-10"><label class="form-label">题目内容</label>' +
-    '<p class="form-hint mb-8" id="importFormatExample"><code>题目|答案</code> 或 <code>题目|答案|口诀</code>，一行一题；挖空用<b>【】</b>标记，如 <code>光合作用场所是【叶绿体】</code></p>' +
+    '<p class="form-hint mb-8">支持多种格式智能识别：<code>题目|答案|口诀</code> / 简答题编号+子项 / 问答 / 【】挖空标记。粘贴后自动检测。</p>' +
     '<textarea id="importTextarea" placeholder="每行一题，用 | 分隔\n\n示例：\n光合作用场所是|【叶绿体】|光→叶\n植物细胞结构包括|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同" style="width:100%;min-height:180px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
     '<div id="importStats" class="form-hint" style="display:none;margin-top:6px;padding:8px 12px;background:var(--bg-input);border-radius:8px;line-height:1.6"></div>' +
     '<div class="flex gap-8 mt-6">' +
@@ -1861,26 +1855,6 @@ function showImportModal() {
 }
 
 function closeImportModal() { var m = document.getElementById('importModal'); if (m) m.remove(); }
-
-function selectImportFormat(fmt, el) {
-  _importFormat = fmt;
-  document.querySelectorAll('#importFormatGroup .chip').forEach(function(c) { c.classList.remove('active'); });
-  if (el) el.classList.add('active');
-  var hint = document.getElementById('importFormatHint');
-  var example = document.getElementById('importFormatExample');
-  var hints = {
-    'auto': '自动识别粘贴内容的格式，推荐使用',
-    'sep': '用分隔符（| ：→ = ——）连接题目和答案',
-    'jianda': '简答题格式：编号开头为题目，后续行为答案，支持【】挖空和口诀'
-  };
-  var examples = {
-    'auto': '<code>题目|答案</code> 或 <code>题目|答案|口诀</code>，一行一题；挖空用<b>【】</b>标记',
-    'sep': '示例：<code>光合作用场所是|叶绿体</code><br>支持的分隔符：<b>|</b> <b>：</b> <b>:</b> <b>→</b> <b>=</b> <b>——</b>',
-    'jianda': '示例：<code>1.简述教党62号文（三级）<br>1.坚持【育人导向】，突出【价值引领】<br>口诀：育人规律，问题协同</code>'
-  };
-  if (hint) hint.textContent = hints[fmt] || hints['auto'];
-  if (example) example.innerHTML = examples[fmt] || examples['auto'];
-}
 
 function toggleSplitImport() {
   var sec = document.getElementById('splitImportSection');
