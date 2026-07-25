@@ -2280,6 +2280,9 @@ function showImportPreview(name, cards, stats) {
   const editId = previewData ? previewData.editBankId : undefined;
   const wasSingle = previewData ? previewData._singleCardEdit : undefined;
   const cardIdx = previewData ? previewData._cardIdx : undefined;
+  _previewPage = 0;
+  _skipSummaryOpen = false;
+  _lastProblemIdx = -1;
   previewData = { name, cards, mode: 'manual', editBankId: editId, stats: stats || null };
   if (wasSingle) { previewData._singleCardEdit = true; previewData._cardIdx = cardIdx; }
 
@@ -2307,22 +2310,25 @@ function showImportPreview(name, cards, stats) {
     <div class="modal-header"><h2 class="modal-title" onclick="editPreviewTitle(this)" title="点击修改标题" style="cursor:pointer">预览：${escapeHtml(name)}</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closePreviewModal()">✕</button></div>
     <div style="overflow-y:auto;flex:1;min-height:0;padding:0 2px">
     ${statsHtml}
+    <div id="skipSummary" style="display:none;background:var(--warning-light);border-radius:10px;padding:10px 14px;margin-bottom:10px"></div>
     <div class="chip-group mb-12" id="previewModeChips">
       <span class="chip active" data-mode="manual" onclick="switchPreviewMode('manual', this)">✋ 手动挖空</span>
       <span class="chip" data-mode="auto" onclick="switchPreviewMode('auto', this)">🤖 系统自动</span>
     </div>
     <p class="text-sm text-secondary mb-12" id="previewModeHint">👆 点击答案中的字选中挖空，连续的字自动合并。保存后可继续第二轮挖空。</p>
+    <div id="previewPageNavTop" style="margin-bottom:10px"></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="previewJumpRow">
       <span style="font-size:12px;color:var(--text-secondary)">🔍 跳到</span>
       <input type="number" id="previewJumpInput" min="1" placeholder="1" style="width:48px;padding:4px 8px;border:2px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;text-align:center" onkeydown="if(event.key==='Enter')jumpToPreviewCard()">
       <span style="font-size:12px;color:var(--text-secondary)">/ ${cards.length}</span>
-      <button class="btn btn-sm btn-ghost" onclick="jumpToPreviewCard()" style="padding:4px 8px;font-size:11px">跳转</button>
+      <button class="btn btn-sm btn-ghost" onclick="jumpToPreviewCard()" style="padding:4px 8px;font-size:11px">GO</button>
       <span style="flex:1"></span>
       <span style="font-size:12px;color:var(--text-secondary)" id="problemCount"></span>
       <button class="btn btn-sm btn-ghost" onclick="jumpToProblemCard(-1)" style="padding:4px 8px;font-size:11px" title="上一个问题">⬆</button>
       <button class="btn btn-sm btn-ghost" onclick="jumpToProblemCard(1)" style="padding:4px 8px;font-size:11px" title="下一个问题">⬇</button>
     </div>
     <div id="previewCards"></div>
+    <div id="previewPageNavBottom" style="margin-top:10px"></div>
     </div>
     <div class="flex gap-10" style="padding:14px 0 0;flex-shrink:0">
     <button class="btn btn-ghost flex-1" onclick="closePreviewModal()">取消</button>
@@ -2370,20 +2376,96 @@ function switchPreviewMode(mode, el) {
 }
 
 function renderPreviewCards() {
-  const container = document.getElementById('previewCards');
-  const cards = previewData.cards;
-  const mode = previewData.mode;
-  let html = '';
-  var problemCount = 0;
+  var container = document.getElementById('previewCards');
+  var cards = previewData.cards;
+  var mode = previewData.mode;
+  var pageSize = 20;
+  var totalPages = Math.ceil(cards.length / pageSize);
+  if (_previewPage == null || _previewPage >= totalPages) _previewPage = 0;
+  var page = _previewPage;
+  var startIdx = page * pageSize;
+  var endIdx = Math.min(startIdx + pageSize, cards.length);
 
-  for (let i = 0; i < cards.length; i++) {
-    const card = cards[i];
+  // 统计全部卡片的问题
+  var allProblems = []; // {idx, status, label, question}
+  var statusCounts = { empty: 0, short: 0, noBlanks: 0 };
+  for (var pi = 0; pi < cards.length; pi++) {
+    var st = getCardStatus(cards[pi], mode);
+    if (st !== 'ok') {
+      statusCounts[st] = (statusCounts[st] || 0) + 1;
+      var labels = { empty: '🔴 答案为空', short: '🟡 答案偏短', noBlanks: '⚠️ 未挖空' };
+      allProblems.push({ idx: pi, status: st, label: labels[st] || st, question: cards[pi].question });
+    }
+  }
+
+  // 渲染跳过摘要
+  var summaryEl = document.getElementById('skipSummary');
+  if (summaryEl) {
+    if (allProblems.length > 0) {
+      summaryEl.style.display = '';
+      var summaryHtml = '<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleSkipSummary()">' +
+        '<span style="font-weight:600;color:var(--warning);font-size:13px">⚠️ ' + allProblems.length + ' 张卡片需要注意</span>' +
+        '<span id="skipSummaryArrow" style="font-size:12px;color:var(--text-tertiary)">' + (_skipSummaryOpen ? '▾' : '▸') + '</span>' +
+        '</div>';
+      if (_skipSummaryOpen) {
+        summaryHtml += '<div style="margin-top:8px;max-height:180px;overflow-y:auto">';
+        var groups = [
+          { key: 'empty', label: '🔴 答案为空', items: [] },
+          { key: 'short', label: '🟡 答案偏短', items: [] },
+          { key: 'noBlanks', label: '⚠️ 未设置挖空', items: [] }
+        ];
+        for (var gi = 0; gi < allProblems.length; gi++) {
+          var p = allProblems[gi];
+          for (var gj = 0; gj < groups.length; gj++) {
+            if (p.status === groups[gj].key) { groups[gj].items.push(p); break; }
+          }
+        }
+        for (var gk = 0; gk < groups.length; gk++) {
+          var g = groups[gk];
+          if (!g.items.length) continue;
+          summaryHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:4px;margin-top:6px;color:var(--text-secondary)">' + g.label + ' · ' + g.items.length + ' 题</div>';
+          for (var gi2 = 0; gi2 < Math.min(g.items.length, 10); gi2++) {
+            var item = g.items[gi2];
+            var shortQ = (item.question || '').replace(/^[\d\.\、\s]+/, '').substring(0, 25);
+            summaryHtml += '<div style="font-size:11px;padding:3px 6px;cursor:pointer;color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onclick="jumpToCardPage(' + item.idx + ')" title="第' + (item.idx + 1) + '题">第' + (item.idx + 1) + '题 · ' + escapeHtml(shortQ) + '</div>';
+          }
+          if (g.items.length > 10) {
+            summaryHtml += '<div style="font-size:11px;color:var(--text-tertiary);padding:3px 6px">…还有 ' + (g.items.length - 10) + ' 题</div>';
+          }
+        }
+        summaryHtml += '</div>';
+      }
+      summaryEl.innerHTML = summaryHtml;
+    } else {
+      summaryEl.style.display = 'none';
+    }
+  }
+
+  // 渲染分页导航
+  var pageNavHtml = '';
+  if (totalPages > 1) {
+    pageNavHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">';
+    for (var pn = 0; pn < totalPages; pn++) {
+      var ps = pn * pageSize + 1;
+      var pe = Math.min(ps + pageSize - 1, cards.length);
+      var activeStyle = pn === page ? 'background:var(--primary);color:#fff' : 'background:var(--bg-input);color:var(--text-secondary)';
+      pageNavHtml += '<button class="btn btn-sm" onclick="goToPreviewPage(' + pn + ')" style="font-size:11px;padding:4px 8px;min-height:28px;' + activeStyle + '">' + ps + '-' + pe + '</button>';
+    }
+    pageNavHtml += '</div>';
+  }
+  var navTop = document.getElementById('previewPageNavTop');
+  var navBottom = document.getElementById('previewPageNavBottom');
+  if (navTop) navTop.innerHTML = pageNavHtml;
+  if (navBottom) navBottom.innerHTML = pageNavHtml;
+
+  // 渲染当前页卡片
+  var html = '';
+  for (var i = startIdx; i < endIdx; i++) {
+    var card = cards[i];
     var status = getCardStatus(card, mode);
-    if (status !== 'ok') problemCount++;
     var statusBadge = '';
-    if (status === 'empty') statusBadge = '<span style="background:var(--danger-light);color:var(--danger);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600" title="答案为空的卡片" data-problem="1">🔴 无答案</span>';
-    else if (status === 'short') statusBadge = '<span style="background:var(--warning-light);color:var(--warning);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600" title="答案偏短，可能解析不完整" data-problem="1">🟡 答案偏短</span>';
-    // 绿色正常卡片不显示标记，但 data-problem=0 便于跳转跳过
+    if (status === 'empty') statusBadge = '<span style="background:var(--danger-light);color:var(--danger);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600">🔴 无答案</span>';
+    else if (status === 'short') statusBadge = '<span style="background:var(--warning-light);color:var(--warning);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600">🟡 答案偏短</span>';
 
     html += '<div class="preview-card" data-idx="' + i + '" id="previewCard-' + i + '" data-status="' + status + '">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
@@ -2425,7 +2507,9 @@ function renderPreviewCards() {
     html += '</div>';
   }
   container.innerHTML = html;
+
   // 更新问题计数
+  var problemCount = allProblems.length;
   var pcEl = document.getElementById('problemCount');
   if (pcEl) {
     if (problemCount > 0) {
@@ -2438,6 +2522,39 @@ function renderPreviewCards() {
       pcEl.style.fontWeight = '400';
     }
   }
+}
+
+var _previewPage = 0;
+var _skipSummaryOpen = false;
+var _lastProblemIdx = -1;
+
+function toggleSkipSummary() {
+  _skipSummaryOpen = !_skipSummaryOpen;
+  renderPreviewCards();
+}
+
+function goToPreviewPage(n) {
+  _previewPage = n;
+  renderPreviewCards();
+  var container = document.getElementById('previewCards');
+  if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function jumpToCardPage(idx) {
+  var pageSize = 20;
+  var page = Math.floor(idx / pageSize);
+  _previewPage = page;
+  _lastProblemIdx = idx;
+  _skipSummaryOpen = true; // 展开摘要方便查看
+  renderPreviewCards();
+  setTimeout(function() {
+    var el = document.getElementById('previewCard-' + idx);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.boxShadow = '0 0 0 3px var(--primary)';
+      setTimeout(function() { el.style.boxShadow = ''; }, 2000);
+    }
+  }, 150);
 }
 
 let _wasDragging = false, _touchJustHappened = 0;
@@ -2722,12 +2839,21 @@ function jumpToProblemCard(direction) {
   }
   if (target < 0) return;
   _lastProblemIdx = target;
-  var el = document.getElementById('previewCard-' + target);
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.style.boxShadow = '0 0 0 3px var(--warning)';
-    setTimeout(function() { el.style.boxShadow = ''; }, 1500);
+  // 自动跳转到目标所在页
+  var pageSize = 20;
+  var targetPage = Math.floor(target / pageSize);
+  if (_previewPage !== targetPage) {
+    _previewPage = targetPage;
+    renderPreviewCards();
   }
+  setTimeout(function() {
+    var el = document.getElementById('previewCard-' + target);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.boxShadow = '0 0 0 3px var(--warning)';
+      setTimeout(function() { el.style.boxShadow = ''; }, 1500);
+    }
+  }, targetPage !== _previewPage ? 150 : 0);
   showToast('已跳到第 ' + (target + 1) + ' 题');
 }
 
