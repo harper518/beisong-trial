@@ -1797,7 +1797,6 @@ function showImportModal() {
     '<div class="flex gap-6 mt-6" style="align-items:center">' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanEmptyLines()">🧹 去空行</button>' +
-      '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanHtmlTags()">🏷️ 去HTML</button>' +
       '<span style="flex:1"></span>' +
     '</div>' +
     '<div style="margin-top:6px">' +
@@ -2022,11 +2021,6 @@ async function handlePdfImport(el) {
 		    return acc;
 		  }, []).filter(l => l !== "").join("\n");
 		  showToast("断行已合并");
-		}
-		function cleanHtmlTags() {
-		  const ta = $("importTextarea"); if (!ta) return;
-		  ta.value = ta.value.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, "\"");
-		  showToast("HTML标签已去除");
 		}
 
 function copyFormatPrompt() {
