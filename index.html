@@ -2006,22 +2006,32 @@ async function handlePdfImport(el) {
 
 	// ==================== 格式清洗 ====================
 		function cleanEmptyLines() {
-		  const ta = $("importTextarea"); if (!ta) return;
-		  ta.value = ta.value.split(/\n/).filter(l => l.trim()).join("\n");
-		  showToast("空行已删除");
-		}
-				function cleanMergeLines() {
-		  const ta = $("importTextarea"); if (!ta) return;
-		  ta.value = ta.value.split(/\n/).reduce((acc, l) => {
-		    const t = l.trim();
-		    if (!t) { acc.push(""); return acc; }
-		    if (acc.length > 0 && acc[acc.length-1] !== "" && !/^\d/.test(t) && !/^[①-⑩]/.test(t) && !/^\(/.test(t) && !/^（/.test(t) && !/^[Q问A答]/.test(t)) {
-		      acc[acc.length-1] += t;
-		    } else { acc.push(t); }
-		    return acc;
-		  }, []).filter(l => l !== "").join("\n");
-		  showToast("断行已合并");
-		}
+  var targets = [$("importTextarea"), $("importQuestions"), $("importAnswers")];
+  var cleaned = 0;
+  targets.forEach(function(ta) {
+    if (!ta || !ta.value.trim()) return;
+    ta.value = ta.value.split(/\n/).filter(function(l) { return l.trim(); }).join("\n");
+    cleaned++;
+  });
+  showToast(cleaned > 0 ? '空行已删除（' + cleaned + ' 个框）' : '没有可清洗的内容');
+}
+function cleanMergeLines() {
+  var targets = [$("importTextarea"), $("importQuestions"), $("importAnswers")];
+  var cleaned = 0;
+  targets.forEach(function(ta) {
+    if (!ta || !ta.value.trim()) return;
+    ta.value = ta.value.split(/\n/).reduce(function(acc, l) {
+      var t = l.trim();
+      if (!t) { acc.push(""); return acc; }
+      if (acc.length > 0 && acc[acc.length-1] !== "" && !/^\d/.test(t) && !/^[①-⑩]/.test(t) && !/^\(/.test(t) && !/^（/.test(t) && !/^[Q问A答]/.test(t)) {
+        acc[acc.length-1] += t;
+      } else { acc.push(t); }
+      return acc;
+    }, []).filter(function(l) { return l !== ""; }).join("\n");
+    cleaned++;
+  });
+  showToast(cleaned > 0 ? '断行已合并（' + cleaned + ' 个框）' : '没有可清洗的内容');
+}
 
 function copyFormatPrompt() {
   var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案 或 题目|答案|口诀\n3. 如果答案中需要挖空，用【关键词】标记要挖掉的位置\n4. 每一道题的所有内容必须在同一行，不能换行\n5. 如有口诀，加在答案后面：题目|答案|口诀\n\n【输出示例】\n光合作用的场所是哪里|【叶绿体】|光→叶\n植物细胞的结构包括什么|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空\n- 所有挖空标记用【】，不要用@';
