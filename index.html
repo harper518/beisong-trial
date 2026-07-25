@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="记忆填空"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" id="themeColorMeta" content="#f0fdfa"/>
-<title>挖空背诵工具 v9 · 小阮出品</title>
+<title>挖空背诵工具 v10 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -387,8 +387,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   </div>
   <div id="banksContainer"></div>
   <input type="file" id="csvFileInput" class="file-input" accept=".csv,.txt,.md" onchange="handleFileImport(this)">
-  <input type="file" id="wordFileInput" class="file-input" accept=".docx" onchange="handleWordImport(this)">
-  <input type="file" id="pdfFileInput" class="file-input" accept=".pdf" onchange="handlePdfImport(this)">
+  <input type="file" id="wordFileInput" class="file-input" accept=".docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword" onchange="handleWordImport(this)">
   <input type="file" id="fileQuestionsInput" class="file-input" accept=".csv,.txt,.md" onchange="handleSplitFileImportQ(this)">
   <input type="file" id="fileAnswersInput" class="file-input" accept=".csv,.txt,.md" onchange="handleSplitFileImportA(this)">
 </div>
@@ -1798,6 +1797,7 @@ function showImportModal() {
     '<div class="flex gap-6 mt-6" style="align-items:center">' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanEmptyLines()">🧹 去空行</button>' +
+      '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="pasteRichText()">📋 富文本</button>' +
       '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="document.getElementById(\'wordFileInput\').click()">📄 Word</button>' +
       '<span style="flex:1"></span>' +
       '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="precheckImport()">🔍 预检</button>' +
@@ -1829,7 +1829,34 @@ function showImportModal() {
     '<button class="btn btn-primary btn-block mt-8" onclick="doImport()">📥 预览 →</button>' +
     '</div>'
   document.body.appendChild(ov);
-  setTimeout(function() { var el = document.getElementById('bankNameInput'); if (el) el.focus(); }, 350);
+  setTimeout(function() {
+    var el = document.getElementById('bankNameInput'); if (el) el.focus();
+    // 富文本粘贴：从Word/WPS复制的内容粘贴时自动识别加粗→【挖空】
+    var ta = $('importTextarea');
+    if (ta && !ta._richPasteBound) {
+      ta._richPasteBound = true;
+      ta.addEventListener('paste', function(e) {
+        var html = (e.clipboardData || window.clipboardData).getData('text/html');
+        if (!html || !/<(strong|b)\b/i.test(html)) return; // 无加粗内容，走默认粘贴
+        e.preventDefault();
+        var text = parseWordHtml(html);
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
+        var before = this.value.substring(0, start);
+        var after = this.value.substring(end);
+        this.value = before + text + after;
+        this.selectionStart = this.selectionEnd = start + text.length;
+        showToast('富文本已粘贴，加粗→【挖空】');
+        clearTimeout(ta._precheckTimer);
+        ta._precheckTimer = setTimeout(function() { precheckImport(); }, 600);
+      });
+      // 手动输入也自动预检（防抖 800ms）
+      ta.addEventListener('input', function() {
+        clearTimeout(ta._precheckTimer);
+        ta._precheckTimer = setTimeout(function() { precheckImport(); }, 800);
+      });
+    }
+  }, 350);
 }
 
 function closeImportModal() { var m = document.getElementById('importModal'); if (m) m.remove(); }
@@ -1911,12 +1938,16 @@ async function handleFileImport(el) {
   $('importTextarea').value = text;
   if (!$('bankNameInput').value) $('bankNameInput').value = file.name.replace(/\.(csv|txt)$/i, '');
   showToast('文件已加载');
+  setTimeout(function() { precheckImport(); }, 200);
 }
 
 function parseWordHtml(html) {
-  // 去掉图片和 SVG
+  // 去掉图片（img/picture/svg/base64图片全部删除）
   html = html.replace(/<img[^>]*\/?>/gi, '');
+  html = html.replace(/<picture[\s\S]*?<\/picture>/gi, '');
   html = html.replace(/<svg[\s\S]*?<\/svg>/gi, '');
+  // 删除表格（结构多变，自动解析不可靠，直接丢弃）
+  html = html.replace(/<table[\s\S]*?<\/table>/gi, '');
   // 加粗/高亮 → 【挖空】——逐个匹配，避免嵌套或多行问题
   html = html.replace(/<(strong|b)\b[^>]*>([\s\S]*?)<\/(strong|b)>/gi, function(_, __, inner) {
     return '【' + inner.replace(/<[^>]*>/g, '').replace(/\s+/g, '') + '】';
@@ -1947,6 +1978,12 @@ function parseWordHtml(html) {
 
 async function handleWordImport(el) {
   const file = el.files[0]; if (!file) return;
+  // .doc（旧版Word 97-2003）不支持，mammoth.js 只支持 .docx
+  if (/\.doc$/i.test(file.name)) {
+    showToast('⚠️ 旧版 .doc 格式不支持，请用 Word 或 WPS 打开后"另存为" .docx 格式再上传');
+    el.value = '';
+    return;
+  }
   showToast('⏳ Word 智能解析中...');
   try {
     if (!window.mammoth) {
@@ -1967,42 +2004,9 @@ async function handleWordImport(el) {
     if (!$('bankNameInput').value) $('bankNameInput').value = file.name.replace(/\.docx?$/i, '');
     var lineCount = text.split('\n').filter(function(l) { return l.trim(); }).length;
     showToast('Word 已智能解析：加粗→挖空，' + lineCount + ' 行，请检查后导入');
+    setTimeout(function() { precheckImport(); }, 200);
   } catch(err) {
     showToast('Word 解析失败：' + err.message);
-  }
-  el.value = '';
-}
-
-async function handlePdfImport(el) {
-  const file = el.files[0]; if (!file) return;
-  showToast('⏳ PDF 解析中...');
-  try {
-    if (!window.pdfjsLib) {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
-        s.onload = resolve; s.onerror = () => reject(new Error('CDN load failed'));
-        document.head.appendChild(s);
-      });
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-    }
-    const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-    const texts = [];
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const pageText = content.items.map(it => it.str).join(' ');
-      if (pageText.trim()) texts.push(pageText.trim());
-      // progress
-    }
-    const text = texts.join('\n\n');
-    if (!text.trim()) { showToast('PDF 为空或无法读取文字（可能是扫描件）'); return; }
-    $('importTextarea').value = text;
-    if (!$('bankNameInput').value) $('bankNameInput').value = file.name.replace(/\.pdf$/i, '');
-    showToast('PDF 已解析（' + pdf.numPages + ' 页，' + text.length + ' 字符），请检查格式后导入');
-  } catch(err) {
-    showToast('PDF 解析失败：' + err.message);
   }
   el.value = '';
 }
@@ -2018,6 +2022,43 @@ async function handlePdfImport(el) {
   });
   showToast(cleaned > 0 ? '空行已删除（' + cleaned + ' 个框）' : '没有可清洗的内容');
 }
+
+async function pasteRichText() {
+  try {
+    var items = await navigator.clipboard.read();
+    var found = false;
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      if (item.types.indexOf('text/html') !== -1) {
+        var blob = await item.getType('text/html');
+        var html = await blob.text();
+        if (html && /<(strong|b)\b/i.test(html)) {
+          var text = parseWordHtml(html);
+          var ta = $('importTextarea');
+          ta.value = (ta.value ? ta.value + '\n' : '') + text;
+          showToast('✅ 富文本已粘贴，加粗→【挖空】');
+          found = true;
+          break;
+        }
+      }
+    }
+    if (!found) {
+      var plainText = await navigator.clipboard.readText();
+      if (plainText && plainText.trim()) {
+        var ta2 = $('importTextarea');
+        ta2.value = (ta2.value ? ta2.value + '\n' : '') + plainText;
+        showToast('已粘贴纯文本（未检测到加粗格式）');
+        found = true;
+      }
+    }
+    if (!found) showToast('剪贴板为空或无法读取');
+  } catch(e) {
+    showToast('⚠️ 请直接在输入框内 Ctrl+V 粘贴（自动识别加粗→【挖空】）');
+    var ta = $('importTextarea');
+    if (ta) { ta.focus(); ta.select(); }
+  }
+}
+
 function cleanMergeLines() {
   var targets = [$("importTextarea"), $("importQuestions"), $("importAnswers")];
   var cleaned = 0;
@@ -2298,10 +2339,14 @@ function showImportPreview(name, cards, stats) {
     </div>
     <p class="text-sm text-secondary mb-12" id="previewModeHint">👆 点击答案中的字选中挖空，连续的字自动合并。保存后可继续第二轮挖空。</p>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="previewJumpRow">
-      <span style="font-size:12px;color:var(--text-secondary)">🔍 跳转到第</span>
-      <input type="number" id="previewJumpInput" min="1" placeholder="1" style="width:56px;padding:4px 8px;border:2px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;text-align:center" onkeydown="if(event.key==='Enter')jumpToPreviewCard()">
-      <span style="font-size:12px;color:var(--text-secondary)">/ ${cards.length} 题</span>
-      <button class="btn btn-sm btn-ghost" onclick="jumpToPreviewCard()" style="padding:4px 10px;font-size:12px">跳转</button>
+      <span style="font-size:12px;color:var(--text-secondary)">🔍 跳到</span>
+      <input type="number" id="previewJumpInput" min="1" placeholder="1" style="width:48px;padding:4px 8px;border:2px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;text-align:center" onkeydown="if(event.key==='Enter')jumpToPreviewCard()">
+      <span style="font-size:12px;color:var(--text-secondary)">/ ${cards.length}</span>
+      <button class="btn btn-sm btn-ghost" onclick="jumpToPreviewCard()" style="padding:4px 8px;font-size:11px">跳转</button>
+      <span style="flex:1"></span>
+      <span style="font-size:12px;color:var(--text-secondary)" id="problemCount"></span>
+      <button class="btn btn-sm btn-ghost" onclick="jumpToProblemCard(-1)" style="padding:4px 8px;font-size:11px" title="上一个问题">⬆</button>
+      <button class="btn btn-sm btn-ghost" onclick="jumpToProblemCard(1)" style="padding:4px 8px;font-size:11px" title="下一个问题">⬇</button>
     </div>
     <div id="previewCards"></div>
     </div>
@@ -2355,47 +2400,70 @@ function renderPreviewCards() {
   const cards = previewData.cards;
   const mode = previewData.mode;
   let html = '';
+  var problemCount = 0;
 
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
-    html += `<div class="preview-card" data-idx="${i}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1">
-          <div class="text-sm text-secondary mb-6">第 ${i + 1} 题 · ${escapeHtml(card.question.replace(/^[\d\.\、\s]+/, '').substring(0, 30))}</div>
-          ${card.koujue ? `<div class="text-sm mb-6" style="color:var(--primary)">💡 ${escapeHtml(card.koujue)}</div>` : ''}
-          <div class="text-sm mb-6" style="color:var(--text-tertiary);font-size:11px">📝 答案${(card.answer||'').split('\n').filter(l=>l.trim()).length}行 · ${(card.answer||'').length}字</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleEditPreviewCard(${i})" style="padding:2px 8px;font-size:12px;flex-shrink:0;margin-left:8px" title="编辑题目">✏️</button>
-      </div>
-      ${card._editing ? `<div id="editPanel-${i}" style="background:var(--bg);border:2px solid var(--primary);border-radius:10px;padding:12px;margin-bottom:10px">
-        <label style="font-size:12px;color:var(--text-secondary)">题目</label>
-        <textarea id="editPQ-${i}" style="width:100%;min-height:50px;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:13px;resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="2">${escapeHtml(card.question)}</textarea>
-        <label style="font-size:12px;color:var(--text-secondary)">答案</label>
-        <textarea id="editPA-${i}" style="width:100%;min-height:60px;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:13px;resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="2">${escapeHtml(card.answer)}</textarea>
-        <label style="font-size:12px;color:var(--text-secondary)">💡 口诀（可选）</label>
-        <input id="editPKj-${i}" value="${escapeHtml(card.koujue || '')}" placeholder="例如：全（全民化）民（民主化）" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:13px;margin-bottom:10px;font-family:inherit">
-        <div class="flex gap-8" style="justify-content:flex-end">
-          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();cancelEditPreviewCard(${i})">取消</button>
-          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();saveEditPreviewCard(${i})">💾 保存</button>
-        </div>
-      </div>` : ''}`;
+    var status = getCardStatus(card, mode);
+    if (status !== 'ok') problemCount++;
+    var statusBadge = '';
+    if (status === 'empty') statusBadge = '<span style="background:var(--danger-light);color:var(--danger);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600" title="答案为空的卡片" data-problem="1">🔴 无答案</span>';
+    else if (status === 'short') statusBadge = '<span style="background:var(--warning-light);color:var(--warning);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600" title="答案偏短，可能解析不完整" data-problem="1">🟡 答案偏短</span>';
+    // 绿色正常卡片不显示标记，但 data-problem=0 便于跳转跳过
+
+    html += '<div class="preview-card" data-idx="' + i + '" id="previewCard-' + i + '" data-status="' + status + '">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+        '<div style="flex:1">' +
+          '<div class="text-sm text-secondary mb-6">第 ' + (i + 1) + ' 题 ' + statusBadge + ' · ' + escapeHtml(card.question.replace(/^[\d\.\、\s]+/, '').substring(0, 30)) + '</div>' +
+          (card.koujue ? '<div class="text-sm mb-6" style="color:var(--primary)">💡 ' + escapeHtml(card.koujue) + '</div>' : '') +
+          '<div class="text-sm mb-6" style="color:var(--text-tertiary);font-size:11px">📝 答案' + (card.answer||'').split('\n').filter(function(l){return l.trim();}).length + '行 · ' + (card.answer||'').length + '字</div>' +
+        '</div>' +
+        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleEditPreviewCard(' + i + ')" style="padding:2px 8px;font-size:12px;flex-shrink:0;margin-left:8px" title="编辑题目">✏️</button>' +
+      '</div>' +
+      (card._editing ? '<div id="editPanel-' + i + '" style="background:var(--bg);border:2px solid var(--primary);border-radius:10px;padding:12px;margin-bottom:10px">' +
+        '<label style="font-size:12px;color:var(--text-secondary)">题目</label>' +
+        '<textarea id="editPQ-' + i + '" style="width:100%;min-height:50px;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:13px;resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="2">' + escapeHtml(card.question) + '</textarea>' +
+        '<label style="font-size:12px;color:var(--text-secondary)">答案</label>' +
+        '<textarea id="editPA-' + i + '" style="width:100%;min-height:60px;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:13px;resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="2">' + escapeHtml(card.answer) + '</textarea>' +
+        '<label style="font-size:12px;color:var(--text-secondary)">💡 口诀（可选）</label>' +
+        '<input id="editPKj-' + i + '" value="' + escapeHtml(card.koujue || '') + '" placeholder="例如：全（全民化）民（民主化）" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:13px;margin-bottom:10px;font-family:inherit">' +
+        '<div class="flex gap-8" style="justify-content:flex-end">' +
+          (card._undoSnapshot ? '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();undoCardEdit(' + i + ')" style="color:var(--warning)">↩️ 撤回编辑</button>' : '') +
+          '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();cancelEditPreviewCard(' + i + ')">取消</button>' +
+          '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();saveEditPreviewCard(' + i + ')">💾 保存</button>' +
+        '</div>' +
+      '</div>' : '');
 
     if (mode === 'manual') {
-      html += `<div style="position:relative"><div class="preview-answer" id="pv-answer-${i}">${renderAnswerChars(card, i)}</div><button class="btn btn-sm" onclick="saveCardSelection(${i})" style="position:absolute;left:-8px;top:50%;transform:translate(-100%,-50%);opacity:.35;font-size:18px;padding:4px 6px;min-height:auto;background:transparent;border:none;cursor:pointer;line-height:1" title="保存选中（回车）">💾</button></div>
-        <div style="margin-top:6px" id="pv-info-${i}">${renderSavedInfo(card, i)}</div>
-        <div class="flex gap-6 mt-6">
-          <button class="btn btn-sm btn-ghost" onclick="saveCardSelection(${i})" style="font-size:12px;padding:4px 10px;min-height:28px">💾 保存选中</button>
-          <button class="btn btn-sm btn-ghost" onclick="clearCardSelection(${i})" style="font-size:12px;padding:4px 10px;min-height:28px">🔄 清除全部</button>
-        </div>`;
+      html += '<div style="position:relative"><div class="preview-answer" id="pv-answer-' + i + '">' + renderAnswerChars(card, i) + '</div><button class="btn btn-sm" onclick="saveCardSelection(' + i + ')" style="position:absolute;left:-8px;top:50%;transform:translate(-100%,-50%);opacity:.35;font-size:18px;padding:4px 6px;min-height:auto;background:transparent;border:none;cursor:pointer;line-height:1" title="保存选中（回车）">💾</button></div>' +
+        '<div style="margin-top:6px" id="pv-info-' + i + '">' + renderSavedInfo(card, i) + '</div>' +
+        '<div class="flex gap-6 mt-6">' +
+          '<button class="btn btn-sm btn-ghost" onclick="saveCardSelection(' + i + ')" style="font-size:12px;padding:4px 10px;min-height:28px">💾 保存选中</button>' +
+          (card._undoSnapshot ? '<button class="btn btn-sm btn-ghost" onclick="undoCardEdit(' + i + ')" style="font-size:12px;padding:4px 10px;min-height:28px;color:var(--warning)">↩️ 撤回</button>' : '') +
+          '<button class="btn btn-sm btn-ghost" onclick="clearCardSelection(' + i + ')" style="font-size:12px;padding:4px 10px;min-height:28px">🔄 清除全部</button>' +
+        '</div>';
     } else {
-      const autoBlanks = card._autoBlanks || [];
-      html += `<div class="preview-text" id="pv-auto-text-${i}">${renderAutoPreview(card)}</div>
-        <div class="text-sm text-secondary mt-8" id="pv-auto-tags-${i}">${renderAutoTags(card, i)}</div>`;
+      var autoBlanks = card._autoBlanks || [];
+      html += '<div class="preview-text" id="pv-auto-text-' + i + '">' + renderAutoPreview(card) + '</div>' +
+        '<div class="text-sm text-secondary mt-8" id="pv-auto-tags-' + i + '">' + renderAutoTags(card, i) + '</div>';
     }
 
-    html += `</div>`;
+    html += '</div>';
   }
   container.innerHTML = html;
+  // 更新问题计数
+  var pcEl = document.getElementById('problemCount');
+  if (pcEl) {
+    if (problemCount > 0) {
+      pcEl.textContent = '⚠️ ' + problemCount + ' 个问题';
+      pcEl.style.color = 'var(--warning)';
+      pcEl.style.fontWeight = '600';
+    } else {
+      pcEl.textContent = '✅ 全部正常';
+      pcEl.style.color = 'var(--success)';
+      pcEl.style.fontWeight = '400';
+    }
+  }
 }
 
 let _wasDragging = false, _touchJustHappened = 0;
@@ -2579,7 +2647,9 @@ function toggleImportChar(idx, charIdx) {
 function saveCardSelection(idx) {
   const card = previewData.cards[idx];
   const sel = card._charSelected || {};
-  if (!Object.values(sel).some(v => v)) return;
+  if (!Object.values(sel).some(function(v) { return v; })) return;
+  // 保存撤回快照（首次保存时）
+  if (!card._undoSnapshot) saveUndoSnapshot(card);
 
   const q = (card.question || '').trim();
   const rawA = card.answer || '';
@@ -2636,6 +2706,89 @@ function clearCardSelection(idx) {
   delete card._manualBlanks;
   document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
   document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
+}
+
+// 卡片状态判定：empty=答案为空, short=答案<20字, noBlanks=手动模式无挖空, ok=正常
+function getCardStatus(card, mode) {
+  var ans = (card.answer || '').replace(/\s/g, '');
+  if (!ans) return 'empty';
+  if (ans.length < 20) return 'short';
+  if (mode === 'manual') {
+    var hasBlanks = (card.blanks && card.blanks.length > 0) || (card._savedChars && Object.keys(card._savedChars).length > 0);
+    if (!hasBlanks) return 'noBlanks';
+  }
+  return 'ok';
+}
+
+// 跳转到上一个/下一个问题卡片
+var _lastProblemIdx = -1;
+function jumpToProblemCard(direction) {
+  if (!previewData) return;
+  var cards = previewData.cards;
+  var mode = previewData.mode;
+  var problemIndices = [];
+  for (var i = 0; i < cards.length; i++) {
+    if (getCardStatus(cards[i], mode) !== 'ok') problemIndices.push(i);
+  }
+  if (!problemIndices.length) { showToast('✅ 没有发现问题卡片'); return; }
+  // 找当前/最近的位置
+  var cur = _lastProblemIdx;
+  if (cur < 0) cur = direction > 0 ? -1 : cards.length;
+  var target = -1;
+  if (direction > 0) {
+    for (var j = 0; j < problemIndices.length; j++) {
+      if (problemIndices[j] > cur) { target = problemIndices[j]; break; }
+    }
+    if (target < 0 && problemIndices.length) target = problemIndices[0]; // 循环到开头
+  } else {
+    for (var k = problemIndices.length - 1; k >= 0; k--) {
+      if (problemIndices[k] < cur) { target = problemIndices[k]; break; }
+    }
+    if (target < 0 && problemIndices.length) target = problemIndices[problemIndices.length - 1]; // 循环到末尾
+  }
+  if (target < 0) return;
+  _lastProblemIdx = target;
+  var el = document.getElementById('previewCard-' + target);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.style.boxShadow = '0 0 0 3px var(--warning)';
+    setTimeout(function() { el.style.boxShadow = ''; }, 1500);
+  }
+  showToast('已跳到第 ' + (target + 1) + ' 题');
+}
+
+// 撤回卡片编辑/挖空操作
+function undoCardEdit(idx) {
+  if (!previewData || !previewData.cards[idx]) return;
+  var card = previewData.cards[idx];
+  var snap = card._undoSnapshot;
+  if (!snap) return;
+  card.question = snap.question;
+  card.answer = snap.answer;
+  card.koujue = snap.koujue;
+  card.blanks = snap.blanks ? snap.blanks.slice() : [];
+  card._savedChars = snap._savedChars ? Object.assign({}, snap._savedChars) : {};
+  card._charSelected = snap._charSelected ? Object.assign({}, snap._charSelected) : {};
+  card._manualBlanks = snap._manualBlanks;
+  card._autoBlanks = snap._autoBlanks;
+  delete card._undoSnapshot;
+  card._editing = false;
+  renderPreviewCards();
+  showToast('↩️ 已撤回');
+}
+
+// 保存撤回快照
+function saveUndoSnapshot(card) {
+  card._undoSnapshot = {
+    question: card.question,
+    answer: card.answer,
+    koujue: card.koujue,
+    blanks: (card.blanks || []).slice(),
+    _savedChars: Object.assign({}, card._savedChars || {}),
+    _charSelected: Object.assign({}, card._charSelected || {}),
+    _manualBlanks: card._manualBlanks,
+    _autoBlanks: card._autoBlanks
+  };
 }
 
 function _rebuildCombinedBlanks(card) {
@@ -2788,11 +2941,14 @@ function jumpToPreviewCard() {
 
 function toggleEditPreviewCard(idx) {
   if (!previewData || !previewData.cards[idx]) return;
-  previewData.cards[idx]._editing = !previewData.cards[idx]._editing;
+  var card = previewData.cards[idx];
+  // 进入编辑模式时自动保存撤回快照
+  if (!card._editing && !card._undoSnapshot) saveUndoSnapshot(card);
+  card._editing = !card._editing;
   renderPreviewCards();
   // 滚动到编辑面板
-  setTimeout(() => {
-    const panel = document.getElementById('editPanel-' + idx);
+  setTimeout(function() {
+    var panel = document.getElementById('editPanel-' + idx);
     if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 100);
 }
@@ -4310,7 +4466,7 @@ function showManualMenu() {
       '<div style="margin-bottom:20px">' +
         '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">📚 导入 & 题库管理</h4>' +
         '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
-          '<p style="margin:0 0 6px"><b>＋ 导入</b> — 粘贴题目文本或上传文件（支持 .txt /.docx /.pdf），粘贴后点击"预览"确认。支持多种格式智能识别。</p>' +
+          '<p style="margin:0 0 6px"><b>＋ 导入</b> — 粘贴题目文本或上传文件（支持 .txt /.docx /.doc），粘贴后点击"预览"确认。支持多种格式智能识别。从 Word/WPS 复制的内容粘贴时自动识别加粗→【挖空】。</p>' +
           '<p style="margin:0 0 6px"><b>📋 导入格式</b> — 五种格式可选：① 自动检测（推荐）② 分隔符格式 <code>题目|答案|口诀</code> ③ 简答题格式（编号开头=题目）④ Q&A 格式（Q:/A:）⑤ #%格式（#题目 %答案）。导入预览可手动点击选字挖空。</p>' +
           '<p style="margin:0 0 6px"><b>📄 Word/WPS 智能导入</b> — 上传 .docx 文件时<b>自动识别加粗文字</b>并转为 <code>【关键词】</code> 挖空标记。图片自动过滤。大纲型内容（如一、标题 + 1. 2. 条目）自动配对：标题作题目、条目作答案。上传前在 Word 里 Ctrl+B 加粗关键词即可。</p>' +
           '<p style="margin:0 0 6px"><b>✏️ 手动挖空</b> — 答案中写 <code>@关键词@</code> 标记要挖空的位置，导入预览时自动识别。比自动挖空更精准，推荐大题和精准背诵使用。例：<code>光合作用场所是 @叶绿体@ @类囊体薄膜@</code></p>' +
@@ -5373,7 +5529,7 @@ function renderSettings() {
 
     '<div class="section"><div class="section-title">关于</div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div><span style="font-size:13px;color:var(--text-secondary);font-weight:600">v9</span></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div><span style="font-size:13px;color:var(--text-secondary);font-weight:600">v10</span></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div>';
