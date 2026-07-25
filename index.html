@@ -965,19 +965,45 @@ function isQAFormat(rawText) {
 	function parseJianDaText(rawText) {
   const lines = rawText.split(/\n/), cards = [];
   let current = null, chapter = '';
+  var cnNum = /^[一二三四五六七八九十]+[\.\、\）\)]/;
+  var arNum = /^\d+[\.\、]/;
+  var subNum = /^[\(（]\d+[\)）]|^[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]/;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
     if (/^第[一二三四五六七八九十百\d]+章/.test(line)) { chapter = line; continue; }
-    if (/^\d+[\.\、]/.test(line)) {
+    var isCnNum = cnNum.test(line);
+    var isArNum = arNum.test(line) && !isCnNum;
+    var isSubNum = subNum.test(line);
+    var isBullet = /^[•●◦◆◇▪▸►▹▶☞✓✔✗✘☐☑☒]/.test(line);
+    if (isCnNum) {
+      // 中文数字：顶级题目，启动新卡片
       if (current && current.question) cards.push(current);
       current = { question: line, answer: '', koujue: '', chapter };
+    } else if (isArNum) {
+      // 阿拉伯数字：如果上一题是中文数字标题，则归入答案；否则启动新题
+      if (current && cnNum.test(current.question)) {
+        current.answer += (current.answer ? '\n' : '') + line;
+      } else {
+        if (current && current.question) cards.push(current);
+        current = { question: line, answer: '', koujue: '', chapter };
+      }
+    } else if (isSubNum || isBullet) {
+      // 子编号/项目符号：一律归入当前答案
+      if (current) {
+        current.answer += (current.answer ? '\n' : '') + line;
+      } else {
+        current = { question: line, answer: '', koujue: '', chapter };
+      }
     } else if (current) {
-      if (/^(口诀|背诵技巧)[：:]/.test(line)) {
-        current.koujue = line.replace(/^(口诀|背诵技巧)[：:]\s*/, '').trim();
+      if (/^(口诀|背诵技巧|记忆)[：:]/.test(line)) {
+        current.koujue = line.replace(/^(口诀|背诵技巧|记忆)[：:]\s*/, '').trim();
       } else {
         current.answer += (current.answer ? '\n' : '') + line;
       }
+    } else {
+      // 开头无编号行：作为第一题
+      current = { question: line, answer: '', koujue: '', chapter };
     }
   }
   if (current && current.question) cards.push(current);
@@ -988,10 +1014,12 @@ function isJianDaFormat(rawText) {
   const lines = rawText.split(/\n/).filter(l => l.trim());
   let kj = 0, num = 0;
   for (const line of lines) {
-    if (/^(口诀|背诵技巧)[：:]/.test(line)) kj++;
+    if (/^(口诀|背诵技巧|记忆)[：:]/.test(line)) kj++;
     if (/^\d+[\.\、]/.test(line)) num++;
+    if (/^[一二三四五六七八九十]+[\.\、\）\)]/.test(line)) num++;
+    if (/^[•●◦◆◇▪▸►▹▶☞✓✔✗✘☐☑☒]/.test(line)) num++;
   }
-  return kj >= 2 && num >= 3;
+  return (kj >= 2 && num >= 3) || num >= 6;
 }
 
 function isHashPctFormat(rawText) {
@@ -1881,25 +1909,60 @@ async function handleFileImport(el) {
   showToast('文件已加载');
 }
 
+function parseWordHtml(html) {
+  // 去掉图片和 SVG
+  html = html.replace(/<img[^>]*\/?>/gi, '');
+  html = html.replace(/<svg[\s\S]*?<\/svg>/gi, '');
+  // 加粗/高亮 → 【挖空】——逐个匹配，避免嵌套或多行问题
+  html = html.replace(/<(strong|b)\b[^>]*>([\s\S]*?)<\/(strong|b)>/gi, function(_, __, inner) {
+    return '【' + inner.replace(/<[^>]*>/g, '').replace(/\s+/g, '') + '】';
+  });
+  // 结构标签 → 换行
+  html = html.replace(/<br\s*\/?>/gi, '\n');
+  html = html.replace(/<\/p>/gi, '\n');
+  html = html.replace(/<\/div>/gi, '\n');
+  html = html.replace(/<\/li>/gi, '\n');
+  html = html.replace(/<\/tr>/gi, '\n');
+  // 标题 → ## 标记
+  html = html.replace(/<\/h[1-6]>/gi, '\n');
+  html = html.replace(/<h[1-6][^>]*>/gi, '\n## ');
+  // 去掉其余 HTML 标签
+  html = html.replace(/<[^>]*>/g, '');
+  // 转义字符还原
+  html = html.replace(/&nbsp;/gi, ' ');
+  html = html.replace(/&lt;/gi, '<');
+  html = html.replace(/&gt;/gi, '>');
+  html = html.replace(/&amp;/gi, '&');
+  html = html.replace(/&quot;/gi, '"');
+  html = html.replace(/&#39;/gi, "'");
+  // 清理多余空行和行首空白
+  html = html.replace(/\n{3,}/g, '\n\n');
+  html = html.replace(/^[ \t]+/gm, '');
+  return html.trim();
+}
+
 async function handleWordImport(el) {
   const file = el.files[0]; if (!file) return;
-  showToast('⏳ Word 解析中...');
+  showToast('⏳ Word 智能解析中...');
   try {
     if (!window.mammoth) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
         s.src = 'https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js';
-        s.onload = resolve; s.onerror = () => reject(new Error('CDN load failed'));
+        s.onload = resolve; s.onerror = function() { reject(new Error('CDN load failed')); };
         document.head.appendChild(s);
       });
     }
-    const buf = await file.arrayBuffer();
-    const result = await mammoth.extractRawText({ arrayBuffer: buf });
-    const text = result.value.trim();
-    if (!text) { showToast('Word 文件为空或无法读取'); return; }
+    var buf = await file.arrayBuffer();
+    // 用 convertToHtml 保留加粗等格式信息
+    var result = await mammoth.convertToHtml({ arrayBuffer: buf });
+    var html = result.value;
+    if (!html || !html.trim()) { showToast('Word 文件为空或无法读取'); return; }
+    var text = parseWordHtml(html);
     $('importTextarea').value = text;
     if (!$('bankNameInput').value) $('bankNameInput').value = file.name.replace(/\.docx?$/i, '');
-    showToast('Word 文件已解析（' + text.length + ' 字符），请检查格式后导入');
+    var lineCount = text.split('\n').filter(function(l) { return l.trim(); }).length;
+    showToast('Word 已智能解析：加粗→挖空，' + lineCount + ' 行，请检查后导入');
   } catch(err) {
     showToast('Word 解析失败：' + err.message);
   }
