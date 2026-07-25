@@ -1788,6 +1788,7 @@ function showImportModal() {
     '<div class="form-group mb-10"><label class="form-label">题目内容</label>' +
     '<p class="form-hint mb-8" id="importFormatExample"><code>题目|答案</code> 或 <code>题目|答案|口诀</code>，一行一题；挖空用<b>【】</b>标记，如 <code>光合作用场所是【叶绿体】</code></p>' +
     '<textarea id="importTextarea" placeholder="每行一题，用 | 分隔\n\n示例：\n光合作用场所是|【叶绿体】|光→叶\n植物细胞结构包括|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同" style="width:100%;min-height:180px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
+    '<div id="importStats" class="form-hint" style="display:none;margin-top:6px;padding:8px 12px;background:var(--bg-input);border-radius:8px;line-height:1.6"></div>' +
     '<div class="flex gap-8 mt-6">' +
       '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="pasteFromTextarea(\'importTextarea\')">📋 粘贴</button>' +
       '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="copyFromTextarea(\'importTextarea\')">📝 复制</button>' +
@@ -1797,7 +1798,7 @@ function showImportModal() {
     '<div class="flex gap-6 mt-6" style="align-items:center">' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanEmptyLines()">🧹 去空行</button>' +
-      '<span style="flex:1"></span>' +
+      '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="precheckImport()">🔍 预检</button>' +
     '</div>' +
     '<div style="margin-top:6px">' +
       '<button class="btn btn-sm" style="background:var(--primary-light);border:none;font-size:11px;width:100%;color:var(--primary);font-weight:600" onclick="copyFormatPrompt()">📋 复制格式话术（给AI用）</button>' +
@@ -2066,6 +2067,84 @@ function parseMbakText(rawText) {
     cards.push({ question: q, answer: clean, blanks, fullText: q + '\n' + clean });
   }
   return cards;
+}
+
+function precheckImport() {
+  var raw = $('importTextarea').value.trim();
+  if (!raw) { showToast('请先粘贴或上传内容'); return; }
+  raw = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  raw = raw.replace(/\\n/g, '\n');
+
+  // 格式检测（与 doImport 自动检测一致）
+  var format = _importFormat || 'auto';
+  var cards = [], detectedFmt = '';
+
+  if (format === 'jianda') { cards = parseJianDaText(raw); detectedFmt = '📝 简答题'; }
+  else if (format === 'sep') { cards = parseImportText(raw); detectedFmt = '📋 分隔符'; }
+  else if (format === 'qa') { cards = parseQAText(raw); detectedFmt = '❓ Q&A'; }
+  else if (format === 'hashpct') { cards = parseHashPctText(raw); detectedFmt = '#%'; }
+  else {
+    // 自动检测
+    var lines = raw.split(/\n/).filter(function(l) { return l.trim(); });
+    var sepLines = 0;
+    for (var li = 0; li < lines.length; li++) {
+      var l = lines[li];
+      if (l.includes('——') || l.includes('→') || l.includes(' - ') || l.includes('=') || l.includes('：') || l.includes('|') || l.includes(':') || l.includes('~') || l.includes('\t')) sepLines++;
+    }
+    var sepRatio = sepLines / Math.max(lines.length, 1);
+
+    if (raw.trim().startsWith('{')) {
+      try { var data = JSON.parse(raw); if (data._format === 'mbak' && data.cards && data.cards.length) { cards = data.cards; detectedFmt = '💾 含挖空备份'; } else { cards = []; } }
+      catch(e) { cards = parseImportText(raw); detectedFmt = '📋 分隔符（fallback）'; }
+    } else if (raw.includes('【') && raw.includes('】') && raw.includes('|')) {
+      cards = parseMbakText(raw); detectedFmt = '💾 含挖空文本';
+    } else if (sepRatio > 0.6) {
+      cards = parseImportText(raw); detectedFmt = '📋 分隔符';
+    } else if (isJianDaFormat(raw)) {
+      cards = parseJianDaText(raw); detectedFmt = '📝 简答题';
+    } else if (isQAFormat(raw)) {
+      cards = parseQAText(raw); detectedFmt = '❓ Q&A';
+    } else if (isHashPctFormat(raw)) {
+      cards = parseHashPctText(raw); detectedFmt = '#%';
+    } else {
+      cards = parseImportText(raw); detectedFmt = '📋 分隔符（默认）';
+    }
+  }
+
+  // 统计
+  var answerLineCounts = cards.map(function(c) { return (c.answer || '').split('\n').filter(function(l) { return l.trim(); }).length; });
+  var totalAnswerLines = answerLineCounts.reduce(function(a, b) { return a + b; }, 0);
+  var avgAnswerLines = cards.length ? (totalAnswerLines / cards.length).toFixed(1) : '0';
+  var cardsWithEmpty = cards.filter(function(c) { return !(c.answer || '').trim(); }).length;
+  var cardsWithKj = cards.filter(function(c) { return !!c.koujue; }).length;
+
+  // 渲染统计栏
+  var statsEl = document.getElementById('importStats');
+  if (!statsEl) return;
+  statsEl.style.display = '';
+  var h = '<div style="display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px">';
+  h += '<span>🔍 识别：<b>' + detectedFmt + '</b></span>';
+  h += '<span>📦 <b>' + cards.length + ' 题</b></span>';
+  h += '<span>📝 <b>' + totalAnswerLines + '</b> 个要点</span>';
+  h += '<span>📐 均 <b>' + avgAnswerLines + '</b> 行/题</span>';
+  h += '<span>💡 <b>' + cardsWithKj + '</b> 题有口诀</span>';
+  h += '<span>📄 <b>' + raw.length + '</b> 字</span>';
+  h += '</div>';
+
+  var warnings = [];
+  if (cards.length === 0) {
+    warnings.push('<span style="color:var(--danger)">❌ 未解析出题目，请检查格式</span>');
+  } else if (cards.length <= 2 && raw.length > 500) {
+    warnings.push('<span style="color:var(--danger)">⚠️ 原文' + raw.length + '字仅解析出' + cards.length + '题，格式可能不匹配</span>');
+  }
+  if (cards.length > 0 && cardsWithEmpty > cards.length * 0.5) {
+    warnings.push('<span style="color:var(--warning)">⚠️ ' + cardsWithEmpty + '/' + cards.length + ' 题答案为空</span>');
+  }
+  if (warnings.length) {
+    h += '<div style="margin-top:4px">' + warnings.join(' &nbsp;') + '</div>';
+  }
+  statsEl.innerHTML = h;
+  showToast('预检完成：' + cards.length + '题 · ' + detectedFmt);
 }
 
 function doImport() {
