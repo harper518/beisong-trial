@@ -3921,6 +3921,23 @@ function showInfoModal(title, htmlMsg, btnText) {
   ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
 }
 
+function switchManualTab(tab) {
+  var quickEl = document.getElementById('manualTabQuick');
+  var fullEl = document.getElementById('manualTabFull');
+  var tabs = document.querySelectorAll('.manual-tab');
+  if (tab === 'quick') {
+    if (quickEl) quickEl.style.display = '';
+    if (fullEl) fullEl.style.display = 'none';
+    if (tabs[0]) { tabs[0].style.background = 'var(--primary)'; tabs[0].style.color = '#fff'; tabs[0].style.fontWeight = '600'; }
+    if (tabs[1]) { tabs[1].style.background = 'transparent'; tabs[1].style.color = 'var(--text-secondary)'; tabs[1].style.fontWeight = '400'; }
+  } else {
+    if (quickEl) quickEl.style.display = 'none';
+    if (fullEl) fullEl.style.display = '';
+    if (tabs[0]) { tabs[0].style.background = 'transparent'; tabs[0].style.color = 'var(--text-secondary)'; tabs[0].style.fontWeight = '400'; }
+    if (tabs[1]) { tabs[1].style.background = 'var(--primary)'; tabs[1].style.color = '#fff'; tabs[1].style.fontWeight = '600'; }
+  }
+}
+
 const MANUALS = {
   full: { title: '📖 超详细说明书', content: `<div style="max-height:65vh;overflow-y:auto;line-height:1.9">
 <div style="font-weight:700;color:var(--primary)">▎题库</div>
@@ -4039,23 +4056,310 @@ const MANUALS = {
 };
 
 function showManualMenu() {
-  const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
-  ov.innerHTML = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:300px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px 16px"><h3 style="margin-bottom:16px;font-size:16px;text-align:center">📖 选择说明书</h3>' +
-    Object.entries(MANUALS).map(([k, v]) => '<button class="btn btn-outline btn-block" style="margin-bottom:8px;text-align:left;font-size:14px">' + v.title + '</button>').join('') +
-    '<button class="btn btn-ghost btn-block" style="font-size:13px">取消</button></div>';
-  document.body.appendChild(ov);
-  const btns = ov.querySelectorAll('.btn-outline');
-  const keys = Object.keys(MANUALS);
-  btns.forEach((btn, i) => {
-    btn.onclick = () => { ov.remove(); showManual(keys[i]); };
-  });
-  ov.querySelector('.btn-ghost').onclick = () => ov.remove();
-  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
-}
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  ov.innerHTML = '<div class="modal" style="animation:none;max-width:560px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:0;border-radius:var(--radius);max-height:88dvh;display:flex;flex-direction:column">' +
+    '<div style="padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0"><h3 style="font-size:18px;margin:0;white-space:nowrap">📖 使用说明</h3>' +
+      '<div style="display:flex;background:var(--bg-input);border-radius:8px;padding:3px;flex-shrink:0"><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:var(--primary);color:#fff;font-weight:600;min-height:30px;transition:all .15s" onclick="switchManualTab(\'quick\')">⚡ 速览</button><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:transparent;color:var(--text-secondary);min-height:30px;transition:all .15s" onclick="switchManualTab(\'full\')">📋 详细</button></div></div>' +
+      '<button class="btn btn-ghost btn-sm" onclick="this.closest(\'.modal-overlay\').remove()" style="font-size:20px;padding:4px 8px;min-width:44px;min-height:44px;flex-shrink:0">✕</button>' +
+    '</div>' +
+    // ⚡ 速览版
+    '<div id="manualTabQuick" style="overflow-y:auto;flex:1;padding:16px 18px 24px;font-size:14px;line-height:1.7;color:var(--text)">' +
 
-function showManual(type) {
-  const m = MANUALS[type];
-  if (m) showInfoModal(m.title, m.content, '知道了');
+      // 🔴 数据安全
+      '<div style="margin-bottom:16px">' +
+        '<h4 style="font-size:16px;margin:0 0 8px;color:#e74c3c">🔴 数据安全 <span style="font-size:12px;font-weight:400;color:#999">— 最最重要</span></h4>' +
+        '<div style="background:#fff5f5;border:1px solid #fcc;border-radius:10px;padding:12px 14px">' +
+          '<p style="margin:0 0 6px"><b>📍 数据在浏览器里，不在云端</b>——换浏览器就看不到，不是丢了。</p>' +
+          '<p style="margin:0 0 6px"><b>📦 导出备份 = 唯一的保险</b>——设置页 → 导出备份文件/复制备份码，存电脑/网盘/微信收藏。没备份 = 赌运气。</p>' +
+          '<p style="margin:0 0 6px"><b>💾 缓存 ≠ 数据！</b>——清浏览器缓存一般不丢题。但清"Cookie 和网站数据"就会丢。</p>' +
+          '<p style="margin:0 0 4px"><b>🗑️ 以下操作会丢数据：</b></p>' +
+          '<p style="margin:0 0 2px;padding-left:12px">① 浏览器清除数据时<b>勾选了 Cookie 和网站数据</b></p>' +
+          '<p style="margin:0 0 2px;padding-left:12px">② <b style="color:#e74c3c">iOS Safari 清除历史记录与网站数据</b>（iPhone用户最多中招）</p>' +
+          '<p style="margin:0 0 2px;padding-left:12px">③ 手机管家/清理软件的垃圾清理</p>' +
+          '<p style="margin:0 0 2px;padding-left:12px">④ 无痕/隐私模式下关闭窗口</p>' +
+          '<p style="margin:0 0 2px;padding-left:12px">⑤ 手机存储空间不足，系统自动清理</p>' +
+          '<p style="margin:0 0 2px;padding-left:12px">⑥ 浏览器卸载或重置</p>' +
+          '<p style="margin:0"><b>🔒 隐私安全</b>——纯前端工具，题目不会上传到任何服务器。导出文件请自己保管好。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 📦 备份 & 同步
+      '<div style="margin-bottom:16px">' +
+        '<h4 style="font-size:15px;margin:0 0 8px;color:var(--primary)">📦 备份 & 同步</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:12px 14px">' +
+          '<p style="margin:0 0 6px"><b>两种备份方式，用途不同：</b></p>' +
+          '<table style="width:100%;font-size:13px;border-collapse:collapse;margin-bottom:6px">' +
+            '<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 8px"><b>📤 导出备份文件</b></td><td style="padding:4px 8px"><b>完整备份</b>（题库+进度+设置）</td><td style="padding:4px 8px;font-size:12px;color:var(--success);white-space:nowrap">✅ 推荐</td></tr>' +
+            '<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 8px">📋 复制备份码</td><td style="padding:4px 8px">备份<b>全部数据</b>（题库+进度+设置），长文本</td><td style="padding:4px 8px;font-size:12px;color:var(--text-tertiary)">文本传输</td></tr>' +
+          '</table>' +
+          '<p style="margin:0 0 4px"><b>📱 多设备同步：</b>设置页 → 导出文件/复制备份码 → 微信/QQ/AirDrop 传到另一台设备 → 导入恢复。</p>' +
+          '<p style="margin:0">每次同步前先两边都导出备份，防止传输出错。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 📥 导入技巧（挖空专属）
+      '<div style="margin-bottom:16px">' +
+        '<h4 style="font-size:15px;margin:0 0 8px;color:var(--primary)">📥 导入技巧 <span style="font-size:12px;font-weight:400;color:#999">— 挖空专属</span></h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:12px 14px">' +
+          '<p style="margin:0 0 6px"><b>📄 Word/WPS 智能导入</b>——上传 .docx 文件，<b>加粗文字自动转为【挖空】</b>，图片自动过滤，大纲结构自动配对（标题→题目、条目→答案）。上传前在 Word 里把关键词加粗（Ctrl+B），导入就自动标记好了。</p>' +
+          '<p style="margin:0 0 6px"><b>📝 简答题格式</b>——编号开头=题目、后续=答案、口诀行=背诵提示。系统自动识别，适合政治/专业课大题。</p>' +
+          '<p style="margin:0 0 6px"><b>✏️ 手动挖空</b>——答案中写 <code>@关键词@</code>，导入时自动识别挖空位置，比自动挖空更精准。</p>' +
+          '<p style="margin:0"><b>🧹 文本清洗</b>——粘贴前先用"合并断行/去空行"清洗，大幅提高解析成功率。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // ⚠️ 常见坑
+      '<div style="margin-bottom:16px">' +
+        '<h4 style="font-size:15px;margin:0 0 8px;color:#e67e22">⚠️ 容易踩的坑</h4>' +
+        '<div style="background:#fef9f2;border:1px solid #f0d9b5;border-radius:10px;padding:12px 14px">' +
+          '<p style="margin:0 0 4px">· <b>别用微信内置浏览器打开</b>——部分功能异常。复制链接到 Chrome/Safari/Edge。</p>' +
+          '<p style="margin:0 0 4px">· <b>别用无痕模式长期刷题</b>——关了窗口数据就没了。</p>' +
+          '<p style="margin:0 0 4px">· <b>导入前先备份！</b>导入直接写入题库不可撤销，没备份就回不来了。</p>' +
+          '<p style="margin:0 0 4px">· <b>AI 生成的题目</b>——删掉 AI 的寒暄废话再粘贴，只留题目本身。</p>' +
+          '<p style="margin:0 0 4px">· <b>不要手动编辑导出文件</b>——可能破坏编码导致导入失败。</p>' +
+          '<p style="margin:0">· <b>挖空密度不要频繁切换</b>——低密度适合初学，高密度适合考前冲刺。做题中随时可调。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 💡 速记 + 实操建议
+      '<div style="margin-bottom:12px">' +
+        '<h4 style="font-size:15px;margin:0 0 8px;color:var(--primary)">💡 实操建议</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:12px 14px">' +
+          '<p style="margin:0 0 4px">📄 <b>Word 导入前先加粗关键词</b>（Ctrl+B），导入后自动变成【挖空】，省去手动标记</p>' +
+          '<p style="margin:0 0 4px">✏️ 用 <code>@关键词@</code> 手动标空比自动挖空更精准，推荐大题答案使用</p>' +
+          '<p style="margin:0 0 4px">💡 每道题带<b>口诀</b>（用 | 分隔）：<code>题目|答案|口诀</code>，做题时点 💡 查看</p>' +
+          '<p style="margin:0 0 4px">🌙 睡前暗色模式 + 低亮度刷题，护眼且记忆效果好；早上再复习一遍巩固</p>' +
+          '<p style="margin:0 0 4px">📊 错题本定期清零：设置 → 清空错题本；用 ← → 按钮把常用题库排前面</p>' +
+          '<p style="margin:0 0 4px">📦 <b>每周导出一份备份</b>，设置页点"📤 分享/导出备份文件"</p>' +
+          '<p style="margin:0 0 4px">🔄 页面异常 → 设置页点<b>"检查更新"</b>（= 强制刷新，不丢数据）</p>' +
+          '<p style="margin:0 0 4px">✏️ 题库名称<b>直接点击就能改名</b>，不用进编辑</p>' +
+          '<p style="margin:0 0 4px">🌐 <b>不需要联网</b>，飞行模式也能刷</p>' +
+          '<p style="margin:0 0 4px">📱 手机/平板/电脑都能用，触控按钮 ≥44px</p>' +
+          '<p style="margin:0">🆘 数据没了别慌——看<a href="javascript:void(0)" onclick="switchManualTab(\'full\')" style="color:var(--primary);text-decoration:underline">详细版</a>的"数据丢失场景"，或者用之前的备份文件导入恢复</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 📋 免责说明
+      '<div style="margin-bottom:12px">' +
+        '<h4 style="font-size:14px;margin:0 0 6px;color:var(--text-tertiary)">📋 免责说明</h4>' +
+        '<div style="font-size:12px;color:var(--text-tertiary);line-height:1.6;background:var(--bg-input);border-radius:8px;padding:10px 14px">' +
+          '<p style="margin:0 0 4px">· 本工具为<b>低价个人学习辅助工具</b>，非商业软件，功能按"现状"提供。</p>' +
+          '<p style="margin:0 0 4px">· <b>数据安全由使用者自行负责</b>——请养成定期导出备份的习惯。</p>' +
+          '<p style="margin:0 0 4px">· 推荐使用 Chrome/Edge/Safari，不保证所有浏览器 100% 兼容。</p>' +
+          '<p style="margin:0 0 4px">· 仅供个人学习使用，<b>禁止转售、二传、二次发布</b>。</p>' +
+          '<p style="margin:0 0 4px">· <b>更新服务：</b>购买后可联系获取最新版本。后续会不定期更新新功能。</p>' +
+          '<p style="margin:0">· 📕 小红书：<b>2750492576</b></p>' +
+        '</div>' +
+      '</div>' +
+
+      '<div style="text-align:center;padding-top:8px;border-top:1px solid var(--border)">' +
+        '<span style="font-size:12px;color:var(--text-tertiary)">上面是重点速览，完整功能说明请看</span> <button onclick="switchManualTab(\'full\')" style="font-size:12px;color:var(--primary);border:none;background:none;cursor:pointer;text-decoration:underline;padding:0;min-height:auto">📋 详细版 →</button>' +
+      '</div>' +
+
+    '</div>' +
+
+    // 📋 详细版
+    '<div id="manualTabFull" style="overflow-y:auto;flex:1;padding:16px 18px 24px;font-size:14px;line-height:1.7;color:var(--text);display:none">' +
+
+      // 🔰 零基础须知
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:#e67e22">🔰 零基础须知</h4>' +
+        '<div style="background:#fef9f2;border:1px solid #f0d9b5;border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 4px">· 这不是 App，是一个<b>网页工具</b>——不需要安装，浏览器打开链接就能用。</p>' +
+          '<p style="margin:0 0 4px">· 数据存在<b>当前这个浏览器</b>里，换一个浏览器数据就看不到，不是丢了。</p>' +
+          '<p style="margin:0 0 4px">· <b>导出 = 存文件</b>到电脑/手机；<b>导入 = 从文件恢复</b>回浏览器。</p>' +
+          '<p style="margin:0 0 4px">· 想手机和电脑同步？导出 → 微信/QQ 发给另一台设备 → 在那边导入。</p>' +
+          '<p style="margin:0 0 4px">· 不小心关了浏览器也<b>不要紧</b>，只要浏览器没被"清除数据"，题库都在。</p>' +
+          '<p style="margin:0 0 4px">· <b>不需要联网</b>，飞行模式下也能刷题。</p>' +
+          '<p style="margin:0 0 4px">· 页面看起来乱了？往下拉刷新或关掉标签页重新打开链接。</p>' +
+          '<p style="margin:0 0 4px">· <b>不建议用微信内置浏览器打开</b>，部分功能可能异常。</p>' +
+          '<p style="margin:0">· 遇到页面异常，去设置页点<b>"检查更新"</b>，大部分问题都能解决。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 📚 导入 & 题库管理
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">📚 导入 & 题库管理</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 6px"><b>＋ 导入</b> — 粘贴题目文本或上传文件（支持 .txt /.docx /.pdf），粘贴后点击"预览"确认。支持多种格式智能识别。</p>' +
+          '<p style="margin:0 0 6px"><b>📋 导入格式</b> — 五种格式可选：① 自动检测（推荐）② 分隔符格式 <code>题目|答案|口诀</code> ③ 简答题格式（编号开头=题目）④ Q&A 格式（Q:/A:）⑤ #%格式（#题目 %答案）。导入预览可手动点击选字挖空。</p>' +
+          '<p style="margin:0 0 6px"><b>📄 Word/WPS 智能导入</b> — 上传 .docx 文件时<b>自动识别加粗文字</b>并转为 <code>【关键词】</code> 挖空标记。图片自动过滤。大纲型内容（如一、标题 + 1. 2. 条目）自动配对：标题作题目、条目作答案。上传前在 Word 里 Ctrl+B 加粗关键词即可。</p>' +
+          '<p style="margin:0 0 6px"><b>✏️ 手动挖空</b> — 答案中写 <code>@关键词@</code> 标记要挖空的位置，导入预览时自动识别。比自动挖空更精准，推荐大题和精准背诵使用。例：<code>光合作用场所是 @叶绿体@ @类囊体薄膜@</code></p>' +
+          '<p style="margin:0 0 6px"><b>🤖 AI 格式话术</b> — 导入页点"AI格式话术"复制模板，发给豆包/Kimi/千问等 AI，让它按要求格式输出题目。删掉 AI 的寒暄废话再粘贴。</p>' +
+          '<p style="margin:0 0 6px"><b>🧹 文本清洗</b> — 导入框下方提供两个工具：合并断行（修复硬换行导致格式断裂）、清除空行。粘贴前先清洗可大幅提高解析成功率。</p>' +
+          '<p style="margin:0 0 6px"><b>📂 分开粘贴</b> — 题目和答案分别放在两个文本框，逐行配对。</p>' +
+          '<p style="margin:0 0 6px"><b>⚠️ 导入预览</b> — 预览中可逐题查看、手动点击选字挖空、删除不需要的题。确认无误再导入。</p>' +
+          '<p style="margin:0 0 6px"><b>🔀 合并</b> — 将两个题库合二为一，源题库所有题目移入目标题库后删除。</p>' +
+          '<p style="margin:0 0 6px"><b>📤 导出</b> — 题库可导出为 .txt 文件，支持纯文本导出和含挖空标记导出（方便再次导入）。</p>' +
+          '<p style="margin:0 0 6px"><b>↕ 排序</b> — 点击 ↑↓ 箭头调整题库显示顺序。</p>' +
+          '<p style="margin:0"><b>✏️ 重命名</b> — 直接点击题库名称即可修改，无需进入编辑模式。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 📖 浏览模式
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">📖 浏览模式</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 6px"><b>选择题库</b> — 顶部下拉菜单切换题库，标题自动更新。</p>' +
+          '<p style="margin:0 0 6px"><b>题目列表</b> — 按顺序展示所有题目，挖空处高亮显示。</p>' +
+          '<p style="margin:0 0 6px"><b>搜索筛选</b> — 支持关键字搜索和分类筛选（全部/收藏/错题）。</p>' +
+          '<p style="margin:0"><b>⭐ 收藏</b> — 浏览中可收藏题目，在收藏标签页查看。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 📝 刷题模式
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">📝 刷题模式</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 6px"><b>选题库</b> — 选择一个题库开始刷题。</p>' +
+          '<p style="margin:0 0 6px"><b>题目数量</b> — 可选 5 / 10 / 自定义数量。输入数字后点"自定义"确认。</p>' +
+          '<p style="margin:0 0 6px"><b>出题顺序</b> — 三种模式：随机不重复（推荐）、随机可重复、按顺序。</p>' +
+          '<p style="margin:0 0 6px"><b>⏱ 计时模式</b> — 三种：不限时 / 每题限时 / 总时间。每题限时可自定义秒数，超时自动跳过并标记为错。</p>' +
+          '<p style="margin:0 0 6px"><b>🔄 错题优先</b> — 开启后错题自动排到前面先做，答对后恢复正常顺序。基于记忆曲线智能调度。</p>' +
+          '<p style="margin:0 0 6px"><b>填空作答</b> — 挖空处以黄色框显示，点击输入答案。填完所有空<b>自动诊断</b>，也可按<b>回车键</b>手动诊断。</p>' +
+          '<p style="margin:0 0 6px"><b>密度切换</b> — <b>低</b>=每点1空好背 / <b>高</b>=多空挑战。做题中随时可调，不影响已答题目。</p>' +
+          '<p style="margin:0 0 6px"><b>⭐ 收藏 / 💡 口诀 / 🗑 删除</b> — 做题中随时可用，按钮在题目卡片底部。</p>' +
+          '<p style="margin:0 0 6px"><b>📊 结果页</b> — 显示正确率、用时，可逐题查看作答详情。支持再来一轮。</p>' +
+          '<p style="margin:0">· 点答题卡<b>左边缘</b>回上一题、<b>右边缘</b>去下一题（不挡填空框）。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // ❌ 错题复习
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">❌ 错题复习</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 6px"><b>错题本</b> — 答错的题目自动进入错题本（按题库分类），记录错误次数和最近答错时间。支持切换题库查看。</p>' +
+          '<p style="margin:0 0 6px"><b>错题显示</b> — 错误答案用红色下划线标出，正确答案用绿色高亮，一目了然。</p>' +
+          '<p style="margin:0 0 6px"><b>间隔复习</b> — 基于遗忘曲线：答对晋级（1天→2天→4天→7天→✅掌握），答错降级重新开始。</p>' +
+          '<p style="margin:0 0 6px"><b>📅 待复习提醒</b> — 到期的错题在刷题时自动排前面（需开启错题优先）。</p>' +
+          '<p style="margin:0"><b>清空错题</b> — 设置页提供"清空错题本"按钮，一次性清除所有错题记录。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 🧠 记忆曲线
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">🧠 记忆曲线（间隔重复）</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 6px"><b>原理</b> — 基于艾宾浩斯遗忘曲线，在遗忘临界点复习效果最好。</p>' +
+          '<p style="margin:0 0 6px"><b>阶段</b> — 每道题有 6 个阶段：<b>阶段0</b>（新题/今日错）→ <b>阶段1</b>（1天后复习）→ <b>阶段2</b>（2天后）→ <b>阶段3</b>（4天后）→ <b>阶段4</b>（7天后）→ <b>✅ 阶段5</b>（已掌握，不再提醒）。</p>' +
+          '<p style="margin:0 0 6px"><b>规则</b> — 在阶段 N 答对晋级 N+1，答错退回阶段 0（次日重新开始）。只有到期（srNextReview ≤ 今天）的题才会在错题优先模式中排前面。</p>' +
+          '<p style="margin:0 0 6px"><b>实践建议</b> — 每天刷题时开启"错题优先"，系统自动把该复习的错题排前面。连续答对几次后间隔拉长，自然过渡到长期记忆。</p>' +
+          '<p style="margin:0">· 这和传统"反复背同一道题"不同——间隔越长记忆越深，效率更高。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // ⭐ 收藏 & 🔍 搜索
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">⭐ 收藏 & 🔍 搜索</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 6px"><b>⭐ 收藏题目</b> — 刷题或浏览时点击 ⭐ 星标按钮即可收藏。收藏页支持全部/收藏/错题三个子分类筛选。</p>' +
+          '<p style="margin:0 0 6px"><b>🔍 全局搜索</b> — 题库页点 🔍 按钮，输入关键词跨所有题库实时搜索题目内容、答案和口诀。</p>' +
+          '<p style="margin:0"><b>📖 浏览筛选</b> — 浏览模式下可切换"全部题目"或"仅看收藏"，快速回顾收藏的好题。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // ⚙️ 设置
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">⚙️ 设置 & 数据</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 6px"><b>📤 分享/导出备份文件</b> — <b>完整备份</b>：将所有题库题目、错题记录、收藏、设置全部打包导出。📱 手机自动弹出分享菜单，💻 电脑自动下载。建议保留最近 2-3 次备份。</p>' +
+          '<p style="margin:0 0 6px"><b>📋 复制/分享备份码</b> — 备份全部数据为文本码，可粘贴到微信/备忘录保存，恢复时粘贴回来。</p>' +
+          '<p style="margin:0 0 6px"><b>📥 粘贴备份码恢复 / 上传 JSON 备份文件</b> — 从备份码或文件恢复数据。<b>恢复会覆盖当前数据</b>，操作前务必先导出备份。</p>' +
+          '<p style="margin:0 0 6px"><b>📊 存储空间</b> — 设置页顶部显示存储用量、题库数、题目总数、错题总数。上限约 5 MB。</p>' +
+          '<p style="margin:0 0 6px"><b>⏰ 备份提醒</b> — 按紧急程度显示：🔴 从未备份 / 🟠 超过 30 天 / 🟡 超过 7 天 / 🟢 最近备份。</p>' +
+          '<p style="margin:0 0 6px"><b>🌙 深色模式</b> — 切换开关一键开启暗色主题，夜间刷题护眼。</p>' +
+          '<p style="margin:0 0 6px"><b>🎨 主题颜色</b> — 10 种配色可选（青绿/浅紫/浅蓝/玫红/粉色/浅绿/浅黄/黑白/米黄/豆沙绿）。</p>' +
+          '<p style="margin:0 0 6px"><b>🔤 字体大小</b> — 拖动滑块调整全局字号（14–24px）。</p>' +
+          '<p style="margin:0 0 6px"><b>🔊 语音朗读</b> — 可选声音、语速（0.5-2x）、模式（仅读一遍/循环朗读/自动下一题/每题三遍）。</p>' +
+          '<p style="margin:0 0 6px"><b>🔄 检查更新</b> — 清除缓存并刷新页面，获取最新版本。不丢数据。</p>' +
+          '<p style="margin:0"><b>🗑️ 删除所有数据</b> — 清空全部题库和设置，不可恢复。操作前务必先导出备份。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 🤖 配合AI使用
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">🤖 配合 AI 使用</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 4px">· 点击导入页面的<b>"AI格式话术"</b>按钮，获得格式模板。</p>' +
+          '<p style="margin:0 0 4px">· 把模板发给 AI（豆包/千问/Kimi 等），告诉它按格式输出题目。</p>' +
+          '<p style="margin:0 0 4px">· AI 返回题目后，<b>删掉 AI 的寒暄废话</b>（"好的，以下是为您生成的题目…"），只留题目本身。</p>' +
+          '<p style="margin:0">· 如果 AI 输出中含加粗文字，导入 Word 后会自动转为【挖空】。也可以直接让 AI 用 【】 标记要挖空的关键词。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 💡 实操建议
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--success)">💡 实操建议</h4>' +
+        '<div style="background:var(--success-light);border:1px solid var(--success);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 4px">📄 <b>Word 导入前先加粗关键词</b>（Ctrl+B），导入后自动变成【挖空】，省去手动标记的时间。没加粗也没关系，导入预览页可以手动点击选字挖空。</p>' +
+          '<p style="margin:0 0 4px">✏️ 用 <code>@关键词@</code> 手动标空比自动挖空更精准，推荐政治/专业课大题答案使用。</p>' +
+          '<p style="margin:0 0 4px">💡 每道题带一句<b>口诀</b>，格式 <code>题目|答案|口诀</code>，做题时点 💡 按钮查看。</p>' +
+          '<p style="margin:0 0 4px">🌙 <b>睡前记忆效果最好</b>——暗色模式 + 低亮度刷题，减少蓝光干扰；睡前刷一遍、早上复习一遍，间隔重复巩固。</p>' +
+          '<p style="margin:0 0 4px">📊 低密度适合初学、高密度适合考前冲刺，做题中随时可调。</p>' +
+          '<p style="margin:0 0 4px">🧹 错题本定期清零（设置 → 清空错题本），用 ← → 按钮把常用题库排前面。</p>' +
+          '<p style="margin:0 0 4px">📱 手机/平板/电脑全设备适配，触控按钮 ≥44px，大屏居中显示。</p>' +
+          '<p style="margin:0">📦 <b>每周导出一份备份</b>——这是唯一能保护你数据的方法。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // ⚠️ 重点说明
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:#e74c3c">⚠️ 重点说明</h4>' +
+        '<div style="background:#fff3f3;border:1px solid #fcc;border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 6px"><b>💾 数据存储位置</b> — 所有题目、错题、设置都保存在浏览器本地存储（localStorage），不会上传到任何服务器，完全离线可用。但清除浏览器数据会导致数据丢失！</p>' +
+          '<p style="margin:0 0 6px"><b>💾 缓存 ≠ 数据</b> — "浏览器缓存"和"你的题库数据（localStorage）"是两回事。清缓存一般不丢题库。但"清除浏览数据"时勾选了"Cookie 和网站数据"就会丢。</p>' +
+          '<p style="margin:0 0 6px"><b>📦 定期备份</b> — 强烈建议每周导出备份文件保存到电脑或网盘。这是<b>唯一能完整恢复</b>的方式。</p>' +
+          '<p style="margin:0 0 6px"><b>📱 多设备同步</b> — 工具不支持自动同步。手动操作：设置页点"导出备份文件" → 微信/QQ/网盘发给另一台设备 → 在那边导入。</p>' +
+          '<p style="margin:0 0 6px"><b>🗑️ 数据丢失场景</b> — 以下操作会清空数据：① 浏览器清除数据时勾选了 Cookie 和网站数据；② <b>iOS Safari 的"清除历史记录与网站数据"</b>（iPhone 最坑）；③ 手机管家清理；④ 无痕/隐私模式关闭窗口；⑤ 存储空间不足系统自动清理。</p>' +
+          '<p style="margin:0"><b>🔒 隐私安全</b> — 纯前端工具，无后台服务器，题目数据不会被收集或分享。导出文件请妥善保管。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 🖥️ 使用环境
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">🖥️ 使用环境</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 4px">· <b>推荐浏览器</b>：Chrome / Edge / Safari。国产浏览器可能有兼容性问题。</p>' +
+          '<p style="margin:0 0 4px">· <b>不推荐微信内置浏览器</b>：部分功能可能异常，请复制链接用系统浏览器打开。</p>' +
+          '<p style="margin:0 0 4px">· <b>无痕/隐私模式</b>：关闭窗口后数据<b>不会保留</b>，不建议长期刷题使用。</p>' +
+          '<p style="margin:0 0 4px">· <b>强制刷新</b>：按 Ctrl+Shift+R（Mac: Cmd+Shift+R）可解决大部分页面异常。</p>' +
+          '<p style="margin:0">· 支持手机、平板、电脑，所有触控按钮 ≥44px。</p>' +
+        '</div>' +
+      '</div>' +
+
+      // 免责说明
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--text-tertiary)">📋 免责说明</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px;font-size:13px;color:var(--text-secondary);line-height:1.7">' +
+          '<p style="margin:0 0 6px"><b>· 本工具为低价个人学习辅助工具</b>，非商业软件产品，功能按"现状"提供，不承诺 100% 无缺陷或所有设备完美兼容。</p>' +
+          '<p style="margin:0 0 6px"><b>· 数据责任：</b>使用者有责任自行定期导出备份。开发者不对因浏览器清理、系统故障、操作失误等原因导致的数据丢失承担任何责任。</p>' +
+          '<p style="margin:0 0 6px"><b>· 使用范围：</b>仅供个人学习使用，<b>禁止转售、二传、二次发布</b>。他人如需使用请自行联系购买。</p>' +
+          '<p style="margin:0 0 6px"><b>· 更新服务：</b>购买用户可联系获取最新版本 HTML 文件。后续会不定期更新新功能，敬请期待。功能更新以实际发布版本为准，不承诺特定功能的上线时间。</p>' +
+          '<p style="margin:0 0 6px"><b>· 浏览器兼容：</b>推荐 Chrome / Edge / Safari 最新版本。国产浏览器（QQ、360 等）、微信内置浏览器可能存在兼容性问题，非工具缺陷。</p>' +
+          '<p style="margin:0"><b>· 联系方式：</b>📕 小红书 <b>2750492576</b></p>' +
+        '</div>' +
+      '</div>' +
+
+      // 小贴士
+      '<div style="background:var(--primary-light);border-radius:10px;padding:12px 16px;font-size:13px">' +
+        '<b>💡 小贴士</b><br>' +
+        '· 导入时如遇格式问题，可在导入前用"文本清洗"工具（合并断行/清除空行）处理。<br>' +
+        '· 养成定期导出备份的习惯——这是唯一能保护你数据的方法。留意设置页备份时间提醒。<br>' +
+        '· Word 导入前先把关键词加粗（Ctrl+B），导入后自动变【挖空】。<br>' +
+        '· 用 @关键词@ 手动标记挖空比自动挖空更精准。<br>' +
+        '· 题库名称直接点击即可重命名，无需进入编辑模式。<br>' +
+        '· 刷题时用 ⭐ 星标收藏好题，错题页统一回顾。<br>' +
+        '· 强制刷新（Ctrl+Shift+R）= 设置页"检查更新"，不丢数据。<br>' +
+        '· 手机端点击屏幕左右两侧可快速切换上/下一题。<br>' +
+        '· 🌙 设置页可开启深色模式，和主题颜色独立组合使用。<br>' +
+        '· 手机触控按钮全部 ≥44px，平板和电脑也能流畅使用。' +
+      '</div>' +
+
+    '</div>' +
+  '</div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
 }
 
 function retrySameSettings() {
