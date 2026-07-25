@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="记忆填空"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" id="themeColorMeta" content="#f0fdfa"/>
-<title>挖空背诵工具 · 小阮出品</title>
+<title>挖空背诵工具 v2.5 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1065,32 +1065,73 @@ function fmtDate(ts) { const d = new Date(ts); return `${d.getFullYear()}-${Stri
 function downloadFile(fn, content, mime) { const b = new Blob([content],{type:mime}), url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
 function showExportModal(title, content) {
   if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
-  const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
-  ov.innerHTML = `<div class="modal" style="animation:none;max-width:420px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;border-radius:var(--radius)">
-    <h3 style="margin-bottom:6px">📤 ${escapeHtml(title)}</h3>
-    <textarea readonly style="width:100%;min-height:160px;max-height:50vh;font-size:13px;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text);word-break:break-all;font-family:inherit" onclick="this.select()">${escapeHtml(content)}</textarea>
-    <p class="text-sm text-secondary mt-6">👆 点上方文字全选 → 复制</p>
-    <div class="flex gap-8 mt-10">
-      <button class="btn btn-primary flex-1" onclick="copyExportContent(this)">📋 一键复制</button>
-      <button class="btn btn-ghost flex-1" onclick="this.closest('.modal-overlay').remove()">关闭</button>
-    </div></div>`;
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var hasShare = navigator.share !== undefined;
+  var canShareFile = false;
+  try { canShareFile = navigator.canShare && navigator.canShare({ files: [new File(['test'], 'test.txt', {type:'text/plain'})] }); } catch(e) {}
+  ov.innerHTML = '<div class="modal" style="animation:none;max-width:420px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;border-radius:var(--radius)"><h3 style="margin-bottom:6px">📤 ' + escapeHtml(title) + '</h3><textarea readonly style="width:100%;min-height:160px;max-height:50vh;font-size:13px;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text);word-break:break-all;font-family:inherit" onclick="this.select()">' + escapeHtml(content) + '</textarea><p class="text-sm text-secondary mt-6" style="font-size:12px;color:var(--text-secondary);margin-top:6px">👆 点上方文字全选 → 复制</p>' +
+    (hasShare
+      ? '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn btn-primary flex-1" style="flex:1;min-width:80px" onclick="copyExportContent(this)">📋 复制</button>' +
+        (canShareFile ? '<button class="btn btn-primary flex-1" style="flex:1;min-width:80px;background:#25c26b;border-color:#25c26b" onclick="shareExportFile(this,\'' + escapeHtml(title) + '\')">📎 分享文件</button>' : '<button class="btn btn-primary flex-1" style="flex:1;min-width:80px;background:#7c8aaa;border-color:#7c8aaa" onclick="shareExportText(this,\'' + escapeHtml(title) + '\')">📤 分享文本</button>') +
+        '<button class="btn btn-ghost flex-1" style="flex:1;min-width:60px" onclick="this.closest(\'.modal-overlay\').remove()">关闭</button></div>' +
+        (canShareFile ? '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:6px">📎 分享文件 → 微信/QQ/WPS 完整版 &nbsp;|&nbsp; 📤 分享文本 → 5000字截断</div>' : '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:6px">📱 分享 → 微信/QQ/备忘录 &nbsp;|&nbsp; 复制 → 粘贴到任意位置</div>')
+      : '<div style="display:flex;gap:10px;margin-top:12px"><button class="btn btn-primary flex-1" style="flex:1" onclick="copyExportContent(this)">📋 一键复制</button><button class="btn btn-outline flex-1" style="flex:1" onclick="downloadExportText(this,\'' + escapeHtml(title) + '\')">📥 下载 TXT</button><button class="btn btn-ghost flex-1" style="flex:1" onclick="this.closest(\'.modal-overlay\').remove()">关闭</button></div><div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:6px">💻 下载文件 → 电脑文档/桌面</div>') +
+  '</div>';
   document.body.appendChild(ov);
   ov._exportContent = content;
-  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
 }
 function copyExportContent(btn) {
-  const ov = btn.closest('.modal-overlay');
-  const content = ov._exportContent;
+  var ov = btn.closest('.modal-overlay');
+  var content = ov._exportContent;
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(content).then(() => showToast('已复制到剪贴板'));
+    navigator.clipboard.writeText(content).then(function() { showToast('已复制到剪贴板'); });
   } else {
-    const ta = document.createElement('textarea');
+    var ta = document.createElement('textarea');
     ta.value = content; ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
     try { document.execCommand('copy'); showToast('已复制到剪贴板'); } catch(e) { showToast('复制失败，请手动选择复制'); }
     document.body.removeChild(ta);
   }
   ov.remove();
+}
+function downloadExportText(btn, title) {
+  var ov = btn.closest('.modal-overlay');
+  var content = ov._exportContent || '';
+  var filename = (title || '题库导出') + '.txt';
+  downloadFile(filename, content, 'text/plain;charset=utf-8');
+  showToast('✅ 已下载');
+}
+function shareExportFile(btn, title) {
+  var ov = btn.closest('.modal-overlay');
+  var content = ov._exportContent || '';
+  var filename = (title || '题库导出') + '.txt';
+  var file = new File([content], filename, { type: 'text/plain;charset=utf-8' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: title || '题库导出' }).then(function() {
+      showToast('✅ 已分享文件');
+    }).catch(function(err) {
+      if (err.name !== 'AbortError') { downloadExportText(btn, title); }
+    });
+  } else {
+    downloadExportText(btn, title);
+  }
+}
+function shareExportText(btn, title) {
+  var ov = btn.closest('.modal-overlay');
+  var content = ov._exportContent || '';
+  if (navigator.share) {
+    navigator.share({
+      title: title || '题库导出',
+      text: content.slice(0, 5000) + (content.length > 5000 ? '\n\n...（内容过长已截断，完整内容请用复制）' : '')
+    }).then(function() {
+      showToast('✅ 分享成功');
+    }).catch(function(err) {
+      if (err.name !== 'AbortError') {
+        navigator.clipboard.writeText(content).then(function() { showToast('已复制到剪贴板'); });
+      }
+    });
+  }
 }
 function showToast(msg) { const c = $('toastContainer'); if (!c) return; const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; c.appendChild(t); setTimeout(function() { t.remove(); }, 2300); }
 
@@ -1207,6 +1248,11 @@ let categoryFilter = null; // null=全选，Set=选中分类
 let kjCategoryFilter = null; // 口诀页分类筛选
 let drawMode = 'random-norepeat';
 let hideQuestionStart = false;
+let timerMode = 'off'; // 'off' | 'perQuestion' | 'total'
+let timerSeconds = 75;
+let timerInterval = null;
+let timerRemaining = 0;
+let wrongFirst = true; // 错题优先排序（默认开启）
 
 // ==================== 初始化 ====================
 function init() {
@@ -1253,6 +1299,10 @@ function initApp() {
   getSetting('voiceEnabled', false);
   getSetting('voiceRate', 0.9);
   getSetting('voicePitch', 1.0);
+  // 恢复计时和排序设置
+  if (appData.settings.timerMode) timerMode = appData.settings.timerMode;
+  if (appData.settings.timerSeconds) timerSeconds = appData.settings.timerSeconds;
+  if (appData.settings.wrongFirst !== undefined) wrongFirst = appData.settings.wrongFirst;
 
   // 防止刷题时水平滑动退出页面
   let pageStartX = 0, pageStartY = 0;
@@ -1372,7 +1422,7 @@ function initApp() {
   }
 
   switchTab('banks');
-  setTimeout(function() { showIntroModal(); }, 600);
+  // showIntroModal() 已移除 — 不再弹出欢迎提示
   } catch(e) {
     console.error('initApp error:', e);
     showFatalError(e.message || '初始化异常');
@@ -1711,9 +1761,9 @@ function showImportModal() {
     '<p class="form-hint mb-8" id="importFormatExample"><code>题目|答案</code> 或 <code>题目|答案|口诀</code>，一行一题；挖空用<b>【】</b>标记，如 <code>光合作用场所是【叶绿体】</code></p>' +
     '<textarea id="importTextarea" placeholder="每行一题，用 | 分隔\n\n示例：\n光合作用场所是|【叶绿体】|光→叶\n植物细胞结构包括|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同" style="width:100%;min-height:180px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
     '<div class="flex gap-8 mt-6">' +
-      '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importTextarea\')">📋 粘贴</button>' +
-      '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'csvFileInput\').click()">📂 上传</button>' +
-      '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="copyFromTextarea(\'importTextarea\')">📝 复制</button>' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="pasteFromTextarea(\'importTextarea\')">📋 粘贴</button>' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="document.getElementById(\'csvFileInput\').click()">📂 上传</button>' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="copyFromTextarea(\'importTextarea\')">📝 复制</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importTextarea\')">🗑 清空</button>' +
     '</div>' +
     '<div class="flex gap-6 mt-6" style="align-items:center;flex-wrap:wrap">' +
@@ -1729,17 +1779,17 @@ function showImportModal() {
       '<div class="form-group mb-10"><label class="form-label">📝 题目（一行一题）</label>' +
         '<textarea id="importQuestions" placeholder="1. 光合作用的场所是\n2. 植物细胞的基本结构包括" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
         '<div class="flex gap-8 mt-6 mb-6">' +
-          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importQuestions\')">📋 粘贴</button>' +
-          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'fileQuestionsInput\').click()">📂 上传</button>' +
-          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="copyFromTextarea(\'importQuestions\')">📝 复制</button>' +
+          '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="pasteFromTextarea(\'importQuestions\')">📋 粘贴</button>' +
+          '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="document.getElementById(\'fileQuestionsInput\').click()">📂 上传</button>' +
+          '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="copyFromTextarea(\'importQuestions\')">📝 复制</button>' +
           '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importQuestions\')">🗑 清空</button>' +
         '</div></div>' +
       '<div class="form-group mb-8"><label class="form-label">✅ 答案（一行一答案）</label>' +
         '<textarea id="importAnswers" placeholder="叶绿体\n细胞壁、细胞膜、细胞质、细胞核" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
         '<div class="flex gap-8 mt-6">' +
-          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importAnswers\')">📋 粘贴</button>' +
-          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'fileAnswersInput\').click()">📂 上传</button>' +
-          '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="copyFromTextarea(\'importAnswers\')">📝 复制</button>' +
+          '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="pasteFromTextarea(\'importAnswers\')">📋 粘贴</button>' +
+          '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="document.getElementById(\'fileAnswersInput\').click()">📂 上传</button>' +
+          '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="copyFromTextarea(\'importAnswers\')">📝 复制</button>' +
           '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importAnswers\')">🗑 清空</button>' +
         '</div></div>' +
       '<p style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px">两边的第1行配对为第1题，第2行配对为第2题，以此类推。</p>' +
@@ -2688,22 +2738,23 @@ function showMergeBankPicker(which) {
 
 // ==================== 合并题库 ====================
 function showMergeModal() {
-  const banks = Object.values(appData.banks).sort((a, b) => b.createdAt - a.createdAt);
+  setTimeout(function() {
+  var banks = Object.values(appData.banks).sort(function(a, b) { return b.createdAt - a.createdAt; });
   if (banks.length < 2) { showToast('至少需要两个题库才能合并'); return; }
-  const opts = banks.map(b => '<option value="' + b.id + '">' + escapeHtml(b.name) + '（' + b.cards.length + '题）</option>').join('');
-  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  var ov = document.createElement('div'); ov.className = 'modal-overlay';
   ov.innerHTML = '<div class="modal" style="max-width:360px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px 18px;border-radius:var(--radius)"><h3 style="margin-bottom:16px;font-size:17px">🔀 合并题库</h3><div style="margin-bottom:12px"><div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">将 A 题库合并到 B 题库</div><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">A 的所有题目会移入 B，A 将被删除</div><div style="margin-bottom:8px"><label style="font-size:13px;font-weight:600">A（源题库）</label><input type="hidden" id="mergeSrc" value="' + banks[0].id + '"><button class="btn btn-ghost btn-sm" id="mergeSrcBtn" onclick="showMergeBankPicker(&#39;src&#39;)" style="width:100%;padding:8px;margin-top:4px;text-align:left;font-size:13px">' + escapeHtml(banks[0].name) + ' （' + banks[0].cards.length + '题） ▾</button></div><div style="margin-bottom:12px"><label style="font-size:13px;font-weight:600">B（目标题库）</label><input type="hidden" id="mergeDst" value="' + banks[1].id + '"><button class="btn btn-ghost btn-sm" id="mergeDstBtn" onclick="showMergeBankPicker(&#39;dst&#39;)" style="width:100%;padding:8px;margin-top:4px;text-align:left;font-size:13px">' + escapeHtml(banks[1].name) + ' （' + banks[1].cards.length + '题） ▾</button></div></div><div class="flex gap-10"><button class="btn btn-ghost flex-1" id="mergeCancel">取消</button><button class="btn btn-primary flex-1" id="mergeConfirm">确认合并</button></div></div>';
   document.body.appendChild(ov);
-  ov.querySelector('#mergeCancel').onclick = () => ov.remove();
-  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
-  ov.querySelector('#mergeConfirm').onclick = () => {
-    const srcId = ov.querySelector('#mergeSrc').value;
-    const dstId = ov.querySelector('#mergeDst').value;
+  ov.querySelector('#mergeCancel').onclick = function() { ov.remove(); };
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+  ov.querySelector('#mergeConfirm').onclick = function() {
+    var srcId = ov.querySelector('#mergeSrc').value;
+    var dstId = ov.querySelector('#mergeDst').value;
     if (!srcId || !dstId) { showToast('请选择两个题库'); return; }
     if (srcId === dstId) { showToast('不能合并到同一个题库'); return; }
     executeMerge(srcId, dstId);
     ov.remove();
   };
+  }, 50);
 }
 
 function executeMerge(srcId, dstId) {
@@ -2786,10 +2837,7 @@ function renderPracticeSetup() {
         <div class="flex items-center gap-8" id="countChips">
           <span class="chip${batchSize === 5 ? ' active' : ''}" data-n="5" onclick="selectCount(5, this)">5 题</span>
           <span class="chip${batchSize === 10 ? ' active' : ''}" data-n="10" onclick="selectCount(10, this)">10 题</span>
-          <span class="chip${batchSize === 20 ? ' active' : ''}" data-n="20" onclick="selectCount(20, this)">20 题</span>
-          <span style="font-size:13px;color:var(--text-secondary)">或自定义：</span>
-          <input type="number" id="customCount" placeholder="数量" min="1" value="${batchSize !== 5 && batchSize !== 10 && batchSize !== 20 && batchSize ? batchSize : ''}" onchange="selectCustom()" style="width:70px;text-align:center;padding:9px">
-          <span style="font-size:13px;color:var(--text-secondary)">题</span>
+          <input type="number" id="customCount" placeholder="自定义" min="1" value="${batchSize !== 5 && batchSize !== 10 && batchSize ? batchSize : ''}" onchange="selectCustom()" style="width:80px;text-align:center;padding:9px">
         </div>
       </div>
 
@@ -2812,9 +2860,119 @@ function renderPracticeSetup() {
         <p class="form-hint">隐藏题目时只显示填空区，点击按钮可随时显示</p>
       </div>
 
+      <div class="form-group">
+        <label class="form-label">⏱️ 计时模式</label>
+        <div class="chip-group" id="timerModeGroup">
+          <span class="chip active" data-timer="off" onclick="selectTimerMode('off', this)">🆓 不计时</span>
+          <span class="chip" data-timer="perQuestion" onclick="selectTimerMode('perQuestion', this)">⏱️ 每题限时</span>
+          <span class="chip" data-timer="total" onclick="selectTimerMode('total', this)">⏰ 总时间</span>
+        </div>
+        <div id="timerConfig" style="display:none;margin-top:8px">
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px">
+            <span id="timerConfigLabel">每题限时</span>
+            <input type="number" id="timerSeconds" value="75" min="5" max="3600" step="5" onchange="saveTimerSeconds()" style="width:72px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--bg-input);color:var(--text)">
+            <span>秒</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">📋 出题排序</label>
+        <div class="chip-group">
+          <span class="chip${wrongFirst ? ' active' : ''}" id="wrongFirstChip" onclick="toggleWrongFirst()">${wrongFirst ? '✅ 错题优先' : '📖 顺序出题'}</span>
+        </div>
+        <p class="form-hint">错题优先：答错的题和到期复习的题自动排在前面。关闭后按选定方式正常出题。</p>
+      </div>
+
       <button class="btn btn-primary btn-block btn-lg" onclick="startPractice()">👊 开始刷题</button>
     </div>`;
   setTimeout(() => { const bid = document.getElementById("bankSelect").value; if (bid) { categoryFilter = null; renderCategoryFilter(bid); } }, 0);
+}
+
+// ====== 计时器 ======
+function selectTimerMode(mode, el) {
+  timerMode = mode;
+  document.querySelectorAll('#timerModeGroup .chip').forEach(function(c) { c.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  var config = document.getElementById('timerConfig');
+  var label = document.getElementById('timerConfigLabel');
+  if (mode === 'off') {
+    config.style.display = 'none';
+  } else {
+    config.style.display = '';
+    if (mode === 'perQuestion') {
+      label.textContent = '每题限时';
+      document.getElementById('timerSeconds').value = timerSeconds || 75;
+    } else {
+      label.textContent = '总共限时';
+      document.getElementById('timerSeconds').value = timerSeconds || 600;
+    }
+  }
+  appData.settings.timerMode = mode;
+  appData.settings.timerSeconds = timerSeconds;
+  saveData(appData);
+}
+function saveTimerSeconds() {
+  var input = document.getElementById('timerSeconds');
+  if (!input) return;
+  timerSeconds = parseInt(input.value) || 75;
+  if (timerSeconds < 5) timerSeconds = 5;
+  if (timerSeconds > 3600) timerSeconds = 3600;
+  input.value = timerSeconds;
+  appData.settings.timerSeconds = timerSeconds;
+  saveData(appData);
+}
+function startTimer() {
+  if (timerMode === 'off') { return; }
+  var secInput = document.getElementById('timerSeconds');
+  timerSeconds = parseInt(secInput.value) || 60;
+  if (timerSeconds < 5) timerSeconds = 5;
+  if (timerSeconds > 3600) timerSeconds = 3600;
+  timerRemaining = timerSeconds;
+  updateTimerDisplay();
+  timerInterval = setInterval(function() {
+    timerRemaining--;
+    updateTimerDisplay();
+    if (timerRemaining <= 0) { handleTimerExpiry(); }
+  }, 1000);
+  document.getElementById('timerDisplay').style.display = '';
+}
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+function updateTimerDisplay() {
+  var display = document.getElementById('timerDisplay');
+  if (!display) return;
+  var mins = Math.floor(timerRemaining / 60);
+  var secs = timerRemaining % 60;
+  display.textContent = '⏱ ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
+  if (timerRemaining <= 10) {
+    display.style.background = 'var(--danger-light)'; display.style.color = 'var(--danger)';
+  } else if (timerRemaining <= 30) {
+    display.style.background = 'var(--warning-light)'; display.style.color = '#92400e';
+  } else {
+    display.style.background = 'var(--primary-light)'; display.style.color = 'var(--primary)';
+  }
+}
+function handleTimerExpiry() {
+  stopTimer();
+  if (timerMode === 'perQuestion') {
+    showToast('⏰ 时间到！自动跳到下一题');
+    var card = practiceState.cards[practiceState.index];
+    var wb = getWrongBook(practiceState.bankId);
+    wb[card.id] = { wrongIndices: [], wrongAnswers: ['超时'] };
+    saveData(appData);
+    nextCard();
+  } else {
+    showToast('⏰ 总时间到！自动提交');
+    finishPractice();
+  }
+}
+function toggleWrongFirst() {
+  wrongFirst = !wrongFirst;
+  appData.settings.wrongFirst = wrongFirst;
+  saveData(appData);
+  var el = document.getElementById('wrongFirstChip');
+  if (el) { el.classList.toggle('active', wrongFirst); el.textContent = wrongFirst ? '✅ 错题优先' : '📖 顺序出题'; }
 }
 
 function selectCount(n, el) {
@@ -3007,24 +3165,26 @@ function startPractice() {
     selected = shuffle([...pool]).slice(0, count);
   }
 
-  // 间隔重复 & 错题优先排序
-  const wb = getWrongBook(bankId);
-  const now = Date.now();
-  let dueCount = 0, wrongCount = 0;
-  selected.forEach(c => {
+  // 间隔重复 & 错题优先排序（可通过开关关闭）
+  var wb = getWrongBook(bankId);
+  var now = Date.now();
+  var dueCount = 0, wrongCount = 0;
+  selected.forEach(function(c) {
     if (c.srNextReview && c.srNextReview <= now) dueCount++;
     if (c.id in wb) wrongCount++;
   });
-  selected.sort((a, b) => {
-    // 1. 到期复习优先
-    const aDue = a.srNextReview && a.srNextReview <= now ? 1 : 0;
-    const bDue = b.srNextReview && b.srNextReview <= now ? 1 : 0;
-    if (aDue !== bDue) return bDue - aDue;
-    // 2. 错题其次
-    const aWrong = (a.id in wb) ? 1 : 0;
-    const bWrong = (b.id in wb) ? 1 : 0;
-    return bWrong - aWrong;
-  });
+  if (wrongFirst) {
+    selected.sort(function(a, b) {
+      // 1. 到期复习优先
+      var aDue = a.srNextReview && a.srNextReview <= now ? 1 : 0;
+      var bDue = b.srNextReview && b.srNextReview <= now ? 1 : 0;
+      if (aDue !== bDue) return bDue - aDue;
+      // 2. 错题其次
+      var aWrong = (a.id in wb) ? 1 : 0;
+      var bWrong = (b.id in wb) ? 1 : 0;
+      return bWrong - aWrong;
+    });
+  }
 
   const qh = new Set();
   if (hideQuestionStart) { for (const c of selected) qh.add(c.id); }
@@ -3044,13 +3204,19 @@ function startPractice() {
   $('practiceActive').style.display = 'block';
   renderPracticeCard();
 
+  // 计时器初始化
+  if (timerMode !== 'off') {
+    stopTimer();
+    startTimer();
+  }
+
   // 间隔重复提醒
-  if (dueCount > 0) {
-    setTimeout(() => {
+  if (wrongFirst && dueCount > 0) {
+    setTimeout(function() {
       showToast('📅 今日待复习 ' + dueCount + ' 题，已优先排在前面' + (wrongCount > dueCount ? '，还有 ' + (wrongCount - dueCount) + ' 道错题' : ''));
     }, 600);
-  } else if (wrongCount > 0) {
-    setTimeout(() => {
+  } else if (wrongFirst && wrongCount > 0) {
+    setTimeout(function() {
       showToast('❌ ' + wrongCount + ' 道错题已优先排在前面');
     }, 600);
   }
@@ -3078,6 +3244,7 @@ function renderPracticeCard() {
     <div class="flex justify-between items-center mb-8">
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()" style="padding:4px 8px;font-size:18px" title="返回">🏠</button>
       <span style="font-size:14px;font-weight:700;color:var(--text)">${cur} / ${total}</span>
+      <span id="timerDisplay" style="display:${timerMode === 'off' ? 'none' : ''};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
       <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleStarCurrent()">${starIcon}</button>
       <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--danger)" onclick="deleteCurrentCard()" title="删除此题">🗑️</button>
     </div>
@@ -3258,7 +3425,7 @@ function saveCurrentAnswers() {
   }
 }
 
-function nextCard() { saveCurrentAnswers(); practiceState.index++; renderPracticeCard(); }
+function nextCard() { saveCurrentAnswers(); practiceState.index++; renderPracticeCard(); if (timerMode === 'perQuestion') { stopTimer(); timerRemaining = timerSeconds; updateTimerDisplay(); startTimer(); } }
 function prevCard() { saveCurrentAnswers(); practiceState.index--; renderPracticeCard(); }
 
 function checkMyAnswers() {
@@ -3305,7 +3472,7 @@ function autoCheckIfDone() {
 function renderWrongCardInteractive(card, wrongDetail) {
   var a = card.answer ? card.answer.trim() : '';
   var blanks = card.blanks || [];
-  if (!blanks.length) return '<div style="color:var(--text-secondary)">' + a.replace(/\n/g, '<br>') + '</div>';
+  if (!blanks.length) return '<div style="color:var(--text-secondary);line-height:1.9">' + a.replace(/\n/g, '<br>') + '</div>';
   var sorted = blanks.slice().sort(function(x,y){return x.start - y.start;});
   var groups = [];
   for (var i = 0; i < sorted.length; i++) {
@@ -3320,55 +3487,26 @@ function renderWrongCardInteractive(card, wrongDetail) {
   var resolved = groups.map(function(g){return g[0];});
   var wi = wrongDetail.wrongIndices || [];
   var cid = card.id;
-  var html = '<div style="font-size:11px;color:var(--text-tertiary);margin:8px 0 4px;font-weight:600">错题回顾 (' + wi.length + ' 个答错)</div>';
-  html += '<div style="line-height:2.2" id="wrongBlanks_' + cid + '">';
+  var html = '<div style="font-size:11px;color:var(--text-tertiary);margin:8px 0 4px;font-weight:600">答错 ' + wi.length + ' 处</div>';
+  html += '<div style="line-height:2.4;word-break:break-word;overflow-wrap:break-word" id="wrongBlanks_' + cid + '">';
   var le = 0;
   for (var k = 0; k < resolved.length; k++) {
     var bk = resolved[k];
     html += (a.substring(le, bk.start)).replace(/\n/g, '<br>');
     var isWr = wi.indexOf(k) >= 0;
-    var brd = isWr ? 'var(--danger)' : 'var(--success)';
-    html += '<input type="text" class="blank-input" id="wbi_' + cid + '_' + k + '" data-ans="' + bk.text.replace(/"/g,'&quot;') + '" style="border-color:' + brd + ';width:80px" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">';
+    var style = isWr
+      ? 'color:var(--danger);font-weight:600;text-decoration:underline;text-decoration-color:var(--danger);text-underline-offset:3px;background:var(--danger-light);padding:1px 4px;border-radius:3px'
+      : 'color:var(--success);font-weight:600;background:var(--success-light);padding:1px 4px;border-radius:3px';
+    html += '<span style="' + style + '">' + escapeHtml(bk.text) + '</span>';
     le = bk.end;
   }
   html += (a.substring(le)).replace(/\n/g, '<br>');
-  html += '</div>';
-  html += '<div style="margin-top:8px;text-align:center">';
-  html += '<button class="btn btn-sm btn-outline" onclick="toggleWrongAnswers(\'' + cid + '\',' + resolved.length + ')" id="wrongBtn_' + cid + '">显示答案</button>';
   html += '</div>';
   return html;
 }
 
 function toggleWrongAnswers(cardId, count) {
-  var btn = document.getElementById("wrongBtn_" + cardId);
-  if (!btn) return;
-  var revealing = btn.textContent.indexOf("显示") >= 0;
-  for (var i = 0; i < count; i++) {
-    var inp = document.getElementById("wbi_" + cardId + "_" + i);
-    if (inp) {
-      if (revealing) {
-        var ans = inp.dataset.ans || "";
-        inp.value = ans;
-        inp.style.borderColor = "transparent";
-        inp.style.color = "var(--success)";
-        inp.style.fontWeight = "600";
-        inp.readOnly = true;
-        inp.style.width = "auto";
-        inp.style.minWidth = "80px";
-        inp.size = Math.max(ans.length, 4);
-      } else {
-        inp.value = "";
-        inp.style.borderColor = "";
-        inp.style.color = "";
-        inp.style.fontWeight = "";
-        inp.readOnly = false;
-        inp.style.width = "80px";
-        inp.style.minWidth = "";
-        inp.removeAttribute("size");
-      }
-    }
-  }
-  btn.textContent = revealing ? "隐藏答案" : "显示答案";
+  // 保留兼容性，但不再使用输入框
 }
 
 function applyCheckToInputs(card) {
@@ -3663,6 +3801,7 @@ function doSpeakCard() {
 
 // ==================== 做题结果 ====================
 function showPracticeResult() {
+  stopTimer();
   const st = practiceState;
   const total = st.total;
   const bank = appData.banks[st.bankId];
@@ -3851,6 +3990,7 @@ function retrySameSettings() {
 
 function backToPracticeSetup() {
   if (window.speechSynthesis) window.speechSynthesis.cancel();
+  stopTimer();
   practiceState = null;
   $('practiceResult').style.display = 'none';
   $('practiceActive').style.display = 'none';
@@ -3942,25 +4082,16 @@ function doBrowseSearch() {
 }
 
 function changeBrowseBank() {
-  const bankId = document.getElementById('browseBankSelect').value;
-  const bank = appData.banks[bankId];
+  var bankId = document.getElementById('browseBankSelect').value;
+  var bank = appData.banks[bankId];
   if (!bank) return;
-  // 清空搜索
-  const searchInput = document.getElementById('browseSearchInput');
-  if (searchInput) searchInput.value = '';
-  const wrongCount = Object.keys(getWrongBook(bankId)).length;
-  const favCount = bank.cards.filter(c => c.starred).length;
-	  const kjCount = bank.cards.filter(c => c.koujue).length;
-  browseState = { bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards, answersHidden: false };
-  // 更新 chip 数量
-  const chips = document.querySelectorAll('#browseFilterChips .chip');
-  if (chips[1]) chips[1].textContent = '⭐ 收藏' + (favCount ? ' · ' + favCount : '');
-  if (chips[2]) chips[2].textContent = '💡 口诀' + (kjCount ? ' · ' + kjCount : '');
-  // 重置所有 chip 的 active 类到"全部"
-  chips.forEach(function(c) { c.classList.remove('active'); });
-  if (chips[0]) chips[0].classList.add('active');
-  var subChips = document.getElementById('browseStarSubChips');
-  if (subChips) subChips.style.display = 'none';
+  sessionStorage.setItem('lastPracticeBank', bankId);
+  // 完全重建浏览页，确保标题也更新
+  var favCount = bank.cards.filter(function(c) { return c.starred; }).length;
+  var kjCount = bank.cards.filter(function(c) { return c.koujue; }).length;
+  browseState = { bankId: bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards, answersHidden: false };
+  var c = $('browseContainer');
+  c.innerHTML = '<div class="flex justify-between items-center mb-10"><h1 style="font-size:20px;font-weight:800">📖 目录</h1><input type="hidden" id="browseBankSelect" value="' + bankId + '"><button class="btn btn-ghost btn-sm" onclick="showBankPicker(document.getElementById(\'browseBankSelect\').value, function(bid){document.getElementById(\'browseBankSelect\').value=bid;changeBrowseBank()})" style="font-size:13px">' + escapeHtml(bank.name) + ' ▾</button></div><div style="margin-bottom:10px"><input type="search" id="browseSearchInput" placeholder="🔍 搜索题目..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doBrowseSearch()"></div><div class="chip-group mb-12" id="browseFilterChips"><span class="chip active" data-filter="all" onclick="setBrowseFilter(\'all\', this)">全部</span><span class="chip" data-filter="star" onclick="setBrowseFilter(\'star\', this)">⭐ 收藏' + (favCount ? ' · ' + favCount : '') + '</span><span class="chip" data-filter="koujue" onclick="setBrowseFilter(\'koujue\', this)">💡 口诀' + (kjCount ? ' · ' + kjCount : '') + '</span></div><div class="chip-group mb-12" id="browseStarSubChips" style="display:none;flex-wrap:nowrap;overflow-x:auto"><span class="chip active" data-sub="all" onclick="setStarSubFilter(\'all\', this)">全部</span><span class="chip" data-sub="question" onclick="setStarSubFilter(\'question\', this)">📝 题目</span><span class="chip" data-sub="koujue" onclick="setStarSubFilter(\'koujue\', this)">💡 口诀</span><span class="chip" data-sub="wrong" onclick="setStarSubFilter(\'wrong\', this)">❌ 错题</span></div><div id="browseActive"></div>';
   renderBrowseList();
 }
 
@@ -4450,7 +4581,7 @@ function renderWrongBookStart() {
   html += '<h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em">错题本</h1>';
   html += '<input type="hidden" id="wrongbookBankSelect" value="' + currentBankId + '">';
   var curBankName = currentData ? currentData.bank.name : '选择题库';
-  html += '<button class="btn btn-ghost btn-sm" onclick="showBankPicker(document.getElementById(\'wrongbookBankSelect\').value, function(bid){document.getElementById(\'wrongbookBankSelect\').value=bid;sessionStorage.setItem(\'wrongbookBank\',bid);changeWrongBookBank()})" style="font-size:13px">' + escapeHtml(curBankName) + ' (' + currentData.wrongIds.length + '题) ▾</button></div>';
+  html += '<button class="btn btn-ghost btn-sm" id="wrongbookBankBtn" onclick="pickWrongBookBank()" style="font-size:13px">' + escapeHtml(curBankName) + ' (' + currentData.wrongIds.length + '题) ▾</button></div>';
 
   for (const chapter in groups) {
     html += '<div class="section-title">' + escapeHtml(chapter) + ' · ' + groups[chapter].length + ' 题</div>';
@@ -4473,10 +4604,16 @@ function renderWrongBookStart() {
   c.innerHTML = html;
 }
 
+function pickWrongBookBank() {
+  var sel = document.getElementById('wrongbookBankSelect');
+  var currentId = sel ? sel.value : '';
+  showBankPicker(currentId, function(bid) {
+    sessionStorage.setItem('wrongbookBank', bid);
+    renderWrongBookStart();
+  });
+}
 function changeWrongBookBank() {
-  const sel = document.getElementById('wrongbookBankSelect');
-  if (!sel) return;
-  sessionStorage.setItem('wrongbookBank', sel.value);
+  // 保留兼容性
   renderWrongBookStart();
 }
 
@@ -4707,7 +4844,7 @@ function renderSettings() {
 
     '<div class="section"><div class="section-title">关于</div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v2.5</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div>';
