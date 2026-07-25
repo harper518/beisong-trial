@@ -2142,16 +2142,23 @@ function doImport() {
 
   if (!cards.length) { showToast('未能解析题目，请检查格式'); return; }
 
-  // 诊断：显示解析结果统计
-  var firstCard = cards[0];
-  var firstAnswerLines = (firstCard.answer || '').split('\n').filter(function(l) { return l.trim(); }).length;
-  var fmtLabel = format === 'auto' ? '🤖自动' : (format === 'jianda' ? '📝简答' : (format === 'sep' ? '📋分隔' : format));
-  console.log('[导入诊断] 格式:' + fmtLabel + ' 题目数:' + cards.length + ' 第1题答案行数:' + firstAnswerLines + ' 答案长度:' + (firstCard.answer || '').length + ' 原文长度:' + raw.length);
-  console.log('[导入诊断] 第1题答案前200字:', (firstCard.answer || '').substring(0, 200));
-  showToast('解析：' + cards.length + '题 · 第1题' + firstAnswerLines + '个要点 · 格式：' + fmtLabel);
-  if (cards.length <= 2 && raw.length > 500) {
-    alert('⚠️ 诊断：原文' + raw.length + '字却只解析出' + cards.length + '题，可能格式识别有误。\\n\\n原文前300字：\\n' + raw.substring(0, 300));
-  }
+  // 诊断统计（持久显示在预览中）
+  var answerLineCounts = cards.map(function(c) { return (c.answer || '').split('\n').filter(function(l) { return l.trim(); }).length; });
+  var totalAnswerLines = answerLineCounts.reduce(function(a, b) { return a + b; }, 0);
+  var avgAnswerLines = (totalAnswerLines / cards.length).toFixed(1);
+  var cardsWithEmptyAnswer = cards.filter(function(c) { return !(c.answer || '').trim(); }).length;
+  var fmtLabel = format === 'auto' ? '🤖 自动检测' : (format === 'jianda' ? '📝 简答题' : (format === 'sep' ? '📋 分隔符' : (format === 'qa' ? '❓ Q&A' : format)));
+  var importStats = {
+    format: fmtLabel,
+    totalCards: cards.length,
+    avgAnswerLines: avgAnswerLines,
+    totalAnswerLines: totalAnswerLines,
+    cardsWithEmptyAnswer: cardsWithEmptyAnswer,
+    rawLength: raw.length,
+    firstAnswerLines: answerLineCounts[0] || 0,
+    firstAnswerLength: (cards[0].answer || '').length
+  };
+  console.log('[导入诊断]', JSON.stringify(importStats));
 
   cards = cards.map(c => {
     c.question = (c.question || '').trim();
@@ -2165,24 +2172,45 @@ function doImport() {
   });
 
   closeImportModal();
-  showImportPreview(name, cards);
+  showImportPreview(name, cards, importStats);
 }
 
 // ==================== 导入预览（点击选字挖空） ====================
 let previewData = null;
 
-function showImportPreview(name, cards) {
+function showImportPreview(name, cards, stats) {
   const ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'previewModal';
   // 保留编辑模式信息
   const editId = previewData ? previewData.editBankId : undefined;
   const wasSingle = previewData ? previewData._singleCardEdit : undefined;
   const cardIdx = previewData ? previewData._cardIdx : undefined;
-  previewData = { name, cards, mode: 'manual', editBankId: editId };
+  previewData = { name, cards, mode: 'manual', editBankId: editId, stats: stats || null };
   if (wasSingle) { previewData._singleCardEdit = true; previewData._cardIdx = cardIdx; }
+
+  var statsHtml = '';
+  if (stats) {
+    var warningHtml = '';
+    if (stats.totalCards <= 2 && stats.rawLength > 500) {
+      warningHtml = '<div style="background:var(--danger-light);color:var(--danger);padding:8px 12px;border-radius:8px;margin-top:6px;font-size:13px;font-weight:600">⚠️ 原文' + stats.rawLength + '字仅解析出' + stats.totalCards + '题，格式可能有误</div>';
+    }
+    if (stats.cardsWithEmptyAnswer > stats.totalCards * 0.5) {
+      warningHtml += '<div style="background:var(--warning-light);color:var(--warning);padding:8px 12px;border-radius:8px;margin-top:6px;font-size:13px;font-weight:600">⚠️ ' + stats.cardsWithEmptyAnswer + '/' + stats.totalCards + ' 题答案为空，检查格式</div>';
+    }
+    statsHtml = '<div style="background:var(--bg-input);border-radius:10px;padding:10px 14px;margin-bottom:10px">' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--text-secondary)">' +
+        '<span>📊 格式：<b style="color:var(--text)">' + escapeHtml(stats.format) + '</b></span>' +
+        '<span>📦 题目：<b style="color:var(--text)">' + stats.totalCards + ' 题</b></span>' +
+        '<span>📝 总要点：<b style="color:var(--text)">' + stats.totalAnswerLines + ' 行</b></span>' +
+        '<span>📐 均要点：<b style="color:var(--text)">' + stats.avgAnswerLines + ' 行/题</b></span>' +
+        '<span>📄 原文：<b style="color:var(--text)">' + stats.rawLength + ' 字</b></span>' +
+        '<span>🔤 第1题答案：<b style="color:var(--text)">' + stats.firstAnswerLength + ' 字</b></span>' +
+      '</div>' + warningHtml + '</div>';
+  }
 
   let html = `<div class="modal" style="display:flex;flex-direction:column;max-height:88dvh">
     <div class="modal-header"><h2 class="modal-title" onclick="editPreviewTitle(this)" title="点击修改标题" style="cursor:pointer">预览：${escapeHtml(name)}</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closePreviewModal()">✕</button></div>
     <div style="overflow-y:auto;flex:1;min-height:0;padding:0 2px">
+    ${statsHtml}
     <div class="chip-group mb-12" id="previewModeChips">
       <span class="chip active" data-mode="manual" onclick="switchPreviewMode('manual', this)">✋ 手动挖空</span>
       <span class="chip" data-mode="auto" onclick="switchPreviewMode('auto', this)">🤖 系统自动</span>
