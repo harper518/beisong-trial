@@ -1692,65 +1692,51 @@ function showImportModal() {
     '<button class="btn btn-sm" style="background:var(--border);border:none;min-width:40px;padding:8px;border-radius:8px;cursor:pointer;font-size:16px" onclick="closeImportModal()">✕</button>' +
     '</div>' +
     '<div class="card">' +
-    // 题库名称
     '<div class="form-group mb-10"><label class="form-label">题库名称</label>' +
     '<input type="text" id="bankNameInput" placeholder="例如：生物第三章" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size)"></div>' +
-    // 内容格式
     '<div class="form-group mb-10"><label class="form-label">内容格式</label>' +
     '<div class="chip-group mb-8" id="importFormatGroup">' +
       '<span class="chip active" data-fmt="auto" onclick="selectImportFormat(\'auto\', this)">🤖 自动检测</span>' +
       '<span class="chip" data-fmt="sep" onclick="selectImportFormat(\'sep\', this)">📋 分隔符</span>' +
       '<span class="chip" data-fmt="jianda" onclick="selectImportFormat(\'jianda\', this)">📝 简答题</span>' +
-      '<span class="chip" data-fmt="qa" onclick="selectImportFormat(\'qa\', this)">💬 Q&A</span>' +
-      '<span class="chip" data-fmt="hashpct" onclick="selectImportFormat(\'hashpct\', this)">🏷️ #%格式</span>' +
     '</div>' +
     '<p class="form-hint" id="importFormatHint">自动识别粘贴内容的格式，推荐使用</p></div>' +
-    // 题目内容
     '<div class="form-group mb-10"><label class="form-label">题目内容</label>' +
-    '<p class="form-hint mb-8" id="importFormatExample"><code>题目|答案</code> 或 <code>题目：答案</code>，一行一题</p>' +
-    '<textarea id="importTextarea" placeholder="每行一题，用 | 分隔题目和答案\n\n示例：\n光合作用的场所是|叶绿体\n植物细胞的基本结构包括|细胞壁、细胞膜、细胞质、细胞核" style="width:100%;min-height:180px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
-    // 按钮行：粘贴/上传/复制/清空
+    '<p class="form-hint mb-8" id="importFormatExample"><code>题目|答案</code> 或 <code>题目|答案|口诀</code>，一行一题；挖空用<b>【】</b>标记，如 <code>光合作用场所是【叶绿体】</code></p>' +
+    '<textarea id="importTextarea" placeholder="每行一题，用 | 分隔\n\n示例：\n光合作用场所是|【叶绿体】|光→叶\n植物细胞结构包括|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同" style="width:100%;min-height:180px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
     '<div class="flex gap-8 mt-6">' +
       '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importTextarea\')">📋 粘贴</button>' +
-      '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'csvFileInput\').click()">📂 上传</button>' +
-      '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="copyFromTextarea(\'importTextarea\')">📝 复制</button>' +
+      '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'csvFileInput\').click()">📂 上传文件</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importTextarea\')">🗑 清空</button>' +
     '</div>' +
-    // 格式话术 + 清洗工具行
-    '<div class="mt-6">' +
-      '<button class="btn btn-sm" style="background:var(--primary-light);border:none;font-size:11px;width:100%;color:var(--primary);font-weight:600" onclick="copyFormatPrompt()">📋 复制格式话术（给AI用）</button>' +
-    '</div>' +
-    '<div class="flex gap-6 mt-6 mb-6">' +
-      '<button class="btn btn-sm btn-ghost" style="font-size:11px;flex:1" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
-      '<button class="btn btn-sm btn-ghost" style="font-size:11px;flex:1" onclick="cleanEmptyLines()">🧹 去空行</button>' +
-      '<button class="btn btn-sm btn-ghost" style="font-size:11px;flex:1" onclick="cleanHtmlTags()">🏷️ 去HTML</button>' +
+    '<div class="flex gap-6 mt-6" style="align-items:center">' +
+      '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
+      '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanEmptyLines()">🧹 去空行</button>' +
+      '<span style="flex:1"></span>' +
+      '<a style="font-size:11px;color:var(--text-tertiary);cursor:pointer;white-space:nowrap;text-decoration:none" onclick="copyFormatPrompt()">🤖 AI格式话术</a>' +
     '</div></div>' +
-    // 分开导入（可折叠）
     '<div style="border-top:2px dashed var(--border);padding-top:14px;margin-top:8px;margin-bottom:12px">' +
       '<button class="btn btn-ghost btn-block" onclick="toggleSplitImport()" style="justify-content:space-between;font-size:14px;width:100%;display:flex;align-items:center;padding:8px 12px;border:none;background:transparent;color:var(--text);cursor:pointer">' +
         '<span>📂 题目和答案分开粘贴</span><span id="splitImportArrow" style="font-size:18px;transition:transform .2s">▸</span>' +
       '</button>' +
       '<div id="splitImportSection" style="display:none;margin-top:12px">' +
         '<div class="form-group mb-10"><label class="form-label">📝 题目（一行一题）</label>' +
-          '<textarea id="importQuestions" placeholder="在此粘贴所有题目...\n\n1. 光合作用的场所是\n2. 植物细胞的基本结构包括" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
+          '<textarea id="importQuestions" placeholder="1. 光合作用的场所是\n2. 植物细胞的基本结构包括" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
           '<div class="flex gap-8 mt-6 mb-6">' +
             '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importQuestions\')">📋 粘贴</button>' +
-            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="copyFromTextarea(\'importQuestions\')">📝 复制</button>' +
-            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importQuestions\')">🗑 清空</button>' +
             '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'fileQuestionsInput\').click()">📂 上传</button>' +
+            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importQuestions\')">🗑 清空</button>' +
           '</div></div>' +
         '<div class="form-group mb-8"><label class="form-label">✅ 答案（一行一答案）</label>' +
-          '<textarea id="importAnswers" placeholder="在此粘贴所有答案...\n\n叶绿体\n细胞壁、细胞膜、细胞质、细胞核" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
+          '<textarea id="importAnswers" placeholder="叶绿体\n细胞壁、细胞膜、细胞质、细胞核" style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
           '<div class="flex gap-8 mt-6">' +
             '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="pasteFromTextarea(\'importAnswers\')">📋 粘贴</button>' +
-            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="copyFromTextarea(\'importAnswers\')">📝 复制</button>' +
-            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importAnswers\')">🗑 清空</button>' +
             '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1" onclick="document.getElementById(\'fileAnswersInput\').click()">📂 上传</button>' +
+            '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importAnswers\')">🗑 清空</button>' +
           '</div></div>' +
         '<p style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px">两边的第1行配对为第1题，第2行配对为第2题，以此类推。</p>' +
       '</div>' +
     '</div>' +
-    // 导入按钮
     '<button class="btn btn-primary btn-block mt-8" onclick="doImport()">📥 预览 →</button>' +
     '</div>'
   document.body.appendChild(ov);
@@ -1767,17 +1753,13 @@ function selectImportFormat(fmt, el) {
   var example = document.getElementById('importFormatExample');
   var hints = {
     'auto': '自动识别粘贴内容的格式，推荐使用',
-    'sep': '用分隔符连接题目和答案，如 | ： → = ——',
-    'jianda': '简答题格式：编号 + 题目 + 口诀（可选），答案中有【】挖空标记',
-    'qa': 'Q&A格式：以"问"/"答"或"Q"/"A"标记题目和答案',
-    'hashpct': '#%格式：#后跟题目，%后跟答案，一行一题'
+    'sep': '用分隔符（| ：→ = ——）连接题目和答案',
+    'jianda': '简答题格式：编号开头为题目，后续行为答案，支持【】挖空和口诀'
   };
   var examples = {
-    'auto': '<code>题目|答案</code> 或 <code>题目：答案</code>，一行一题',
-    'sep': '示例：<code>光合作用场所是|叶绿体</code><br>支持的分隔符：<b>|</b> <b>：</b> <b>:</b> <b>→</b> <b>=</b> <b>——</b> <b>-</b> <b>~</b> <b>Tab</b>',
-    'jianda': '示例：<code>1.简述教育的文化功能。（一级）|（1）教育【传递和保存】文化...|口诀：全（全民化）民（民主化）</code>',
-    'qa': '示例：<code>问：光合作用的场所是？\\n答：叶绿体</code> 或 <code>Q: 植物细胞结构？\\nA: 细胞壁、细胞膜...</code>',
-    'hashpct': '示例：<code>#光合作用的场所是\\n%叶绿体</code>'
+    'auto': '<code>题目|答案</code> 或 <code>题目|答案|口诀</code>，一行一题；挖空用<b>【】</b>标记',
+    'sep': '示例：<code>光合作用场所是|叶绿体</code><br>支持的分隔符：<b>|</b> <b>：</b> <b>:</b> <b>→</b> <b>=</b> <b>——</b>',
+    'jianda': '示例：<code>1.简述教党62号文（三级）<br>1.坚持【育人导向】，突出【价值引领】<br>口诀：育人规律，问题协同</code>'
   };
   if (hint) hint.textContent = hints[fmt] || hints['auto'];
   if (example) example.innerHTML = examples[fmt] || examples['auto'];
@@ -1926,7 +1908,7 @@ async function handlePdfImport(el) {
 		}
 
 function copyFormatPrompt() {
-  var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案\n3. 如果答案中需要挖空，用 @关键词@ 标记要挖掉的位置\n4. 如果有多行答案，在答案中用换行分隔\n5. 如有口诀，加在答案后面：题目|答案|口诀\n6. 也可用 # 标记题目、% 标记答案（多行答案每行一个%）\n\n【输出示例】\n光合作用的场所是哪里|叶绿体|光（光合）叶（叶绿体）\n植物细胞的结构包括什么|细胞壁\n细胞膜\n细胞质\n细胞核\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空';
+  var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案 或 题目|答案|口诀\n3. 如果答案中需要挖空，用【关键词】标记要挖掉的位置\n4. 每一道题的所有内容必须在同一行，不能换行\n5. 如有口诀，加在答案后面：题目|答案|口诀\n\n【输出示例】\n光合作用的场所是哪里|【叶绿体】|光→叶\n植物细胞的结构包括什么|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空\n- 所有挖空标记用【】，不要用@';
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(prompt).then(function() { showToast('📋 格式话术已复制，可粘贴到豆包/AI使用'); });
   } else {
