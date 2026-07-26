@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="记忆填空"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" id="themeColorMeta" content="#f0fdfa"/>
-<title>挖空背诵工具 v10 · 小阮出品</title>
+<title>挖空背诵工具 v11 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -389,6 +389,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   <div id="banksContainer"></div>
   <input type="file" id="csvFileInput" class="file-input" accept=".csv,.txt,.md" onchange="handleFileImport(this)">
   <input type="file" id="wordFileInput" class="file-input" accept=".docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword" onchange="handleWordImport(this)">
+  <input type="file" id="pdfFileInput" class="file-input" accept=".pdf,application/pdf" onchange="handlePdfImport(this)">
   <input type="file" id="fileQuestionsInput" class="file-input" accept=".csv,.txt,.md" onchange="handleSplitFileImportQ(this)">
   <input type="file" id="fileAnswersInput" class="file-input" accept=".csv,.txt,.md" onchange="handleSplitFileImportA(this)">
 </div>
@@ -1793,6 +1794,7 @@ function showImportModal() {
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanEmptyLines()">🧹 去空行</button>' +
       '<button class="btn btn-sm desktop-only" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="pasteRichText()">📋 富文本</button>' +
       '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="document.getElementById(\'wordFileInput\').click()">📄 Word</button>' +
+	      '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="document.getElementById(\'pdfFileInput\').click()">📄 PDF</button>' +
       '<span style="flex:1"></span>' +
       '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="precheckImport()">🔍 预检</button>' +
     '</div>' +
@@ -1985,6 +1987,85 @@ async function handleWordImport(el) {
   el.value = '';
 }
 
+async function handlePdfImport(el) {
+  var file = el.files[0]; if (!file) return;
+  showToast('⏳ PDF 解析中，大文件可能需要十几秒...');
+  try {
+    // 动态加载 PDF.js
+    if (!window.pdfjsLib) {
+      await new Promise(function(resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+        s.onload = function() {
+          // 设置 worker
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+          resolve();
+        };
+        s.onerror = function() { reject(new Error('PDF.js CDN 加载失败')); };
+        document.head.appendChild(s);
+      });
+    }
+    var buf = await file.arrayBuffer();
+    var pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+    var fullText = '';
+    for (var i = 1; i <= pdf.numPages; i++) {
+      var page = await pdf.getPage(i);
+      var content = await page.getTextContent();
+      var pageText = content.items.map(function(item) { return item.str; }).join('');
+      // 用空格连接被拆开的字符（PDF.js 对中文可能逐字拆分）
+      fullText += pageText + '\n';
+    }
+    if (!fullText.trim()) { showToast('PDF 文件为空或无法提取文字（可能是扫描件/图片型PDF）'); el.value = ''; return; }
+    // 文本清洗：合并断行、去页眉页脚类短行、去多余空行
+    fullText = cleanPdfText(fullText);
+    $('importTextarea').value = fullText;
+    if (!$('bankNameInput').value) $('bankNameInput').value = file.name.replace(/\.pdf$/i, '');
+    var lineCount = fullText.split('\n').filter(function(l) { return l.trim(); }).length;
+    showToast('PDF 已解析：' + lineCount + ' 行，请检查后导入。⚠️ 扫描件/图片型PDF无法提取文字');
+    setTimeout(function() { precheckImport(); }, 200);
+  } catch(err) {
+    showToast('PDF 解析失败：' + err.message);
+  }
+  el.value = '';
+}
+
+// PDF 文本清洗：合并断行、去短行（可能的页眉页脚）、去多余空行
+function cleanPdfText(text) {
+  // 去除多余空行
+  text = text.replace(/\n{4,}/g, '\n\n');
+  // PDF 提取常见问题：中文句末换行但没有标点，合并
+  // 行末不是标点/符号结尾 → 和下一行合并（PDF断行）
+  var lines = text.split('\n');
+  var merged = [];
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) { merged.push(''); continue; }
+    // 如果上一行不是以标点结尾，且当前行看起来像是被截断的续行，合并到上一行
+    if (merged.length > 0 && merged[merged.length - 1] !== '') {
+      var prev = merged[merged.length - 1];
+      var prevEnd = prev.charAt(prev.length - 1);
+      var isPrevEnd = /[。！？；：）」》\.\!\?\;\:\"\'\)\]》（）“”‘’、，—]/.test(prevEnd);
+      if (!isPrevEnd) {
+        merged[merged.length - 1] = prev + line;
+        continue;
+      }
+    }
+    merged.push(line);
+  }
+  text = merged.join('\n');
+  // 去掉有规律的短行（可能的页眉页脚、页码），保留空行占位
+  lines = text.split('\n');
+  lines = lines.filter(function(l) {
+    var t = l.trim();
+    if (!t) return true; // 保留空行
+    if (t.length === 1 && !/[^\x00-\xff]/.test(t)) return false; // 单英文字母（页眉残留）
+    return true;
+  });
+  text = lines.join('\n');
+  // 去首尾空行
+  text = text.replace(/^\n+/, '').replace(/\n+$/, '');
+  return text;
+}
 	// ==================== 格式清洗 ====================
 		function cleanEmptyLines() {
   var targets = [$("importTextarea"), $("importQuestions"), $("importAnswers")];
@@ -5638,7 +5719,7 @@ function renderSettings() {
 
     '<div class="section"><div class="section-title">关于</div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div><span style="font-size:13px;color:var(--text-secondary);font-weight:600">v10</span></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div><span style="font-size:13px;color:var(--text-secondary);font-weight:600">v11</span></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div>';
