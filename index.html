@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v35 · 小阮出品</title>
+<title>挖空背诵工具 v36 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -299,6 +299,13 @@
   --text:#2a1e2a; --text-secondary:#6b5e6b;
   --primary:#d4952a; --primary-hover:#b87a1a; --primary-light:#f9f6fc; --primary-soft:#fef3e0;
   --border:#e0d8e8;
+}
+/* 藏橙 */
+[data-color="navy-orange"] {
+  --bg:#f2f4f8; --bg-card:#fff; --bg-input:#f2f4f8;
+  --text:#1a2838; --text-secondary:#5a6878;
+  --primary:#e08050; --primary-hover:#c87040; --primary-light:#f2f4f8; --primary-soft:#fef0e8;
+  --border:#d0d8e4;
 }
 
 [data-theme="dark"] {
@@ -1080,7 +1087,7 @@ var themeBgColors = {
   ocean:'#f0f4f8', coral:'#fef5f2', peach:'#fef8f5', lavender:'#f8f6fb', mist:'#f5f8fa',
   snow:'#fafafa', amber:'#fffbf5', sakura:'#fef8fa', sky:'#f5fafd', oat:'#fdfaf6',
   sage2:'#f4f6f4', dusk:'#f6f4f8', wisteria:'#f6f4fa', indigo:'#f2f4fd', mustard:'#fefaf2',
-  turquoise:'#f2faf8', seapine:'#f2f6f4', mint:'#f4faf6', butter:'#fefcf6', periwinkle:'#f6f8fc', iris:'#f4f4fa', mauve:'#faf4f6', 'sakura-sky':'#fef9fb', 'purple-green':'#f8f6fc', 'purple-gold':'#f9f6fc'
+  turquoise:'#f2faf8', seapine:'#f2f6f4', mint:'#f4faf6', butter:'#fefcf6', periwinkle:'#f6f8fc', iris:'#f4f4fa', mauve:'#faf4f6', 'sakura-sky':'#fef9fb', 'purple-green':'#f8f6fc', 'purple-gold':'#f9f6fc', 'navy-orange':'#f2f4f8'
 };
 function updateThemeColorMeta(color) {
   var meta = document.getElementById('themeColorMeta');
@@ -7022,9 +7029,9 @@ function renderSettings() {
   const s = appData.settings;
   const density = s.density || 'low';
 
-  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', coral: '珊瑚橘', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝', snow: '素白', amber: '琥珀金', sakura: '樱粉', sky: '天蓝', oat: '燕麦', sage2: '灰绿', dusk: '暮紫', wisteria: '紫藤', indigo: '靛青', mustard: '芥黄', turquoise: '松石', seapine: '海松', mint: '薄荷', butter: '奶杏', periwinkle: '藤风', iris: '鸢尾', mauve: '暖紫', 'sakura-sky': '樱天', 'purple-green': '紫青', 'purple-gold': '紫金' };
-  var colors = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral', 'peach', 'lavender', 'mist', 'snow', 'amber', 'sakura', 'sky', 'oat', 'sage2', 'dusk', 'wisteria', 'indigo', 'mustard', 'turquoise', 'seapine', 'mint', 'butter', 'periwinkle', 'iris', 'mauve', 'sakura-sky', 'purple-green', 'purple-gold'];
-  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', dusk: '#6b5b7a', wisteria: '#7b6ba8', indigo: '#3f51b5', mustard: '#d4a030', turquoise: '#2eb8a0', seapine: '#3c6e71', mint: '#98d4b8', butter: '#f0dcb0', periwinkle: '#acb8d8', iris: '#656db2', mauve: '#b6668f', 'sakura-sky': '#6db8d8', 'purple-green': '#34b85a', 'purple-gold': '#d4952a' };
+  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', coral: '珊瑚橘', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝', snow: '素白', amber: '琥珀金', sakura: '樱粉', sky: '天蓝', oat: '燕麦', sage2: '灰绿', dusk: '暮紫', wisteria: '紫藤', indigo: '靛青', mustard: '芥黄', turquoise: '松石', seapine: '海松', mint: '薄荷', butter: '奶杏', periwinkle: '藤风', iris: '鸢尾', mauve: '暖紫', 'sakura-sky': '樱天', 'purple-green': '紫青', 'purple-gold': '紫金', 'navy-orange': '藏橙' };
+  var colors = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral', 'peach', 'lavender', 'mist', 'snow', 'amber', 'sakura', 'sky', 'oat', 'sage2', 'dusk', 'wisteria', 'indigo', 'mustard', 'turquoise', 'seapine', 'mint', 'butter', 'periwinkle', 'iris', 'mauve', 'sakura-sky', 'purple-green', 'purple-gold', 'navy-orange'];
+  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', dusk: '#6b5b7a', wisteria: '#7b6ba8', indigo: '#3f51b5', mustard: '#d4a030', turquoise: '#2eb8a0', seapine: '#3c6e71', mint: '#98d4b8', butter: '#f0dcb0', periwinkle: '#acb8d8', iris: '#656db2', mauve: '#b6668f', 'sakura-sky': '#6db8d8', 'purple-green': '#34b85a', 'purple-gold': '#d4952a', 'navy-orange': '#e08050' };
 
   c.innerHTML =
     // 设置页顶部 header（开关打开时显示头像）
@@ -7372,7 +7379,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v35</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v36</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
