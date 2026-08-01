@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v22 · 小阮出品</title>
+<title>挖空背诵工具 v24 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -240,7 +240,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .practice-card{background:var(--bg-card);border-radius:var(--radius);padding:14px 14px;box-shadow:var(--shadow-md);border:1px solid var(--border);min-height:100px;margin-bottom:10px;position:relative}
 .practice-card .card-text{font-size:var(--font-size-lg);line-height:2.0;word-break:break-word;overflow-wrap:break-word;overflow-x:hidden}
 .practice-card .blank-input{
-  display:inline-block;min-width:36px;max-width:120px;
+  display:inline-block;min-width:28px;max-width:80px;
   padding:2px 4px;border:none;border-bottom:2px dashed var(--blank-border);
   background:var(--blank-bg);border-radius:4px 4px 0 0;
   font-size:var(--font-size-lg);font-weight:500;line-height:1.5;
@@ -579,9 +579,9 @@ body.focus-mode #page-practice { padding:12px; max-width:100%; }
 body.focus-mode .page.active { padding-top:env(safe-area-inset-top,12px); }
 body.focus-mode #practiceActive .btn-ghost,
 body.focus-mode #practiceActive .btn-icon { display:none !important; }
-body.focus-mode #practiceActive .flex.justify-between { opacity:.3; transition:opacity .3s; }
-body.focus-mode #practiceActive .flex.justify-between:active,
-body.focus-mode #practiceActive .flex.justify-between:focus-within { opacity:1; }
+body.focus-mode #practiceActive .flex.justify-between { display:none !important; }
+#focusExitBtn { display:none; position:fixed; top:12px; left:12px; z-index:100; width:44px; height:44px; border-radius:50%; background:rgba(0,0,0,.25); color:#fff; border:none; font-size:20px; cursor:pointer; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+body.focus-mode #focusExitBtn { display:flex; }
 body.focus-mode #cardText { font-size:calc(var(--font-size) + 2px); line-height:2; }
 body.focus-mode #cardText .blank-input { font-size:calc(var(--font-size) + 2px); padding:10px 6px; }
 </style>
@@ -632,6 +632,7 @@ body.focus-mode #cardText .blank-input { font-size:calc(var(--font-size) + 2px);
 
 <!-- ====== 做题页面 ====== -->
 <div class="page" id="page-practice">
+  <button id="focusExitBtn" onclick="backToPracticeSetup()" title="退出专注模式">✕</button>
   <div id="practiceSetup"></div>
   <div id="practiceActive" style="display:none"></div>
   <div id="practiceResult" style="display:none"></div>
@@ -961,18 +962,7 @@ function countTotalQuestions() {
 }
 
 function getExamDaysLeft() {
-function updateExamCountdownBadge() {
-  var badge = document.getElementById("examCountdownBadge");
-  if (!badge) return;
-  var days = getExamDaysLeft();
-  if (days === null) { badge.style.display = "none"; return; }
-  badge.style.display = "inline-block";
-  var color = days > 30 ? "#4caf50" : days > 7 ? "#ff9800" : days > 0 ? "#f44336" : "#999";
-  var text = days > 0 ? "距考试 " + days + " 天" : "考试已过";
-  badge.style.borderColor = color;
-  badge.style.color = color;
-  badge.textContent = text;
-}
+
 
   var examDate = (appData.settings || {}).examDate;
   if (!examDate) return null;
@@ -1195,43 +1185,7 @@ function showFocusTransition(callback) {
   }, 1800);
 }
 
-// 微习惯快速启动：随机抽N题开始练习
-function quickStartN(n) {
-  var allCards = [];
-  var banks = Object.values(appData.banks || {});
-  for (var i = 0; i < banks.length; i++) {
-    var cards = banks[i].cards || [];
-    for (var j = 0; j < cards.length; j++) {
-      allCards.push({ card: cards[j], bankId: banks[i].id, bankName: banks[i].name });
-    }
-  }
-  if (!allCards.length) { showToast('没有可用题目'); return; }
-  // 打乱
-  for (var k = allCards.length - 1; k > 0; k--) {
-    var r = Math.floor(Math.random() * (k + 1));
-    var tmp = allCards[k]; allCards[k] = allCards[r]; allCards[r] = tmp;
-  }
-  var picked = allCards.slice(0, Math.min(n, allCards.length));
-  var first = picked[0];
-  var qh = new Set();
-  practiceState = {
-    bankId: first.bankId, bankName: n === 1 ? '快速1题' : '热身' + n + '题',
-    cards: picked.map(function(x) { return x.card; }), index: 0,
-    mode: 'random-repeat',
-    answers: {}, revealed: new Set(),
-    questionHidden: qh, koujueExpanded: {},
-    total: picked.length,
-    _streak: 0,
-    _roundCorrect: 0, _roundWrong: 0, _newlyMastered: [],
-    answersHidden: false
-  };
-  $('practiceSetup').style.display = 'none';
-  $('practiceResult').style.display = 'none';
-  $('practiceActive').style.display = 'block';
-  switchTab('practice');
-  renderPracticeCard();
-  applyFocusMode();
-}
+
 
 function startSprintMode() {
   var pool = getSprintCards();
@@ -2450,16 +2404,7 @@ function renderBanks() {
   // 全局搜索栏
   var totalCards = 0;
   banks.forEach(function(b) { totalCards += b.cards.length; });
-  // 微习惯入口
-  var microHtml = '';
-  if (totalCards > 0) {
-    microHtml = '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">' +
-      '<button class="btn btn-ghost btn-sm" onclick="quickStartN(3)" style="flex:1;min-width:120px;font-size:12px;padding:8px 10px;border:1px dashed var(--border);border-radius:8px;text-align:center">🔍 先来3题热热身</button>' +
-      '<button class="btn btn-ghost btn-sm" onclick="quickStartN(1)" style="flex:1;min-width:120px;font-size:12px;padding:8px 10px;border:1px dashed var(--border);border-radius:8px;text-align:center">💪 只做1题也行</button>' +
-    '</div>';
-  }
-
-  var searchHtml = examBannerHtml + sprintHtml + microHtml + '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
+  var searchHtml = examBannerHtml + sprintHtml + '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
   c.innerHTML = searchHtml;
     c.innerHTML += banks.map((b, idx) => {
     const isFirst = idx === 0;
@@ -6831,7 +6776,6 @@ function restoreFromJsonFile(input) {
       saveData(appData);
       applySettings();
       renderBanks();
-    updateExamCountdownBadge();
       renderSettings();
       updateBadges();
       switchTab('banks');
@@ -7020,12 +6964,9 @@ function renderSettings() {
         if (allCards > 0) suggestedDaily = Math.ceil(allCards / daysLeft);
       }
       var planHtml = '';
-      // 考试日期（左日期 右倒计时）
-      planHtml += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
-        '<div style="flex:1"><div class="setting-label">📅 考试日期</div>' +
-          '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:4px;width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px">' +
-        '</div>' +
-        '<div id="examCountdownBadge" style="padding:10px 16px;border:2px solid var(--border);border-radius:10px;font-size:15px;font-weight:700;white-space:nowrap;text-align:center;min-width:120px;margin-top:20px"></div>' +
+      // 考试日期
+      planHtml += '<div style="margin-bottom:8px"><div class="setting-label">📅 考试日期</div>' +
+        '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:4px;width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px">' +
       '</div>';
       // 晚间复习模式
       planHtml += '<div style="margin-top:8px"><div class="setting-label">🌙 晚间复习模式</div>' +
@@ -7071,23 +7012,8 @@ function renderSettings() {
     
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
-      // 成就展示
-      (function() {
-        var unlocked = appData.settings.achievements || {};
-        var html = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">';
-        var anyUnlocked = false;
-        for (var ai = 0; ai < ACHIEVEMENTS.length; ai++) {
-          var a = ACHIEVEMENTS[ai];
-          var isUnlocked = !!unlocked[a.id];
-          if (isUnlocked) anyUnlocked = true;
-          html += '<div style="background:' + (isUnlocked ? 'var(--primary-light)' : 'var(--bg-input)') + ';border-radius:8px;padding:6px 10px;text-align:center;font-size:11px;opacity:' + (isUnlocked ? '1' : '.4') + '"><div style="font-size:18px">' + a.emoji + '</div><div style="font-weight:600">' + a.name + '</div></div>';
-        }
-        html += '</div>';
-        if (!anyUnlocked) html += '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:10px">完成练习自动解锁成就</div>';
-        return html;
-      })() +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v23</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v24</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
