@@ -1683,6 +1683,8 @@ function extractKeywords(text, count, seed) {
       if (techCount >= 2) score += 4;
       // 惩罚虚词
       score -= (phrase.match(/[的了是在和与或对中上下等所被把让向同及着过]/g) || []).length * 4;
+      // 扣分：包含括号的短语（优先选括号内纯净内容）
+      if (/[（）()]/.test(phrase)) score -= 25;
       // 随机扰动
       if (rng) score += rng() * 6 - 3;
       if (score >= 3) candidates.push({ start: i, end: i + len, text: phrase, score });
@@ -1777,7 +1779,7 @@ function autoGenerateBlanks(cards, density, seed) {
           }
         } else {
           // 没找到关键词？把整个得分点挖掉（排除序号和标点）
-          const cleanText = pt.text.replace(/^[\d\.\、\)）①②③④⑤⑥⑦⑧⑨⑩\s]+/, '').trim();
+          const cleanText = pt.text.replace(/^[\d\.\、\)）①②③④⑤⑥⑦⑧⑨⑩\s]+/, '').replace(/^[（(]/, '').replace(/[）)]$/, '').trim();
           if (cleanText) {
             const idx = pt.text.indexOf(cleanText);
             blanks.push({
@@ -1801,7 +1803,7 @@ function autoGenerateBlanks(cards, density, seed) {
         return b.start >= ptStart && b.end <= ptEnd;
       });
       if (!hasBlank) {
-        const cleanText = pt.text.replace(/^[\d\.\、\)）①②③④⑤⑥⑦⑧⑨⑩\s]+/, '').trim();
+        const cleanText = pt.text.replace(/^[\d\.\、\)）①②③④⑤⑥⑦⑧⑨⑩\s]+/, '').replace(/^[（(]/, '').replace(/[）)]$/, '').trim();
         if (cleanText) {
           const idx = pt.text.indexOf(cleanText);
           blanks.push({
