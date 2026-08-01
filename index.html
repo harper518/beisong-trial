@@ -279,13 +279,6 @@
   --primary:#b6668f; --primary-hover:#a05078; --primary-light:#faf4f6; --primary-soft:#f6e8ec;
   --border:#e8d0d8;
 }
-/* 牡丹 */
-[data-color="peony"] {
-  --bg:#faf4fb; --bg-card:#fff; --bg-input:#faf4fb;
-  --text:#3a183a; --text-secondary:#9b509b;
-  --primary:#bf3dc1; --primary-hover:#a830aa; --primary-light:#faf4fb; --primary-soft:#f6e8f6;
-  --border:#e8d0e8;
-}
 
 [data-theme="dark"] {
   --bg:#042f2e; --bg-card:#134e4a; --bg-input:#11554e; --bg-overlay:rgba(0,0,0,.7);
@@ -1066,7 +1059,7 @@ var themeBgColors = {
   ocean:'#f0f4f8', coral:'#fef5f2', peach:'#fef8f5', lavender:'#f8f6fb', mist:'#f5f8fa',
   snow:'#fafafa', amber:'#fffbf5', sakura:'#fef8fa', sky:'#f5fafd', oat:'#fdfaf6',
   sage2:'#f4f6f4', dusk:'#f6f4f8', wisteria:'#f6f4fa', indigo:'#f2f4fd', mustard:'#fefaf2',
-  turquoise:'#f2faf8', seapine:'#f2f6f4', mint:'#f4faf6', butter:'#fefcf6', periwinkle:'#f6f8fc', iris:'#f4f4fa', mauve:'#faf4f6', peony:'#faf4fb'
+  turquoise:'#f2faf8', seapine:'#f2f6f4', mint:'#f4faf6', butter:'#fefcf6', periwinkle:'#f6f8fc', iris:'#f4f4fa', mauve:'#faf4f6'
 };
 function updateThemeColorMeta(color) {
   var meta = document.getElementById('themeColorMeta');
@@ -7008,9 +7001,9 @@ function renderSettings() {
   const s = appData.settings;
   const density = s.density || 'low';
 
-  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', coral: '珊瑚橘', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝', snow: '素白', amber: '琥珀金', sakura: '樱粉', sky: '天蓝', oat: '燕麦', sage2: '灰绿', dusk: '暮紫', wisteria: '紫藤', indigo: '靛青', mustard: '芥黄', turquoise: '松石', seapine: '海松', mint: '薄荷', butter: '奶杏', periwinkle: '藤风', iris: '鸢尾', mauve: '暖紫', peony: '牡丹' };
-  var colors = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral', 'peach', 'lavender', 'mist', 'snow', 'amber', 'sakura', 'sky', 'oat', 'sage2', 'dusk', 'wisteria', 'indigo', 'mustard', 'turquoise', 'seapine', 'mint', 'butter', 'periwinkle', 'iris', 'mauve', 'peony'];
-  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', dusk: '#6b5b7a', wisteria: '#7b6ba8', indigo: '#3f51b5', mustard: '#d4a030', turquoise: '#2eb8a0', seapine: '#3c6e71', mint: '#98d4b8', butter: '#f0dcb0', periwinkle: '#acb8d8', iris: '#656db2', mauve: '#b6668f', peony: '#bf3dc1' };
+  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', coral: '珊瑚橘', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝', snow: '素白', amber: '琥珀金', sakura: '樱粉', sky: '天蓝', oat: '燕麦', sage2: '灰绿', dusk: '暮紫', wisteria: '紫藤', indigo: '靛青', mustard: '芥黄', turquoise: '松石', seapine: '海松', mint: '薄荷', butter: '奶杏', periwinkle: '藤风', iris: '鸢尾', mauve: '暖紫' };
+  var colors = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral', 'peach', 'lavender', 'mist', 'snow', 'amber', 'sakura', 'sky', 'oat', 'sage2', 'dusk', 'wisteria', 'indigo', 'mustard', 'turquoise', 'seapine', 'mint', 'butter', 'periwinkle', 'iris', 'mauve'];
+  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', dusk: '#6b5b7a', wisteria: '#7b6ba8', indigo: '#3f51b5', mustard: '#d4a030', turquoise: '#2eb8a0', seapine: '#3c6e71', mint: '#98d4b8', butter: '#f0dcb0', periwinkle: '#acb8d8', iris: '#656db2', mauve: '#b6668f' };
 
   c.innerHTML =
     // 设置页顶部 header（开关打开时显示头像）
