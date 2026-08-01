@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v15 · 小阮出品</title>
+<title>挖空背诵工具 v16 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -517,6 +517,52 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   font-weight: 700;
 }
 
+/* ====== 学习计划banner ====== */
+.exam-banner { border-radius:12px; padding:14px 16px; margin-bottom:16px; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.exam-banner.green { background:#e8f5e9; border:1px solid #a5d6a7; color:#2e7d32; }
+.exam-banner.yellow { background:#fff8e1; border:1px solid #ffe082; color:#e65100; }
+.exam-banner.red { background:#ffebee; border:1px solid #ef9a9a; color:#c62828; }
+.exam-banner.gray { background:#f5f5f5; border:1px solid #e0e0e0; color:#757575; }
+.exam-banner:active { transform:scale(.98); }
+.exam-banner .exam-banner-main { flex:1; min-width:0; }
+.exam-banner .exam-banner-title { font-size:15px; font-weight:700; }
+.exam-banner .exam-banner-sub { font-size:12px; opacity:.85; margin-top:2px; }
+.exam-banner .exam-banner-progress { width:100%; height:6px; background:rgba(0,0,0,.1); border-radius:3px; overflow:hidden; margin-top:6px; }
+.exam-banner .exam-banner-progress-fill { height:100%; border-radius:3px; transition:width .4s; background:currentColor; opacity:.5; }
+
+/* ====== 章节掌握度 ====== */
+.chapter-stat-row { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s; min-height:44px; }
+.chapter-stat-row:active { background:var(--bg-input); }
+.chapter-stat-name { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
+.chapter-stat-count { font-size:11px; color:var(--text-tertiary); white-space:nowrap; }
+.chapter-stat-bar { flex:1; height:8px; background:var(--border); border-radius:4px; overflow:hidden; min-width:40px; }
+.chapter-stat-fill { height:100%; border-radius:4px; transition:width .4s; }
+.chapter-stat-fill.green { background:#4caf50; }
+.chapter-stat-fill.yellow { background:#ff9800; }
+.chapter-stat-fill.red { background:#f44336; }
+.chapter-stat-pct { font-size:13px; font-weight:700; white-space:nowrap; min-width:38px; text-align:right; }
+
+/* ====== 浏览页章节TAB ====== */
+.browse-tabs { display:flex; gap:0; margin-bottom:14px; background:var(--bg-input); border-radius:10px; padding:3px; }
+.browse-tab { flex:1; padding:8px 6px; text-align:center; font-size:13px; font-weight:600; border-radius:8px; cursor:pointer; transition:all .15s; border:none; background:transparent; color:var(--text-secondary); }
+.browse-tab.active { background:var(--bg-card); color:var(--primary); box-shadow:var(--shadow-sm); }
+
+/* ====== 冲刺卡片 ====== */
+.sprint-card { background:linear-gradient(135deg, #ff6b6b, #ee5a24); color:#fff; border-radius:14px; padding:20px; margin-bottom:16px; cursor:pointer; box-shadow:0 4px 15px rgba(238,90,36,.3); transition:all .2s; min-height:44px; display:flex; align-items:center; gap:12px; }
+.sprint-card:active { transform:scale(.98); }
+.sprint-card .sprint-icon { font-size:32px; flex-shrink:0; }
+.sprint-card .sprint-main { flex:1; min-width:0; }
+.sprint-card .sprint-title { font-size:17px; font-weight:800; }
+.sprint-card .sprint-sub { font-size:12px; opacity:.85; margin-top:3px; }
+.sprint-card.sprint-alltime { background:linear-gradient(135deg, #667eea, #764ba2); box-shadow:0 4px 15px rgba(118,75,162,.3); }
+
+/* ====== 题库选择多选模式 ====== */
+.bank-check-row { display:flex; align-items:center; gap:10px; padding:11px 14px; cursor:pointer; border-radius:8px; margin-bottom:4px; transition:background .15s; min-height:44px; border:2px solid transparent; }
+.bank-check-row:active { background:var(--bg-input); }
+.bank-check-row.selected { border-color:var(--primary); background:var(--primary-light); }
+.bank-check-row .bank-check-box { width:22px; height:22px; border-radius:6px; border:2px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; transition:all .15s; }
+.bank-check-row.selected .bank-check-box { background:var(--primary); border-color:var(--primary); color:#fff; }
+
 </style>
 </head>
 <body>
@@ -825,7 +871,214 @@ function getSetting(key, defVal) {
 
 function saveSetting(key, value) { appData.settings[key] = value; saveData(appData); applySettings(); }
 
+function saveExamDate(value) {
+  appData.settings.examDate = value || null;
+  saveData(appData);
+  renderSettings();
+  renderBanks(); // 刷新首页banner
+}
+
+function saveDailyTarget(value) {
+  appData.settings.dailyTarget = value > 0 ? value : null;
+  saveData(appData);
+  renderSettings();
+  renderBanks();
+}
+
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,8); }
+
+// ==================== 学习计划辅助函数 ====================
+function countMasteredQuestions() {
+  var mastered = 0, total = 0;
+  var banks = Object.values(appData.banks || {});
+  for (var i = 0; i < banks.length; i++) {
+    var cards = banks[i].cards || [];
+    total += cards.length;
+    for (var j = 0; j < cards.length; j++) {
+      if (cards[j].srStage >= 4) mastered++;
+    }
+  }
+  return { mastered: mastered, total: total, unmastered: total - mastered };
+}
+
+function countTotalQuestions() {
+  var total = 0;
+  var banks = Object.values(appData.banks || {});
+  for (var i = 0; i < banks.length; i++) {
+    total += (banks[i].cards || []).length;
+  }
+  return total;
+}
+
+function getExamDaysLeft() {
+  var examDate = (appData.settings || {}).examDate;
+  if (!examDate) return null;
+  var now = new Date();
+  var exam = new Date(examDate + 'T00:00:00');
+  var diff = Math.ceil((exam.getTime() - now.getTime()) / 86400000);
+  return diff;
+}
+
+function getDailyTarget() {
+  var s = appData.settings || {};
+  if (s.dailyTarget && s.dailyTarget > 0) return s.dailyTarget;
+  var daysLeft = getExamDaysLeft();
+  if (daysLeft === null || daysLeft <= 0) return 0;
+  var stats = countMasteredQuestions();
+  if (stats.unmastered <= 0) return 0;
+  return Math.max(1, Math.ceil(stats.unmastered / Math.max(1, daysLeft)));
+}
+
+function getTodayCompleted() {
+  var ds = (appData.settings || {}).dailyStats;
+  if (!ds) return 0;
+  var today = new Date().toISOString().substring(0, 10);
+  if (ds.date === today) return ds.completed || 0;
+  // 日期不是今天，重置
+  return 0;
+}
+
+function recordTodayCompleted(count) {
+  if (!appData.settings) appData.settings = {};
+  var ds = appData.settings.dailyStats;
+  var today = new Date().toISOString().substring(0, 10);
+  if (!ds || ds.date !== today) {
+    appData.settings.dailyStats = { date: today, completed: count };
+  } else {
+    appData.settings.dailyStats.completed = (ds.completed || 0) + count;
+  }
+  debouncedSaveData(appData);
+}
+
+// ==================== 章节掌握度计算 ====================
+function getChapterStats(bankId) {
+  var bank = appData.banks[bankId];
+  if (!bank) return [];
+  var chapters = {};
+  var cards = bank.cards || [];
+  for (var i = 0; i < cards.length; i++) {
+    var card = cards[i];
+    var ch = (card.chapter || '未分类').trim();
+    if (!chapters[ch]) chapters[ch] = { name: ch, total: 0, mastered: 0 };
+    chapters[ch].total++;
+    if (card.srStage >= 4) chapters[ch].mastered++;
+  }
+  var result = Object.values(chapters);
+  result.sort(function(a, b) { return b.total - a.total; });
+  return result;
+}
+
+function getChapterRateColor(rate) {
+  if (rate >= 0.8) return 'green';
+  if (rate >= 0.6) return 'yellow';
+  return 'red';
+}
+
+// ==================== 考前冲刺模式 ====================
+function getSprintPoolSize() {
+  var count = 0;
+  var banks = Object.values(appData.banks || {});
+  var now = Date.now();
+  for (var i = 0; i < banks.length; i++) {
+    var cards = banks[i].cards || [];
+    var wb = getWrongBook(banks[i].id);
+    for (var j = 0; j < cards.length; j++) {
+      var c = cards[j];
+      if (c.id in wb) { count++; continue; }
+      if (c.srStage != null && c.srStage < 3) { count++; continue; }
+      if (c.starred) { count++; continue; }
+    }
+  }
+  return count;
+}
+
+function getSprintCards() {
+  var result = [];
+  var banks = Object.values(appData.banks || {});
+  var now = Date.now();
+  var seen = {};
+  for (var i = 0; i < banks.length; i++) {
+    var cards = banks[i].cards || [];
+    var wb = getWrongBook(banks[i].id);
+    for (var j = 0; j < cards.length; j++) {
+      var c = cards[j];
+      if (seen[c.id]) continue;
+      var include = false;
+      if (c.id in wb) include = true;
+      if (c.srStage != null && c.srStage < 3) include = true;
+      if (c.starred) include = true;
+      if (include) {
+        seen[c.id] = true;
+        result.push({ card: c, bankId: banks[i].id, bankName: banks[i].name });
+      }
+    }
+  }
+  // 打乱顺序
+  for (var k = result.length - 1; k > 0; k--) {
+    var r = Math.floor(Math.random() * (k + 1));
+    var tmp = result[k]; result[k] = result[r]; result[r] = tmp;
+  }
+  return result;
+}
+
+function startSprintMode() {
+  var pool = getSprintCards();
+  if (!pool.length) { showToast('没有需要冲刺的题目，继续加油！'); return; }
+  // 切换到做题页，使用冲刺模式
+  sessionStorage.setItem('sprintMode', '1');
+  sessionStorage.setItem('sprintPool', JSON.stringify(pool.map(function(x) { return { id: x.card.id, bankId: x.bankId, bankName: x.bankName }; })));
+  switchTab('practice');
+}
+
+// ==================== 章节掌握度视图 ====================
+var _browseChapterMode = false;
+var _browseChapterBankId = null;
+
+function renderChapterHeatmap(bankId) {
+  var bank = appData.banks[bankId];
+  if (!bank) return '<div class="empty"><span class="icon">📊</span><h3>题库不存在</h3></div>';
+  var stats = getChapterStats(bankId);
+  if (!stats.length) return '<div class="empty"><span class="icon">📊</span><h3>暂无章节数据</h3><p>题库卡片未设置章节信息</p></div>';
+  var html = '<div style="margin-bottom:6px;font-size:13px;color:var(--text-tertiary)">📊 ' + escapeHtml(bank.name) + ' · 章节掌握度</div>';
+  for (var i = 0; i < stats.length; i++) {
+    var s = stats[i];
+    var rate = s.total > 0 ? s.mastered / s.total : 0;
+    var color = getChapterRateColor(rate);
+    var pct = Math.round(rate * 100);
+    html += '<div class="chapter-stat-row" onclick="practiceChapter(\'' + bankId + '\', \'' + escapeHtml(s.name).replace(/'/g, "\\'") + '\')">' +
+      '<div class="chapter-stat-name" title="' + escapeHtml(s.name) + '">' + escapeHtml(s.name) + '</div>' +
+      '<div class="chapter-stat-count">' + s.mastered + '/' + s.total + '</div>' +
+      '<div class="chapter-stat-bar"><div class="chapter-stat-fill ' + color + '" style="width:' + pct + '%"></div></div>' +
+      '<div class="chapter-stat-pct" style="color:' + (color === 'red' ? '#f44336' : color === 'yellow' ? '#ff9800' : '#4caf50') + '">' + pct + '%</div>' +
+    '</div>';
+  }
+  html += '<div style="margin-top:14px"><button class="btn btn-primary btn-block" onclick="practiceChapter(\'' + bankId + '\', \'\')">🎯 练习全部章节</button></div>';
+  return html;
+}
+
+function practiceChapter(bankId, chapterName) {
+  sessionStorage.setItem('lastPracticeBank', bankId);
+  if (chapterName) {
+    sessionStorage.setItem('practiceChapterFilter', chapterName);
+  } else {
+    sessionStorage.removeItem('practiceChapterFilter');
+  }
+  switchTab('practice');
+}
+
+function renderBrowseChapters(bankId) {
+  _browseChapterMode = true;
+  _browseChapterBankId = bankId;
+  var c = $('browseContainer');
+  if (!c) return;
+  var bank = appData.banks[bankId];
+  if (!bank) return;
+  var heatmapHtml = renderChapterHeatmap(bankId);
+  c.innerHTML = '<div class="browse-tabs">' +
+    '<button class="browse-tab" onclick="renderBrowseList(\'' + bankId + '\')">📋 题目列表</button>' +
+    '<button class="browse-tab active" onclick="renderBrowseChapters(\'' + bankId + '\')">📊 章节掌握度</button>' +
+    '</div>' + heatmapHtml;
+}
 
 function restorePresetBanks() {
   var preset = getPresetData_7666();
@@ -1819,10 +2072,53 @@ function renderBanks() {
     return;
   }
 
+  // 学习计划banner + 冲刺入口
+  var examBannerHtml = '';
+  var daysLeft = getExamDaysLeft();
+  var todayCompleted = getTodayCompleted();
+  var dailyTarget = getDailyTarget();
+  if (daysLeft !== null) {
+    var bannerClass = daysLeft > 30 ? 'green' : daysLeft > 7 ? 'yellow' : daysLeft > 0 ? 'red' : 'gray';
+    var bannerEmoji = daysLeft > 30 ? '📅' : daysLeft > 7 ? '📅' : daysLeft > 0 ? '🚨' : '✅';
+    var bannerText = daysLeft > 0 ? '距考试还有 <b>' + daysLeft + '</b> 天' : '考试日期已过';
+    var stats = countMasteredQuestions();
+    var suggestText = '';
+    if (daysLeft > 0 && stats.unmastered > 0) {
+      suggestText = ' · 未掌握 <b>' + stats.unmastered + '</b> 题 · 建议每天 <b>' + dailyTarget + '</b> 题';
+    }
+    var progressHtml = '';
+    if (dailyTarget > 0) {
+      var pct = Math.min(100, Math.round((todayCompleted / dailyTarget) * 100));
+      progressHtml = '<div class="exam-banner-progress"><div class="exam-banner-progress-fill" style="width:' + pct + '%"></div></div>';
+    }
+    examBannerHtml = '<div class="exam-banner ' + bannerClass + '" onclick="switchTab(\'practice\')">' +
+      '<div class="exam-banner-main">' +
+        '<div class="exam-banner-title">' + bannerEmoji + ' ' + bannerText + suggestText + '</div>' +
+        (dailyTarget > 0 ? '<div class="exam-banner-sub">今日已完成 ' + todayCompleted + '/' + dailyTarget + ' 题' + (todayCompleted >= dailyTarget ? ' ✅' : '') + '</div>' : '') +
+        progressHtml +
+      '</div>' +
+    '</div>';
+  }
+  // 冲刺入口（始终显示，或考试30天内强调显示）
+  var sprintHtml = '';
+  var sprintPoolSize = getSprintPoolSize();
+  if (sprintPoolSize > 0) {
+    var sprintClass = (daysLeft !== null && daysLeft <= 30 && daysLeft > 0) ? 'sprint-card' : 'sprint-card sprint-alltime';
+    var sprintLabel = (daysLeft !== null && daysLeft <= 30 && daysLeft > 0) ? '🚀 考前冲刺' : '🎯 重点冲刺';
+    sprintHtml = '<div class="' + sprintClass + '" onclick="startSprintMode()">' +
+      '<div class="sprint-icon">' + ((daysLeft !== null && daysLeft <= 30 && daysLeft > 0) ? '🚀' : '🎯') + '</div>' +
+      '<div class="sprint-main">' +
+        '<div class="sprint-title">' + sprintLabel + '</div>' +
+        '<div class="sprint-sub">' + sprintPoolSize + ' 道错题/弱题待攻克</div>' +
+      '</div>' +
+      '<div style="font-size:20px;opacity:.6">→</div>' +
+    '</div>';
+  }
+
   // 全局搜索栏
   var totalCards = 0;
   banks.forEach(function(b) { totalCards += b.cards.length; });
-  var searchHtml = '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
+  var searchHtml = examBannerHtml + sprintHtml + '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
   c.innerHTML = searchHtml;
     c.innerHTML += banks.map((b, idx) => {
     const isFirst = idx === 0;
@@ -3667,11 +3963,21 @@ function renderPracticeSetup() {
     <div class="card" style="padding:20px">
       <div class="form-group">
         <label class="form-label">📚 选择题库</label>
-        <input type="hidden" id="bankSelect" value="${lastBank || (banks[0] && banks[0].id) || ''}">
-        <button class="btn btn-outline btn-block" onclick="showBankPicker(document.getElementById('bankSelect').value, function(bid){document.getElementById('bankSelect').value=bid;sessionStorage.setItem('lastPracticeBank',bid);onBankChange()})" style="justify-content:space-between;text-align:left">
-          <span id="bankSelectLabel">${lastBank && appData.banks[lastBank] ? escapeHtml(appData.banks[lastBank].name) + '（' + appData.banks[lastBank].cards.length + ' 题）' : (banks[0] ? escapeHtml(banks[0].name) + '（' + banks[0].cards.length + ' 题）' : '请选择题库')}</span>
-          <span style="font-size:18px">▾</span>
-        </button>
+        <div class="chip-group" style="margin-bottom:8px">
+          <span class="chip active" id="singleBankChip" onclick="toggleMultiBank(false)">📚 单题库</span>
+          <span class="chip" id="multiBankChip" onclick="toggleMultiBank(true)">🔀 混合多题库</span>
+        </div>
+        <div id="singleBankSection">
+          <input type="hidden" id="bankSelect" value="${lastBank || (banks[0] && banks[0].id) || ''}">
+          <button class="btn btn-outline btn-block" onclick="showBankPicker(document.getElementById('bankSelect').value, function(bid){document.getElementById('bankSelect').value=bid;sessionStorage.setItem('lastPracticeBank',bid);onBankChange()})" style="justify-content:space-between;text-align:left">
+            <span id="bankSelectLabel">${lastBank && appData.banks[lastBank] ? escapeHtml(appData.banks[lastBank].name) + '（' + appData.banks[lastBank].cards.length + ' 题）' : (banks[0] ? escapeHtml(banks[0].name) + '（' + banks[0].cards.length + ' 题）' : '请选择题库')}</span>
+            <span style="font-size:18px">▾</span>
+          </button>
+        </div>
+        <div id="multiBankSection" style="display:none">
+          <div id="multiBankList" style="max-height:200px;overflow-y:auto;border:2px solid var(--border);border-radius:10px;padding:4px">${banks.map(function(b) { return '<div class="bank-check-row" id="mbrow_' + b.id + '" onclick="toggleMultiBankCheck(\'' + b.id + '\')"><div class="bank-check-box" id="mbox_' + b.id + '"></div><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">' + escapeHtml(b.name) + '</div><div style="font-size:11px;color:var(--text-tertiary)">' + b.cards.length + ' 题</div></div></div>'; }).join('')}</div>
+          <div id="multiBankCount" style="font-size:12px;color:var(--text-tertiary);margin-top:6px;text-align:center">已选 0 个题库，共 0 题</div>
+        </div>
         <div id="categoryFilter" style="margin-top:10px"></div>
         <div id="categoryFilterHint" style="font-size:12px;color:var(--text-tertiary);margin-top:4px"></div>
       </div>
@@ -3729,7 +4035,7 @@ function renderPracticeSetup() {
 
       <button class="btn btn-primary btn-block btn-lg" onclick="startPractice()">👊 开始刷题</button>
     </div>`;
-  setTimeout(() => { const bid = document.getElementById("bankSelect").value; if (bid) { categoryFilter = null; renderCategoryFilter(bid); } }, 0);
+  setTimeout(() => { const bid = document.getElementById("bankSelect").value; if (bid) { categoryFilter = null; var chapterFilter = sessionStorage.getItem('practiceChapterFilter'); if (chapterFilter) { sessionStorage.removeItem('practiceChapterFilter'); categoryFilter = new Set(); } renderCategoryFilter(bid); if (chapterFilter) { categoryFilter = new Set(); renderCategoryFilter(bid); var chips = document.querySelectorAll('#categoryFilter .chip'); for (var ci = 0; ci < chips.length; ci++) { if (chips[ci].textContent.trim() === chapterFilter) { chips[ci].click(); break; } } } } }, 0);
 }
 
 // ====== 计时器 ======
@@ -3952,6 +4258,44 @@ function getFilteredCards(bank) {
   });
 }
 
+// ====== 多题库选择 ======
+var _selectedMultiBanks = [];
+var _isMultiBankMode = false;
+
+function toggleMultiBank(on) {
+  _isMultiBankMode = on;
+  var singleChip = document.getElementById('singleBankChip');
+  var multiChip = document.getElementById('multiBankChip');
+  var singleSec = document.getElementById('singleBankSection');
+  var multiSec = document.getElementById('multiBankSection');
+  if (singleChip) singleChip.classList.toggle('active', !on);
+  if (multiChip) multiChip.classList.toggle('active', on);
+  if (singleSec) singleSec.style.display = on ? 'none' : '';
+  if (multiSec) multiSec.style.display = on ? '' : 'none';
+  if (on) updateMultiBankCount();
+}
+
+function toggleMultiBankCheck(bankId) {
+  var idx = _selectedMultiBanks.indexOf(bankId);
+  if (idx >= 0) _selectedMultiBanks.splice(idx, 1);
+  else _selectedMultiBanks.push(bankId);
+  var row = document.getElementById('mbrow_' + bankId);
+  var box = document.getElementById('mbox_' + bankId);
+  if (row) row.classList.toggle('selected', idx < 0);
+  if (box) box.textContent = idx < 0 ? '✓' : '';
+  updateMultiBankCount();
+}
+
+function updateMultiBankCount() {
+  var totalCards = 0;
+  for (var i = 0; i < _selectedMultiBanks.length; i++) {
+    var b = appData.banks[_selectedMultiBanks[i]];
+    if (b) totalCards += (b.cards || []).length;
+  }
+  var countEl = document.getElementById('multiBankCount');
+  if (countEl) countEl.textContent = '已选 ' + _selectedMultiBanks.length + ' 个题库，共 ' + totalCards + ' 题';
+}
+
 function updateFilteredCount() {
   const bankId = document.getElementById("bankSelect").value;
   if (!bankId) return;
@@ -3971,6 +4315,97 @@ function startPracticeSetup(bankId) {
 
 // ==================== 做题 - 开始 ====================
 function startPractice() {
+  // 冲刺模式：使用冲刺题目池
+  var isSprint = sessionStorage.getItem('sprintMode') === '1';
+  if (isSprint) {
+    var sprintPoolRaw = sessionStorage.getItem('sprintPool');
+    if (!sprintPoolRaw) { showToast('冲刺数据已过期，请重新进入'); sessionStorage.removeItem('sprintMode'); renderPracticeSetup(); return; }
+    try {
+      var sprintPool = JSON.parse(sprintPoolRaw);
+      if (!sprintPool.length) { showToast('没有需要冲刺的题目'); sessionStorage.removeItem('sprintMode'); renderPracticeSetup(); return; }
+      var sprintCount = Math.min(sprintPool.length, batchSize || sprintPool.length);
+      var sprintSelected = sprintPool.slice(0, sprintCount);
+      // 从各个题库中找到对应卡片
+      var selectedCards = [];
+      for (var si = 0; si < sprintSelected.length; si++) {
+        var sp = sprintSelected[si];
+        var spBank = appData.banks[sp.bankId];
+        if (!spBank) continue;
+        var spCard = spBank.cards.find(function(x) { return x.id === sp.id; });
+        if (spCard) selectedCards.push({ card: spCard, bankId: sp.bankId, bankName: sp.bankName });
+      }
+      if (!selectedCards.length) { showToast('冲刺题目已失效，请重新进入'); sessionStorage.removeItem('sprintMode'); renderPracticeSetup(); return; }
+      // 构建多题库的练习状态
+      var firstBank = selectedCards[0];
+      var sprintBankId = firstBank.bankId;
+      var sprintBankName = '冲刺模式';
+      var sprintQh = new Set();
+      if (hideQuestionStart) { for (var qi = 0; qi < selectedCards.length; qi++) sprintQh.add(selectedCards[qi].card.id); }
+      practiceState = {
+        bankId: sprintBankId, bankName: sprintBankName,
+        cards: selectedCards.map(function(x) { return x.card; }), index: 0,
+        mode: 'random-repeat',
+        answers: {}, revealed: new Set(),
+        questionHidden: sprintQh, koujueExpanded: {},
+        total: selectedCards.length,
+        _streak: 0,
+        _roundCorrect: 0, _roundWrong: 0, _newlyMastered: [],
+        _isSprint: true,
+        answersHidden: false
+      };
+      $('practiceSetup').style.display = 'none';
+      $('practiceResult').style.display = 'none';
+      $('practiceActive').style.display = 'block';
+      renderPracticeCard();
+      return;
+    } catch(e) { showToast('冲刺模式启动失败'); sessionStorage.removeItem('sprintMode'); renderPracticeSetup(); return; }
+  }
+
+  // 多题库模式（通过UI选择）
+  var multiBanks = (_isMultiBankMode && _selectedMultiBanks.length > 1) ? _selectedMultiBanks.slice() : null;
+  if (multiBanks && multiBanks.length > 1) {
+    // 从多个题库收集题目
+    var allCards = [];
+    for (var mi = 0; mi < multiBanks.length; mi++) {
+      var mBank = appData.banks[multiBanks[mi]];
+      if (!mBank) continue;
+      var mPool = getFilteredCards(mBank);
+      for (var mj = 0; mj < mPool.length; mj++) {
+        allCards.push({ card: mPool[mj], bankId: multiBanks[mi], bankName: mBank.name });
+      }
+    }
+    if (!allCards.length) { showToast('所选题库无题目'); return; }
+    // 打乱
+    for (var ak = allCards.length - 1; ak > 0; ak--) {
+      var ar = Math.floor(Math.random() * (ak + 1));
+      var atmp = allCards[ak]; allCards[ak] = allCards[ar]; allCards[ar] = atmp;
+    }
+    var mCount = batchSize === 0 ? allCards.length : Math.min(batchSize, allCards.length);
+    var mSelected = allCards.slice(0, mCount);
+    var mQh = new Set();
+    if (hideQuestionStart) { for (var qi2 = 0; qi2 < mSelected.length; qi2++) mQh.add(mSelected[qi2].card.id); }
+    // 使用第一个题库作为"主"题库
+    var mBankIds = multiBanks;
+    practiceState = {
+      bankId: mSelected[0].bankId, bankName: '混合 ' + multiBanks.length + ' 个题库',
+      cards: mSelected.map(function(x) { return x.card; }), index: 0,
+      mode: 'random-repeat',
+      answers: {}, revealed: new Set(),
+      questionHidden: mQh, koujueExpanded: {},
+      total: mSelected.length,
+      _streak: 0,
+      _roundCorrect: 0, _roundWrong: 0, _newlyMastered: [],
+      _multiBanks: mBankIds,
+      _cardBankMap: mSelected.reduce(function(map, x, idx) { map[idx] = { bankId: x.bankId, bankName: x.bankName }; return map; }, {}),
+      answersHidden: false
+    };
+    $('practiceSetup').style.display = 'none';
+    $('practiceResult').style.display = 'none';
+    $('practiceActive').style.display = 'block';
+    renderPracticeCard();
+    return;
+  }
+
   const bankId = document.getElementById('bankSelect').value;
   if (!bankId) { showToast('请先选择题库'); return; }
   const bank = appData.banks[bankId];
@@ -4040,6 +4475,7 @@ function startPractice() {
     questionHidden: qh, koujueExpanded: {},
     total: selected.length,
     _streak: 0,
+    _roundCorrect: 0, _roundWrong: 0, _newlyMastered: [],
     answersHidden: false
   };
 
@@ -4088,6 +4524,7 @@ function renderPracticeCard() {
     <div class="flex justify-between items-center mb-8">
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()" style="padding:4px 8px;font-size:18px" title="返回">🏠</button>
       <span style="font-size:14px;font-weight:700;color:var(--text)">${cur} / ${total}</span>
+      ${(st._isSprint || st._multiBanks) ? '<span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (st._cardBankMap && st._cardBankMap[st.index] ? st._cardBankMap[st.index].bankName : (st._isSprint ? '冲刺' : '混合')) + '</span>' : ''}
       <span id="timerDisplay" style="display:${timerMode === 'off' ? 'none' : ''};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
       <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleStarCurrent()">${starIcon}</button>
       <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--danger)" onclick="deleteCurrentCard()" title="删除此题">🗑️</button>
@@ -4400,8 +4837,9 @@ function applyCheckToInputs(card) {
     saveData(appData);
   }
 
-  // 🔥 连续答对 & 🎰 随机幸运
+  // 统计本轮正确/错误
   if (!hasWrong) {
+    practiceState._roundCorrect = (practiceState._roundCorrect || 0) + 1;
     practiceState._streak = (practiceState._streak || 0) + 1;
     // 连续答对彩蛋
     const streakMilestones = [5, 10, 15, 20, 30, 50];
@@ -4409,7 +4847,16 @@ function applyCheckToInputs(card) {
       const emojis = {5:'🔥',10:'💥',15:'⚡',20:'🌟',30:'💎',50:'👑'};
       showToast(emojis[practiceState._streak] + ' 完美连击！×' + practiceState._streak);
     }
+    // 追踪"新掌握"：之前错、这次对的题
+    var wasWrongBefore = card.id in getWrongBook(practiceState.bankId);
+    if (wasWrongBefore) {
+      if (!practiceState._newlyMastered) practiceState._newlyMastered = [];
+      if (!practiceState._newlyMastered.includes(card.id)) {
+        practiceState._newlyMastered.push(card.id);
+      }
+    }
   } else {
+    practiceState._roundWrong = (practiceState._roundWrong || 0) + 1;
     practiceState._streak = 0;
   }
 }
@@ -4649,15 +5096,19 @@ function showPracticeResult() {
   const st = practiceState;
   const total = st.total;
   const bank = appData.banks[st.bankId];
+  const isSprint = sessionStorage.getItem('sprintMode') === '1';
 
-  // 更新顺序进度
-  if (st.mode === 'sequential') {
+  // 记录每日完成数
+  if (st._roundCorrect) recordTodayCompleted(st._roundCorrect);
+
+  // 更新顺序进度（仅非冲刺模式）
+  if (!isSprint && st.mode === 'sequential') {
     const pos = getSeqProgress(st.bankId);
         const filteredLen = getFilteredCards(bank).length;
     appData.seqProgress[st.bankId] = Math.min(pos + total, filteredLen || (bank && bank.cards ? bank.cards.length : 0) || 0);
   }
   // 更新随机不重复的已完成集
-  if (st.mode === 'random-norepeat') {
+  if (!isSprint && st.mode === 'random-norepeat') {
     if (!appData.doneSets) appData.doneSets = {};
     if (!appData.doneSets[st.bankId]) appData.doneSets[st.bankId] = [];
     for (const card of st.cards) {
@@ -4674,16 +5125,75 @@ function showPracticeResult() {
         orig.blanks = card.blanks; orig.fullText = card.fullText;
       }
     }
+    // 多题库模式：更新其他题库的卡片
+    if (st._multiBanks) {
+      for (var mbi = 0; mbi < st._multiBanks.length; mbi++) {
+        var mbId = st._multiBanks[mbi];
+        if (mbId === st.bankId) continue;
+        var mb = appData.banks[mbId];
+        if (!mb) continue;
+        for (var mcj = 0; mcj < st.cards.length; mcj++) {
+          var mc = st.cards[mcj];
+          var morig = mb.cards.find(function(x) { return x.id === mc.id; });
+          if (morig) {
+            morig.lastPracticed = Date.now(); morig.starred = mc.starred;
+            morig.blanks = mc.blanks; morig.fullText = mc.fullText;
+          }
+        }
+      }
+    }
   }
   saveData(appData);
+
+  var correctCount = st._roundCorrect || 0;
+  var wrongCount = st._roundWrong || 0;
+  var correctRate = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+  var newlyMastered = (st._newlyMastered || []).length;
+
+  // 冲刺模式结束后清除
+  if (isSprint) sessionStorage.removeItem('sprintMode');
 
   const rc = $('practiceResult');
   $('practiceActive').style.display = 'none';
   rc.style.display = 'block';
+
+  // 结果页星级
+  var starEmoji = correctRate >= 90 ? '🌟' : correctRate >= 70 ? '👍' : '💪';
+  var resultEmoji = isSprint ? (correctRate >= 70 ? '🎉' : '📚') : '✅';
+
+  // 结语
+  var closingMsg = '';
+  if (correctRate >= 80) closingMsg = '掌握得很好，保持信心！' + starEmoji;
+  else if (correctRate >= 60) closingMsg = '稳步提升中，薄弱环节正在变少 💪';
+  else closingMsg = '发现了提升空间，针对性补强后会越来越好 📈';
+
+  // 冲刺模式特殊信息
+  var sprintExtra = '';
+  if (isSprint) {
+    sprintExtra = '<div style="font-size:13px;color:var(--text-secondary);margin-top:8px">📝 还有 <b>' + (total - correctCount) + '</b> 题待巩固，已加入明日复习计划</div>';
+  }
+
   rc.innerHTML = `<div class="card" style="text-align:center;padding:24px 20px">
-    <div style="font-size:48px;margin-bottom:8px">✅</div>
-    <div style="font-size:20px;font-weight:800;margin-bottom:4px">本轮完成</div>
+    <div style="font-size:48px;margin-bottom:8px">${resultEmoji}</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:4px">${isSprint ? '冲刺完成！' : '本轮完成'}</div>
     <div class="text-sm text-secondary">共 ${total} 题 · ${escapeHtml(st.bankName)}</div>
+    <div style="display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap">
+      <div style="background:var(--success-light);border-radius:10px;padding:10px 16px;text-align:center;min-width:70px">
+        <div style="font-size:22px;font-weight:700;color:var(--success)">${correctCount}</div>
+        <div style="font-size:11px;color:var(--success)">正确</div>
+      </div>
+      <div style="background:var(--danger-light);border-radius:10px;padding:10px 16px;text-align:center;min-width:70px">
+        <div style="font-size:22px;font-weight:700;color:var(--danger)">${wrongCount}</div>
+        <div style="font-size:11px;color:var(--danger)">待加强</div>
+      </div>
+      <div style="background:var(--primary-light);border-radius:10px;padding:10px 16px;text-align:center;min-width:70px">
+        <div style="font-size:22px;font-weight:700;color:var(--primary)">${correctRate}%</div>
+        <div style="font-size:11px;color:var(--primary)">正确率</div>
+      </div>
+    </div>
+    ${newlyMastered > 0 ? '<div class="text-sm" style="margin-top:10px;color:var(--success);font-weight:600">🎉 本次新掌握 <b>' + newlyMastered + '</b> 题（之前错过的现在对了！）</div>' : ''}
+    ${sprintExtra}
+    <div class="text-sm text-secondary" style="margin-top:10px">${starEmoji} ${closingMsg}</div>
     <div class="flex gap-8 flex-wrap justify-center mt-16">
       <button class="btn btn-primary btn-sm" onclick="retrySameSettings()">▶ 再来一轮</button>
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()">🔄 重新设置</button>
@@ -5164,7 +5674,7 @@ function retrySameSettings() {
   }
   const qh = new Set();
   if (hideQuestionStart) { for (const c of selected) qh.add(c.id); }
-  practiceState = { ...practiceState, cards: selected, index: 0, answers: {}, revealed: new Set(), questionHidden: qh, koujueExpanded: {}, total: selected.length, answersHidden: false };
+  practiceState = { ...practiceState, cards: selected, index: 0, answers: {}, revealed: new Set(), questionHidden: qh, koujueExpanded: {}, total: selected.length, answersHidden: false, _streak: 0, _roundCorrect: 0, _roundWrong: 0, _newlyMastered: [] };
   $('practiceResult').style.display = 'none';
   $('practiceActive').style.display = 'block';
   renderPracticeCard();
@@ -5210,6 +5720,12 @@ function renderBrowseStart() {
   <div style="margin-bottom:10px">
     <input type="search" id="browseSearchInput" placeholder="🔍 搜索题目..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doBrowseSearch()">
   </div>
+  <div class="browse-tabs" id="browseTabs">
+    <button class="browse-tab active" id="browseTabList" onclick="switchBrowseTab('list')">📋 题目列表</button>
+    <button class="browse-tab" id="browseTabChapters" onclick="switchBrowseTab('chapters')">📊 章节掌握度</button>
+  </div>
+  <div id="browseTabContent"></div>
+  <div id="browseFilterArea">
   <div class="chip-group mb-12" id="browseFilterChips">
     <span class="chip active" data-filter="all" onclick="setBrowseFilter('all', this)">全部</span>
     <span class="chip" data-filter="star" onclick="setBrowseFilter('star', this)">⭐ 收藏${favCount ? ' · '+favCount : ''}</span>
@@ -5222,7 +5738,7 @@ function renderBrowseStart() {
       <span class="chip" data-sub="koujue" onclick="setStarSubFilter('koujue', this)">💡 口诀</span>
       <span class="chip" data-sub="wrong" onclick="setStarSubFilter('wrong', this)">❌ 错题</span>
     </div>
-    <div id="browseActive"></div>`;
+    <div id="browseActive"></div></div>`;
   renderBrowseList();
 }
 
@@ -5263,6 +5779,26 @@ function doBrowseSearch() {
   renderBrowseList();
 }
 
+var _browseTab = 'list';
+
+function switchBrowseTab(tab) {
+  _browseTab = tab;
+  var tabList = document.getElementById('browseTabList');
+  var tabChapters = document.getElementById('browseTabChapters');
+  var filterArea = document.getElementById('browseFilterArea');
+  var tabContent = document.getElementById('browseTabContent');
+  if (tabList) tabList.classList.toggle('active', tab === 'list');
+  if (tabChapters) tabChapters.classList.toggle('active', tab === 'chapters');
+  if (filterArea) filterArea.style.display = tab === 'list' ? '' : 'none';
+  if (tabContent) tabContent.style.display = tab === 'chapters' ? '' : 'none';
+  if (tab === 'list') {
+    renderBrowseList();
+  } else {
+    var bankId = document.getElementById('browseBankSelect') ? document.getElementById('browseBankSelect').value : browseState.bankId;
+    if (tabContent) tabContent.innerHTML = renderChapterHeatmap(bankId);
+  }
+}
+
 function changeBrowseBank() {
   var bankId = document.getElementById('browseBankSelect').value;
   var bank = appData.banks[bankId];
@@ -5273,7 +5809,7 @@ function changeBrowseBank() {
   var kjCount = bank.cards.filter(function(c) { return c.koujue; }).length;
   browseState = { bankId: bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards, answersHidden: false };
   var c = $('browseContainer');
-  c.innerHTML = '<div class="flex justify-between items-center mb-10"><h1 style="font-size:20px;font-weight:800">📖 目录</h1><input type="hidden" id="browseBankSelect" value="' + bankId + '"><button class="btn btn-ghost btn-sm" onclick="showBankPicker(document.getElementById(\'browseBankSelect\').value, function(bid){document.getElementById(\'browseBankSelect\').value=bid;changeBrowseBank()})" style="font-size:13px">' + escapeHtml(bank.name) + ' ▾</button></div><div style="margin-bottom:10px"><input type="search" id="browseSearchInput" placeholder="🔍 搜索题目..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doBrowseSearch()"></div><div class="chip-group mb-12" id="browseFilterChips"><span class="chip active" data-filter="all" onclick="setBrowseFilter(\'all\', this)">全部</span><span class="chip" data-filter="star" onclick="setBrowseFilter(\'star\', this)">⭐ 收藏' + (favCount ? ' · ' + favCount : '') + '</span><span class="chip" data-filter="koujue" onclick="setBrowseFilter(\'koujue\', this)">💡 口诀' + (kjCount ? ' · ' + kjCount : '') + '</span></div><div class="chip-group mb-12" id="browseStarSubChips" style="display:none;flex-wrap:nowrap;overflow-x:auto"><span class="chip active" data-sub="all" onclick="setStarSubFilter(\'all\', this)">全部</span><span class="chip" data-sub="question" onclick="setStarSubFilter(\'question\', this)">📝 题目</span><span class="chip" data-sub="koujue" onclick="setStarSubFilter(\'koujue\', this)">💡 口诀</span><span class="chip" data-sub="wrong" onclick="setStarSubFilter(\'wrong\', this)">❌ 错题</span></div><div id="browseActive"></div>';
+  c.innerHTML = '<div class="flex justify-between items-center mb-10"><h1 style="font-size:20px;font-weight:800">📖 目录</h1><input type="hidden" id="browseBankSelect" value="' + bankId + '"><button class="btn btn-ghost btn-sm" onclick="showBankPicker(document.getElementById(\'browseBankSelect\').value, function(bid){document.getElementById(\'browseBankSelect\').value=bid;changeBrowseBank()})" style="font-size:13px">' + escapeHtml(bank.name) + ' ▾</button></div><div style="margin-bottom:10px"><input type="search" id="browseSearchInput" placeholder="🔍 搜索题目..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doBrowseSearch()"></div><div class="browse-tabs" id="browseTabs"><button class="browse-tab active" id="browseTabList" onclick="switchBrowseTab(\'list\')">📋 题目列表</button><button class="browse-tab" id="browseTabChapters" onclick="switchBrowseTab(\'chapters\')">📊 章节掌握度</button></div><div id="browseTabContent" style="display:none"></div><div id="browseFilterArea"><div class="chip-group mb-12" id="browseFilterChips"><span class="chip active" data-filter="all" onclick="setBrowseFilter(\'all\', this)">全部</span><span class="chip" data-filter="star" onclick="setBrowseFilter(\'star\', this)">⭐ 收藏' + (favCount ? ' · ' + favCount : '') + '</span><span class="chip" data-filter="koujue" onclick="setBrowseFilter(\'koujue\', this)">💡 口诀' + (kjCount ? ' · ' + kjCount : '') + '</span></div><div class="chip-group mb-12" id="browseStarSubChips" style="display:none;flex-wrap:nowrap;overflow-x:auto"><span class="chip active" data-sub="all" onclick="setStarSubFilter(\'all\', this)">全部</span><span class="chip" data-sub="question" onclick="setStarSubFilter(\'question\', this)">📝 题目</span><span class="chip" data-sub="koujue" onclick="setStarSubFilter(\'koujue\', this)">💡 口诀</span><span class="chip" data-sub="wrong" onclick="setStarSubFilter(\'wrong\', this)">❌ 错题</span></div><div id="browseActive"></div></div>';
   renderBrowseList();
 }
 
@@ -6054,10 +6590,48 @@ function renderSettings() {
         '<label class="toggle"><input type="checkbox" id="avatarToggle"' + (s.showAvatar ? ' checked' : '') + ' onchange="toggleAvatar(this.checked)"><span class="slider"></span></label></div>' +
     '</div></div>' +
 
+    // 学习计划 section
+    (function() {
+      var examDateVal = (s.examDate || '');
+      var dailyTarget = s.dailyTarget || '';
+      var daysLeft = getExamDaysLeft();
+      var stats = countMasteredQuestions();
+      var suggestedDaily = getDailyTarget();
+      var todayCompleted = getTodayCompleted();
+      var summaryHtml = '';
+      if (examDateVal) {
+        var daysText = daysLeft > 0 ? '距考试 <b>' + daysLeft + '</b> 天' : (daysLeft === 0 ? '今天考试！' : '考试日期已过');
+        summaryHtml = '<div style="margin-top:4px;font-size:12px;color:var(--text-secondary)">' + daysText + ' · 题库共 <b>' + stats.total + '</b> 题 · 已掌握 <b>' + stats.mastered + '</b> 题 · 未掌握 <b>' + stats.unmastered + '</b> 题</div>';
+        if (suggestedDaily > 0) {
+          summaryHtml += '<div style="margin-top:2px;font-size:12px;color:var(--primary)">📌 建议每天至少 <b>' + suggestedDaily + '</b> 题</div>';
+        }
+        if (dailyTarget > 0) {
+          summaryHtml += '<div style="margin-top:2px;font-size:12px;color:' + (todayCompleted >= dailyTarget ? 'var(--success)' : 'var(--text-tertiary)') + '">今日已完成 ' + todayCompleted + '/' + dailyTarget + ' 题' + (todayCompleted >= dailyTarget ? ' ✅' : '') + '</div>';
+        }
+      } else {
+        summaryHtml = '<div style="margin-top:4px;font-size:12px;color:var(--text-tertiary)">设置考试日期后，自动帮你规划每天背诵量</div>';
+      }
+      var planHtml = '<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">' +
+        '<div><div class="setting-label">📅 考试日期</div>' +
+          '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:6px;width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px">' +
+        '</div>' +
+        summaryHtml +
+        '<div style="margin-top:4px"><div class="setting-label">每日目标（题数）</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-top:6px">' +
+            '<input type="number" id="dailyTargetInput" value="' + dailyTarget + '" placeholder="' + (suggestedDaily || '自定义') + '" min="1" onchange="saveDailyTarget(parseInt(this.value)||0)" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px">' +
+            '<span style="font-size:12px;color:var(--text-tertiary);white-space:nowrap">题/天</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">留空则根据考试日期和未掌握题数自动计算</div>' +
+        '</div>' +
+      '</div>';
+      return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'studyplan\')"><span>📅 学习计划</span><span class="section-arrow" id="arrow_studyplan">▲</span></div>' +
+        '<div class="section-body" id="body_studyplan">' + planHtml + '</div></div>';
+    })() +
+
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v15</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v16</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
