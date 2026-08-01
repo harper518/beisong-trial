@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="记忆填空"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" id="themeColorMeta" content="#f0fdfa"/>
-<title>挖空背诵工具 v11 · 小阮出品</title>
+<title>挖空背诵工具 v12 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -313,6 +313,18 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .toggle .slider::before{content:"";position:absolute;height:25px;width:25px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:var(--transition);box-shadow:0 2px 4px rgba(0,0,0,.15)}
 .toggle input:checked+.slider{background:var(--primary)}
 .toggle input:checked+.slider::before{transform:translateX(20px)}
+/* 头像 */
+.avatar-area{display:flex;align-items:center;justify-content:flex-end;padding:0 4px 8px}
+.avatar-circle{width:52px;height:52px;border-radius:50%;background:var(--bg-input);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:all var(--transition);flex-shrink:0}
+.avatar-circle:active{transform:scale(.92)}
+.avatar-circle img{width:100%;height:100%;object-fit:cover}
+.avatar-placeholder{font-size:24px;line-height:1}
+/* 可折叠 section */
+.section-header{cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-left:4px;-webkit-tap-highlight-color:transparent;user-select:none;min-height:32px}
+.section-arrow{font-size:10px;color:var(--text-tertiary);transition:transform .25s;margin-left:8px;flex-shrink:0}
+.section-arrow.collapsed{transform:rotate(-90deg)}
+.section-body{overflow:hidden;transition:max-height .3s ease,opacity .3s ease}
+.section-body.collapsed{max-height:0!important;opacity:0;margin:0}
 
 /* ============ Preview (Import) ============ */
 .preview-answer{line-height:2.6;font-size:var(--font-size-lg);letter-spacing:.08em;user-select:none;-webkit-user-select:none}
@@ -392,6 +404,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   <input type="file" id="pdfFileInput" class="file-input" accept=".pdf,application/pdf" onchange="handlePdfImport(this)">
   <input type="file" id="fileQuestionsInput" class="file-input" accept=".csv,.txt,.md" onchange="handleSplitFileImportQ(this)">
   <input type="file" id="fileAnswersInput" class="file-input" accept=".csv,.txt,.md" onchange="handleSplitFileImportA(this)">
+  <input type="file" id="avatarFileInput" class="file-input" accept="image/*" onchange="handleAvatarUpload(this)">
 </div>
 
 <!-- ====== 做题页面 ====== -->
@@ -5599,13 +5612,20 @@ function renderSettings() {
   var colors = ['teal', 'purple', 'blue', 'rose', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage'];
   var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', rose: '#e11d48', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b' };
 
-  c.innerHTML = '<div class="section"><div class="section-title">数据管理</div>' +
-    '<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">' +
+  c.innerHTML =
+    // 头像区域（开关打开时显示）
+    (s.showAvatar ? '<div class="avatar-area">' +
+      '<div class="avatar-circle" onclick="document.getElementById(\'avatarFileInput\').click()" title="点击上传头像">' +
+        (s.avatar ? '<img src="' + s.avatar + '" alt="头像">' : '<span class="avatar-placeholder">📷</span>') +
+      '</div></div>' : '') +
+    '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'dataMgmt\')"><span>数据管理</span><span class="section-arrow" id="arrow_dataMgmt">▲</span></div>' +
+    '<div class="section-body" id="body_dataMgmt"><div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">' +
       '<button class="btn btn-primary btn-block" onclick="shareBackupFile()" style="font-size:15px">📤 分享/导出备份文件</button>' +
       '<div style="font-size:12px;color:var(--text-tertiary);text-align:center;margin:-4px 0 4px">📱 手机直接分享到微信/QQ/存文件 &nbsp;|&nbsp; 💻 电脑自动下载</div>' +
-      '<div style="display:flex;gap:8px">' +
-        '<button class="btn btn-outline" style="flex:1" onclick="copyBackup()">📋 复制备份码</button>' +
-        '<button class="btn btn-outline" style="flex:1" onclick="shareBackupCode()">📤 分享备份码</button>' +
+      '<div style="display:flex;gap:0;border:2px solid var(--border);border-radius:10px;overflow:hidden">' +
+        '<button class="btn btn-outline" style="flex:1;border:none;border-radius:0;padding:12px 8px;font-size:14px" onclick="copyBackup()">📋 复制</button>' +
+        '<div style="width:2px;background:var(--border);flex-shrink:0"></div>' +
+        '<button class="btn btn-outline" style="flex:1;border:none;border-radius:0;padding:12px 8px;font-size:14px" onclick="shareBackupCode()">📤 分享</button>' +
       '</div>' +
       '<button class="btn btn-outline btn-block" id="restoreToggleBtn" onclick="toggleRestoreSection()">📥 粘贴备份码恢复</button>' +
       '<div id="restoreSection" style="display:none;margin-top:12px;padding:14px;background:var(--bg-input);border-radius:10px">' +
@@ -5620,7 +5640,7 @@ function renderSettings() {
         '</div>' +
       '</div>' +
       '<button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空错题本</button>' +
-    '</div></div>' +
+    '</div></div></div>' +
 
     // 📊 存储状态
     (function() {
@@ -5658,8 +5678,8 @@ function renderSettings() {
         backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;font-size:12px;color:#2e7d32">✅ 今天已备份</div>';
       }
 
-      return '<div class="section"><div class="section-title">📊 存储状态</div>' +
-        '<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">' +
+      return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'storage\')"><span>📊 存储状态</span><span class="section-arrow" id="arrow_storage">▲</span></div>' +
+        '<div class="section-body" id="body_storage"><div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">' +
           '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
             '<span style="font-size:14px;font-weight:600">' + statusText + '</span>' +
             '<span style="font-size:13px;color:var(--text-secondary)">' + sizeInfo + ' / ' + storageMax + ' MB</span>' +
@@ -5682,17 +5702,36 @@ function renderSettings() {
               '<div style="font-size:11px;color:var(--text-tertiary)">道错题</div>' +
             '</div>' +
           '</div>' +
-        '</div></div>';
+          // 各类型数据占用明细
+          (function() {
+            var banksSize = new Blob([JSON.stringify(appData.banks || {})]).size;
+            var wrongSize = new Blob([JSON.stringify(appData.wrongBooks || {})]).size;
+            var settingsSize = new Blob([JSON.stringify(appData.settings || {})]).size;
+            var avatarSize = ((appData.settings || {}).avatar || '').length * 2;
+            // 其他：进度、dailyStats、roundCount、unicorns 等
+            var other = { dailyStats: appData.dailyStats, roundCount: appData.roundCount, unicorns: appData.unicorns, weekStats: appData.weekStats };
+            var otherSize = new Blob([JSON.stringify(other)]).size;
+            function fmtSz(bytes) { return bytes >= 1024 ? (bytes/1024).toFixed(0)+'KB' : bytes+'B'; }
+            return '<div style="margin-top:6px;padding:8px 12px;background:var(--bg-input);border-radius:8px;font-size:11px;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:4px 12px;line-height:1.8">' +
+              '<span>📦 题库 ' + fmtSz(banksSize) + '</span>' +
+              '<span>📝 错题 ' + fmtSz(wrongSize) + '</span>' +
+              '<span>⚙️ 设置 ' + fmtSz(settingsSize) + '</span>' +
+              '<span>📈 进度 ' + fmtSz(otherSize) + '</span>' +
+              '<span>🖼️ 头像 ' + fmtSz(avatarSize) + '</span>' +
+            '</div>';
+          })() +
+        '</div></div></div>';
     })() +
 
-    '<div class="section"><div class="section-title">挖空设置</div>' +
-      '<div class="setting-item"><div><div class="setting-label">默认挖空密度</div><div class="setting-desc">每道题的挖空数量，做题时随时可调</div></div>' +
+    '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'blanks\')"><span>挖空设置</span><span class="section-arrow" id="arrow_blanks">▲</span></div>' +
+      '<div class="section-body" id="body_blanks"><div class="setting-item"><div><div class="setting-label">默认挖空密度</div><div class="setting-desc">每道题的挖空数量，做题时随时可调</div></div>' +
         '<div class="segmented" id="settingsDensity">' +
           '<button class="seg' + (density === 'low' ? ' active' : '') + '" data-v="low" onclick="updateDensitySetting(\'low\', this)">低</button>' +
           '<button class="seg' + (density === 'high' ? ' active' : '') + '" data-v="high" onclick="updateDensitySetting(\'high\', this)">高</button>' +
-        '</div></div></div>' +
+        '</div></div></div></div>' +
 
-    '<div class="section"><div class="section-title">语音</div>' +
+    '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'voice\')"><span>语音</span><span class="section-arrow" id="arrow_voice">▲</span></div>' +
+      '<div class="section-body" id="body_voice">' +
       '<div class="setting-item"><div><div class="setting-label">语音朗读</div><div class="setting-desc">使用手机 TTS 朗读，再次点击暂停</div></div>' +
         '<label class="toggle"><input type="checkbox" id="voiceToggle"' + (s.voiceEnabled ? ' checked' : '') + ' onchange="saveSetting(\'voiceEnabled\', this.checked)"><span class="slider"></span></label></div>' +
       '<div class="setting-item"><div><div class="setting-label">朗读声音</div><div class="setting-desc" id="voiceNameVal">' + (s.voiceName || '自动选择') + '</div></div>' +
@@ -5702,9 +5741,10 @@ function renderSettings() {
       '<div class="setting-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc" id="rateVal">' + (s.voiceRate || 0.9) + 'x</div></div>' +
         '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voiceRate || 0.9) + '" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>' +
       '<div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">' + (s.voicePitch || 1.0) + 'x</div></div>' +
-        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voicePitch || 1.0) + '" step="0.1" oninput="updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div>' +
+        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voicePitch || 1.0) + '" step="0.1" oninput="updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div></div>' +
 
-    '<div class="section"><div class="section-title">外观</div>' +
+    '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'appearance\')"><span>外观</span><span class="section-arrow" id="arrow_appearance">▲</span></div>' +
+      '<div class="section-body" id="body_appearance">' +
       '<div class="setting-item"><div><div class="setting-label">夜间模式</div><div class="setting-desc">暗色主题，夜间刷题更护眼</div></div>' +
         '<label class="toggle"><input type="checkbox" id="darkToggle"' + (s.darkMode ? ' checked' : '') + ' onchange="saveSetting(\'darkMode\', this.checked)"><span class="slider"></span></label></div>' +
       '<div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">' + (colorNames[s.color||'teal']) + '</div></div>' +
@@ -5715,15 +5755,99 @@ function renderSettings() {
         '</div></div>' +
       '<div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">' + s.fontSize + 'px</div></div>' +
         '<div style="display:flex;align-items:center;gap:6px;min-width:120px;flex:1;max-width:180px"><span style="font-size:12px;flex-shrink:0">A</span><input type="range" min="14" max="24" value="' + s.fontSize + '" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))" style="flex:1;min-width:0"><span style="font-size:16px;font-weight:700;flex-shrink:0">A</span></div></div>' +
-    '</div>' +
+      '<div class="setting-item"><div><div class="setting-label">显示头像</div><div class="setting-desc">开启后在设置页右上角上传头像</div></div>' +
+        '<label class="toggle"><input type="checkbox" id="avatarToggle"' + (s.showAvatar ? ' checked' : '') + ' onchange="toggleAvatar(this.checked)"><span class="slider"></span></label></div>' +
+    '</div></div>' +
 
-    '<div class="section"><div class="section-title">关于</div>' +
+    '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
+      '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div><span style="font-size:13px;color:var(--text-secondary);font-weight:600">v11</span></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div><span style="font-size:13px;color:var(--text-secondary);font-weight:600">v12</span></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
-    '</div>';
+    '</div></div>';
+  // 应用折叠状态
+  var collapsed = s.collapsedSections || {};
+  Object.keys(collapsed).forEach(function(k) {
+    if (collapsed[k]) applyCollapseState(k, true);
+  });
   loadVoices();
+}
+
+// 折叠/展开 section，状态持久化到 settings
+function toggleSection(sectionId) {
+  var collapsed = appData.settings.collapsedSections || {};
+  var isNow = !collapsed[sectionId];
+  collapsed[sectionId] = isNow;
+  appData.settings.collapsedSections = collapsed;
+  debouncedSaveData(appData);
+  applyCollapseState(sectionId, isNow);
+}
+
+function applyCollapseState(sectionId, isCollapsed) {
+  var body = document.getElementById('body_' + sectionId);
+  var arrow = document.getElementById('arrow_' + sectionId);
+  if (body) {
+    if (isCollapsed) {
+      body.style.maxHeight = '0px';
+      body.style.opacity = '0';
+      body.style.margin = '0';
+    } else {
+      body.style.maxHeight = body.scrollHeight + 'px';
+      body.style.opacity = '1';
+      body.style.margin = '';
+    }
+  }
+  if (arrow) {
+    if (isCollapsed) arrow.classList.add('collapsed');
+    else arrow.classList.remove('collapsed');
+  }
+}
+
+// 头像开关
+function toggleAvatar(checked) {
+  saveSetting('showAvatar', checked);
+  if (!checked) {
+    // 关闭时清除头像数据
+    appData.settings.avatar = '';
+    debouncedSaveData(appData);
+    renderSettings();
+  } else {
+    renderSettings();
+    // 打开时刷新头像区域高度
+    setTimeout(function() {
+      var body = document.getElementById('body_appearance');
+      if (body) body.style.maxHeight = body.scrollHeight + 'px';
+    }, 100);
+  }
+}
+
+// 头像上传
+function handleAvatarUpload(el) {
+  var file = el.files[0]; if (!file) return;
+  if (file.size > 500 * 1024) { showToast('头像图片不能超过 500KB'); el.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    // 压缩到 128x128 以内
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var size = Math.min(img.width, img.height, 128);
+      canvas.width = size; canvas.height = size;
+      var ctx = canvas.getContext('2d');
+      var sx = (img.width - size) / 2;
+      var sy = (img.height - size) / 2;
+      ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      appData.settings.avatar = dataUrl;
+      debouncedSaveData(appData);
+      renderSettings();
+      showToast('✅ 头像已保存');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  el.value = '';
 }
 
 	function checkUpdate() {
