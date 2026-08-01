@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v26 · 小阮出品</title>
+<title>挖空背诵工具 v27 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1335,7 +1335,7 @@ function extractKeywords(text, count, seed) {
       if (/[，,。！!？?、；;：:""''（）()《》【】…—\-·・\d]/.test(phrase[0]) ||
           /[，,。！!？?、；;：:""''（）()《》【】…—\-·・\d]/.test(phrase[phrase.length - 1])) continue;
       // 排除短语中间含有编号标记的（如"光反应(2)暗"会把(2)吃掉）
-      if (/[（）()《》【】·・•]/.test(phrase)) continue;
+      if (/[（）()《》【】·・•①②③④⑤⑥⑦⑧⑨⑩]/.test(phrase)) continue;
             // 纯数字/序号不要
       if (/^[\d一二三四五六七八九十百千万亿\.\、\)）]+$/.test(phrase)) continue;
       let score = len * 3;
@@ -1805,15 +1805,22 @@ function showDailyInsightCard() {
   var insight = getDailyInsight();
   var si = appData.settings.dailyInsight || {};
   var canRefresh = !si.refreshed;
-  var width = Math.min(400, window.innerWidth - 40);
-  var html = "<div style=\"background:linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);border-radius:20px;padding:28px 24px;color:#e0e0e0;max-width:" + width + "px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);position:relative\">" +
-    (canRefresh ? "<button onclick=\"event.stopPropagation();refreshDailyInsight();showDailyInsightCard();\" style=\"position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;min-width:36px;min-height:36px\" title=\"刷新（每天仅一次）\">🔄</button>" :
-     "<span style=\"position:absolute;top:16px;right:16px;font-size:11px;color:rgba(255,255,255,0.3)\">今日已刷新</span>") +
-    "<div style=\"font-size:32px;margin-bottom:16px\">💡</div>" +
-    "<div style=\"font-size:17px;line-height:1.9;font-weight:500\">" + escapeHtml(insight) + "</div>" +
-    "<div style=\"margin-top:20px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;color:rgba(255,255,255,0.4);text-align:right\">每日洞见 · 基于认知科学与心理学</div>" +
-  "</div>";
-  showInfoModal("每日洞见", html, "关闭");
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:420px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px 20px;max-height:75dvh;overflow-y:auto">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+      '<h3 style="margin:0;font-size:18px">💡 每日洞见</h3>' +
+      (canRefresh
+        ? '<button onclick="event.stopPropagation();refreshDailyInsight();this.closest(\'.modal-overlay\').remove();showDailyInsightCard();" style="background:var(--primary-light);border:1px solid var(--primary-soft);color:var(--primary);padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap">🔄 换一条</button>'
+        : '<span style="font-size:11px;color:var(--text-tertiary)">今日已刷新</span>') +
+    '</div>' +
+    '<div style="background:linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #f0fdfa 100%);border-radius:14px;padding:20px 18px;margin-bottom:12px">' +
+      '<div style="font-size:16px;line-height:2;color:var(--text)">' + escapeHtml(insight) + '</div>' +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--text-tertiary);text-align:right">每日洞见 · 基于认知科学与心理学</div>' +
+  '</div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
 }
 
 // ====== 今日学习摘要 ======
@@ -1851,24 +1858,25 @@ function showTodaySummary() {
       }
     }
   }
-  var width = Math.min(380, window.innerWidth - 40);
-  var cardHtml = "<div style=\"background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);border-radius:20px;padding:24px;color:#fff;text-align:center;max-width:" + width + "px;margin:0 auto;box-shadow:0 20px 60px rgba(102,126,234,0.4)\">" +
-    "<div style=\"font-size:14px;opacity:0.85;margin-bottom:4px\">" + today + "</div>" +
-    "<div style=\"font-size:28px;font-weight:800;margin-bottom:16px\">📋 今日学习摘要</div>" +
-    "<div style=\"display:flex;justify-content:center;gap:24px;margin-bottom:20px;flex-wrap:wrap\">" +
-      "<div style=\"text-align:center\"><div style=\"width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;border:3px solid rgba(255,255,255,0.3)\"><div style=\"text-align:center\"><div style=\"font-size:22px;font-weight:800\">" + Math.floor(duration / 60) + "</div><div style=\"font-size:10px;opacity:0.8\">分钟</div></div></div><div style=\"font-size:11px;opacity:0.8\">练习时长</div></div>" +
-      "<div style=\"text-align:center\"><div style=\"width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;border:3px solid rgba(255,255,255,0.3)\"><div style=\"text-align:center\"><div style=\"font-size:22px;font-weight:800\">" + todayCards + "</div><div style=\"font-size:10px;opacity:0.8\">题</div></div></div><div style=\"font-size:11px;opacity:0.8\">今日做题</div></div>" +
-      "<div style=\"text-align:center\"><div style=\"width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;border:3px solid rgba(255,255,255,0.3)\"><div style=\"text-align:center\"><div style=\"font-size:22px;font-weight:800\">" + (totalCards > 0 ? Math.round(mastered / totalCards * 100) : 0) + "%</div><div style=\"font-size:10px;opacity:0.8\">掌握率</div></div></div><div style=\"font-size:11px;opacity:0.8\">总进度</div></div>" +
-    "</div>" +
-    "<div style=\"background:rgba(255,255,255,0.12);border-radius:14px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:center;font-size:13px\">" +
-      (dailyTarget > 0 ? "<span>🎯 目标 " + todayCards + "/" + dailyTarget + " 题" + (todayCards >= dailyTarget ? " ✅" : "") + "</span>" : "") +
-      "<span>📱 切屏 " + switches + " 次</span>" +
-      "<span>📦 总题库 " + totalCards + " 题</span>" +
-      "<span>✅ 已掌握 " + mastered + " 题</span>" +
-    "</div>" +
-    "<div style=\"margin-top:16px;font-size:12px;opacity:0.6\">点击任意处关闭</div>" +
-  "</div>";
-  showInfoModal("今日学习摘要", cardHtml, "关闭");
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:400px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px 20px;max-height:75dvh;overflow-y:auto">' +
+    '<h3 style="margin:0 0 4px;font-size:18px">📋 今日学习摘要</h3>' +
+    '<p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">' + today + '</p>' +
+    '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">' +
+      '<div style="text-align:center;background:var(--bg);border-radius:14px;padding:14px 16px;min-width:70px"><div style="font-size:24px;font-weight:800;color:var(--primary)">' + Math.floor(duration / 60) + '</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px">分钟</div></div>' +
+      '<div style="text-align:center;background:var(--bg);border-radius:14px;padding:14px 16px;min-width:70px"><div style="font-size:24px;font-weight:800;color:var(--primary)">' + todayCards + '</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px">今日做题</div></div>' +
+      '<div style="text-align:center;background:var(--bg);border-radius:14px;padding:14px 16px;min-width:70px"><div style="font-size:24px;font-weight:800;color:var(--primary)">' + (totalCards > 0 ? Math.round(mastered / totalCards * 100) : 0) + '%</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px">总掌握率</div></div>' +
+    '</div>' +
+    '<div style="background:var(--bg);border-radius:12px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;font-size:13px">' +
+      (dailyTarget > 0 ? '<span>🎯 目标 ' + todayCards + '/' + dailyTarget + ' 题' + (todayCards >= dailyTarget ? ' ✅' : '') + '</span>' : '') +
+      '<span>📱 切屏 ' + switches + ' 次</span>' +
+      '<span>📦 总题库 ' + totalCards + ' 题</span>' +
+      '<span>✅ 已掌握 ' + mastered + ' 题</span>' +
+    '</div>' +
+  '</div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
 }
 
 // iPad 友好的题库选择弹窗（替代原生 select）
@@ -4906,6 +4914,16 @@ function renderPracticeCard() {
   }
 }
 
+// 在 ①②③ 序号前插入换行（保留序号不被挖空吃掉）
+function fmtAnswerSeg(seg, isFirst) {
+  var result = seg.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n$1');
+  if (isFirst) result = result.replace(/^\n/, '');
+  return escNl(result);
+}
+function fmtAnswerSegLast(seg) {
+  return escNl(seg.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n$1'));
+}
+
 function renderCardWithBlanks(card, revealed, hideQ) {
   const q = card.question.trim();
   const a = card.answer.trim();
@@ -4942,7 +4960,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
   for (let i = 0; i < blanks.length; i++) {
     const b = blanks[i];
     const saved = (practiceState.answers[card.id] || {})[i] || '';
-    ah += escNl(text.substring(le, b.start));
+    ah += fmtAnswerSeg(text.substring(le, b.start), i === 0);
     if (revealed) {
       ah += `<span class="revealed-text">${escNl(b.text)}</span>`;
     } else {
@@ -4950,7 +4968,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     }
     le = b.end;
   }
-  ah += escNl(text.substring(le));
+  ah += fmtAnswerSegLast(text.substring(le));
   h += `<div style="line-height:1.9">${ah}</div>`;
   return h;
 }
@@ -5119,6 +5137,11 @@ function applyCheckToInputs(card) {
       }
     }
     saveData(appData);
+  }
+
+  // 自动朗读答案（仅全对时）
+  if (appData.settings.autoReadAloud && !hasWrong) {
+    setTimeout(function() { speakCard(); }, 500);
   }
 
   // 🧠 自适应难度：连续答对3次自动升密度，连续答错2次自动降密度
@@ -6918,6 +6941,8 @@ function renderSettings() {
       '<div class="section-body" id="body_voice">' +
       '<div class="setting-item"><div><div class="setting-label">语音朗读</div><div class="setting-desc">使用手机 TTS 朗读，再次点击暂停</div></div>' +
         '<label class="toggle"><input type="checkbox" id="voiceToggle"' + (s.voiceEnabled ? ' checked' : '') + ' onchange="saveSetting(\'voiceEnabled\', this.checked)"><span class="slider"></span></label></div>' +
+      '<div class="setting-item"><div><div class="setting-label">做完题自动朗读答案</div><div class="setting-desc">全部填空后自动读出答案内容</div></div>' +
+        '<label class="toggle"><input type="checkbox" id="autoReadToggle"' + (s.autoReadAloud ? ' checked' : '') + ' onchange="saveSetting(\'autoReadAloud\', this.checked)"><span class="slider"></span></label></div>' +
       '<div class="setting-item"><div><div class="setting-label">朗读声音</div><div class="setting-desc" id="voiceNameVal">' + (s.voiceName || '自动选择') + '</div></div>' +
         '<input type="hidden" id="voiceSelect" value="' + (s.voiceName || '') + '"><button class="btn btn-ghost btn-sm" id="voicePickBtn" onclick="showVoicePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">' + (s.voiceName || '自动选择') + ' ▾</button></div>' +
       '<div class="setting-item"><div><div class="setting-label">朗读模式</div><div class="setting-desc" id="readModeVal">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + '</div></div>' +
@@ -6983,21 +7008,48 @@ function renderSettings() {
       planHtml += (function() {
         var dates = (appData.settings || {}).studyDates || {};
         var today = new Date();
-        var html = '<div style="margin-top:12px"><div class="setting-label">📊 学习记录（近12周）</div>';
-        html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:8px">';
-        for (var d = 83; d >= 0; d--) {
+        // 连续学习天数
+        var streak = 0;
+        var cd = new Date(today);
+        while (true) {
+          var ck = cd.toISOString().substring(0, 10);
+          if (dates[ck] && dates[ck] > 0) { streak++; cd.setDate(cd.getDate() - 1); }
+          else break;
+        }
+        var dl = ['一','二','三','四','五','六','日'];
+        var html = '<div style="margin-top:12px"><div class="setting-label">📊 学习记录（近12周）';
+        if (streak > 0) html += ' · 🔥 连续 <b>' + streak + '</b> 天';
+        html += '</div><div style="text-align:center;margin-top:10px">';
+        // 星期表头
+        var fd = new Date(today); fd.setDate(fd.getDate() - 83);
+        var sd = fd.getDay(); sd = sd === 0 ? 6 : sd - 1;
+        html += '<div style="display:inline-flex;gap:5px;margin-bottom:3px;font-size:10px;color:var(--text-tertiary)">';
+        for (var wi = 0; wi < 7; wi++) html += '<span style="width:14px;text-align:center">' + dl[(sd + wi) % 7] + '</span>';
+        html += '</div>';
+        // 月份标记
+        html += '<div style="position:relative;height:14px;font-size:9px;color:var(--text-tertiary);margin-bottom:2px">';
+        var lm = -1;
+        for (var mi = 0; mi < 84; mi++) {
+          var mdt = new Date(today); mdt.setDate(mdt.getDate() - (83 - mi));
+          var cm = mdt.getMonth();
+          if (cm !== lm) { html += '<span style="position:absolute;left:' + (Math.floor(mi / 7) * 19) + 'px">' + (cm + 1) + '月</span>'; lm = cm; }
+        }
+        html += '</div>';
+        // 方块网格
+        html += '<div style="display:inline-flex;flex-wrap:wrap;gap:5px;max-width:133px;vertical-align:top">';
+        for (var d = 0; d < 84; d++) {
           var dt = new Date(today);
-          dt.setDate(dt.getDate() - d);
+          dt.setDate(dt.getDate() - (83 - d));
           var dateStr = dt.toISOString().substring(0, 10);
           var count = dates[dateStr] || 0;
           var color = count >= 20 ? '#2e7d32' : count >= 10 ? '#4caf50' : count >= 5 ? '#a5d6a7' : count > 0 ? '#c8e6c9' : '#e0e0e0';
           var title = dateStr + (count > 0 ? ': ' + count + ' 题' : ': 未学习');
-          html += '<div style="width:12px;height:12px;border-radius:2px;background:' + color + '" title="' + title + '"></div>';
-          if (d % 7 === 0 && d > 0) html += '</div><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
+          html += '<div style="width:14px;height:14px;border-radius:3px;background:' + color + ';cursor:pointer" title="' + title + '" onclick="event.stopPropagation();showToast(\'' + dateStr + ': ' + (count > 0 ? count + ' 题' : '未学习') + '\')"></div>';
         }
         html += '</div>';
-        html += '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;color:var(--text-tertiary)">少<span style="width:10px;height:10px;border-radius:2px;background:#e0e0e0"></span><span style="width:10px;height:10px;border-radius:2px;background:#c8e6c9"></span><span style="width:10px;height:10px;border-radius:2px;background:#a5d6a7"></span><span style="width:10px;height:10px;border-radius:2px;background:#4caf50"></span><span style="width:10px;height:10px;border-radius:2px;background:#2e7d32"></span>多</div>';
-        html += '</div>';
+        // 图例
+        html += '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;font-size:10px;color:var(--text-tertiary)">少<span style="width:12px;height:12px;border-radius:2px;background:#e0e0e0"></span><span style="width:12px;height:12px;border-radius:2px;background:#c8e6c9"></span><span style="width:12px;height:12px;border-radius:2px;background:#a5d6a7"></span><span style="width:12px;height:12px;border-radius:2px;background:#4caf50"></span><span style="width:12px;height:12px;border-radius:2px;background:#2e7d32"></span>多</div>';
+        html += '</div></div>';
         return html;
       })();
       return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'studyplan\')"><span>📅 学习计划</span><span class="section-arrow" id="arrow_studyplan">▲</span></div>' +
@@ -7038,7 +7090,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v26</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v27</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
