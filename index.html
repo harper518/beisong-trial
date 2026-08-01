@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v25 · 小阮出品</title>
+<title>挖空背诵工具 v26 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1334,7 +1334,9 @@ function extractKeywords(text, count, seed) {
       // 不能以标点、序号、括号开头或结尾
       if (/[，,。！!？?、；;：:""''（）()《》【】…—\-·・\d]/.test(phrase[0]) ||
           /[，,。！!？?、；;：:""''（）()《》【】…—\-·・\d]/.test(phrase[phrase.length - 1])) continue;
-      // 纯数字/序号不要
+      // 排除短语中间含有编号标记的（如"光反应(2)暗"会把(2)吃掉）
+      if (/[（）()《》【】·・•]/.test(phrase)) continue;
+            // 纯数字/序号不要
       if (/^[\d一二三四五六七八九十百千万亿\.\、\)）]+$/.test(phrase)) continue;
       let score = len * 3;
       // 得分点关键词大幅加分（学科术语=得分点核心）
@@ -2357,11 +2359,6 @@ function renderBanks() {
     var bannerClass = daysLeft > 30 ? 'green' : daysLeft > 7 ? 'yellow' : daysLeft > 0 ? 'red' : 'gray';
     var bannerEmoji = daysLeft > 30 ? '📅' : daysLeft > 7 ? '📅' : daysLeft > 0 ? '🚨' : '✅';
     var bannerText = daysLeft > 0 ? '距考试还有 <b>' + daysLeft + '</b> 天' : '考试日期已过';
-    var stats = countMasteredQuestions();
-    var suggestText = '';
-    if (daysLeft > 0 && stats.unmastered > 0) {
-      suggestText = ' · 未掌握 <b>' + stats.unmastered + '</b> 题 · 建议每天 <b>' + dailyTarget + '</b> 题';
-    }
     var progressHtml = '';
     if (dailyTarget > 0) {
       var pct = Math.min(100, Math.round((todayCompleted / dailyTarget) * 100));
@@ -2379,9 +2376,7 @@ function renderBanks() {
     }
     examBannerHtml = '<div class="exam-banner ' + bannerClass + '" onclick="switchTab(\'practice\')">' +
       '<div class="exam-banner-main">' +
-        '<div class="exam-banner-title">' + bannerEmoji + ' ' + bannerText + suggestText + '</div>' +
-        dailyStatsHtml +
-        progressHtml +
+        '<div class="exam-banner-title">' + bannerEmoji + ' ' + bannerText + '</div>' +
       '</div>' +
     '</div>';
   }
@@ -6966,7 +6961,7 @@ function renderSettings() {
       var planHtml = '';
       // 考试日期
       planHtml += '<div style="margin-bottom:8px"><div class="setting-label">📅 考试日期</div>' +
-        '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:4px;width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px;box-sizing:border-box">' +
+        '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:4px;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px;box-sizing:border-box;max-width:220px">' +
       '</div>';
       // 晚间复习模式
       planHtml += '<div style="margin-top:8px"><div class="setting-label">🌙 晚间复习模式</div>' +
@@ -7013,41 +7008,37 @@ function renderSettings() {
     (function() {
       var insight = getDailyInsight();
       var si = appData.settings.dailyInsight || {};
-      var preview = insight.length > 50 ? insight.substring(0, 50) + '...' : insight;
-      return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'dailyinsight\')"><span>💡 每日洞见</span><span class="section-arrow" id="arrow_dailyinsight">▲</span></div>' +
-        '<div class="section-body" id="body_dailyinsight">' +
-        '<div class="setting-item" style="cursor:pointer" onclick="showDailyInsightCard()">' +
-        '<div><div class="setting-label">' + escapeHtml(preview) + '</div>' +
-        '<div class="setting-desc" style="margin-top:4px">' + (si.refreshed ? '今日已刷新 · 点击查看完整内容' : '点击查看完整内容 · 每天可刷新一次') + '</div></div>' +
-        '<button onclick="event.stopPropagation();refreshDailyInsight()" style="background:var(--primary-light);border:1px solid var(--primary-soft);color:var(--primary);padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap"' +
-        (si.refreshed ? ' disabled style="background:var(--bg);border-color:var(--border);color:var(--text-tertiary);padding:6px 14px;border-radius:20px;font-size:13px;cursor:default;white-space:nowrap"' : '') +
-        '>🔄 换一条</button>' +
-        '</div></div></div>';
+      var preview = insight.length > 40 ? insight.substring(0, 40) + '...' : insight;
+      return '<div class="section"><div class="setting-item" style="cursor:pointer" onclick="showDailyInsightCard()">' +
+        '<div><div class="setting-label">💡 每日洞见</div>' +
+        '<div class="setting-desc">' + escapeHtml(preview) + '</div></div>' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+        '<span style="font-size:11px;color:var(--text-tertiary)">' + (si.refreshed ? '已刷新' : '可刷新') + '</span>' +
+        '<span style="color:var(--text-tertiary)">→</span></div>' +
+        '</div></div>';
     })() +
 
     // 今日学习摘要
     (function() {
       var brief = getTodaySummaryBrief();
       if (!brief) {
-        return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'todaysummary\')"><span>📋 今日学习摘要</span><span class="section-arrow" id="arrow_todaysummary">▲</span></div>' +
-          '<div class="section-body" id="body_todaysummary">' +
-          '<div class="setting-item" style="cursor:pointer" onclick="showTodaySummary()">' +
-          '<div><div class="setting-label">今天还没有学习记录</div>' +
-          '<div class="setting-desc">开始刷题后会在这里显示今日摘要</div></div></div>' +
+        return '<div class="section"><div class="setting-item" style="cursor:pointer" onclick="showTodaySummary()">' +
+          '<div><div class="setting-label">📋 今日学习摘要</div>' +
+          '<div class="setting-desc">今天还没有学习记录</div></div>' +
+          '<div style="display:flex;align-items:center">→</div>' +
           '</div></div>';
       }
-      return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'todaysummary\')"><span>📋 今日学习摘要</span><span class="section-arrow" id="arrow_todaysummary">▲</span></div>' +
-        '<div class="section-body" id="body_todaysummary">' +
-        '<div class="setting-item" style="cursor:pointer" onclick="showTodaySummary()">' +
-        '<div><div class="setting-label">' + escapeHtml(brief) + '</div>' +
-        '<div class="setting-desc">点击查看详细统计</div></div><div style="display:flex;align-items:center">→</div>' +
-        '</div></div></div>';
+      return '<div class="section"><div class="setting-item" style="cursor:pointer" onclick="showTodaySummary()">' +
+        '<div><div class="setting-label">📋 今日学习摘要</div>' +
+        '<div class="setting-desc">' + escapeHtml(brief) + '</div></div>' +
+        '<div style="display:flex;align-items:center">→</div>' +
+        '</div></div>';
     })() +
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v25</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v26</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
