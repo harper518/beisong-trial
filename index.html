@@ -460,6 +460,11 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   border-bottom-color:var(--success);border-bottom-style:solid;
   background:var(--blank-revealed-bg);color:var(--blank-revealed-text);
 }
+.practice-card .blank-input.peeked{
+  max-width:none !important;min-width:auto;text-align:left;
+  background:var(--blank-revealed-bg);color:var(--blank-revealed-text);
+  border-bottom-color:var(--success);border-bottom-style:solid;
+}
 .practice-card .blank-input.correct{
   border-bottom-color:var(--success);border-bottom-style:solid;
   background:var(--success-light);
@@ -874,9 +879,9 @@ var TIER_FEATURES = {
   basic: ['unlimitedBanks', 'unlimitedQuestions', 'randomNorepeat', 'perQuestionTimer', 'totalTimer',
           'hideQuestion', 'fullVoice', 'readModeSelect', 'shareFile', 'fullSr',
           'heatmap', 'dailySummary', 'wrongFirst', 'bankMerge', 'mixedBank',
-          '16colors', 'koujue'],
+          '16colors', 'koujue', 'voiceRatePitch'],
   pro:   ['mixedBank', 'focusMode', 'pomodoro', 'adaptiveDifficulty', 'achievements',
-          'comboSystem', 'allColors', 'voiceRatePitch', 'dailyInsight', 'avatar',
+          'comboSystem', 'allColors', 'dailyInsight', 'avatar',
           'chapterHeatmap', 'categoryFilter', 'sprintMode', 'starCard',
           'autoReadAloud']
 };
@@ -972,7 +977,7 @@ function showTierCompare() {
     '<tr><td style="text-align:left;padding:6px">朗读声音选择</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">朗读模式选择</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">做完题自动朗读答案</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">语速/音调调节</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">语速/音调调节</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">主题颜色</td><td>8种</td><td>16种</td><td>全部40种</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">间隔重复</td><td>1/2天</td><td>1/2/4/7天</td><td>1/2/4/7天</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">热力图（近12周）</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
@@ -1655,8 +1660,8 @@ function extractKeywords(text, count, seed) {
       // 不能以标点、序号、括号开头或结尾
       if (/[，,。！!？?、；;：:""''（）()《》【】…—\-·・\d]/.test(phrase[0]) ||
           /[，,。！!？?、；;：:""''（）()《》【】…—\-·・\d]/.test(phrase[phrase.length - 1])) continue;
-      // 排除短语中间含有编号标记的（如"光反应(2)暗"会把(2)吃掉）
-      if (/[（）()《》【】·・•①②③④⑤⑥⑦⑧⑨⑩]/.test(phrase)) continue;
+      // 排除短语中间含有编号标记的
+      if (/[《》【】·・•①②③④⑤⑥⑦⑧⑨⑩]/.test(phrase)) continue;
             // 纯数字/序号不要
       if (/^[\d一二三四五六七八九十百千万亿\.\、\)）]+$/.test(phrase)) continue;
       let score = len * 3;
@@ -1670,6 +1675,9 @@ function extractKeywords(text, count, seed) {
       if (/[\d一二三四五六七八九十百千万亿]/.test(phrase) && !/^\d+$/.test(phrase)) score += 3;
       // 在逗号/分号/句号/换行后面紧跟的词（得分点开头）加分
       if (i === 0 || /[，,。；;、\n]/.test(text[i - 1])) score += 5;
+      // 括号内的内容通常是关键信息，加分
+      if (i > 0 && (text[i - 1] === '（' || text[i - 1] === '(')) score += 10;
+      if (i + phrase.length < text.length && (text[i + phrase.length] === '）' || text[i + phrase.length] === ')')) score += 8;
       // 包含多个技术字的更可能是核心概念
       const techCount = (phrase.match(TECH_CHARS) || []).length;
       if (techCount >= 2) score += 4;
@@ -1779,6 +1787,29 @@ function autoGenerateBlanks(cards, density, seed) {
               isAnswer: true
             });
           }
+        }
+      }
+    }
+
+    // 确保每个小点至少有一个空（低密度兜底）
+    for (let pi = 0; pi < pts.length; pi++) {
+      const pt = pts[pi];
+      if (!pt.text.trim()) continue;
+      const ptStart = answerStart + pt.start;
+      const ptEnd = answerStart + pt.start + pt.text.length;
+      const hasBlank = blanks.some(function(b) {
+        return b.start >= ptStart && b.end <= ptEnd;
+      });
+      if (!hasBlank) {
+        const cleanText = pt.text.replace(/^[\d\.\、\)）①②③④⑤⑥⑦⑧⑨⑩\s]+/, '').trim();
+        if (cleanText) {
+          const idx = pt.text.indexOf(cleanText);
+          blanks.push({
+            start: ptStart + idx,
+            end: ptStart + idx + cleanText.length,
+            text: cleanText,
+            isAnswer: true
+          });
         }
       }
     }
@@ -5272,10 +5303,14 @@ function renderPracticeCard() {
         if (inp.classList.contains('peeked')) {
           inp.value = '';
           inp.classList.remove('peeked');
+          inp.removeAttribute('size');
+          inp.style.width = '';
           t.count = 0;
         } else if (t.count >= 2) {
           inp.value = inp.dataset.ans || '';
           inp.classList.add('peeked');
+          inp.setAttribute('size', Math.min((inp.dataset.ans || '').length, 60));
+          inp.style.width = 'auto';
           t.count = 0;
         }
         taps.set(inp, t);
@@ -5288,10 +5323,14 @@ function renderPracticeCard() {
 function fmtAnswerSeg(seg, isFirst) {
   var result = seg.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n$1');
   if (isFirst) result = result.replace(/^\n/, '');
+  // 合并连续换行：防止原文\n + 自动添加\n = 双重<br>造成空行
+  result = result.replace(/\n+/g, '\n');
   return escNl(result);
 }
 function fmtAnswerSegLast(seg) {
-  return escNl(seg.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n$1'));
+  var result = seg.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n$1');
+  result = result.replace(/\n+/g, '\n');
+  return escNl(result);
 }
 
 function renderCardWithBlanks(card, revealed, hideQ) {
@@ -7372,10 +7411,14 @@ function renderSettings() {
         '<input type="hidden" id="voiceSelect" value="' + (s.voiceName || '') + '"><button class="btn btn-ghost btn-sm" id="voicePickBtn" onclick="showVoicePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">' + (s.voiceName || '自动选择') + ' ▾</button></div>' +
       '<div class="setting-item"><div><div class="setting-label">朗读模式</div><div class="setting-desc" id="readModeVal">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + '</div></div>' +
         '<input type="hidden" id="readModeSelect" value="' + (s.readMode||'once') + '"><button class="btn btn-ghost btn-sm" id="readModePickBtn" onclick="showReadModePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + ' ▾</button></div>' +
-      '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读语速</div><div class="setting-desc" id="rateVal">' + (s.voiceRate || 0.9) + 'x</div></div>' +
-        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voiceRate || 0.9) + '" step="0.1" oninput="if(!hasFeature(&#39;voiceRatePitch&#39;)){return} updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>' +
-      '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读音调</div><div class="setting-desc" id="pitchVal">' + (s.voicePitch || 1.0) + 'x</div></div>' +
-        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voicePitch || 1.0) + '" step="0.1" oninput="if(!hasFeature(&#39;voiceRatePitch&#39;)){return} updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div></div>' +
+      (function() {
+        if (!hasFeature('voiceRatePitch')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读语速</div><div class="setting-desc">需升级3元版解锁</div></div><span style="font-size:18px">🔒</span></div><div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读音调</div><div class="setting-desc">需升级3元版解锁</div></div><span style="font-size:18px">🔒</span></div>';
+        return '<div class="setting-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc" id="rateVal">' + (s.voiceRate || 0.9) + 'x</div></div>' +
+          '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voiceRate || 0.9) + '" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>' +
+          '<div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">' + (s.voicePitch || 1.0) + 'x</div></div>' +
+          '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voicePitch || 1.0) + '" step="0.1" oninput="updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div>';
+      })() +
+      '</div></div>' +
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'appearance\')"><span>外观</span><span class="section-arrow" id="arrow_appearance">▲</span></div>' +
       '<div class="section-body" id="body_appearance">' +
