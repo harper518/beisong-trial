@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v17 · 小阮出品</title>
+<title>挖空背诵工具 v18 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -584,16 +584,11 @@ body.focus-mode #practiceActive .flex.justify-between:active,
 body.focus-mode #practiceActive .flex.justify-between:focus-within { opacity:1; }
 body.focus-mode #cardText { font-size:calc(var(--font-size) + 2px); line-height:2; }
 body.focus-mode #cardText .blank-input { font-size:calc(var(--font-size) + 2px); padding:10px 6px; }
-.focus-toggle { position:fixed; top:8px; right:12px; z-index:100; font-size:18px; background:rgba(0,0,0,.5); color:#fff; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; display:none; align-items:center; justify-content:center; }
-body.focus-mode .focus-toggle { display:flex; }
-
 </style>
 </head>
 <body>
 
 <div class="toast-container" id="toastContainer"></div>
-<button class="focus-toggle" id="focusToggle" onclick="toggleFocusMode()" title="退出专注模式">✕</button>
-
 <!-- PWA 安装引导横幅（Android/桌面） -->
 <div class="pwa-install-banner" id="pwaInstallBanner">
   <div class="pwa-icon">📲</div>
@@ -867,6 +862,10 @@ function saveData(data) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22 ||
+        (e.message && e.message.toLowerCase().indexOf('quota') !== -1)) {
+      showToast('⚠️ 存储空间已满！请立即导出备份，然后清理旧数据');
+    }
     console.error('saveData error:', e);
   }
 }
@@ -1165,6 +1164,7 @@ function quickStartN(n) {
   $('practiceActive').style.display = 'block';
   switchTab('practice');
   renderPracticeCard();
+  applyFocusMode();
 }
 
 function startSprintMode() {
@@ -4682,7 +4682,6 @@ function renderPracticeCard() {
       <span style="font-size:14px;font-weight:700;color:var(--text)">${cur} / ${total}</span>
       ${(st._isSprint || st._multiBanks) ? '<span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (st._cardBankMap && st._cardBankMap[st.index] ? st._cardBankMap[st.index].bankName : (st._isSprint ? '冲刺' : '混合')) + '</span>' : ''}
       <span id="timerDisplay" style="display:${timerMode === 'off' ? 'none' : ''};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
-      <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 10px;line-height:1;min-width:44px;min-height:44px" onclick="toggleFocusMode()" title="专注模式">🧘</button>
       <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleStarCurrent()">${starIcon}</button>
       <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 10px;line-height:1;min-width:44px;min-height:44px" onclick="toggleHighFreqCurrent()" title="标记为高频考点">${card.highFreq ? '🔥' : '🔹'}</button>
       <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--danger)" onclick="deleteCurrentCard()" title="删除此题">🗑️</button>
@@ -5067,11 +5066,13 @@ function toggleStarCurrent() {
   renderPracticeCard();
 }
 
-function toggleFocusMode() {
-  document.body.classList.toggle('focus-mode');
-  var ft = document.getElementById('focusToggle');
-  if (document.body.classList.contains('focus-mode')) {
-    showToast('🧘 专注模式开启 · 点击右上角 ✕ 退出');
+function applyFocusMode() {
+  // 根据设置自动应用/移除专注模式的 body class
+  var shouldFocus = !!(appData.settings || {}).focusMode;
+  if (shouldFocus) {
+    document.body.classList.add('focus-mode');
+  } else {
+    document.body.classList.remove('focus-mode');
   }
 }
 
@@ -5295,6 +5296,7 @@ function doSpeakCard() {
 // ==================== 做题结果 ====================
 function showPracticeResult() {
   stopTimer();
+  document.body.classList.remove('focus-mode');
   const st = practiceState;
   const total = st.total;
   const bank = appData.banks[st.bankId];
@@ -5901,6 +5903,7 @@ function retrySameSettings() {
 function backToPracticeSetup() {
   if (window.speechSynthesis) window.speechSynthesis.cancel();
   stopTimer();
+  document.body.classList.remove('focus-mode');
   practiceState = null;
   $('practiceResult').style.display = 'none';
   $('practiceActive').style.display = 'none';
@@ -6667,17 +6670,91 @@ function renderSettings() {
       '<div class="avatar-circle" onclick="document.getElementById(\'avatarFileInput\').click()" title="点击上传头像">' +
         (s.avatarData ? '<img src="' + s.avatarData + '" alt="头像">' : '<span class="avatar-placeholder">📷</span>') +
       '</div></div>' : '') +
-    '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'dataMgmt\')"><span>数据管理</span><span class="section-arrow" id="arrow_dataMgmt">▲</span></div>' +
+        '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'dataMgmt\')"><span>📦 数据管理</span><span class="section-arrow" id="arrow_dataMgmt">▲</span></div>' +
     '<div class="section-body" id="body_dataMgmt"><div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">' +
-      '<button class="btn btn-primary btn-block" onclick="shareBackupFile()" style="font-size:15px">📤 分享/导出备份文件</button>' +
-      '<div style="font-size:12px;color:var(--text-tertiary);text-align:center;margin:-4px 0 4px">📱 手机直接分享到微信/QQ/存文件 &nbsp;|&nbsp; 💻 电脑自动下载</div>' +
-      '<div style="display:flex;gap:0;border:2px solid var(--border);border-radius:10px;overflow:hidden">' +
-        '<button class="btn btn-outline" style="flex:1;border:none;border-radius:0;padding:12px 8px;font-size:14px" onclick="copyBackup()">📋 复制</button>' +
-        '<div style="width:2px;background:var(--border);flex-shrink:0"></div>' +
-        '<button class="btn btn-outline" style="flex:1;border:none;border-radius:0;padding:12px 8px;font-size:14px" onclick="shareBackupCode()">📤 分享</button>' +
-      '</div>' +
-      '<button class="btn btn-outline btn-block" id="restoreToggleBtn" onclick="toggleRestoreSection()">📥 粘贴备份码恢复</button>' +
-      '<div id="restoreSection" style="display:none;margin-top:12px;padding:14px;background:var(--bg-input);border-radius:10px">' +
+      // 📊 存储概览
+      (function() {
+        var storageJson = localStorage.getItem('memorize_v2_trial_7666') || '';
+        var storageBytes = storageJson.length * 2;
+        var storageKB = storageBytes / 1024;
+        var storageMB = storageBytes / (1024 * 1024);
+        var storageMax = 5;
+        var storagePercent = Math.min(100, Math.round((storageMB / storageMax) * 100));
+        var bankCount = Object.keys(appData.banks || {}).length;
+        var totalQ = 0, totalW = 0;
+        Object.values(appData.banks || {}).forEach(function(b) { totalQ += (b.cards || []).length; });
+        Object.values(appData.wrongBooks || {}).forEach(function(w) {
+          if (Array.isArray(w)) totalW += w.length; else totalW += Object.keys(w).length;
+        });
+        var barColor = storagePercent > 80 ? '#e74c3c' : storagePercent > 50 ? '#e67e22' : 'var(--primary)';
+        var sizeInfo = storageMB >= 1 ? storageMB.toFixed(1) + ' MB' : storageKB.toFixed(0) + ' KB';
+        var statusText = storagePercent > 90 ? '⚠️ 即将用满，建议导出备份后清理'
+          : storagePercent > 70 ? '⚡ 使用中，建议定期备份'
+          : '✅ 空间充裕';
+        var lastBackup = (appData.settings || {}).lastBackup;
+        var backupDays = lastBackup ? Math.floor((Date.now() - lastBackup) / 86400000) : null;
+        var backupWarn = '';
+        if (backupDays === null) {
+          backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;color:#856404">⚠️ 尚未备份过！建议立即导出备份</div>';
+        } else if (backupDays > 30) {
+          backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#ffe0e0;border:1px solid #e74c3c;border-radius:6px;font-size:12px;color:#a33">🔴 已 <b>' + backupDays + ' 天</b>未备份！数据风险极高，请立即备份</div>';
+        } else if (backupDays > 7) {
+          backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;color:#856404">🟡 已 <b>' + backupDays + ' 天</b>未备份，建议尽快导出</div>';
+        } else if (backupDays > 0) {
+          backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;font-size:12px;color:#2e7d32">🟢 ' + backupDays + ' 天前备份过，状态良好</div>';
+        } else {
+          backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;font-size:12px;color:#2e7d32">✅ 今天已备份</div>';
+        }
+        // 各类型数据占用明细
+        var banksSize = new Blob([JSON.stringify(appData.banks || {})]).size;
+        var wrongSize = new Blob([JSON.stringify(appData.wrongBooks || {})]).size;
+        var settingsSize = new Blob([JSON.stringify(appData.settings || {})]).size;
+        var avatarSize = ((appData.settings || {}).avatarData || '').length * 2;
+        var other = { dailyStats: appData.dailyStats, roundCount: appData.roundCount, unicorns: appData.unicorns, weekStats: appData.weekStats };
+        var otherSize = new Blob([JSON.stringify(other)]).size;
+        function fmtSz(bytes) { return bytes >= 1024 ? (bytes/1024).toFixed(0)+'KB' : bytes+'B'; }
+        return '<div style="padding:12px 14px;background:var(--bg-input);border-radius:10px;margin-bottom:12px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">' +
+            '<span style="font-size:14px;font-weight:600">📊 ' + statusText + '</span>' +
+            '<span style="font-size:13px;color:var(--text-secondary)">' + sizeInfo + ' / ' + storageMax + ' MB</span>' +
+          '</div>' +
+          '<div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin-bottom:8px">' +
+            '<div style="height:100%;width:' + storagePercent + '%;background:' + barColor + ';border-radius:5px;transition:width .3s"></div>' +
+          '</div>' +
+          backupWarn +
+          '<div style="display:flex;gap:10px;margin-top:8px">' +
+            '<div style="flex:1;background:var(--bg-card);border-radius:8px;padding:10px;text-align:center">' +
+              '<div style="font-size:22px;font-weight:700;color:var(--primary)">' + bankCount + '</div>' +
+              '<div style="font-size:11px;color:var(--text-tertiary)">个题库</div>' +
+            '</div>' +
+            '<div style="flex:1;background:var(--bg-card);border-radius:8px;padding:10px;text-align:center">' +
+              '<div style="font-size:22px;font-weight:700;color:var(--primary)">' + totalQ + '</div>' +
+              '<div style="font-size:11px;color:var(--text-tertiary)">道题目</div>' +
+            '</div>' +
+            '<div style="flex:1;background:var(--bg-card);border-radius:8px;padding:10px;text-align:center">' +
+              '<div style="font-size:22px;font-weight:700;color:' + (totalW > 0 ? '#e74c3c' : 'var(--text-tertiary)') + '">' + totalW + '</div>' +
+              '<div style="font-size:11px;color:var(--text-tertiary)">道错题</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="margin-top:8px;padding:8px 12px;background:var(--bg-card);border-radius:8px;font-size:11px;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:4px 12px;line-height:1.8">' +
+            '<span>📦 题库 ' + fmtSz(banksSize) + '</span>' +
+            '<span>📝 错题 ' + fmtSz(wrongSize) + '</span>' +
+            '<span>⚙️ 设置 ' + fmtSz(settingsSize) + '</span>' +
+            '<span>📈 进度 ' + fmtSz(otherSize) + '</span>' +
+            '<span>🖼️ 头像 ' + fmtSz(avatarSize) + '</span>' +
+          '</div>' +
+        '</div>';
+      })() +
+      // 💾 备份
+      '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:2px">💾 备份</div>' +
+      '<button class="btn btn-primary btn-block" onclick="shareBackupFile()" style="font-size:15px">📤 导出备份文件</button>' +
+      '<div style="font-size:12px;color:var(--text-tertiary);text-align:center;margin:-4px 0 4px">📱 手机分享 &nbsp;|&nbsp; 💻 电脑下载</div>' +
+      '<button class="btn btn-outline btn-block" onclick="copyBackup()" style="font-size:14px">📋 复制备份码</button>' +
+      '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin:-2px 0 6px">可粘贴到微信/备忘录保存</div>' +
+      // 📥 恢复
+      '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:2px;margin-top:4px">📥 恢复</div>' +
+      '<button class="btn btn-outline btn-block" id="restoreToggleBtn" onclick="toggleRestoreSection()" style="font-size:14px">📥 粘贴备份码恢复</button>' +
+      '<div id="restoreSection" style="display:none;margin-top:10px;padding:14px;background:var(--bg-input);border-radius:10px">' +
         '<textarea id="restoreTextarea" placeholder="在此粘贴之前复制的备份码..." style="width:100%;min-height:100px;font-size:13px;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text)"></textarea>' +
         '<div class="flex gap-8 mt-12">' +
           '<button class="btn btn-ghost flex-1" onclick="toggleRestoreSection()">取消</button>' +
@@ -6688,89 +6765,12 @@ function renderSettings() {
           '<label class="btn btn-outline btn-block" style="margin-top:6px;cursor:pointer;display:block;text-align:center;min-height:38px;line-height:38px;padding:0">📂 上传 JSON 备份文件<input type="file" accept=".json" onchange="restoreFromJsonFile(this)" style="display:none"></label>' +
         '</div>' +
       '</div>' +
-      '<button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空复习清单</button>' +
+      // 🗑 清理
+      '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:2px;margin-top:8px">🗑 清理</div>' +
+      '<button class="btn btn-ghost btn-block" onclick="clearWrongBook()" style="font-size:14px">🗑 清空复习清单</button>' +
+      '<button class="btn btn-ghost btn-block" onclick="clearAllData()" style="font-size:14px;color:var(--danger)">🗑️ 删除所有数据</button>' +
+      '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:2px">清空全部题库和设置，不可恢复</div>' +
     '</div></div></div>' +
-
-    // 📊 存储状态
-    (function() {
-      var storageJson = localStorage.getItem('memorize_v2_trial_7666') || '';
-      var storageBytes = storageJson.length * 2;
-      var storageKB = storageBytes / 1024;
-      var storageMB = storageBytes / (1024 * 1024);
-      var storageMax = 5;
-      var storagePercent = Math.min(100, Math.round((storageMB / storageMax) * 100));
-      var bankCount = Object.keys(appData.banks || {}).length;
-      var totalQ = 0, totalW = 0;
-      Object.values(appData.banks || {}).forEach(function(b) { totalQ += (b.cards || []).length; });
-      Object.values(appData.wrongBooks || {}).forEach(function(w) {
-        if (Array.isArray(w)) totalW += w.length; else totalW += Object.keys(w).length;
-      });
-
-      var barColor = storagePercent > 80 ? '#e74c3c' : storagePercent > 50 ? '#e67e22' : 'var(--primary)';
-      var sizeInfo = storageMB >= 1 ? storageMB.toFixed(1) + ' MB' : storageKB.toFixed(0) + ' KB';
-      var statusText = storagePercent > 90 ? '⚠️ 即将用满，建议导出备份后清理'
-        : storagePercent > 70 ? '⚡ 使用中，建议定期备份'
-        : '✅ 空间充裕';
-
-      var lastBackup = (appData.settings || {}).lastBackup;
-      var backupDays = lastBackup ? Math.floor((Date.now() - lastBackup) / 86400000) : null;
-      var backupWarn = '';
-      if (backupDays === null) {
-        backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;color:#856404">⚠️ 尚未备份过！建议立即导出备份</div>';
-      } else if (backupDays > 30) {
-        backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#ffe0e0;border:1px solid #e74c3c;border-radius:6px;font-size:12px;color:#a33">🔴 已 <b>' + backupDays + ' 天</b>未备份！数据风险极高，请立即备份</div>';
-      } else if (backupDays > 7) {
-        backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;color:#856404">🟡 已 <b>' + backupDays + ' 天</b>未备份，建议尽快导出</div>';
-      } else if (backupDays > 0) {
-        backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;font-size:12px;color:#2e7d32">🟢 ' + backupDays + ' 天前备份过，状态良好</div>';
-      } else {
-        backupWarn = '<div style="margin-top:6px;padding:8px 12px;background:#e8f5e9;border:1px solid #4caf50;border-radius:6px;font-size:12px;color:#2e7d32">✅ 今天已备份</div>';
-      }
-
-      return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'storage\')"><span>📊 存储状态</span><span class="section-arrow" id="arrow_storage">▲</span></div>' +
-        '<div class="section-body" id="body_storage"><div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">' +
-          '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
-            '<span style="font-size:14px;font-weight:600">' + statusText + '</span>' +
-            '<span style="font-size:13px;color:var(--text-secondary)">' + sizeInfo + ' / ' + storageMax + ' MB</span>' +
-          '</div>' +
-          '<div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden">' +
-            '<div style="height:100%;width:' + storagePercent + '%;background:' + barColor + ';border-radius:5px;transition:width .3s"></div>' +
-          '</div>' +
-          backupWarn +
-          '<div style="display:flex;gap:10px;margin-top:4px">' +
-            '<div style="flex:1;background:var(--bg-input);border-radius:8px;padding:10px;text-align:center">' +
-              '<div style="font-size:22px;font-weight:700;color:var(--primary)">' + bankCount + '</div>' +
-              '<div style="font-size:11px;color:var(--text-tertiary)">个题库</div>' +
-            '</div>' +
-            '<div style="flex:1;background:var(--bg-input);border-radius:8px;padding:10px;text-align:center">' +
-              '<div style="font-size:22px;font-weight:700;color:var(--primary)">' + totalQ + '</div>' +
-              '<div style="font-size:11px;color:var(--text-tertiary)">道题目</div>' +
-            '</div>' +
-            '<div style="flex:1;background:var(--bg-input);border-radius:8px;padding:10px;text-align:center">' +
-              '<div style="font-size:22px;font-weight:700;color:' + (totalW > 0 ? '#e74c3c' : 'var(--text-tertiary)') + '">' + totalW + '</div>' +
-              '<div style="font-size:11px;color:var(--text-tertiary)">道错题</div>' +
-            '</div>' +
-          '</div>' +
-          // 各类型数据占用明细
-          (function() {
-            var banksSize = new Blob([JSON.stringify(appData.banks || {})]).size;
-            var wrongSize = new Blob([JSON.stringify(appData.wrongBooks || {})]).size;
-            var settingsSize = new Blob([JSON.stringify(appData.settings || {})]).size;
-            var avatarSize = ((appData.settings || {}).avatarData || '').length * 2;
-            // 其他：进度、dailyStats、roundCount、unicorns 等
-            var other = { dailyStats: appData.dailyStats, roundCount: appData.roundCount, unicorns: appData.unicorns, weekStats: appData.weekStats };
-            var otherSize = new Blob([JSON.stringify(other)]).size;
-            function fmtSz(bytes) { return bytes >= 1024 ? (bytes/1024).toFixed(0)+'KB' : bytes+'B'; }
-            return '<div style="margin-top:6px;padding:8px 12px;background:var(--bg-input);border-radius:8px;font-size:11px;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:4px 12px;line-height:1.8">' +
-              '<span>📦 题库 ' + fmtSz(banksSize) + '</span>' +
-              '<span>📝 错题 ' + fmtSz(wrongSize) + '</span>' +
-              '<span>⚙️ 设置 ' + fmtSz(settingsSize) + '</span>' +
-              '<span>📈 进度 ' + fmtSz(otherSize) + '</span>' +
-              '<span>🖼️ 头像 ' + fmtSz(avatarSize) + '</span>' +
-            '</div>';
-          })() +
-        '</div></div></div>';
-    })() +
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'blanks\')"><span>挖空设置</span><span class="section-arrow" id="arrow_blanks">▲</span></div>' +
       '<div class="section-body" id="body_blanks"><div class="setting-item"><div><div class="setting-label">默认挖空密度</div><div class="setting-desc">每道题的挖空数量，做题时随时可调</div></div>' +
@@ -6809,6 +6809,8 @@ function renderSettings() {
         '<div style="display:flex;align-items:center;gap:6px;min-width:120px;flex:1;max-width:180px"><span style="font-size:12px;flex-shrink:0">A</span><input type="range" min="14" max="24" value="' + s.fontSize + '" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))" style="flex:1;min-width:0"><span style="font-size:16px;font-weight:700;flex-shrink:0">A</span></div></div>' +
       '<div class="setting-item"><div><div class="setting-label">显示头像</div><div class="setting-desc">开启后在设置页右上角上传头像</div></div>' +
         '<label class="toggle"><input type="checkbox" id="avatarToggle"' + (s.showAvatar ? ' checked' : '') + ' onchange="toggleAvatar(this.checked)"><span class="slider"></span></label></div>' +
+      '<div class="setting-item"><div><div class="setting-label">🧘 专注模式</div><div class="setting-desc">练习时自动隐藏多余按钮，沉浸背书</div></div>' +
+        '<label class="toggle"><input type="checkbox" id="focusModeToggle"' + (s.focusMode ? ' checked' : '') + ' onchange="saveSetting(\'focusMode\', this.checked)"><span class="slider"></span></label></div>' +
     '</div></div>' +
 
     // 学习计划 section
@@ -6897,8 +6899,7 @@ function renderSettings() {
         return html;
       })() +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v17</div></div></div>' +
-      '<div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v18</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
