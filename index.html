@@ -8,7 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="记忆填空"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" id="themeColorMeta" content="#f0fdfa"/>
-<title>挖空背诵工具 v13 · 小阮出品</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>挖空背诵工具 v14 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -390,11 +393,157 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   .desktop-only { display: none !important; }
 }
 
+/* ====== PWA 安装引导横幅 ====== */
+.pwa-install-banner {
+  display: none;
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 9998;
+  background: #fff;
+  border: 2px solid var(--primary);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.15);
+  font-size: 14px;
+  align-items: center;
+  gap: 12px;
+}
+.pwa-install-banner.show { display: flex; }
+.pwa-install-banner .pwa-close {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+.pwa-install-banner .pwa-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+.pwa-install-banner .pwa-text {
+  flex: 1;
+  min-width: 0;
+}
+.pwa-install-banner .pwa-text strong {
+  display: block;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.pwa-install-banner .pwa-text span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.pwa-install-banner .pwa-btn {
+  flex-shrink: 0;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+/* iOS 专用安装引导横幅 */
+.pwa-ios-banner {
+  display: none;
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 9998;
+  background: #fff;
+  border: 2px solid var(--primary);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.15);
+  font-size: 14px;
+}
+.pwa-ios-banner.show { display: block; }
+.pwa-ios-banner .pwa-close {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+.pwa-ios-banner .pwa-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.pwa-ios-banner .pwa-step {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.pwa-ios-banner .pwa-arrow {
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 700;
+}
+.pwa-ios-banner .pwa-share-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: #007AFF;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 </style>
 </head>
 <body>
 
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- PWA 安装引导横幅（Android/桌面） -->
+<div class="pwa-install-banner" id="pwaInstallBanner">
+  <div class="pwa-icon">📲</div>
+  <div class="pwa-text">
+    <strong>添加到桌面</strong>
+    <span>像App一样使用，支持离线背诵</span>
+  </div>
+  <button class="pwa-btn" onclick="pwaInstall()">安装</button>
+  <button class="pwa-close" onclick="pwaDismissBanner()" aria-label="关闭">✕</button>
+</div>
+<!-- PWA iOS 安装引导横幅 -->
+<div class="pwa-ios-banner" id="pwaIosBanner">
+  <button class="pwa-close" onclick="pwaDismissIosBanner()" aria-label="关闭">✕</button>
+  <strong style="color:var(--text)">📲 添加到主屏幕</strong>
+  <span style="color:var(--text-secondary);font-size:12px;display:block;margin-top:4px">像App一样使用，支持离线背诵</span>
+  <div class="pwa-steps">
+    <div class="pwa-step"><span class="pwa-share-icon">↑</span> 点击分享</div>
+    <span class="pwa-arrow">→</span>
+    <div class="pwa-step">➕ 添加到主屏幕</div>
+  </div>
+</div>
 
 <!-- ====== 题库页面 ====== -->
 <div class="page active" id="page-banks">
@@ -5905,7 +6054,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div><span style="font-size:13px;color:var(--text-secondary);font-weight:600">v13</span></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div><span style="font-size:13px;color:var(--text-secondary);font-weight:600">v14</span></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
@@ -6204,6 +6353,98 @@ function clearAllData() {
     switchTab('banks');
   });
 }
+// ====== PWA：Service Worker 注册 + 安装引导 ======
+(function() {
+  // 注册 Service Worker（离线缓存）
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function() {});
+  }
+
+  // 检测是否已经以 PWA 模式运行
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || (typeof navigator.standalone !== 'undefined' && navigator.standalone)
+    || window.location.search.indexOf('pwa=1') !== -1;
+
+  // ====== Android/桌面：beforeinstallprompt ======
+  var deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!isStandalone) showAndroidBanner();
+  });
+
+  window.pwaInstall = function() {
+    if (!deferredPrompt) {
+      alert('请使用浏览器的"添加到主屏幕"功能安装');
+      return;
+    }
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(result) {
+      if (result.outcome === 'accepted') {
+        var banner = document.getElementById('pwaInstallBanner');
+        if (banner) banner.classList.remove('show');
+      }
+      deferredPrompt = null;
+    });
+  };
+
+  function showAndroidBanner() {
+    var banner = document.getElementById('pwaInstallBanner');
+    if (banner && !localStorage.getItem('pwa_banner_dismissed')) {
+      setTimeout(function() { banner.classList.add('show'); }, 2000);
+    }
+  }
+
+  window.pwaDismissBanner = function() {
+    var banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.classList.remove('show');
+    localStorage.setItem('pwa_banner_dismissed', '1');
+  };
+
+  // ====== iOS Safari 安装引导 ======
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isSafari = /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|OPiOS|mercury/.test(navigator.userAgent);
+
+  if (isIOS && isSafari && !isStandalone && !localStorage.getItem('pwa_ios_banner_dismissed')) {
+    setTimeout(function() {
+      var banner = document.getElementById('pwaIosBanner');
+      if (banner) banner.classList.add('show');
+    }, 2500);
+  }
+
+  window.pwaDismissIosBanner = function() {
+    var banner = document.getElementById('pwaIosBanner');
+    if (banner) banner.classList.remove('show');
+    localStorage.setItem('pwa_ios_banner_dismissed', Date.now().toString());
+  };
+
+  // 如果已安装 PWA，隐藏所有横幅
+  if (isStandalone) {
+    var ab = document.getElementById('pwaInstallBanner');
+    var ib = document.getElementById('pwaIosBanner');
+    if (ab) ab.style.display = 'none';
+    if (ib) ib.style.display = 'none';
+  }
+
+  // 安装成功后隐藏横幅
+  window.addEventListener('appinstalled', function() {
+    var banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.classList.remove('show');
+    localStorage.setItem('pwa_banner_dismissed', '1');
+  });
+
+  // 监听 display-mode 变化（用户手动添加到桌面后刷新）
+  window.matchMedia('(display-mode: standalone)').addEventListener('change', function(e) {
+    if (e.matches) {
+      var ab = document.getElementById('pwaInstallBanner');
+      var ib = document.getElementById('pwaIosBanner');
+      if (ab) ab.style.display = 'none';
+      if (ib) ib.style.display = 'none';
+    }
+  });
+})();
+// ====== PWA END ======
 </script>
 
 </body>
