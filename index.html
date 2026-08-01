@@ -1438,25 +1438,6 @@ function autoGenerateBlanks(cards, density, seed) {
       return { ...card, fullText: cleanFt, blanks: blanks };
     }
 
-    // 检测 （关键词） 括号模式：括号内的实质性内容优先作为挖空
-    var parenBlanks = [];
-    var parenRe = /（([^）]+)）/g;
-    var pm;
-    while ((pm = parenRe.exec(a)) !== null) {
-      var content = pm[1].trim();
-      // 过滤序号类短模式
-      if (/^[\d一二三四五六七八九十百千万亿①②③④⑤⑥⑦⑧⑨⑩A-Za-z\.\、\s]+$/.test(content)) continue;
-      if (content.length < 2) continue;
-      var relStart = pm.index + 1; // 跳过 "（"
-      var relEnd = pm.index + 1 + content.length;
-      parenBlanks.push({
-        start: answerStart + relStart,
-        end: answerStart + relEnd,
-        text: content,
-        isAnswer: true
-      });
-    }
-
     const pointTexts = splitIntoPoints(a);
     if (!pointTexts.length) return { ...card, fullText: ft, blanks: [] };
 
@@ -1510,21 +1491,6 @@ function autoGenerateBlanks(cards, density, seed) {
           }
         }
       }
-    }
-
-    blanks.sort((a, b) => a.start - b.start);
-
-    // 合并括号识别的空（优先），过滤重叠的算法空
-    if (parenBlanks.length > 0) {
-      var covered = new Set();
-      for (var bi = 0; bi < parenBlanks.length; bi++) {
-        for (var cp = parenBlanks[bi].start; cp < parenBlanks[bi].end; cp++) covered.add(cp);
-      }
-      // 过滤掉与括号空重叠的算法空
-      blanks = parenBlanks.concat(blanks.filter(function(b) {
-        for (var cp2 = b.start; cp2 < b.end; cp2++) { if (covered.has(cp2)) return false; }
-        return true;
-      }));
     }
 
     blanks.sort((a, b) => a.start - b.start);
@@ -4899,7 +4865,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     if (revealed) {
       ah += `<span class="revealed-text">${escNl(b.text)}</span>`;
     } else {
-      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text)}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
+      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text).replace(/\n/g, ' ')}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
     }
     le = b.end;
   }
