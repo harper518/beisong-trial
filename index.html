@@ -7,11 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="记忆填空"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-<meta name="theme-color" id="themeColorMeta" content="#f0fdfa"/>
+<meta name="theme-color" id="themeColorMeta" content="#f4faf6"/>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v33 · 小阮出品</title>
+<title>挖空背诵工具 v34 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -51,12 +51,6 @@
   --text:#1e3a5f; --text-secondary:#5c7c9e;
   --primary:#3b82f6; --primary-hover:#2563eb; --primary-light:#eff6ff; --primary-soft:#dbeafe;
   --border:#d0e0f5;
-}
-[data-color="rose"] {
-  --bg:#fff1f5; --bg-card:#fff; --bg-input:#fff1f5;
-  --text:#5f1e3a; --text-secondary:#9e5c7c;
-  --primary:#e11d48; --primary-hover:#be123c; --primary-light:#ffe4e6; --primary-soft:#fecdd3;
-  --border:#f5d0e0;
 }
 [data-color="pink"] {
   --bg:#fdf2f8; --bg-card:#fff; --bg-input:#fdf2f8;
@@ -264,6 +258,34 @@
   --primary:#f0dcb0; --primary-hover:#e0cca0; --primary-light:#fefcf6; --primary-soft:#fdf4e0;
   --border:#f0e4c8;
 }
+/* 藤风 */
+[data-color="periwinkle"] {
+  --bg:#f6f8fc; --bg-card:#fff; --bg-input:#f6f8fc;
+  --text:#1a203a; --text-secondary:#6a709b;
+  --primary:#acb8d8; --primary-hover:#98a4c8; --primary-light:#f6f8fc; --primary-soft:#e8ecf6;
+  --border:#d8dcec;
+}
+/* 鸢尾 */
+[data-color="iris"] {
+  --bg:#f4f4fa; --bg-card:#fff; --bg-input:#f4f4fa;
+  --text:#1a1a3a; --text-secondary:#6a6a9b;
+  --primary:#656db2; --primary-hover:#555da0; --primary-light:#f4f4fa; --primary-soft:#e8e8f6;
+  --border:#d0d0e8;
+}
+/* 暖紫 */
+[data-color="mauve"] {
+  --bg:#faf4f6; --bg-card:#fff; --bg-input:#faf4f6;
+  --text:#3a1a28; --text-secondary:#9b5a6a;
+  --primary:#b6668f; --primary-hover:#a05078; --primary-light:#faf4f6; --primary-soft:#f6e8ec;
+  --border:#e8d0d8;
+}
+/* 牡丹 */
+[data-color="peony"] {
+  --bg:#faf4fb; --bg-card:#fff; --bg-input:#faf4fb;
+  --text:#3a183a; --text-secondary:#9b509b;
+  --primary:#bf3dc1; --primary-hover:#a830aa; --primary-light:#faf4fb; --primary-soft:#f6e8f6;
+  --border:#e8d0e8;
+}
 
 [data-theme="dark"] {
   --bg:#042f2e; --bg-card:#134e4a; --bg-input:#11554e; --bg-overlay:rgba(0,0,0,.7);
@@ -286,12 +308,6 @@
   --text:#d5e8ff; --text-secondary:#9ebcdc;
   --primary:#60a5fa; --primary-hover:#93bbfd; --primary-light:#172554; --primary-soft:#1e3a6e;
   --border:#1e3a6e;
-}
-[data-theme="dark"][data-color="rose"] {
-  --bg:#1f0a14; --bg-card:#3d1128; --bg-input:#2e0d1e;
-  --text:#ffd5e8; --text-secondary:#dc9ebc;
-  --primary:#f43f5e; --primary-hover:#fb7185; --primary-light:#4c0519; --primary-soft:#6b1128;
-  --border:#6b1128;
 }
 [data-theme="dark"][data-color="pink"] {
   --bg:#200a18; --bg-card:#3d112c; --bg-input:#2e0d22;
@@ -1044,13 +1060,13 @@ let appData = loadData();
 
 // 状态栏颜色 = 页面背景色（与主题一一对应）
 var themeBgColors = {
-  teal:'#f0fdfa', purple:'#faf5ff', blue:'#f0f7ff', rose:'#fff1f5', pink:'#fdf2f8',
+  teal:'#f0fdfa', purple:'#faf5ff', blue:'#f0f7ff', pink:'#fdf2f8',
   green:'#f0fdf4', yellow:'#fefce8', bw:'#f5f5f5', cream:'#fffaf3', sage:'#f4faf0',
   ink:'#f5f5f5', moss:'#f2f7f2', zen:'#faf7f4', bamboo:'#f4f8f2', wood:'#fdf8f4',
   ocean:'#f0f4f8', coral:'#fef5f2', peach:'#fef8f5', lavender:'#f8f6fb', mist:'#f5f8fa',
   snow:'#fafafa', amber:'#fffbf5', sakura:'#fef8fa', sky:'#f5fafd', oat:'#fdfaf6',
   sage2:'#f4f6f4', dusk:'#f6f4f8', wisteria:'#f6f4fa', indigo:'#f2f4fd', mustard:'#fefaf2',
-  turquoise:'#f2faf8', seapine:'#f2f6f4', mint:'#f4faf6', butter:'#fefcf6'
+  turquoise:'#f2faf8', seapine:'#f2f6f4', mint:'#f4faf6', butter:'#fefcf6', periwinkle:'#f6f8fc', iris:'#f4f4fa', mauve:'#faf4f6', peony:'#faf4fb'
 };
 function updateThemeColorMeta(color) {
   var meta = document.getElementById('themeColorMeta');
@@ -2409,10 +2425,7 @@ function applySettings() {
   document.documentElement.setAttribute('data-color', s.color || 'teal');
   document.documentElement.style.setProperty('--font-size', s.fontSize + 'px');
   // 更新顶部状态栏颜色
-  const themeLight = {teal:'#f0fdfa',purple:'#faf5ff',blue:'#f0f7ff',rose:'#fff1f5',pink:'#fdf2f8',green:'#f0fdf4',yellow:'#fefce8',bw:'#f5f5f5',cream:'#fffaf3',sage:'#f4faf0'};
-  const themeDark = {teal:'#042f2e',purple:'#1a0a2e',blue:'#0a1628',rose:'#1f0a14',pink:'#200a18',green:'#051a10',yellow:'#1a1508',bw:'#1a1a1a',cream:'#2a2018',sage:'#1a2a1a'};
-  const mc = document.getElementById('themeColorMeta');
-  if (mc) mc.content = s.darkMode ? (themeDark[s.color] || '#042f2e') : (themeLight[s.color] || '#f0fdfa');
+  updateThemeColorMeta(s.color);
 }
 
 function saveThemeColor(color) {
@@ -6995,9 +7008,9 @@ function renderSettings() {
   const s = appData.settings;
   const density = s.density || 'low';
 
-  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', rose: '玫红', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', coral: '珊瑚橘', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝', snow: '素白', amber: '琥珀金', sakura: '樱粉', sky: '天蓝', oat: '燕麦', sage2: '灰绿', dusk: '暮紫', wisteria: '紫藤', indigo: '靛青', mustard: '芥黄', turquoise: '松石', seapine: '海松', mint: '薄荷', butter: '奶杏' };
-  var colors = ['teal', 'purple', 'blue', 'rose', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral', 'peach', 'lavender', 'mist', 'snow', 'amber', 'sakura', 'sky', 'oat', 'sage2', 'dusk', 'wisteria', 'indigo', 'mustard', 'turquoise', 'seapine', 'mint', 'butter'];
-  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', rose: '#e11d48', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', dusk: '#6b5b7a', wisteria: '#7b6ba8', indigo: '#3f51b5', mustard: '#d4a030', turquoise: '#2eb8a0', seapine: '#3c6e71', mint: '#98d4b8', butter: '#f0dcb0' };
+  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', coral: '珊瑚橘', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝', snow: '素白', amber: '琥珀金', sakura: '樱粉', sky: '天蓝', oat: '燕麦', sage2: '灰绿', dusk: '暮紫', wisteria: '紫藤', indigo: '靛青', mustard: '芥黄', turquoise: '松石', seapine: '海松', mint: '薄荷', butter: '奶杏', periwinkle: '藤风', iris: '鸢尾', mauve: '暖紫', peony: '牡丹' };
+  var colors = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral', 'peach', 'lavender', 'mist', 'snow', 'amber', 'sakura', 'sky', 'oat', 'sage2', 'dusk', 'wisteria', 'indigo', 'mustard', 'turquoise', 'seapine', 'mint', 'butter', 'periwinkle', 'iris', 'mauve', 'peony'];
+  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', dusk: '#6b5b7a', wisteria: '#7b6ba8', indigo: '#3f51b5', mustard: '#d4a030', turquoise: '#2eb8a0', seapine: '#3c6e71', mint: '#98d4b8', butter: '#f0dcb0', periwinkle: '#acb8d8', iris: '#656db2', mauve: '#b6668f', peony: '#bf3dc1' };
 
   c.innerHTML =
     // 设置页顶部 header（开关打开时显示头像）
@@ -7345,7 +7358,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v33</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v34</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
