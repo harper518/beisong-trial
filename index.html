@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v21 · 小阮出品</title>
+<title>挖空背诵工具 v22 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -896,6 +896,11 @@ function getSetting(key, defVal) {
 function saveSetting(key, value) { appData.settings[key] = value; saveData(appData); applySettings(); }
 
 function saveExamDate(value) {
+function saveEveningStart(value) {
+  appData.settings.eveningStart = value || null;
+  saveData(appData);
+}
+
   appData.settings.examDate = value || null;
   saveData(appData);
   renderSettings();
@@ -909,31 +914,8 @@ function saveDailyTarget(value) {
   renderBanks();
 }
 
-function saveBedtimeReminder(value) {
-  appData.settings.bedtimeReminder = value || null;
-  saveData(appData);
-}
 
 // 检查睡前复习提醒
-function checkBedtimeReminder() {
-  var reminder = (appData.settings || {}).bedtimeReminder;
-  if (!reminder) return;
-  var now = new Date();
-  var nowTime = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
-  var lastShown = sessionStorage.getItem('bedtime_shown_date');
-  var today = now.toISOString().substring(0, 10);
-  if (lastShown === today) return; // 今天已提醒过
-  // 在提醒时间前后30分钟内
-  var reminderParts = reminder.split(':');
-  var reminderMin = parseInt(reminderParts[0]) * 60 + parseInt(reminderParts[1]);
-  var nowMin = now.getHours() * 60 + now.getMinutes();
-  if (Math.abs(nowMin - reminderMin) <= 30) {
-    sessionStorage.setItem('bedtime_shown_date', today);
-    setTimeout(function() {
-      showToast('🌙 睡前复习效果最佳！大脑会在睡眠中巩固记忆 💤');
-    }, 1000);
-  }
-}
 
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,8); }
 
@@ -961,6 +943,19 @@ function countTotalQuestions() {
 }
 
 function getExamDaysLeft() {
+function updateExamCountdownBadge() {
+  var badge = document.getElementById("examCountdownBadge");
+  if (!badge) return;
+  var days = getExamDaysLeft();
+  if (days === null) { badge.style.display = "none"; return; }
+  badge.style.display = "inline-block";
+  var color = days > 30 ? "#4caf50" : days > 7 ? "#ff9800" : days > 0 ? "#f44336" : "#999";
+  var text = days > 0 ? "距考试 " + days + " 天" : "考试已过";
+  badge.style.borderColor = color;
+  badge.style.color = color;
+  badge.textContent = text;
+}
+
   var examDate = (appData.settings || {}).examDate;
   if (!examDate) return null;
   var now = new Date();
@@ -1800,6 +1795,108 @@ function showBackupDetailToast(title) {
   setTimeout(function() { t.remove(); }, 10000);
 }
 
+
+// ====== 每日洞见 ======
+var DAILY_INSIGHTS = ["遗忘不是你的错，是大脑的节能策略。艾宾浩斯发现遗忘曲线在20分钟后就开始陡降——所以\"感觉忘了再复习\"比\"学完马上复习\"记忆强度高3倍。","测试效应（Testing Effect）是认知科学最稳健的发现：主动回忆一次，比重复阅读4次更有效。你每次填空作答，都在强化那条神经通路。","大脑不是硬盘——记忆是\"重新构造\"而非\"读取\"。每次回忆都在重新巩固，这就是为什么间隔复习比一次性背熟更持久。","每次纠错都在重写神经回路。脑成像研究显示：犯错时大脑的注意网络激活强度是答对时的2.3倍。做错题不是失败——是你的大脑在最高效地学习。","\"Desirable Difficulties\"（有益困难）理论：学习时感觉越费劲，记忆越牢固。轻松流畅的阅读给你\"学会了\"的错觉，吃力地回忆才是真正的学习。","同样的内容，间隔1天复习的记忆保留率（60%）是连续复习（20%）的3倍。你隔几天再背，不是在偷懒——是在给海马体时间巩固。","间隔复习的最佳时机是\"几乎要忘记的时候\"。研究发现：当回忆成功率在70-80%时复习，记忆强化效果最大。","睡眠不是学习的暂停，是学习的延续。深度睡眠时海马体会以20倍速重播白天的记忆痕迹。今晚好好睡觉，比熬夜多背两小时更有效。","睡前1小时学习的内容，比早上学习的内容在48小时后回忆率高26%。不是因为晚上更聪明，而是因为学完就睡，没有新信息干扰记忆巩固。","自我决定论（SDT）认为：人类内在动机的三大支柱是自主、胜任、联结。你主动选择来刷题——这本身就是动机最强的学习状态。","外在奖励会削弱内在动机（\"过度合理化效应\"）。考高分、父母的夸奖都有用，但真正的持久动力来自\"我变得更厉害了\"的感受本身。","大脑对\"开始学习\"的抗拒叫行动偏差。破解方法不是靠意志力，而是把目标降到荒谬的地步：只做1道题。一旦开始，前额叶皮层接管，继续下去的概率是92%。","\"2分钟规则\"：如果一件事能在2分钟内完成，立刻做。如果不能，只做2分钟。这个技巧绕过了大脑对\"大任务\"的抗拒回路。","多任务处理是个神话。大脑不能同时做两件需要认知的事——它只是在快速切换，每次切换损耗约15%的效率。专注一件事，反而更快。","手机在旁边（即使关机），认知能力下降相当于前一晚少睡1小时。物理上把它放到另一个房间，你的工作记忆容量会明显提升。","\"我不会\"和\"我还不会\"之间只差一个字——但大脑的神经反应完全不同。成长型思维者在犯错时前额叶更活跃，他们真的在从错误中学习更多。","蔡格尼克效应：未完成的任务会在大脑中保持\"后台运行\"，产生适度的紧张感。这不是坏事——它让你更想回来完成。利用这个：每次结束时留一道没做完的题。","前额叶皮层是大脑的CEO，负责计划和自控。但它很脆弱：疲劳、压力、饥饿都会削弱它。状态不好时，先照顾好身体，再谈学习。","多巴胺不是快乐分子，是\"渴望\"分子。它在追求目标的过程中释放，而不是在达成时。所以设定小目标、逐步达成，比盯着大目标更能保持动力。","自我效能感（Self-Efficacy）是比天赋更可靠的预测指标。相信自己能学会的人，真的学得更好——因为他们更愿意尝试困难的题目。","神经可塑性意味着：每次学习都在物理上改变你的大脑结构。你不是\"不擅长这个科目\"，你只是还没有建立足够的神经连接。","刻意练习的核心不是重复，是\"在舒适区边缘练习\"。做题太简单=无聊，太难=焦虑。最佳学习发生在\"刚好有点挑战\"的区域。","记忆宫殿技术有2500年历史，但背后的原理很现代：大脑对空间和图像的编码能力远强于抽象文字。把知识点放在想象的房间里，回忆率翻倍。","元认知（对自己认知的认知）是学霸和普通学生的关键区别。每次做完题问自己：\"我真的理解了吗？还是只是觉得理解了？\"","峰终定律：人们对一段体验的评价，取决于最强烈时刻和结束时刻的感受。所以学习结束时做一道你会的题——大脑会给这次学习打更高分。","执行意图（Implementation Intention）比单纯的目标有效2倍。不说\"我今天要刷题\"，说\"吃完晚饭后我就在书桌前打开题库\"。具体的时间地点触发行动。","\"生成效应\"：自己产出答案比看现成答案，记忆强50%。所以你填空比直接看解析有效得多——哪怕填错了，生成的过程本身就在学习。","情绪对记忆有锚定作用。在积极的情绪中学习，回忆时也更容易。不需要很快乐，\"平静而专注\"就是最佳学习状态。","注意力不是无限的——每天能深度专注的时间大约只有4小时。把最难的题目放在精力最好的时段（对大多数人来说是上午）。","\"零散的努力\"累积起来远超\"偶尔的爆发\"。每天10道题坚持一个月，比某一天狂刷300题效果好得多。一致性>强度。","考试焦虑会占用工作记忆容量——你越担心做不好，能用来思考的空间就越少。深呼吸10秒（4秒吸、6秒呼）可以在2分钟内降低皮质醇水平。","番茄工作法背后的科学：大脑的注意周期大约是90分钟，但大多数人每25分钟就需要一个微休息。这不是意志力弱——这是神经生理学。","\"启动效应\"：开始学习前的环境线索会影响你的状态。固定的学习地点、固定的背景音乐、甚至固定的笔，都能让大脑更快进入\"学习模式\"。","交错练习（Interleaving）比集中练习效果更好。混合不同类型的题目，虽然做的时候感觉更乱，但长期记忆更强——因为大脑被迫学习\"区分\"。","情绪标注（Affect Labeling）：把焦虑写下来只需要2分钟，就能显著降低焦虑水平，释放工作记忆空间。下次紧张时试试：在纸上写\"我现在很紧张，因为...\"。","海马体每天产生约700个新神经元。学习能保护这些新生神经元免于死亡——你不仅在积累知识，还在物理上\"建设\"你的大脑。","\"心流状态\"需要两个条件：明确的目标 + 即时的反馈。刷题完美满足这两点——你不需要额外\"找状态\"，题目本身就在引导你进入心流。","\"白熊效应\"：越告诉自己不要想某事，它越会在脑中挥之不去。应对焦虑不是\"别紧张\"，而是\"我接受我现在很紧张，然后继续做题\"。","学习风格的迷思：研究表明，按\"视觉型/听觉型/动觉型\"来学习并不提高效果。真正的关键是：多重编码——同一个内容用文字+图像+声音三种方式输入。","延迟满足能力（棉花糖实验的深层含义）不是天赋，而是可以通过\"转移注意力策略\"训练的。每次想放弃时，转移注意力到当下这道题上，而不是想着\"还要做多久\"。","\"掌握目标\"vs\"表现目标\"：想着\"我要掌握这个知识点\"比\"我要比同学考得好\"更能坚持、更能应对挫折。动机的方向比强度更重要。","复习时间黄金比：学完一个新知识后的最佳复习时间点是——1天后、3天后、7天后、30天后。这不是玄学，是艾宾浩斯曲线的实际应用。","认知负荷理论：工作记忆一次只能处理4±1个信息块。把大题拆成小步骤，不是因为你不行——是因为人的大脑就是这样设计的。","\"游泳之前的准备\"陷阱：看解析、记笔记、整理错题...这些都有用，但真正的学习发生在\"自己动手做\"的时候。看完解析不代表会了——关掉答案做一遍才是。","大脑占人体重量的2%，却消耗20%的能量。高强度的脑力劳动真的会累——累了就休息，不是偷懒，是确保后续学习效率。","\"契可尼效应\"：人更容易记住未完成的事。睡前留一道半解的题，第二天醒来你可能会自然想通——因为大脑在睡眠中继续处理未完成的认知任务。","表扬\"努力\"比表扬\"聪明\"更能培养成长型思维。对你自己也一样：\"我真的很努力\"比\"我真聪明\"更能让你下次继续努力。","社会助长效应：有人和你一起学习（即使只是线上打卡），效率会提升。不是因为竞争——是因为人类是社会性动物，镜像神经元在默默驱动。","\"微量习惯\"（Tiny Habits）：把目标缩小到荒谬的程度。（如\"每天只做1道题\"）不是为了少做——是为了绕过大脑对\"开始\"的抗拒。一旦开始，惯性接管。","\"决策疲劳\"是真实存在的：每做一个决定，下一个决定的质量就降低一点。减少日常决策（比如固定学习时间），把认知资源留给真正需要思考的题目。","身体姿势影响认知：坐直的人比驼背的人对负面反馈的接受度高30%。这不是鸡汤——是具身认知（Embodied Cognition）的实验结论。","10分钟法则：想放弃时，告诉自己\"再做10分钟\"。10分钟后如果还想停就停。但有80%的概率你会继续——因为启动是最大的障碍。","巴甫洛夫的\"条件反射\"同样适用于学习状态：每次学习前做同样的手势、放同样的背景音、用同样的桌面。几周后，触发信号一出，大脑自动进入专注模式。","\"选择性优化补偿\"（SOC理论）：把80%精力放在20%最常考的题目上。你不是偷懒——你是在用认知科学的策略分配有限资源。","阅读姿势影响理解深度：出声朗读比自己默读记忆强30%——因为同时激活了听觉通路和运动皮层。这就是为什么\"自言自语背书\"其实很科学。","\"莱斯托夫效应\"：在一堆相似内容中，最特别的那个最容易记住。所以故意把重点题目用不同的颜色标注，大脑会优先记住它们。","不要试图\"管理时间\"——管理注意力。时间不为你所控，但注意力在哪里、此刻脑子在想什么，是你可以选择的。","\"自我对话\"的质量决定情绪的质量。把\"我必须做完\"换成\"我选择做完\"，内在动机立刻不同。因为\"选择\"激活了自主感——这是人类心理需求的核心。","极简主义学习法：不是资料越多越好，是越少越好。一本教材精读3遍，胜过3本教材匆匆浏览。深度>广度。","\"反刍思维\"是学习的大敌——反复回想考砸的瞬间不会让下次更好，只会消耗前额叶的资源。替代方案：用\"下次我可以怎么做\"的具体行动计划打断反刍。","\"胜利日记\"实验：每天记下3件学习中的小成就（哪怕只是\"今天打开题库了\"），3周后自评动机显著上升。因为你重新训练了大脑关注进步而非差距。","强迫\"快乐学习\"反而有害。能接纳\"学习有时就是无聊的、辛苦的\"这一事实的人，长期坚持的概率更高。真正的动力不是快乐，是意义感。","意志力不像\"电池\"——认为意志力有限的人确实更容易放弃，认为意志力无限的人坚持更久。关键是：\"你相信什么，什么就是真的。\"","\"完形倾向\"：大脑倾向于把不完整的东西补全。利用这个：把题目读完但故意不填最后一个空，第二天你会发现大脑在催你来完成。","\"稀释效应\"：一个强论点比三个弱论点更有说服力。学习同理——吃透一道难题，比浏览十道简单题收获更大。","每日静坐5分钟（不需要冥想，睁眼坐着就行）可以提高工作记忆容量。原理：短暂的感觉剥夺让默认模式网络（DMN）得到休息，后续注意力更集中。","\"教是最好的学\"——费曼学习法的核心：尝试用自己的话解释一个概念，你立刻知道哪里没真懂。没人在旁边听也没关系，对空气讲都有效。","过度学习（Overlearning）有科学依据：即使已经能答对，再多练2-3次可以让记忆抵抗遗忘的能力翻倍。关键是\"已经会了之后的额外练习\"。","\"生理同步\"效应：学习时心率平稳的时段，信息编码效率更高。紧张时先做几次深呼吸，不只是心理安慰——你在优化大脑的编码窗口。","情境依赖效应：在类似考试的环境下学习（安静、坐着、时间限制），考试时回忆率更高。因为大脑把\"环境线索\"和\"记忆内容\"绑在了一起。","\"近因效应\"：最后学的内容记得最牢。所以练题结束时，快速浏览一遍刚才做错的题——它们在\"近因窗口\"里，明天的回忆率更高。","不要等\"有动力了再学\"。行动先于动力——先翻开题库做1道，动力自然就跟上了。这和大脑的多巴胺环路工作原理一致：预期奖励>实际获得。","\"组块化\"（Chunking）是扩大工作记忆的唯一方法。把相关知识点打包成一个\"组块\"，你一次能处理的信息量就翻了几倍。高手和新手的大脑区别就在这里。","自我解释效应：做题时对自己讲出\"为什么选这个\"（即使在心里默念），理解深度提升40%。这强迫你从\"感觉对了\"升级到\"真懂了\"。","\"归因理论\"：把失败归因于\"努力不够\"（可改变的）而不是\"能力不足\"（不可改变的）的人，下次成绩提升显著。因为努力可以加码，能力听起来像定局。","习惯形成=线索+行为+奖励。设置一个每次学习后的微奖励（比如打勾✅ + 喝口水），大脑就慢慢把\"完成学习\"和\"获得满足感\"绑定了。","环境设计>意志力。把题库快捷方式放在手机桌面最显眼的位置，把社交App藏到文件夹里。不是靠意志力对抗诱惑——是不给诱惑机会。","\"前瞻性记忆\"：告诉自己\"明天早上看到题库图标就点进去\"——比\"我明天要刷题\"有效3倍。因为\"看到图标\"是具体的触发线索，\"要刷题\"只是模糊意图。","\"伊丽莎白·洛夫特斯\"的记忆研究表明：记忆不是录像机，是可塑的。每次回忆都是一次\"重新编辑\"——你可以刻意强化想记住的、弱化想遗忘的。","学习时听音乐的黄金法则：有歌词的音乐占用语音工作记忆（和刷题的文字处理冲突），纯音乐和无声音最佳。如果一定要听，纯器乐、Lo-fi 或白噪音最安全。","\"自我损耗\"理论的更新：最新元分析发现，意志力损耗效应比最初认为的小得多。如果你觉得\"累了学不动了\"，试试先做一道——你比你以为的更有余力。","\"巴德利工作记忆模型\"告诉我们：视觉空间画板和语音回路是两个独立通道。边看图边学文字（双通道）比只看文字（单通道）效率高。给抽象知识配一张简图。","\"默认模式网络\"（DMN）在你发呆时也极度活跃——这是创意的来源。学累了发呆5分钟不是浪费时间，是让大脑在后台整合信息。","\"锚定效应\"影响你的自我评价：不要用\"上次考了多少分\"来定义自己。你的真实水平不是某个数字，而是你每天都在进步的趋势。","\"行动语言\"的力量：对自己说\"我不刷题\"vs\"我不能刷题\"——前者是选择，后者是被迫。主动选择的语言强化了你的自主感，长期坚持的概率翻倍。","人在\"刚好及格\"时学得最投入。如果正确率100%，说明题太简单；如果正确率<50%，说明难度太高。最佳学习区间是正确率65-85%——够挑战但不绝望。","\"闪光灯记忆\"告诉我们：情绪越强烈，记忆越牢固。所以把枯燥的知识点和一件有趣的事、一个生动的画面绑定——大脑会优先保存它们。","自证预言在学习中的力量：如果你相信\"这个科目我就是不行\"，你的大脑自动过滤掉和这个信念矛盾的证据。反过来：\"我在这方面每天都在进步\"——大脑开始收集证明这一点的证据。","时间不是敌人。\"还有30天考试\"和\"只剩30天了\"——同一个事实，不同的框架。前者是机会视角（还有时间进步），后者是威胁视角（来不及了）。刻意选择前者。","效率不是检验学习成果的标准。\"理解得快\"和\"记得牢\"几乎无关。真正预测长期记忆的是：你有没有在遗忘之前主动回忆。慢一点，其实是快一点。","极简主义复习法：只复习错题。因为你做对的题目已经在大脑里有巩固的通路，而错题才是真正需要\"重新编码\"的内容。错题本不是耻辱本——是最高效的复习清单。","身份认同是最深层的驱动力。不要说\"我要刷题\"，说\"我是一个每天学习的人\"。你不是在完成一个任务——你是在成为你想成为的那种人。"];
+
+function getDailyInsight() {
+  var today = new Date().toISOString().substring(0, 10);
+  var si = appData.settings.dailyInsight;
+  if (!si || si.date !== today) {
+    var idx = Math.floor(Math.random() * DAILY_INSIGHTS.length);
+    appData.settings.dailyInsight = { date: today, index: idx, refreshed: false };
+    saveData(appData);
+  }
+  return DAILY_INSIGHTS[appData.settings.dailyInsight.index];
+}
+
+function refreshDailyInsight() {
+  var today = new Date().toISOString().substring(0, 10);
+  var si = appData.settings.dailyInsight;
+  if (si && si.refreshed) {
+    showToast("今天已经刷新过了，明天再来吧 🌟");
+    return;
+  }
+  var newIdx;
+  do {
+    newIdx = Math.floor(Math.random() * DAILY_INSIGHTS.length);
+  } while (newIdx === (si ? si.index : -1) && DAILY_INSIGHTS.length > 1);
+  appData.settings.dailyInsight = { date: today, index: newIdx, refreshed: true };
+  saveData(appData);
+  renderSettings();
+  showToast("🔄 已刷新每日洞见");
+}
+
+function showDailyInsightCard() {
+  var insight = getDailyInsight();
+  var si = appData.settings.dailyInsight || {};
+  var canRefresh = !si.refreshed;
+  var width = Math.min(400, window.innerWidth - 40);
+  var html = "<div style=\"background:linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);border-radius:20px;padding:28px 24px;color:#e0e0e0;max-width:" + width + "px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);position:relative\">" +
+    (canRefresh ? "<button onclick=\"event.stopPropagation();refreshDailyInsight();showDailyInsightCard();\" style=\"position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;min-width:36px;min-height:36px\" title=\"刷新（每天仅一次）\">🔄</button>" :
+     "<span style=\"position:absolute;top:16px;right:16px;font-size:11px;color:rgba(255,255,255,0.3)\">今日已刷新</span>") +
+    "<div style=\"font-size:32px;margin-bottom:16px\">💡</div>" +
+    "<div style=\"font-size:17px;line-height:1.9;font-weight:500\">" + escapeHtml(insight) + "</div>" +
+    "<div style=\"margin-top:20px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;color:rgba(255,255,255,0.4);text-align:right\">每日洞见 · 基于认知科学与心理学</div>" +
+  "</div>";
+  showInfoModal("每日洞见", html, "关闭");
+}
+
+// ====== 今日学习摘要 ======
+function getTodaySummaryBrief() {
+  ensureDailyPractice();
+  var dp = appData.settings.dailyPractice;
+  if (!dp || (!dp.duration && !dp.totalSwitches)) return null;
+  var parts = [];
+  if (dp.duration > 0) parts.push("⏱ " + fmtDuration(dp.duration));
+  var today = new Date().toISOString().substring(0, 10);
+  var completed = 0;
+  var dates = appData.settings.studyDates || {};
+  if (dates[today]) completed = dates[today];
+  if (completed > 0) parts.push("📝 " + completed + "题");
+  return parts.join(" · ");
+}
+
+function showTodaySummary() {
+  ensureDailyPractice();
+  var dp = appData.settings.dailyPractice;
+  var today = new Date().toISOString().substring(0, 10);
+  var dates = appData.settings.studyDates || {};
+  var todayCards = dates[today] || 0;
+  var duration = dp.duration || 0;
+  var switches = dp.totalSwitches || 0;
+  var dailyTarget = (appData.settings || {}).dailyTarget || 0;
+  var totalCards = 0, mastered = 0;
+  var banks = appData.banks || {};
+  for (var bkId in banks) {
+    var bk = banks[bkId];
+    if (bk && bk.cards) {
+      totalCards += bk.cards.length;
+      for (var ci = 0; ci < bk.cards.length; ci++) {
+        if (bk.cards[ci].mastered) mastered++;
+      }
+    }
+  }
+  var width = Math.min(380, window.innerWidth - 40);
+  var cardHtml = "<div style=\"background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);border-radius:20px;padding:24px;color:#fff;text-align:center;max-width:" + width + "px;margin:0 auto;box-shadow:0 20px 60px rgba(102,126,234,0.4)\">" +
+    "<div style=\"font-size:14px;opacity:0.85;margin-bottom:4px\">" + today + "</div>" +
+    "<div style=\"font-size:28px;font-weight:800;margin-bottom:16px\">📋 今日学习摘要</div>" +
+    "<div style=\"display:flex;justify-content:center;gap:24px;margin-bottom:20px;flex-wrap:wrap\">" +
+      "<div style=\"text-align:center\"><div style=\"width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;border:3px solid rgba(255,255,255,0.3)\"><div style=\"text-align:center\"><div style=\"font-size:22px;font-weight:800\">" + Math.floor(duration / 60) + "</div><div style=\"font-size:10px;opacity:0.8\">分钟</div></div></div><div style=\"font-size:11px;opacity:0.8\">练习时长</div></div>" +
+      "<div style=\"text-align:center\"><div style=\"width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;border:3px solid rgba(255,255,255,0.3)\"><div style=\"text-align:center\"><div style=\"font-size:22px;font-weight:800\">" + todayCards + "</div><div style=\"font-size:10px;opacity:0.8\">题</div></div></div><div style=\"font-size:11px;opacity:0.8\">今日做题</div></div>" +
+      "<div style=\"text-align:center\"><div style=\"width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;border:3px solid rgba(255,255,255,0.3)\"><div style=\"text-align:center\"><div style=\"font-size:22px;font-weight:800\">" + (totalCards > 0 ? Math.round(mastered / totalCards * 100) : 0) + "%</div><div style=\"font-size:10px;opacity:0.8\">掌握率</div></div></div><div style=\"font-size:11px;opacity:0.8\">总进度</div></div>" +
+    "</div>" +
+    "<div style=\"background:rgba(255,255,255,0.12);border-radius:14px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:center;font-size:13px\">" +
+      (dailyTarget > 0 ? "<span>🎯 目标 " + todayCards + "/" + dailyTarget + " 题" + (todayCards >= dailyTarget ? " ✅" : "") + "</span>" : "") +
+      "<span>📱 切屏 " + switches + " 次</span>" +
+      "<span>📦 总题库 " + totalCards + " 题</span>" +
+      "<span>✅ 已掌握 " + mastered + " 题</span>" +
+    "</div>" +
+    "<div style=\"margin-top:16px;font-size:12px;opacity:0.6\">点击任意处关闭</div>" +
+  "</div>";
+  showInfoModal("今日学习摘要", cardHtml, "关闭");
+}
+
 // iPad 友好的题库选择弹窗（替代原生 select）
 var _bankPickerCallback = null;
 function showBankPicker(currentId, onPick) {
@@ -2000,6 +2097,19 @@ function initApp() {
       debouncedSaveData(appData);
       if (practiceState && practiceState.cards && $('practiceActive').style.display !== 'none' && $('practiceResult').style.display === 'none') {
         practiceSwitches++;
+            // 番茄钟模式：切屏警告
+            if (appData.settings && appData.settings.pomodoro) {
+              if (practiceSwitches >= 2) {
+                showToast("🍅 番茄钟：切屏已达上限，练习已暂停");
+                setTimeout(function() { showPracticeResult(); }, 1500);
+                return;
+              } else if (practiceSwitches === 1) {
+                showToast("🍅 番茄钟：再切屏1次将自动结束练习！");
+              } else {
+                showToast("🍅 番茄钟进行中，请专注！");
+              }
+            }
+
       }
     }
   });
@@ -2101,7 +2211,7 @@ function initApp() {
     }, 800);
   }
 
-  checkBedtimeReminder();
+  checkEveningMode();
   switchTab('banks');
   // showIntroModal() 已移除 — 不再弹出欢迎提示
   } catch(e) {
@@ -2265,7 +2375,8 @@ function renderBanks() {
     return;
   }
 
-  // 学习计划banner + 冲刺入口
+  
+// 学习计划banner + 冲刺入口
   var examBannerHtml = '';
   var daysLeft = getExamDaysLeft();
   var todayCompleted = getTodayCompleted();
@@ -4529,6 +4640,7 @@ function startPracticeSetup(bankId) {
 function startPractice() {
   practiceStartTime = Date.now();
   practiceSwitches = 0;
+  applyFocusMode();
   // 冲刺模式：使用冲刺题目池
   var isSprint = sessionStorage.getItem('sprintMode') === '1';
   if (isSprint) {
@@ -4741,7 +4853,6 @@ function renderPracticeCard() {
       ${(st._isSprint || st._multiBanks) ? '<span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (st._cardBankMap && st._cardBankMap[st.index] ? st._cardBankMap[st.index].bankName : (st._isSprint ? '冲刺' : '混合')) + '</span>' : ''}
       <span id="timerDisplay" style="display:${timerMode === 'off' ? 'none' : ''};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
       <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleStarCurrent()">${starIcon}</button>
-      <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 10px;line-height:1;min-width:44px;min-height:44px" onclick="toggleHighFreqCurrent()" title="标记为高频考点">${card.highFreq ? '🔥' : '🔹'}</button>
       <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--danger)" onclick="deleteCurrentCard()" title="删除此题">🗑️</button>
     </div>
 
@@ -5134,14 +5245,6 @@ function applyFocusMode() {
   }
 }
 
-function toggleHighFreqCurrent() {
-  const card = practiceState.cards[practiceState.index];
-  card.highFreq = !card.highFreq;
-  const bank = appData.banks[practiceState.bankId];
-  if (bank) { const c = bank.cards.find(x => x.id === card.id); if (c) c.highFreq = card.highFreq; }
-  saveData(appData);
-  renderPracticeCard();
-}
 
 function deleteCurrentCard() {
 	  const st = practiceState;
@@ -6710,6 +6813,7 @@ function restoreFromJsonFile(input) {
       saveData(appData);
       applySettings();
       renderBanks();
+    updateExamCountdownBadge();
       renderSettings();
       updateBadges();
       switchTab('banks');
@@ -6882,111 +6986,51 @@ function renderSettings() {
         '<label class="toggle"><input type="checkbox" id="avatarToggle"' + (s.showAvatar ? ' checked' : '') + ' onchange="toggleAvatar(this.checked)"><span class="slider"></span></label></div>' +
       '<div class="setting-item"><div><div class="setting-label">🧘 专注模式</div><div class="setting-desc">练习时自动隐藏多余按钮，沉浸背书</div></div>' +
         '<label class="toggle"><input type="checkbox" id="focusModeToggle"' + (s.focusMode ? ' checked' : '') + ' onchange="saveSetting(\'focusMode\', this.checked)"><span class="slider"></span></label></div>' +
-    '</div></div>' +
+
+      '<div class="setting-item"><div><div class="setting-label">🍅 番茄钟模式</div><div class="setting-desc">练习期间切屏3次自动暂停，保护专注力</div></div>' +
+        '<label class="toggle"><input type="checkbox" id="pomodoroToggle"' + (s.pomodoro ? ' checked' : '') + ' onchange="saveSetting(\'pomodoro\', this.checked)"><span class="slider"></span></label></div>' +    '</div></div>' +
 
     // 学习计划 section
     (function() {
-      var examDateVal = (s.examDate || '');
-      var dailyTarget = s.dailyTarget || '';
-      var daysLeft = getExamDaysLeft();
-      var stats = countMasteredQuestions();
-      var suggestedDaily = getDailyTarget();
-      var todayCompleted = getTodayCompleted();
-      var summaryHtml = '';
-      if (examDateVal) {
-        var daysText = daysLeft > 0 ? '距考试 <b>' + daysLeft + '</b> 天' : (daysLeft === 0 ? '今天考试！' : '考试日期已过');
-        summaryHtml = '<div style="margin-top:4px;font-size:12px;color:var(--text-secondary)">' + daysText + ' · 题库共 <b>' + stats.total + '</b> 题 · 已掌握 <b>' + stats.mastered + '</b> 题 · 未掌握 <b>' + stats.unmastered + '</b> 题</div>';
-        if (suggestedDaily > 0) {
-          summaryHtml += '<div style="margin-top:2px;font-size:12px;color:var(--primary)">📌 建议每天至少 <b>' + suggestedDaily + '</b> 题</div>';
-        }
-        if (dailyTarget > 0) {
-          summaryHtml += '<div style="margin-top:2px;font-size:12px;color:' + (todayCompleted >= dailyTarget ? 'var(--success)' : 'var(--text-tertiary)') + '">今日已完成 ' + todayCompleted + '/' + dailyTarget + ' 题' + (todayCompleted >= dailyTarget ? ' ✅' : '') + '</div>';
-        }
-      } else {
-        summaryHtml = '<div style="margin-top:4px;font-size:12px;color:var(--text-tertiary)">设置考试日期后，自动帮你规划每天背诵量</div>';
-      }
-      var planHtml = '<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">' +
-        '<div><div class="setting-label">📅 考试日期</div>' +
-          '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:6px;width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px">' +
-        '</div>' +
-        summaryHtml +
-        '<div style="margin-top:4px"><div class="setting-label">每日目标（题数）</div>' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-top:6px">' +
-            '<input type="number" id="dailyTargetInput" value="' + dailyTarget + '" placeholder="' + (suggestedDaily || '自定义') + '" min="1" onchange="saveDailyTarget(parseInt(this.value)||0)" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px">' +
-            '<span style="font-size:12px;color:var(--text-tertiary);white-space:nowrap">题/天</span>' +
-          '</div>' +
-          '<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">留空则根据考试日期和未掌握题数自动计算</div>' +
-        '</div>' +
-        '<div style="margin-top:12px"><div class="setting-label">🌙 睡前复习提醒</div>' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-top:6px">' +
-            '<input type="time" id="bedtimeReminderInput" value="' + (s.bedtimeReminder || '') + '" onchange="saveBedtimeReminder(this.value)" style="padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px;width:140px">' +
-            '<span style="font-size:12px;color:var(--text-tertiary)">留空关闭提醒</span>' +
-          '</div>' +
-          '<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">设置后，每天到点打开工具时会提示"睡前复习效果最佳"</div>' +
-        '</div>' +
-        // 本周统计
-        (function() {
-          var ws = getCurrentWeekStats();
-          var html = '';
-          if (ws.duration > 0 || ws.switches > 0) {
-            html += '<div style="margin-top:12px;padding:10px 14px;background:var(--bg-card);border-radius:8px;display:flex;gap:16px;font-size:13px">';
-            html += '<span>📊 <b>本周</b></span>';
-            if (ws.duration > 0) html += '<span>⏱ ' + fmtDuration(ws.duration) + '</span>';
-            if (ws.switches > 0) html += '<span>📱 切屏 ' + ws.switches + ' 次</span>';
-            html += '</div>';
-          }
-          return html;
-        })() +
-        // 学习日历热力图
-        (function() {
-          var dates = appData.settings.studyDates || {};
-          var today = new Date();
-          var html = '<div style="margin-top:12px"><div class="setting-label">📊 学习记录（近12周）</div>';
-          html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:8px">';
-          for (var d = 83; d >= 0; d--) {
-            var dt = new Date(today);
-            dt.setDate(dt.getDate() - d);
-            var dateStr = dt.toISOString().substring(0, 10);
-            var count = dates[dateStr] || 0;
-            var color = count >= 20 ? '#2e7d32' : count >= 10 ? '#4caf50' : count >= 5 ? '#a5d6a7' : count > 0 ? '#c8e6c9' : '#e0e0e0';
-            var title = dateStr + (count > 0 ? ': ' + count + ' 题' : ': 未学习');
-            html += '<div style="width:12px;height:12px;border-radius:2px;background:' + color + '" title="' + title + '"></div>';
-            // 每周换行
-            if (d % 7 === 0 && d > 0) html += '</div><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
-          }
-          html += '</div>';
-          // 图例
-          html += '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;color:var(--text-tertiary)">少<span style="width:10px;height:10px;border-radius:2px;background:#e0e0e0"></span><span style="width:10px;height:10px;border-radius:2px;background:#c8e6c9"></span><span style="width:10px;height:10px;border-radius:2px;background:#a5d6a7"></span><span style="width:10px;height:10px;border-radius:2px;background:#4caf50"></span><span style="width:10px;height:10px;border-radius:2px;background:#2e7d32"></span>多</div>';
-          html += '</div>';
-          return html;
-        })() +
-      '</div>';
       return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'studyplan\')"><span>📅 学习计划</span><span class="section-arrow" id="arrow_studyplan">▲</span></div>' +
         '<div class="section-body" id="body_studyplan">' + planHtml + '</div></div>';
     })() +
 
-    // 周报 section
+    // 今日学习摘要
     (function() {
-      var wss = appData.settings.weeklyStats || {};
-      var weeks = Object.keys(wss).sort().reverse().slice(0, 8);
-      if (!weeks.length) return '';
-      var html = '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'weeklyReport\')"><span>📊 周报</span><span class="section-arrow" id="arrow_weeklyReport">▲</span></div>';
-      html += '<div class="section-body" id="body_weeklyReport"><div class="setting-item" style="flex-direction:column;align-items:stretch;gap:6px">';
-      for (var wi = 0; wi < weeks.length; wi++) {
-        var wk = weeks[wi];
-        var st = wss[wk];
-        var isCurrent = wk === getISOWeek(new Date().toISOString().substring(0, 10));
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg-card);border-radius:8px;font-size:13px' + (isCurrent ? ';border:1px solid var(--primary)' : '') + '">';
-        html += '<span style="font-weight:600">' + wk + (isCurrent ? ' <span style="font-size:10px;color:var(--primary)">本周</span>' : '') + '</span>';
-        html += '<span style="color:var(--text-secondary)">';
-        html += (st.duration > 0 ? '⏱ ' + fmtDuration(st.duration) : '⏱ --');
-        html += ' &middot; ';
-        html += (st.switches > 0 ? '📱 切屏 ' + st.switches + ' 次' : '📱 0 次');
-        html += '</span></div>';
+      return '<div class="section"><div class="section-header" style="cursor:pointer" onclick="showTodaySummary()"><span style="font-weight:700;font-size:15px">📋 今日学习摘要</span><span style="font-size:13px;color:var(--text-secondary);margin-left:8px">' + (getTodaySummaryBrief() || '暂无数据') + '</span><span style="margin-left:auto;font-size:18px;color:var(--text-tertiary)">›</span></div></div>';
+    })() +
+
+    // 每日洞见
+    (function() {
+      var insight = getDailyInsight();
+      var preview = insight.length > 40 ? insight.substring(0, 40) + '…' : insight;
+      return '<div class="section"><div class="section-header" style="cursor:pointer" onclick="showDailyInsightCard()"><span style="font-weight:700;font-size:15px">💡 每日洞见</span><span style="font-size:13px;color:var(--text-secondary);margin-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">' + escapeHtml(preview) + '</span><span style="margin-left:auto;font-size:18px;color:var(--text-tertiary)">›</span></div></div>';
+    })() +
+
+    // 学习日历热力图
+    (function() {
+      var dates = appData.settings.studyDates || {};
+      var today = new Date();
+      var html = '<div style="margin-top:12px"><div class="setting-label">📊 学习记录（近12周）</div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:8px">';
+      for (var d = 83; d >= 0; d--) {
+        var dt = new Date(today);
+        dt.setDate(dt.getDate() - d);
+        var dateStr = dt.toISOString().substring(0, 10);
+        var count = dates[dateStr] || 0;
+        var color = count >= 20 ? '#2e7d32' : count >= 10 ? '#4caf50' : count >= 5 ? '#a5d6a7' : count > 0 ? '#c8e6c9' : '#e0e0e0';
+        var title = dateStr + (count > 0 ? ': ' + count + ' 题' : ': 未学习');
+        html += '<div style="width:12px;height:12px;border-radius:2px;background:' + color + '" title="' + title + '"></div>';
+        if (d % 7 === 0 && d > 0) html += '</div><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
       }
-      html += '</div></div></div>';
+      html += '</div>';
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;color:var(--text-tertiary)">少<span style="width:10px;height:10px;border-radius:2px;background:#e0e0e0"></span><span style="width:10px;height:10px;border-radius:2px;background:#c8e6c9"></span><span style="width:10px;height:10px;border-radius:2px;background:#a5d6a7"></span><span style="width:10px;height:10px;border-radius:2px;background:#4caf50"></span><span style="width:10px;height:10px;border-radius:2px;background:#2e7d32"></span>多</div>';
+      html += '</div>';
       return html;
     })() +
+
+    
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       // 成就展示
@@ -7005,7 +7049,7 @@ function renderSettings() {
         return html;
       })() +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v21</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v22</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
