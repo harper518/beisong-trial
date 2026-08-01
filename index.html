@@ -930,7 +930,7 @@ function sha256Browser(s) {
 
 // 激活码格式化: BV3-XXXX-XXXX-XXXX 或 BV9-XXXX-XXXX-XXXX
 function formatActivationCode(input) {
-  var cleaned = input.toUpperCase().replace(/[^A-Z2-9]/g, '');
+  var cleaned = input.toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (cleaned.indexOf('BV3') === 0) cleaned = cleaned.substring(3);
   else if (cleaned.indexOf('BV9') === 0) cleaned = cleaned.substring(3);
   else if (cleaned.indexOf('ADM') === 0) cleaned = cleaned.substring(3);
