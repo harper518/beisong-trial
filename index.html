@@ -7335,7 +7335,7 @@ function renderSettings() {
       if (tier !== 'pro') {
         var upgradeHint = tier === 'free' ? '激活码请联系开发者获取' : '已是' + TIER_NAMES[tier] + '，输入新码可升级';
         html += '<div style="display:flex;gap:8px;margin-bottom:6px">' +
-          '<input type="text" id="activateInput" placeholder="输入激活码（如 BV3-XXXX-XXXX-XXXX）" autocomplete="off" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px;min-height:40px">' +
+          '<input type="text" id="activateInput" placeholder=" " autocomplete="off" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px;min-height:40px">' +
           '<button class="btn btn-primary btn-sm" onclick="var v=document.getElementById(&#39;activateInput&#39;).value;if(v)activateCode(v)" style="min-height:40px;padding:0 16px;font-size:14px;white-space:nowrap">激活</button>' +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">' + upgradeHint + ' · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
