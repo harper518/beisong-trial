@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="记忆填空"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" id="themeColorMeta" content="#f0fdfa"/>
-<title>挖空背诵工具 v12 · 小阮出品</title>
+<title>挖空背诵工具 v13 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -334,6 +334,12 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .preview-char:active{transform:scale(.9)}
 .preview-char.char-sel{background:var(--warning);border-color:var(--warning);color:#fff}
 .preview-char.saved{cursor:default}
+.newline-marker{display:inline-block;opacity:.22;cursor:pointer;font-weight:700;transition:all .15s;user-select:none;-webkit-user-select:none;min-width:14px;text-align:center;padding:0 2px}
+.newline-marker:hover{opacity:.6;transform:scale(1.25)}
+.newline-marker:active{opacity:.9;transform:scale(.85)}
+.merge-undo-dot{display:inline-block;background:var(--primary-light);color:var(--primary);border-radius:50%;width:16px;height:16px;line-height:16px;text-align:center;font-size:12px;margin:0 1px;cursor:pointer;font-weight:700;transition:all .15s;user-select:none;-webkit-user-select:none}
+.merge-undo-dot:hover{background:var(--primary);color:#fff;transform:scale(1.15)}
+.merge-undo-dot:active{transform:scale(.85)}
 .preview-card{background:var(--bg-card);border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border);margin-bottom:10px}
 .preview-card .preview-text{font-size:var(--font-size);line-height:2.2;word-break:break-word;overflow-wrap:break-word;overflow-x:hidden}
 .preview-card .blank-tag{display:inline-block;background:var(--warning);padding:3px 12px;border-radius:14px;font-size:12px;color:#fff;cursor:pointer;margin:2px;font-weight:600;transition:all var(--transition)}
@@ -689,7 +695,7 @@ function restorePresetBanks() {
 }
 
 // ==================== 自动挖空算法 ====================
-const STOP_WORDS = new Set(['的','了','是','在','和','与','或','对','从','到','等','这','那','其','之','也','就','都','但','而','且','所','被','把','让','向','同','及','以及','着','过','可以','能够','需要','应该','必须','可能','已经','正在','将要','没有','不是','什么','怎么','怎样','如何','为什么','哪个','哪里','因为','所以','虽然','但是','如果','即使','除非','无论','不管','进行','使用','通过','根据','关于','对于','由于','为了','一个','一种','这个','这种','一些','这些','那些','每个','第一','第二','第三','首先','其次','最后','然后','接着','方面','部分','情况','过程','结果','作用','功能','特点','具有','形成','产生','发生','发展','变化','包括','包含','主要','重要','基本','一般','特别','非常','比较','更加','一定','所有','任何','不同','相同','之间','之中','之后','之前','以内','以外','以上','以下','不能','不会','不可','不再','也是','就有','都会','也可','是指','称为','叫做','属于','用来','用以','用于','作为','其中','其他','其它','各自','某些','有的','有些','我国','人们','我们','他们','你们','它们','当','并','则','以','可','能','会','要','有','无']);
+const STOP_WORDS = new Set(['的','了','是','在','和','与','或','对','从','到','等','这','那','其','之','也','就','都','但','而','且','所','被','把','让','向','同','及','以及','着','过','可以','能够','需要','应该','必须','可能','已经','正在','将要','没有','不是','什么','怎么','怎样','如何','为什么','哪个','哪里','因为','所以','虽然','但是','如果','即使','除非','无论','不管','进行','使用','通过','根据','关于','对于','由于','为了','一个','一种','这个','这种','一些','这些','那些','每个','第一','第二','第三','首先','其次','最后','然后','接着','方面','部分','情况','过程','结果','作用','功能','特点','具有','形成','产生','发生','发展','变化','包括','包含','主要','重要','基本','一般','特别','非常','比较','更加','一定','所有','任何','不同','相同','之间','之中','之后','之前','以内','以外','以上','以下','不能','不会','不可','不再','也是','就有','都会','也可','是指','称为','叫做','属于','用来','用以','用于','作为','其中','其他','其它','各自','某些','有的','有些','我国','人们','我们','他们','你们','它们','当','并','则','以','可','能','会','要','有','无','为主','程度','有助于','标志着','就是说','指的是','共同','相互','整体','具体','实际','直接','间接','最终','逐步','不断','充分','进一步','结合']);
 
 const CHAR_STOP = new Set(['的','了','是','和','与','或','对','在','中','上','下','等','并','则','以','可','能','会','要','有','无','及','被','把','从','到','由','让','向','同','为','因','所','而','且','虽','但','却','只','仅','又','再','还','也','就','都','很','更','最','极','较','太','非','不','没','将','已','正','着','过']);
 
@@ -752,7 +758,7 @@ function extractKeywords(text, count, seed) {
   const rng = seed != null ? seededRandom(seed) : null;
   const candidates = [];
 
-  for (let len = 5; len >= 2; len--) {
+  for (let len = 8; len >= 2; len--) {
     for (let i = 0; i <= text.length - len; i++) {
       const phrase = text.substring(i, i + len);
       if (STOP_WORDS.has(phrase)) continue;
@@ -767,6 +773,8 @@ function extractKeywords(text, count, seed) {
       if (hasTechChar(phrase)) score += 12;
       // 中英文混合（如"DNA复制"）加分
       if (/[A-Za-z]/.test(phrase)) score += 6;
+      // 概念后缀加分：以学科特征字结尾的词更可能是考点
+      if (/[性化法制论学观力体质感型式态物器术程期段点度率量数值系组群类种属科]$/.test(phrase)) score += 5;
       // 数字参与但不主导的词（如"3个"）适度加分
       if (/[\d一二三四五六七八九十百千万亿]/.test(phrase) && !/^\d+$/.test(phrase)) score += 3;
       // 在逗号/分号/句号/换行后面紧跟的词（得分点开头）加分
@@ -829,6 +837,25 @@ function autoGenerateBlanks(cards, density, seed) {
       return { ...card, fullText: cleanFt, blanks: blanks };
     }
 
+    // 检测 （关键词） 括号模式：括号内的实质性内容优先作为挖空
+    var parenBlanks = [];
+    var parenRe = /（([^）]+)）/g;
+    var pm;
+    while ((pm = parenRe.exec(a)) !== null) {
+      var content = pm[1].trim();
+      // 过滤序号类短模式
+      if (/^[\d一二三四五六七八九十百千万亿①②③④⑤⑥⑦⑧⑨⑩A-Za-z\.\、\s]+$/.test(content)) continue;
+      if (content.length < 2) continue;
+      var relStart = pm.index + 1; // 跳过 "（"
+      var relEnd = pm.index + 1 + content.length;
+      parenBlanks.push({
+        start: answerStart + relStart,
+        end: answerStart + relEnd,
+        text: content,
+        isAnswer: true
+      });
+    }
+
     const pointTexts = splitIntoPoints(a);
     if (!pointTexts.length) return { ...card, fullText: ft, blanks: [] };
 
@@ -882,6 +909,21 @@ function autoGenerateBlanks(cards, density, seed) {
           }
         }
       }
+    }
+
+    blanks.sort((a, b) => a.start - b.start);
+
+    // 合并括号识别的空（优先），过滤重叠的算法空
+    if (parenBlanks.length > 0) {
+      var covered = new Set();
+      for (var bi = 0; bi < parenBlanks.length; bi++) {
+        for (var cp = parenBlanks[bi].start; cp < parenBlanks[bi].end; cp++) covered.add(cp);
+      }
+      // 过滤掉与括号空重叠的算法空
+      blanks = parenBlanks.concat(blanks.filter(function(b) {
+        for (var cp2 = b.start; cp2 < b.end; cp2++) { if (covered.has(cp2)) return false; }
+        return true;
+      }));
     }
 
     blanks.sort((a, b) => a.start - b.start);
@@ -2411,6 +2453,7 @@ function showImportPreview(name, cards, stats) {
       <span class="chip active" data-mode="manual" onclick="switchPreviewMode('manual', this)">✋ 手动挖空</span>
       <span class="chip" data-mode="auto" onclick="switchPreviewMode('auto', this)">🤖 系统自动</span>
     </div>
+    <button id="clearAllAutoBtn" class="btn btn-sm btn-ghost" style="display:none;font-size:11px;margin-bottom:12px;color:var(--danger)" onclick="clearAllAutoBlanks()">🔄 清空全部挖空</button>
     <p class="text-sm text-secondary mb-12" id="previewModeHint">👆 点击答案中的字选中挖空，连续的字自动合并。保存后可继续第二轮挖空。</p>
     <div id="previewPageNavTop" style="margin-bottom:10px"></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="previewJumpRow">
@@ -2458,6 +2501,8 @@ function switchPreviewMode(mode, el) {
   document.getElementById('previewModeHint').textContent = mode === 'manual'
     ? '👆 点击答案中的字选中挖空，连续的字自动合并。保存后可继续第二轮挖空。'
     : '🤖 系统按得分点自动挖空，可点击标签取消/恢复。';
+  var clearBtn = document.getElementById('clearAllAutoBtn');
+  if (clearBtn) clearBtn.style.display = mode === 'auto' ? '' : 'none';
   if (mode === 'auto') {
     // 为每道题生成自动挖空
     previewData.cards.forEach(c => {
@@ -2654,6 +2699,7 @@ function jumpToCardPage(idx) {
 }
 
 let _wasDragging = false, _touchJustHappened = 0;
+var MERGE_MARKER = '​'; // 零宽空格，作为换行合并标记（1:1替换\n）
 function renderAnswerChars(card, idx) {
   const a = card.answer || '';
   if (!a) return '<span style="color:var(--text-tertiary)">（无答案）</span>';
@@ -2669,8 +2715,9 @@ function renderAnswerChars(card, idx) {
     onmouseleave="mouseSelectEnd(${idx})">`;
   for (let i = 0; i < a.length; i++) {
     const ch = a[i];
-    if (ch === '\\' && a[i+1] === 'n') { h += '<span style="opacity:.2">↵</span>'; i++; continue; }
-    if (ch === '\n') { h += '<span style="opacity:.2">↵</span>'; continue; }
+    if (ch === '\\' && a[i+1] === 'n') { h += '<span class="newline-marker" data-nli="' + i + '" onclick="event.stopPropagation();mergeLineAt(' + idx + ',' + i + ')" title="点击合并上下行">↵</span>'; i++; continue; }
+    if (ch === '\n') { h += '<span class="newline-marker" data-nli="' + i + '" onclick="event.stopPropagation();mergeLineAt(' + idx + ',' + i + ')" title="点击合并上下行">↵</span>'; continue; }
+    if (ch === '​') { h += '<span class="merge-undo-dot" data-mgi="' + i + '" onclick="event.stopPropagation();unmergeLineAt(' + idx + ',' + i + ')" title="点击恢复换行">↩</span>'; continue; }
     if (/\s/.test(ch)) { h += ' '; continue; }
     if (saved[i]) {
       const cls = sel[i] ? 'char-sel saved' : 'saved';
@@ -2683,6 +2730,58 @@ function renderAnswerChars(card, idx) {
   }
   h += '</div>';
   return h;
+}
+
+// 合并换行：将 \n 或 \n 替换为零宽空格标记
+function mergeLineAt(idx, pos) {
+  var card = previewData.cards[idx];
+  if (!card) return;
+  var a = card.answer || '';
+  if (pos < 0 || pos >= a.length) return;
+  var ch = a[pos];
+  // 处理 \n 双字符（字面量反斜杠n）和 \n 真正换行
+  if (ch === '\\' && a[pos + 1] === 'n') {
+    // 2字符 → 1字符 MERGE_MARKER，需要调整后续索引
+    var newA = a.substring(0, pos) + MERGE_MARKER + a.substring(pos + 2);
+    shiftCharKeys(card, pos + 1, -1); // pos+1之后的索引前移1
+    card.answer = newA;
+  } else if (ch === '\n') {
+    // 1字符 → 1字符 MERGE_MARKER，无需调整索引
+    card.answer = a.substring(0, pos) + MERGE_MARKER + a.substring(pos + 1);
+  } else {
+    return; // 不是换行符
+  }
+  if (!card._undoSnapshot) saveUndoSnapshot(card);
+  document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
+  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
+}
+
+// 恢复换行：将零宽空格标记还原为 \n
+function unmergeLineAt(idx, pos) {
+  var card = previewData.cards[idx];
+  if (!card) return;
+  var a = card.answer || '';
+  if (pos < 0 || pos >= a.length || a[pos] !== MERGE_MARKER) return;
+  // 1字符 → 1字符，无需调整索引
+  card.answer = a.substring(0, pos) + '\n' + a.substring(pos + 1);
+  if (!card._undoSnapshot) saveUndoSnapshot(card);
+  document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
+  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
+}
+
+// 字符删除后调整 _charSelected 和 _savedChars 索引
+function shiftCharKeys(card, fromIdx, delta) {
+  ['_charSelected', '_savedChars'].forEach(function(key) {
+    var obj = card[key] || {};
+    var newObj = {};
+    Object.keys(obj).forEach(function(k) {
+      var ki = parseInt(k);
+      if (ki < fromIdx) newObj[k] = obj[k];
+      else if (ki + delta < fromIdx) {} // 被删除的位置，丢弃
+      else newObj[ki + delta] = obj[k];
+    });
+    card[key] = newObj;
+  });
 }
 
 // 滑动选择
@@ -3081,6 +3180,18 @@ function toggleAutoBlank(idx, bidx) {
   document.getElementById('pv-auto-tags-' + idx).innerHTML = renderAutoTags(card, idx);
 }
 
+function clearAllAutoBlanks() {
+  if (!previewData || !previewData.cards) return;
+  var count = 0;
+  previewData.cards.forEach(function(c) {
+    if (c._autoBlanks) {
+      c._autoBlanks.forEach(function(b) { b._removed = true; count++; });
+    }
+  });
+  renderPreviewCards();
+  showToast('已清空 ' + count + ' 个自动挖空');
+}
+
 function editPreviewTitle(h2) {
   const oldText = previewData.name;
   const input = document.createElement('input');
@@ -3221,6 +3332,35 @@ function confirmImport() {
   const { name, cards, mode, editBankId } = previewData;
   const cleaned = cards.map(c => {
     delete c._charSelected; delete c._savedChars;
+    // 清理合并标记：从答案中移除零宽空格，调整空白位置
+    var a = c.answer || '';
+    if (a.indexOf(MERGE_MARKER) >= 0) {
+      var mergePositions = [];
+      for (var mi = 0; mi < a.length; mi++) { if (a[mi] === MERGE_MARKER) mergePositions.push(mi); }
+      c.answer = a.split(MERGE_MARKER).join('');
+      // 调整 blanks 中的绝对位置（需要换算为相对位置、校正、再换算回绝对位置）
+      if (c.blanks && mergePositions.length > 0) {
+        var q2 = (c.question || '').trim();
+        var ansStart = q2.length + 1;
+        c.blanks.forEach(function(b) {
+          var relStart = b.start - ansStart;
+          var relEnd = b.end - ansStart;
+          var shiftS = 0, shiftE = 0;
+          for (var mp = 0; mp < mergePositions.length; mp++) {
+            if (mergePositions[mp] < relStart) shiftS++;
+            else break;
+          }
+          for (var mp2 = 0; mp2 < mergePositions.length; mp2++) {
+            if (mergePositions[mp2] < relEnd) shiftE++;
+            else break;
+          }
+          b.start -= shiftS;
+          b.end -= shiftE;
+        });
+      }
+      // 重建 fullText
+      c.fullText = (c.question || '').trim() + '\n' + c.answer;
+    }
     if (mode === 'auto' && c._autoBlanks) {
       c.blanks = c._autoBlanks.filter(b => !b._removed);
       delete c._manualBlanks;
@@ -5765,7 +5905,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div><span style="font-size:13px;color:var(--text-secondary);font-weight:600">v12</span></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用</div></div><span style="font-size:13px;color:var(--text-secondary);font-weight:600">v13</span></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
