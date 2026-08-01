@@ -313,12 +313,14 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .toggle .slider::before{content:"";position:absolute;height:25px;width:25px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:var(--transition);box-shadow:0 2px 4px rgba(0,0,0,.15)}
 .toggle input:checked+.slider{background:var(--primary)}
 .toggle input:checked+.slider::before{transform:translateX(20px)}
+/* 设置页顶部 header */
+.settings-header{display:flex;align-items:center;justify-content:space-between;padding:0 4px 12px;min-height:44px}
+.settings-header-title{font-size:17px;font-weight:700;color:var(--text)}
 /* 头像 */
-.avatar-area{display:flex;align-items:center;justify-content:flex-end;padding:0 4px 8px}
-.avatar-circle{width:52px;height:52px;border-radius:50%;background:var(--bg-input);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:all var(--transition);flex-shrink:0}
+.avatar-circle{width:44px;height:44px;border-radius:50%;background:var(--bg-input);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:all var(--transition);flex-shrink:0}
 .avatar-circle:active{transform:scale(.92)}
 .avatar-circle img{width:100%;height:100%;object-fit:cover}
-.avatar-placeholder{font-size:24px;line-height:1}
+.avatar-placeholder{font-size:22px;line-height:1}
 /* 可折叠 section */
 .section-header{cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-left:4px;-webkit-tap-highlight-color:transparent;user-select:none;min-height:32px}
 .section-arrow{font-size:10px;color:var(--text-tertiary);transition:transform .25s;margin-left:8px;flex-shrink:0}
@@ -5613,10 +5615,11 @@ function renderSettings() {
   var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', rose: '#e11d48', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b' };
 
   c.innerHTML =
-    // 头像区域（开关打开时显示）
-    (s.showAvatar ? '<div class="avatar-area">' +
+    // 设置页顶部 header（开关打开时显示头像）
+    (s.showAvatar ? '<div class="settings-header">' +
+      '<span class="settings-header-title">设置</span>' +
       '<div class="avatar-circle" onclick="document.getElementById(\'avatarFileInput\').click()" title="点击上传头像">' +
-        (s.avatar ? '<img src="' + s.avatar + '" alt="头像">' : '<span class="avatar-placeholder">📷</span>') +
+        (s.avatarData ? '<img src="' + s.avatarData + '" alt="头像">' : '<span class="avatar-placeholder">📷</span>') +
       '</div></div>' : '') +
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'dataMgmt\')"><span>数据管理</span><span class="section-arrow" id="arrow_dataMgmt">▲</span></div>' +
     '<div class="section-body" id="body_dataMgmt"><div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">' +
@@ -5707,7 +5710,7 @@ function renderSettings() {
             var banksSize = new Blob([JSON.stringify(appData.banks || {})]).size;
             var wrongSize = new Blob([JSON.stringify(appData.wrongBooks || {})]).size;
             var settingsSize = new Blob([JSON.stringify(appData.settings || {})]).size;
-            var avatarSize = ((appData.settings || {}).avatar || '').length * 2;
+            var avatarSize = ((appData.settings || {}).avatarData || '').length * 2;
             // 其他：进度、dailyStats、roundCount、unicorns 等
             var other = { dailyStats: appData.dailyStats, roundCount: appData.roundCount, unicorns: appData.unicorns, weekStats: appData.weekStats };
             var otherSize = new Blob([JSON.stringify(other)]).size;
@@ -5809,37 +5812,35 @@ function toggleAvatar(checked) {
   saveSetting('showAvatar', checked);
   if (!checked) {
     // 关闭时清除头像数据
-    appData.settings.avatar = '';
+    appData.settings.avatarData = '';
     debouncedSaveData(appData);
     renderSettings();
   } else {
     renderSettings();
-    // 打开时刷新头像区域高度
-    setTimeout(function() {
-      var body = document.getElementById('body_appearance');
-      if (body) body.style.maxHeight = body.scrollHeight + 'px';
-    }, 100);
   }
 }
 
 // 头像上传
 function handleAvatarUpload(el) {
   var file = el.files[0]; if (!file) return;
-  if (file.size > 500 * 1024) { showToast('头像图片不能超过 500KB'); el.value = ''; return; }
+  if (file.size > 2 * 1024 * 1024) { showToast('头像图片不能超过 2MB'); el.value = ''; return; }
   var reader = new FileReader();
   reader.onload = function(e) {
-    // 压缩到 128x128 以内
     var img = new Image();
     img.onload = function() {
+      // 短边压缩到 200px，保持比例
+      var maxSide = 200;
+      var w = img.width, h = img.height;
+      if (w > maxSide || h > maxSide) {
+        var ratio = Math.min(maxSide / w, maxSide / h);
+        w = Math.round(w * ratio); h = Math.round(h * ratio);
+      }
       var canvas = document.createElement('canvas');
-      var size = Math.min(img.width, img.height, 128);
-      canvas.width = size; canvas.height = size;
+      canvas.width = w; canvas.height = h;
       var ctx = canvas.getContext('2d');
-      var sx = (img.width - size) / 2;
-      var sy = (img.height - size) / 2;
-      ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-      appData.settings.avatar = dataUrl;
+      ctx.drawImage(img, 0, 0, w, h);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      appData.settings.avatarData = dataUrl;
       debouncedSaveData(appData);
       renderSettings();
       showToast('✅ 头像已保存');
