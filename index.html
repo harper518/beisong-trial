@@ -1001,6 +1001,21 @@ function debouncedSaveData(data) { clearTimeout(_debouncedSave); _debouncedSave 
 
 let appData = loadData();
 
+// 状态栏主题色映射（所有28个主题的bg色）
+var themeBgColors = {
+  teal:'#f0fdfa', purple:'#faf5ff', blue:'#f0f7ff', rose:'#fff1f5', pink:'#fdf2f8',
+  green:'#f0fdf4', yellow:'#fefce8', bw:'#f5f5f5', cream:'#fffaf3', sage:'#f4faf0',
+  ink:'#f5f5f5', moss:'#f2f7f2', zen:'#faf7f4', bamboo:'#f4f8f2', wood:'#fdf8f4',
+  ocean:'#f0f4f8', coral:'#fef5f2', peach:'#fef8f5', lavender:'#f8f6fb', mist:'#f5f8fa',
+  snow:'#fafafa', amber:'#fffbf5', sakura:'#fef8fa', sky:'#f5fafd', oat:'#fdfaf6',
+  sage2:'#f4f6f4', cinnabar:'#fef5f2', dusk:'#f6f4f8'
+};
+function updateThemeColorMeta(color) {
+  var meta = document.getElementById('themeColorMeta');
+  var bg = themeBgColors[color] || '#f0fdfa';
+  if (meta) meta.content = bg;
+}
+
 // 确保预设题库永远存在（防止数据损坏导致空页面）
 (function() {
   var preset = getPresetData_7666();
@@ -2358,21 +2373,7 @@ function applySettings() {
   if (mc) mc.content = s.darkMode ? (themeDark[s.color] || '#042f2e') : (themeLight[s.color] || '#f0fdfa');
 }
 
-var themeBgColors = {
-    teal:'#f0fdfa', purple:'#faf5ff', blue:'#f0f7ff', rose:'#fff1f5', pink:'#fdf2f8',
-    green:'#f0fdf4', yellow:'#fefce8', bw:'#f5f5f5', cream:'#fffaf3', sage:'#f4faf0',
-    ink:'#f5f5f5', moss:'#f2f7f2', zen:'#faf7f4', bamboo:'#f4f8f2', wood:'#fdf8f4',
-    ocean:'#f0f4f8', coral:'#fef5f2', peach:'#fef8f5', lavender:'#f8f6fb', mist:'#f5f8fa',
-    snow:'#fafafa', amber:'#fffbf5', sakura:'#fef8fa', sky:'#f5fafd', oat:'#fdfaf6',
-    sage2:'#f4f6f4', cinnabar:'#fef5f2', dusk:'#f6f4f8'
-  };
-  function updateThemeColorMeta(color) {
-    var meta = document.getElementById('themeColorMeta');
-    var bg = themeBgColors[color] || '#f0fdfa';
-    if (meta) meta.content = bg;
-  }
-
-  function saveThemeColor(color) {
+function saveThemeColor(color) {
   saveSetting('color', color);
   applySettings();
   updateThemeColorMeta(color);
