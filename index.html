@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v20 · 小阮出品</title>
+<title>挖空背诵工具 v21 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1787,6 +1787,18 @@ function shareExportText(btn, title) {
   }
 }
 function showToast(msg) { const c = $('toastContainer'); if (!c) return; const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; c.appendChild(t); setTimeout(function() { t.remove(); }, 2300); }
+
+function showBackupDetailToast(title) {
+  var c = $('toastContainer'); if (!c) return;
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.style.cssText = 'white-space:normal;max-width:320px;text-align:left;line-height:1.6;padding:14px 16px';
+  t.innerHTML = '<div style="font-weight:700;margin-bottom:6px">' + escapeHtml(title) + '</div>'
+    + '<div style="font-size:13px">✅ <b>已备份：</b>题库 / 错题 / 设置 / 进度</div>'
+    + '<div style="font-size:13px;color:#f9a825">⚠️ <b>未备份：</b>编辑中间状态</div>';
+  c.appendChild(t);
+  setTimeout(function() { t.remove(); }, 10000);
+}
 
 // iPad 友好的题库选择弹窗（替代原生 select）
 var _bankPickerCallback = null;
@@ -6624,6 +6636,7 @@ function removeFromWrongBookPage(cardId) {
 // ==================== 设置 ====================
 // ====== 分享/导出备份 ======
 async function shareBackupCode() {
+  if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
   try {
     showToast('正在生成备份码...');
     var data = JSON.parse(JSON.stringify(appData));
@@ -6635,7 +6648,7 @@ async function shareBackupCode() {
         await navigator.share({ text: textToShare, title: '挖空背诵备份 - ' + today });
         appData.settings.lastBackup = Date.now();
         saveData(appData);
-        showToast('✅ 备份码已分享');
+        showBackupDetailToast('✅ 备份码已分享');
         return;
       } catch (err) { if (err.name === 'AbortError') return; }
     }
@@ -6644,7 +6657,7 @@ async function shareBackupCode() {
         await navigator.clipboard.writeText(code);
         appData.settings.lastBackup = Date.now();
         saveData(appData);
-        showToast('📋 分享不支持，已改为复制到剪贴板');
+        showBackupDetailToast('📋 分享不支持，已改为复制到剪贴板');
       } catch(e) { showToast('复制失败'); }
     } else { showToast('复制失败'); }
   } catch(e) { showToast('导出失败'); }
@@ -6803,8 +6816,12 @@ function renderSettings() {
       '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:2px">💾 备份</div>' +
       '<button class="btn btn-primary btn-block" onclick="shareBackupFile()" style="font-size:15px">📤 导出备份文件</button>' +
       '<div style="font-size:12px;color:var(--text-tertiary);text-align:center;margin:-4px 0 4px">📱 手机分享 &nbsp;|&nbsp; 💻 电脑下载</div>' +
-      '<button class="btn btn-outline btn-block" onclick="copyBackup()" style="font-size:14px">📋 复制备份码</button>' +
-      '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin:-2px 0 6px">可粘贴到微信/备忘录保存</div>' +
+      '<div style="display:flex;border:2px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:6px">' +
+        '<button onclick="copyBackup()" style="flex:1;border:none;background:var(--bg-card);color:var(--text);padding:10px 6px;font-size:14px;cursor:pointer;min-height:44px">📋 复制备份码</button>' +
+        '<div style="width:1px;background:var(--border);align-self:stretch"></div>' +
+        '<button onclick="shareBackupCode()" style="flex:1;border:none;background:var(--bg-card);color:var(--text);padding:10px 6px;font-size:14px;cursor:pointer;min-height:44px">📤 分享备份码</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin:-2px 0 6px">可粘贴/分享到微信或备忘录保存</div>' +
       // 📥 恢复
       '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:2px;margin-top:4px">📥 恢复</div>' +
       '<button class="btn btn-outline btn-block" id="restoreToggleBtn" onclick="toggleRestoreSection()" style="font-size:14px">📥 粘贴备份码恢复</button>' +
@@ -6988,7 +7005,7 @@ function renderSettings() {
         return html;
       })() +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v20</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v21</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -7176,15 +7193,15 @@ async function copyBackup() {
   try {
     showToast('正在生成备份码...');
     const code = await makeBackupCode();
-    // 直接复制，不弹窗
     if (navigator.clipboard && navigator.clipboard.writeText) {
       try {
         await navigator.clipboard.writeText(code);
-        showToast('✅ 备份码已复制到剪贴板（' + code.length + '字符）');
+        appData.settings.lastBackup = Date.now();
+        saveData(appData);
+        showBackupDetailToast('✅ 备份码已复制到剪贴板');
         return;
       } catch(e) {}
     }
-    // 兜底：fallback 到旧版弹窗
     showBackupModal(code);
   } catch(e) { showToast('导出失败'); }
 }
