@@ -866,132 +866,226 @@ body.focus-mode #cardText .blank-input { font-size:calc(var(--font-size) + 2px);
 </nav>
 
 <script>
-// ==================== 授权激活（本地验证） ====================
-const AUTH_CODES = ['5826'];
-const AUTH_MINUTES = 10;
+// ==================== 版本激活系统 ====================
+var TIER_FEATURES = {
+  basic: ['unlimitedBanks', 'unlimitedQuestions', 'randomNorepeat', 'perQuestionTimer', 'totalTimer',
+          'hideQuestion', 'fullVoice', 'voiceSelect', 'readModeSelect', 'shareFile', 'fullSr',
+          'heatmap', 'dailySummary', 'wrongFirst', 'bankMerge', 'mixedBank',
+          '16colors'],
+  pro:   ['mixedBank', 'focusMode', 'pomodoro', 'adaptiveDifficulty', 'achievements',
+          'comboSystem', 'allColors', 'voiceRatePitch', 'dailyInsight', 'avatar',
+          'chapterHeatmap', 'categoryFilter', 'sprintMode', 'koujue', 'starCard']
+};
+var TIER_NAMES = { free: '免费版', basic: '科学备考版', pro: '智能全能版' };
+var TIER_EMOJI = { free: '🆓', basic: '💰', pro: '👑' };
+var TIER_PRICES = { basic: '¥3/年', pro: '¥9.9/年' };
+var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
+var FREE_MAX_BANKS = 2;
+var FREE_MAX_CARDS_PER_BANK = 60;
+var FREE_COLORS = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream'];
+var BASIC_COLORS = FREE_COLORS.concat(['sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral']);
 
-function getAuthData() {
-  try {
-    const raw = localStorage.getItem('memorize_auth_data');
-    return raw ? JSON.parse(raw) : null;
-  } catch(e) { return null; }
+// 管理码 SHA-256 哈希
+var ADMIN_HASHES = {
+  '37b2a028d82dff82803c72d83d1d0c23fc710109bf0979ab59af10ee9d1b7763': 'free',
+  '9ce88faaa380776fd6821afa56f14e48ace5be183e7690fd894c50212c1c810c': 'basic',
+  '05c97e9b99cbcdecb0bb896a5d1837110c9f10ca3ae20f6fed77dbadad62a625': 'pro'
+};
+
+function getTier() {
+  return (appData.activation && appData.activation.tier) || 'free';
 }
-
-function isPermanentAuth() {
-  const d = getAuthData();
-  return d && d.permanent === true;
+function hasFeature(name) {
+  var tier = getTier();
+  if (tier === 'pro') return true;
+  if (tier === 'basic') return TIER_FEATURES.basic.indexOf(name) >= 0;
+  return false;
 }
-
-function checkAuth() {
-  if (isPermanentAuth()) return true;
-  const d = getAuthData();
-  if (!d || !d.expireAt) return false;
-  if (Date.now() >= d.expireAt) { localStorage.removeItem('memorize_auth_data'); return false; }
-  return true;
+function isTierLocked(name) {
+  return !hasFeature(name);
 }
-
-function showAuthModal() {
-  localStorage.removeItem('memorize_auth_data');
-  let attempts = 0, locked = false;
-  // 隐藏所有页面内容，显示简洁验证页
-  var pages = document.querySelectorAll('.page');
-  for (var p = 0; p < pages.length; p++) pages[p].style.display = 'none';
-  var tabBar = document.querySelector('.tab-bar');
-  if (tabBar) tabBar.style.display = 'none';
-  var ov = document.createElement('div');
-  ov.id = 'authModal';
-  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100dvh;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:9999;padding:20px';
-  ov.innerHTML = `<div style="width:100%;max-width:340px;text-align:center">
-    <div style="font-size:48px;margin-bottom:12px">🔐</div>
-    <h3 style="margin-bottom:6px;font-size:20px;font-weight:700;color:var(--text)">授权验证</h3>
-    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">请输入授权密码，有效期 10 分钟</p>
-    <input type="text" inputmode="numeric" id="authInput" placeholder="输入密码" autocomplete="off" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:20px;text-align:center;letter-spacing:6px">
-    <p class="text-sm" id="authError" style="text-align:center;color:var(--danger);margin-top:10px;display:none"></p>
-    <button class="btn btn-primary btn-block mt-12" id="authBtn" style="margin-top:12px">验证</button>
-    <p style="color:var(--text-tertiary);font-size:13px;margin-top:16px">请联系微信获取密码</p>
-  </div>`;
-  document.body.appendChild(ov);
-
-  const input = document.getElementById('authInput');
-  const btn = document.getElementById('authBtn');
-  const err = document.getElementById('authError');
-
-  let lockTime = 0, countdownId = 0;
-  function doAuth() {
-    if (locked) return;
-    const password = input.value.trim();
-    if (!password) return;
-    btn.disabled = true; btn.textContent = '验证中...';
-
-    const currentLevel = (getAuthData() && getAuthData().level) || 0;
-
-    // 永久密码（最后一个）无论当前 level 都可以直接使用
-    if (password === AUTH_CODES[AUTH_CODES.length - 1]) {
-      localStorage.setItem('memorize_auth_data', JSON.stringify({
-        level: AUTH_CODES.length - 1,
-        expireAt: null,
-        permanent: true
-      }));
-      ov.remove();
-      var pages2 = document.querySelectorAll('.page');
-      for (var q = 0; q < pages2.length; q++) pages2[q].style.display = '';
-      var tb2 = document.querySelector('.tab-bar');
-      if (tb2) tb2.style.display = '';
-      try { initApp(); } catch(e) { console.error('initApp error:', e); showFatalError(e.message || '初始化异常'); }
-      return;
-    }
-
-    // 当前层级密码验证
-    if (password === AUTH_CODES[currentLevel]) {
-      const isLast = currentLevel >= AUTH_CODES.length - 1;
-      const expireAt = isLast ? null : Date.now() + AUTH_MINUTES * 60 * 1000;
-      const newLevel = isLast ? currentLevel : currentLevel + 1;
-      localStorage.setItem('memorize_auth_data', JSON.stringify({
-        level: newLevel,
-        expireAt: expireAt,
-        permanent: isLast
-      }));
-      ov.remove();
-      var pages3 = document.querySelectorAll('.page');
-      for (var r = 0; r < pages3.length; r++) pages3[r].style.display = '';
-      var tb3 = document.querySelector('.tab-bar');
-      if (tb3) tb3.style.display = '';
-      try { initApp(); } catch(e) { console.error('initApp error:', e); showFatalError(e.message || '初始化异常'); }
-      return;
-    }
-
-    // 密码错误
-    attempts++;
-    if (attempts >= 3) {
-      locked = true; lockTime = Date.now();
-      btn.disabled = true; input.disabled = true;
-      countdownId = setInterval(() => {
-        const remain = 30 - Math.floor((Date.now() - lockTime) / 1000);
-        if (remain <= 0) { clearInterval(countdownId); err.textContent = ''; return; }
-        err.textContent = '输错 3 次，已锁定 ' + remain + ' 秒';
-      }, 1000);
-      err.style.display = 'block';
-      setTimeout(() => {
-        locked = false; attempts = 0;
-        err.style.display = 'none';
-        btn.disabled = false; input.disabled = false;
-        input.value = ''; input.focus();
-      }, 30000);
-    } else {
-      err.textContent = '密码错误（' + attempts + '/3）';
-      err.style.display = 'block';
-      input.value = '';
-      input.focus();
-    }
-    btn.disabled = false; btn.textContent = '验证';
+function getEffectiveSetting(key, defVal) {
+  var val = getSetting(key, defVal);
+  var tier = getTier();
+  if (tier === 'free') {
+    if (['adaptiveDensity','focusMode','pomodoro','showAvatar'].indexOf(key) >= 0) return false;
+    if (key === 'voiceMode' || key === 'voiceName') return defVal;
   }
+  if (tier === 'basic') {
+    if (['adaptiveDensity','focusMode','pomodoro','showAvatar'].indexOf(key) >= 0) return false;
+  }
+  return val;
+}
 
-  btn.onclick = doAuth;
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); });
-  // 不自动聚焦，让用户手动点击输入框（移动端键盘需要用户手势才能弹出）
+// SHA-256 (异步)
+function sha256Browser(s) {
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(function(h) {
+    return Array.from(new Uint8Array(h)).map(function(b) { return b.toString(16).padStart(2,'0'); }).join('');
+  });
+}
+
+// 激活码格式化: BV3-XXXX-XXXX-XXXX 或 BV9-XXXX-XXXX-XXXX
+function formatActivationCode(input) {
+  var cleaned = input.toUpperCase().replace(/[^A-Z2-9]/g, '');
+  if (cleaned.indexOf('BV3') === 0) cleaned = cleaned.substring(3);
+  else if (cleaned.indexOf('BV9') === 0) cleaned = cleaned.substring(3);
+  else if (cleaned.indexOf('ADM') === 0) cleaned = cleaned.substring(3);
+  cleaned = cleaned.substring(0, 12);
+  var parts = [];
+  for (var i = 0; i < cleaned.length && i < 12; i += 4) {
+    parts.push(cleaned.substring(i, i + 4));
+  }
+  // 检测前缀
+  var prefix = '';
+  if (input.toUpperCase().indexOf('BV3') === 0) prefix = 'BV3-';
+  else if (input.toUpperCase().indexOf('BV9') === 0) prefix = 'BV9-';
+  else if (input.toUpperCase().indexOf('ADM') === 0) prefix = 'ADM-';
+  return prefix + parts.join('-');
+}
+
+// 版本对比弹窗
+function showTierCompare() {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+  var tier = getTier();
+  ov.innerHTML = '<div style="background:var(--bg-card);border-radius:16px;padding:20px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;font-size:13px;line-height:1.6">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="margin:0;font-size:17px">📊 版本功能对比</h3><button style="background:var(--border);border:none;border-radius:8px;padding:6px 12px;font-size:14px;cursor:pointer;min-height:36px" onclick="this.closest('div').parentElement.parentElement.remove()">✕</button></div>' +
+    '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">' +
+    '<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px">功能</th><th style="padding:8px;background:' + (tier==='free'?'var(--primary-soft)':'') + '">🆓 免费</th><th style="padding:8px;background:' + (tier==='basic'?'var(--primary-soft)':'') + '">💰 ¥3/年</th><th style="padding:8px;background:' + (tier==='pro'?'var(--primary-soft)':'') + '">👑 ¥9.9/年</th></tr></thead>' +
+    '<tbody>' +
+    '<tr><td style="text-align:left;padding:6px">题库数 / 题数</td><td>2库×60题</td><td>无限制</td><td>无限制</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">手动挖空</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">随机重复 / 顺序出题</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">随机不重复</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">每题限时 / 总时间</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">隐藏题目</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">导入（粘贴/TXT/DOCX/PDF）</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">题库合并</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">混合多题库刷题</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">分享/导出文件</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">语音朗读</td><td>仅一遍</td><td>全部模式</td><td>全部模式</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">朗读声音/模式选择</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">语速/音调调节</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">主题颜色</td><td>8种</td><td>16种</td><td>全部40种</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">间隔重复</td><td>1/2天</td><td>1/2/4/7天</td><td>1/2/4/7天</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">热力图（近12周）</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">今日学习摘要</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">复习优先</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">自适应难度</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">速刷/考前冲刺</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">番茄钟模式</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">专注模式</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">每日洞见</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">章节掌握度热力图</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">分类筛选</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">成就徽章+连击彩蛋</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">口诀系统</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">头像上传</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">备份/恢复</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">PWA离线安装</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
+    '</tbody></table></div></div>';
+  document.body.appendChild(ov);
+}
+
+// 激活码验证
+function activateCode(input) {
+  var code = formatActivationCode(input);
+  if (code.length < 14) { return showToast('❌ 激活码格式不正确'); }
+  sha256Browser(code).then(function(hash) {
+    // 检查管理码（硬编码，不走网络）
+    if (ADMIN_HASHES[hash]) {
+      var adminTier = ADMIN_HASHES[hash];
+      appData.activation = { tier: adminTier, codeHash: hash, activatedAt: null, expires: null, _trialUsedBasic: (appData.activation||{})._trialUsedBasic||false, _trialUsedPro: (appData.activation||{})._trialUsedPro||false, _isTrial: false, _trialExpires: null, _trialStarted: null };
+      saveData(appData);
+      if (window._trialExpiryTimer) { clearInterval(window._trialExpiryTimer); window._trialExpiryTimer = null; }
+      if (window._trialCountdownTimer) { clearInterval(window._trialCountdownTimer); window._trialCountdownTimer = null; }
+      showActivationSuccess(TIER_NAMES[adminTier], null);
+      return;
+    }
+    // 检查 codes.json
+    fetch('./codes.json?t=' + Date.now())
+      .then(function(r) { if (!r.ok) throw new Error('network'); return r.json(); })
+      .then(function(codes) {
+        var entry = codes[hash];
+        if (!entry) { return showToast('❌ 无效的激活码'); }
+        if (entry.status === 'revoked') { return showToast('❌ 此激活码已被撤销'); }
+        var now = Date.now();
+        var expires = now + 370 * 86400000; // ~1年
+        appData.activation = { tier: entry.tier, codeHash: hash, activatedAt: now, expires: expires, _trialUsedBasic: (appData.activation||{})._trialUsedBasic||false, _trialUsedPro: (appData.activation||{})._trialUsedPro||false, _isTrial: false, _trialExpires: null, _trialStarted: null };
+        saveData(appData);
+        if (window._trialExpiryTimer) { clearInterval(window._trialExpiryTimer); window._trialExpiryTimer = null; }
+        if (window._trialCountdownTimer) { clearInterval(window._trialCountdownTimer); window._trialCountdownTimer = null; }
+        showActivationSuccess(TIER_NAMES[entry.tier], expires);
+      })
+      .catch(function() { showToast('❌ 验证服务暂时不可用，请确保网络连接正常'); });
+  });
+}
+
+function showActivationSuccess(tierName, expires) {
+  var expiresStr = expires ? '到期：' + new Date(expires).toLocaleDateString('zh-CN') : '永久有效';
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.addEventListener('click', function(e) { if (e.target === ov) { ov.remove(); switchTab('settings'); } });
+  ov.innerHTML = '<div style="background:var(--bg-card);border-radius:16px;padding:30px;text-align:center;max-width:360px;width:100%">' +
+    '<div style="font-size:60px;margin-bottom:16px">🎉</div>' +
+    '<div style="font-size:20px;font-weight:800;margin-bottom:8px;color:var(--text)">升级成功！</div>' +
+    '<div style="font-size:15px;color:var(--text-secondary);margin-bottom:4px">当前版本：<b>' + tierName + '</b></div>' +
+    '<div style="font-size:13px;color:var(--text-tertiary);margin-bottom:20px">' + expiresStr + '</div>' +
+    '<button style="width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;min-height:44px" onclick="var ov=this.closest('div').parentElement;ov.remove();switchTab('settings')">开始使用</button>' +
+    '</div>';
+  document.body.appendChild(ov);
+}
+
+// 试用
+function startTrial(tier) {
+  if (!appData.activation) appData.activation = { tier: 'free', codeHash: '', activatedAt: null, expires: null, _trialUsedBasic: false, _trialUsedPro: false, _isTrial: false, _trialExpires: null, _trialStarted: null };
+  var act = appData.activation;
+  var usedKey = tier === 'pro' ? '_trialUsedPro' : '_trialUsedBasic';
+  if (act[usedKey]) { showToast('该版本已试用过，每版本仅可试用一次'); return; }
+  if (act._isTrial) { showToast('试用已在进行中'); return; }
+  if (act.tier && act.tier !== 'free') { showToast('您已是付费用户，无需试用'); return; }
+  var now = Date.now();
+  act.tier = tier;
+  act._isTrial = true;
+  act[usedKey] = true;
+  act._trialStarted = now;
+  act._trialExpires = now + 20 * 60 * 1000;
+  saveData(appData);
+  renderSettings();
+  showToast('🎁 试用已开启！' + TIER_NAMES[tier] + '，20分钟后自动恢复免费版');
+}
+
+// 检查激活到期
+function checkActivationExpiry() {
+  var act = appData.activation;
+  if (!act || act.tier === 'free') return;
+  if (act.expires && Date.now() > act.expires) {
+    if (Date.now() - act.expires < 3 * 86400000) {
+      // 3天宽限期，只提醒不锁定
+    } else {
+      appData.activation = { tier: 'free', codeHash: '', activatedAt: null, expires: null, _trialUsedBasic: (act||{})._trialUsedBasic||false, _trialUsedPro: (act||{})._trialUsedPro||false, _isTrial: false, _trialExpires: null, _trialStarted: null };
+      saveData(appData);
+      showToast('⏰ 你的版本已到期，已退回免费版。数据保留，重新激活即可恢复');
+    }
+  }
+}
+
+function checkExpiryWarning() {
+  var act = appData.activation;
+  if (!act || act.tier === 'free' || !act.expires) return '';
+  var remaining = Math.ceil((act.expires - Date.now()) / 86400000);
+  if (remaining <= 7 && remaining > 0) {
+    return '<div style="margin-top:8px;padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;font-size:12px;color:#856404">⏰ 你的版本将在 <b>' + remaining + '</b> 天后到期，到期后功能将退回免费版。<a href="#" onclick="event.preventDefault();document.getElementById('activateInput').focus()" style="color:var(--primary);font-weight:600">续费 →</a></div>';
+  }
+  if (remaining <= 0 && remaining > -3) {
+    return '<div style="margin-top:8px;padding:8px 12px;background:#ffe0e0;border:1px solid #e74c3c;border-radius:8px;font-size:12px;color:#a33">🔴 宽限期还剩 <b>' + (3 + remaining) + '</b> 天，请尽快续费！</div>';
+  }
+  return '';
 }
 
 // ==================== localStorage 数据层 ====================
+
 const STORAGE_KEY = 'memorize_v2_trial_7666';
 
 function getPresetData_7666() {
@@ -1408,6 +1502,7 @@ function showFocusTransition(callback) {
 
 
 function startSprintMode() {
+  if (!hasFeature('sprintMode')) { showToast('🔒 考前冲刺需要升级到9.9元版，请升级解锁'); return; }
   var pool = getSprintCards();
   if (!pool.length) { showToast('没有需要冲刺的题目，继续加油！'); return; }
   // 切换到做题页，使用冲刺模式
@@ -1906,7 +2001,7 @@ function shuffle(a) { const arr = [...a]; for (let i = arr.length - 1; i > 0; i-
 function fmtDate(ts) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function downloadFile(fn, content, mime) { const b = new Blob([content],{type:mime}), url = URL.createObjectURL(b), a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
 function showExportModal(title, content) {
-  if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (!hasFeature('shareFile')) { showToast('免费版不支持导出，请升级版本'); return; }
   var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
   var hasShare = navigator.share !== undefined;
   var canShareFile = false;
@@ -2120,6 +2215,7 @@ function showBankPicker(currentId, onPick) {
 // 朗读声音弹窗（代替原生 select，避免 iPad 旋转）
 var _availableVoices = [];
 function showVoicePicker() {
+  if (!hasFeature('voiceSelect')) { showToast('🔒 朗读声音选择需升级到3元版，免费版仅支持默认声音'); return; }
   loadVoices(); // 确保语音列表是最新的
   var currentVal = document.getElementById('voiceSelect').value;
   var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
@@ -2140,6 +2236,7 @@ function showVoicePicker() {
 
 // 朗读模式弹窗（代替原生 select，避免 iPad 旋转）
 function showReadModePicker() {
+  if (!hasFeature('readModeSelect')) { showToast('🔒 朗读模式选择需升级到3元版，免费版仅支持读一遍'); return; }
   var currentVal = document.getElementById('readModeSelect').value;
   var modes = [
     {value:'once', label:'仅读一遍'},
@@ -2228,7 +2325,7 @@ function init() {
     getSetting('fontSize', 16);
     applySettings();
       updateThemeColorMeta((appData.settings||{}).color||'teal');
-    if (!checkAuth()) { showAuthModal(); return; }
+    checkActivationExpiry();
     initApp();
   } catch(e) {
     console.error('Init error:', e);
@@ -2258,10 +2355,7 @@ function showIntroModal() {
 
 function initApp() {
   try {
-  // 试用版：每30秒检查授权是否过期
-  if (!isPermanentAuth()) {
-    setInterval(() => { if (!checkAuth()) { location.reload(); } }, 30000);
-  }
+  // 激活系统在页面加载时检查，运行时每分钟自检
   getSetting('density', 'low');
   getSetting('voiceEnabled', false);
   getSetting('voiceRate', 0.9);
@@ -2285,6 +2379,53 @@ function initApp() {
     const dy = Math.abs(e.touches[0].clientY - pageStartY);
     if (dx > dy && dx > 20) e.preventDefault();
   }, { passive: false });
+
+
+  // ====== 试用到期检测 ======
+  (function() {
+    var act = appData.activation;
+    if (!act || !act._isTrial || !act._trialExpires) return;
+    var now = Date.now();
+    // 检测系统时间篡改
+    if (act._trialStarted && now < act._trialStarted - 60000) {
+      act.tier = 'free';
+      act._isTrial = false;
+      saveData(appData);
+      setTimeout(function() { showToast('⚠️ 检测到系统时间异常，试用已结束'); }, 1000);
+      return;
+    }
+    // 试用到期
+    if (now >= act._trialExpires) {
+      act.tier = 'free';
+      act._isTrial = false;
+      saveData(appData);
+      setTimeout(function() { showToast('⏰ 试用已结束，已恢复免费版。喜欢请购买激活码～'); }, 1000);
+      return;
+    }
+    // 运行时每分钟检测一次到期
+    window._trialExpiryTimer = setInterval(function() {
+      if (appData.activation && appData.activation._isTrial && appData.activation._trialExpires && Date.now() >= appData.activation._trialExpires) {
+        appData.activation.tier = 'free';
+        appData.activation._isTrial = false;
+        saveData(appData);
+        showToast('⏰ 试用已结束，已恢复免费版。喜欢请购买激活码～');
+        if (window._trialExpiryTimer) { clearInterval(window._trialExpiryTimer); window._trialExpiryTimer = null; }
+        if (window._trialCountdownTimer) { clearInterval(window._trialCountdownTimer); window._trialCountdownTimer = null; }
+      }
+    }, 60000);
+    // 每30秒刷新倒计时显示
+    window._trialCountdownTimer = setInterval(function() {
+      if (!appData.activation || !appData.activation._isTrial || !appData.activation._trialExpires) {
+        if (window._trialCountdownTimer) { clearInterval(window._trialCountdownTimer); window._trialCountdownTimer = null; }
+        return;
+      }
+      var remaining = Math.max(0, Math.floor((appData.activation._trialExpires - Date.now()) / 1000));
+      var min = Math.floor(remaining / 60);
+      var sec = remaining % 60;
+      var cd = document.getElementById('trialCountdown');
+      if (cd) { cd.textContent = '⏱ 试用剩余 ' + min + ' 分 ' + sec + ' 秒 · ' + (TIER_NAMES[appData.activation.tier] || ''); }
+    }, 30000);
+  })();
 
   // 跟踪最后聚焦的挖空输入框（移动端键盘有时会在Enter前先失焦）
   var _lastBlankInput = null;
@@ -2450,6 +2591,9 @@ function applySettings() {
 }
 
 function saveThemeColor(color) {
+  var tier = getTier();
+  if (tier === 'free' && FREE_COLORS.indexOf(color) === -1) { showToast('🔒 免费版仅支持8种颜色，请升级解锁更多'); return; }
+  if (tier === 'basic' && BASIC_COLORS.indexOf(color) === -1 && FREE_COLORS.indexOf(color) === -1) { showToast('🔒 3元版仅支持16种颜色，请升级解锁全部40种'); return; }
   saveSetting('color', color);
   applySettings();
   updateThemeColorMeta(color);
@@ -2746,7 +2890,7 @@ function editBank(id) {
 
 
 function exportBank(id) {
-  if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (!hasFeature('shareFile')) { showToast('免费版不支持导出，请升级版本'); return; }
   const bank = appData.banks[id];
   if (!bank) return;
   const text = bank.cards.map(c => c.question + '|' + c.answer).join('\n');
@@ -2754,7 +2898,7 @@ function exportBank(id) {
 }
 
 function exportBankFull(id) {
-  if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (!hasFeature('shareFile')) { showToast('免费版不支持导出，请升级版本'); return; }
   const bank = appData.banks[id];
   if (!bank) return;
   // 导出为纯文本，挖空用【】标记
@@ -4261,13 +4405,10 @@ function saveEditPreviewCard(idx) {
 }
 
 function confirmImport() {
+  // 免费版检查题目上限
+  if (getTier() === 'free') { var totalCards = 0; Object.values(appData.banks || {}).forEach(function(b) { totalCards += (b.cards || []).length; }); if (previewData.cards && totalCards + previewData.cards.length > FREE_MAX_BANKS * FREE_MAX_CARDS_PER_BANK) { showToast('🔒 免费版最多' + FREE_MAX_BANKS + '个题库×' + FREE_MAX_CARDS_PER_BANK + '题，当前' + totalCards + '题，无法导入更多。请升级解锁'); closePreviewModal(); return; } }
   if (!previewData) return;
-  // 试用版（非永久授权）不允许导入
-  if (!isPermanentAuth()) {
-    showToast('试用版不支持导入，请输入永久密码后重试');
-    closePreviewModal();
-    return;
-  }
+  // 所有版本均可导入
   // 单题编辑模式（从刷题页进入）
   if (previewData._singleCardEdit) {
     const edited = previewData.cards[0];
@@ -4386,6 +4527,7 @@ function showMergeBankPicker(which) {
 
 // ==================== 合并题库 ====================
 function showMergeModal() {
+  if (!hasFeature('bankMerge')) { showToast('🔒 题库合并需要升级到3元版，请升级解锁'); return; }
   setTimeout(function() {
   var banks = Object.values(appData.banks).sort(function(a, b) { return b.createdAt - a.createdAt; });
   if (banks.length < 2) { showToast('至少需要两个题库才能合并'); return; }
@@ -4548,6 +4690,7 @@ function renderPracticeSetup() {
 
 // ====== 计时器 ======
 function selectTimerMode(mode, el) {
+  if (getTier() === 'free' && mode !== 'off') { showToast('🔒 免费版仅支持不计时模式，请升级解锁计时功能'); return; }
   timerMode = mode;
   document.querySelectorAll('#timerModeGroup .chip').forEach(function(c) { c.classList.remove('active'); });
   if (el) el.classList.add('active');
@@ -4648,12 +4791,14 @@ function selectCustom() {
 }
 
 function selectHideQ(val, el) {
+  if (val === 1 && getTier() === 'free') { showToast('🔒 免费版不可隐藏题目，请升级解锁'); return; }
   hideQuestionStart = val === 1;
   document.querySelectorAll('#hideQChips .chip').forEach(c => c.classList.remove('active'));
   if (el) el.classList.add('active');
 }
 
 function selectDrawMode(mode, el) {
+  if (getTier() === 'free' && mode === 'random-norepeat') { showToast('🔒 免费版仅支持随机重复和顺序出题，请升级解锁更多模式'); return; }
   drawMode = mode;
   document.querySelectorAll('#drawModeChips .chip').forEach(c => c.classList.remove('active'));
   if (el) el.classList.add('active');
@@ -4771,6 +4916,7 @@ var _selectedMultiBanks = [];
 var _isMultiBankMode = false;
 
 function toggleMultiBank(on) {
+  if (!hasFeature('mixedBank')) { showToast('🔒 混合多题库需要升级到3元版，请升级解锁'); return; }
   _isMultiBankMode = on;
   var singleChip = document.getElementById('singleBankChip');
   var multiChip = document.getElementById('multiBankChip');
@@ -6939,7 +7085,7 @@ function removeFromWrongBookPage(cardId) {
 // ==================== 设置 ====================
 // ====== 分享/导出备份 ======
 async function shareBackupCode() {
-  if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (!hasFeature('shareFile')) { showToast('免费版不支持分享备份码，请升级版本'); return; }
   try {
     showToast('正在生成备份码...');
     var data = JSON.parse(JSON.stringify(appData));
@@ -7034,6 +7180,54 @@ function renderSettings() {
   var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', dusk: '#6b5b7a', wisteria: '#7b6ba8', indigo: '#3f51b5', mustard: '#d4a030', turquoise: '#2eb8a0', seapine: '#3c6e71', mint: '#98d4b8', butter: '#f0dcb0', periwinkle: '#acb8d8', iris: '#656db2', mauve: '#b6668f', 'sakura-sky': '#6db8d8', 'purple-green': '#34b85a', 'purple-gold': '#d4952a', 'navy-orange': '#e08050' };
 
   c.innerHTML =
+    // 激活与版本 section
+    (function() {
+      var act = appData.activation || { tier: 'free' };
+      var tier = act.tier || 'free';
+      var isTrial = act._isTrial || false;
+      var trialRemaining = act._trialExpires ? Math.max(0, Math.floor((act._trialExpires - Date.now()) / 1000)) : 0;
+      var trialMin = Math.floor(trialRemaining / 60);
+      var trialSec = trialRemaining % 60;
+      var trialUsedBasic = act._trialUsedBasic || false;
+      var trialUsedPro = act._trialUsedPro || false;
+      var bothTrialsUsed = trialUsedBasic && trialUsedPro;
+      var dm8 = (appData.settings || {}).darkMode;
+      var html = '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'activation\')"><span>⭐ 激活与版本</span><span class="section-arrow" id="arrow_activation">▲</span></div>' +
+        '<div class="section-body" id="body_activation">' +
+        '<div style="padding:14px;background:var(--bg-input);border-radius:12px;margin-bottom:12px">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">' +
+            '<span style="font-size:32px">' + (TIER_EMOJI[tier] || '🆓') + '</span>' +
+            '<div><div style="font-size:16px;font-weight:700;color:var(--text)">当前版本：' + (TIER_NAMES[tier] || '免费版') + '</div>' +
+            '<div style="font-size:12px;color:var(--text-secondary)">' + (isTrial ? '试用中 · 剩余 ' + trialMin + '分' + trialSec + '秒' : (tier === 'free' ? (bothTrialsUsed ? '两个版本均已试用，喜欢请购买激活码' : '基础功能可用') : '已激活 · 永久使用')) + '</div></div>' +
+          '</div>' +
+          checkExpiryWarning() +
+        '</div>';
+      // 试用按钮
+      if (tier === 'free' && !isTrial) {
+        html += '<div style="display:flex;gap:8px;margin-bottom:12px">';
+        if (!trialUsedBasic) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial('basic')">🎁 试用3元版</button>';
+        if (!trialUsedPro) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#7C3AED;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial('pro')">👑 试用9.9版</button>';
+        html += '</div>';
+        if (!bothTrialsUsed) html += '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-bottom:8px">20分钟试用 · 每版本可各试用一次 · 无需激活码</div>';
+      }
+      // 试用倒计时
+      if (isTrial) {
+        html += '<div id="trialCountdown" style="margin-bottom:12px;padding:8px 12px;background:' + (dm8 ? '#3d2e0a' : '#fef3c7') + ';border:1px solid ' + (dm8 ? '#92400e' : '#f59e0b') + ';border-radius:8px;text-align:center;font-size:13px;font-weight:600;color:' + (dm8 ? '#fcd34d' : '#b45309') + '">⏱ 试用剩余 ' + trialMin + ' 分 ' + trialSec + ' 秒 · ' + (TIER_NAMES[tier] || '') + '</div>';
+      }
+      // 激活码输入
+      if (tier === 'free' || isTrial) {
+        html += '<div style="display:flex;gap:8px;margin-bottom:6px">' +
+          '<input type="text" id="activateInput" placeholder="输入激活码（如 BV3-XXXX-XXXX-XXXX）" autocomplete="off" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px;min-height:40px">' +
+          '<button class="btn btn-primary btn-sm" onclick="var v=document.getElementById('activateInput').value;if(v)activateCode(v)" style="min-height:40px;padding:0 16px;font-size:14px;white-space:nowrap">激活</button>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">激活码请联系开发者获取 · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
+      }
+      if (tier !== 'free' && !isTrial) {
+        html += '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">已激活 · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
+      }
+      return html;
+    })() +
+
     // 设置页顶部 header（开关打开时显示头像）
     (s.showAvatar ? '<div class="settings-header">' +
       '<span class="settings-header-title">设置</span>' +
@@ -7166,10 +7360,10 @@ function renderSettings() {
         '<input type="hidden" id="voiceSelect" value="' + (s.voiceName || '') + '"><button class="btn btn-ghost btn-sm" id="voicePickBtn" onclick="showVoicePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">' + (s.voiceName || '自动选择') + ' ▾</button></div>' +
       '<div class="setting-item"><div><div class="setting-label">朗读模式</div><div class="setting-desc" id="readModeVal">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + '</div></div>' +
         '<input type="hidden" id="readModeSelect" value="' + (s.readMode||'once') + '"><button class="btn btn-ghost btn-sm" id="readModePickBtn" onclick="showReadModePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + ' ▾</button></div>' +
-      '<div class="setting-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc" id="rateVal">' + (s.voiceRate || 0.9) + 'x</div></div>' +
-        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voiceRate || 0.9) + '" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">' + (s.voicePitch || 1.0) + 'x</div></div>' +
-        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voicePitch || 1.0) + '" step="0.1" oninput="updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div></div>' +
+      '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读语速</div><div class="setting-desc" id="rateVal">' + (s.voiceRate || 0.9) + 'x</div></div>' +
+        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voiceRate || 0.9) + '" step="0.1" oninput="if(!hasFeature('voiceRatePitch')){showToast('🔒 语速/音调需9.9元版解锁');return} updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>' +
+      '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读音调</div><div class="setting-desc" id="pitchVal">' + (s.voicePitch || 1.0) + 'x</div></div>' +
+        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voicePitch || 1.0) + '" step="0.1" oninput="if(!hasFeature('voiceRatePitch')){showToast('🔒 语速/音调需9.9元版解锁');return} updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div></div>' +
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'appearance\')"><span>外观</span><span class="section-arrow" id="arrow_appearance">▲</span></div>' +
       '<div class="section-body" id="body_appearance">' +
@@ -7177,9 +7371,15 @@ function renderSettings() {
         '<label class="toggle"><input type="checkbox" id="darkToggle"' + (s.darkMode ? ' checked' : '') + ' onchange="saveSetting(\'darkMode\', this.checked)"><span class="slider"></span></label></div>' +
       '<div class="setting-item"><div><div class="setting-label">主题颜色</div><div class="setting-desc" id="colorVal">' + (colorNames[s.color||'teal']) + '</div></div>' +
         '<div class="color-dots">' +
-          colors.map(function(clr) {
+          colors.filter(function(clr) {
+            var t = getTier();
+            if (t === 'free') return FREE_COLORS.indexOf(clr) >= 0;
+            if (t === 'basic') return FREE_COLORS.indexOf(clr) >= 0 || BASIC_COLORS.indexOf(clr) >= 0;
+            return true;
+          }).map(function(clr) {
             return '<span class="color-dot' + (s.color === clr ? ' active' : '') + '" style="background:' + colorBgs[clr] + '" onclick="saveThemeColor(\'' + clr + '\')"></span>';
           }).join('') +
+          (function() { var t = getTier(); if (t === 'free') return '<span style="font-size:11px;color:var(--text-tertiary);margin-left:4px">+32种颜色待解锁</span>'; if (t === 'basic') return '<span style="font-size:11px;color:var(--text-tertiary);margin-left:4px">+24种颜色待解锁</span>'; return ''; })() +
         '</div></div>' +
       '<div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">' + s.fontSize + 'px</div></div>' +
         '<div style="display:flex;align-items:center;gap:6px;min-width:120px;flex:1;max-width:180px"><span style="font-size:12px;flex-shrink:0">A</span><input type="range" min="14" max="24" value="' + s.fontSize + '" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))" style="flex:1;min-width:0"><span style="font-size:16px;font-weight:700;flex-shrink:0">A</span></div></div>' +
@@ -7193,6 +7393,7 @@ function renderSettings() {
 
     // 学习计划 section
     (function() {
+      if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>🔒 学习计划 · 需升级3元版解锁</span></div></div>';
       var examDateVal = ((appData.settings || {}).examDate || '');
       var dailyTarget = (appData.settings || {}).dailyTarget || '';
       var suggestedDaily = '';
@@ -7225,6 +7426,7 @@ function renderSettings() {
       '</div>';
       // 学习日历热力图
       planHtml += (function() {
+        if (!hasFeature('heatmap')) return '<div style="margin-top:12px;padding:14px;background:var(--bg-input);border-radius:10px;text-align:center;color:var(--text-tertiary);font-size:13px">🔒 学习热力图 · 需升级3元版解锁</div>';
         var dates = (appData.settings || {}).studyDates || {};
         var today = new Date();
         // 连续学习天数
@@ -7311,6 +7513,7 @@ function renderSettings() {
 
     // 每日洞见
     (function() {
+      if (!hasFeature('dailyInsight')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>🔒 每日洞见 · 需9.9元版</span></div></div>';
       var insight = getDailyInsight();
       var si = appData.settings.dailyInsight || {};
       var canRefresh = !si.refreshed;
@@ -7334,6 +7537,7 @@ function renderSettings() {
 
     // 今日学习摘要
     (function() {
+      if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>🔒 今日学习摘要 · 需升级3元版解锁</span></div></div>';
       ensureDailyPractice();
       var dp = appData.settings.dailyPractice;
       var today = new Date().toISOString().substring(0, 10);
@@ -7379,7 +7583,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v36</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v37</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -7573,7 +7777,7 @@ async function makeBackupCode() {
 }
 
 async function copyBackup() {
-  if (!isPermanentAuth()) { showToast('试用版不支持导出'); return; }
+  if (!hasFeature('shareFile')) { showToast('免费版不支持复制备份码，请升级版本'); return; }
   try {
     showToast('正在生成备份码...');
     const code = await makeBackupCode();
