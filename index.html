@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v30 · 小阮出品</title>
+<title>挖空背诵工具 v31 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -28,8 +28,8 @@
   --transition:0.2s cubic-bezier(.4,0,.2,1); --safe-bottom:env(safe-area-inset-bottom,16px);
 }
 /* ---- 主题色选择器 ---- */
-.color-dots { display:grid; grid-template-columns:repeat(8,28px); gap:7px; justify-content:start; }
-.color-dot { width:28px; height:28px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all .2s; display:inline-block; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.color-dots { display:grid; grid-template-columns:repeat(6,24px); gap:8px; justify-content:start; }
+.color-dot { width:24px; height:24px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all .2s; display:inline-block; box-shadow:0 1px 3px rgba(0,0,0,.15); }
 .color-dot.active { border-color:var(--text); transform:scale(1.18); box-shadow:0 2px 6px rgba(0,0,0,.25); }
 .color-dot:active { transform:scale(.92); }
 
@@ -2133,6 +2133,7 @@ function init() {
     getSetting('darkMode', false);
     getSetting('fontSize', 16);
     applySettings();
+      updateThemeColorMeta((appData.settings||{}).color||'teal');
     if (!checkAuth()) { showAuthModal(); return; }
     initApp();
   } catch(e) {
@@ -2357,9 +2358,24 @@ function applySettings() {
   if (mc) mc.content = s.darkMode ? (themeDark[s.color] || '#042f2e') : (themeLight[s.color] || '#f0fdfa');
 }
 
-function saveThemeColor(color) {
+var themeBgColors = {
+    teal:'#f0fdfa', purple:'#faf5ff', blue:'#f0f7ff', rose:'#fff1f5', pink:'#fdf2f8',
+    green:'#f0fdf4', yellow:'#fefce8', bw:'#f5f5f5', cream:'#fffaf3', sage:'#f4faf0',
+    ink:'#f5f5f5', moss:'#f2f7f2', zen:'#faf7f4', bamboo:'#f4f8f2', wood:'#fdf8f4',
+    ocean:'#f0f4f8', coral:'#fef5f2', peach:'#fef8f5', lavender:'#f8f6fb', mist:'#f5f8fa',
+    snow:'#fafafa', amber:'#fffbf5', sakura:'#fef8fa', sky:'#f5fafd', oat:'#fdfaf6',
+    sage2:'#f4f6f4', cinnabar:'#fef5f2', dusk:'#f6f4f8'
+  };
+  function updateThemeColorMeta(color) {
+    var meta = document.getElementById('themeColorMeta');
+    var bg = themeBgColors[color] || '#f0fdfa';
+    if (meta) meta.content = bg;
+  }
+
+  function saveThemeColor(color) {
   saveSetting('color', color);
   applySettings();
+  updateThemeColorMeta(color);
   renderSettings();
 }
 
@@ -7286,7 +7302,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v30</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v31</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
