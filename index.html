@@ -512,6 +512,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .setting-item:only-of-type{border-radius:var(--radius);border-bottom:none}
 .tier-locked-item{opacity:0.55;pointer-events:none;user-select:none}
 .tier-locked-item .toggle,.tier-locked-item input[type=range]{pointer-events:none;opacity:0.5}
+::placeholder{color:var(--text-tertiary);opacity:1}
 .setting-label{font-weight:600;font-size:var(--font-size)}
 .setting-desc{font-size:13px;color:var(--text-secondary);margin-top:1px}
 
@@ -871,12 +872,13 @@ body.focus-mode #cardText .blank-input { font-size:calc(var(--font-size) + 2px);
 // ==================== 版本激活系统 ====================
 var TIER_FEATURES = {
   basic: ['unlimitedBanks', 'unlimitedQuestions', 'randomNorepeat', 'perQuestionTimer', 'totalTimer',
-          'hideQuestion', 'fullVoice', 'voiceSelect', 'readModeSelect', 'shareFile', 'fullSr',
+          'hideQuestion', 'fullVoice', 'readModeSelect', 'shareFile', 'fullSr',
           'heatmap', 'dailySummary', 'wrongFirst', 'bankMerge', 'mixedBank',
           '16colors'],
   pro:   ['mixedBank', 'focusMode', 'pomodoro', 'adaptiveDifficulty', 'achievements',
           'comboSystem', 'allColors', 'voiceRatePitch', 'dailyInsight', 'avatar',
-          'chapterHeatmap', 'categoryFilter', 'sprintMode', 'koujue', 'starCard']
+          'chapterHeatmap', 'categoryFilter', 'sprintMode', 'koujue', 'starCard',
+          'autoReadAloud']
 };
 var TIER_NAMES = { free: '免费版', basic: '科学备考版', pro: '智能全能版' };
 var TIER_EMOJI = { free: '🆓', basic: '💰', pro: '👑' };
@@ -967,7 +969,9 @@ function showTierCompare() {
     '<tr><td style="text-align:left;padding:6px">混合多题库刷题</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">分享/导出文件</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">语音朗读</td><td>仅一遍</td><td>全部模式</td><td>全部模式</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">朗读声音/模式选择</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">朗读声音选择</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">朗读模式选择</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">做完题自动朗读答案</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">语速/音调调节</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">主题颜色</td><td>8种</td><td>16种</td><td>全部40种</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">间隔重复</td><td>1/2天</td><td>1/2/4/7天</td><td>1/2/4/7天</td></tr>' +
@@ -1504,7 +1508,7 @@ function showFocusTransition(callback) {
 
 
 function startSprintMode() {
-  if (!hasFeature('sprintMode')) { showToast('🔒 考前冲刺需要升级到9.9元版，请升级解锁'); return; }
+  if (!hasFeature('sprintMode')) { return; }
   var pool = getSprintCards();
   if (!pool.length) { showToast('没有需要冲刺的题目，继续加油！'); return; }
   // 切换到做题页，使用冲刺模式
@@ -2217,7 +2221,6 @@ function showBankPicker(currentId, onPick) {
 // 朗读声音弹窗（代替原生 select，避免 iPad 旋转）
 var _availableVoices = [];
 function showVoicePicker() {
-  if (!hasFeature('voiceSelect')) { showToast('🔒 朗读声音选择需升级到3元版，免费版仅支持默认声音'); return; }
   loadVoices(); // 确保语音列表是最新的
   var currentVal = document.getElementById('voiceSelect').value;
   var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
@@ -2238,7 +2241,7 @@ function showVoicePicker() {
 
 // 朗读模式弹窗（代替原生 select，避免 iPad 旋转）
 function showReadModePicker() {
-  if (!hasFeature('readModeSelect')) { showToast('🔒 朗读模式选择需升级到3元版，免费版仅支持读一遍'); return; }
+  if (!hasFeature('readModeSelect')) { return; }
   var currentVal = document.getElementById('readModeSelect').value;
   var modes = [
     {value:'once', label:'仅读一遍'},
@@ -4692,7 +4695,7 @@ function renderPracticeSetup() {
 
 // ====== 计时器 ======
 function selectTimerMode(mode, el) {
-  if (getTier() === 'free' && mode !== 'off') { showToast('🔒 免费版仅支持不计时模式，请升级解锁计时功能'); return; }
+  if (getTier() === 'free' && mode !== 'off') { return; }
   timerMode = mode;
   document.querySelectorAll('#timerModeGroup .chip').forEach(function(c) { c.classList.remove('active'); });
   if (el) el.classList.add('active');
@@ -4793,14 +4796,14 @@ function selectCustom() {
 }
 
 function selectHideQ(val, el) {
-  if (val === 1 && getTier() === 'free') { showToast('🔒 免费版不可隐藏题目，请升级解锁'); return; }
+  if (val === 1 && getTier() === 'free') { return; }
   hideQuestionStart = val === 1;
   document.querySelectorAll('#hideQChips .chip').forEach(c => c.classList.remove('active'));
   if (el) el.classList.add('active');
 }
 
 function selectDrawMode(mode, el) {
-  if (getTier() === 'free' && mode === 'random-norepeat') { showToast('🔒 免费版仅支持随机重复和顺序出题，请升级解锁更多模式'); return; }
+  if (getTier() === 'free' && mode === 'random-norepeat') { return; }
   drawMode = mode;
   document.querySelectorAll('#drawModeChips .chip').forEach(c => c.classList.remove('active'));
   if (el) el.classList.add('active');
@@ -4918,7 +4921,7 @@ var _selectedMultiBanks = [];
 var _isMultiBankMode = false;
 
 function toggleMultiBank(on) {
-  if (!hasFeature('mixedBank')) { showToast('🔒 混合多题库需要升级到3元版，请升级解锁'); return; }
+  if (!hasFeature('mixedBank')) { return; }
   _isMultiBankMode = on;
   var singleChip = document.getElementById('singleBankChip');
   var multiChip = document.getElementById('multiBankChip');
@@ -7328,16 +7331,17 @@ function renderSettings() {
       if (isTrial) {
         html += '<div id="trialCountdown" style="margin-bottom:12px;padding:8px 12px;background:' + (dm8 ? '#3d2e0a' : '#fef3c7') + ';border:1px solid ' + (dm8 ? '#92400e' : '#f59e0b') + ';border-radius:8px;text-align:center;font-size:13px;font-weight:600;color:' + (dm8 ? '#fcd34d' : '#b45309') + '">⏱ 试用剩余 ' + trialMin + ' 分 ' + trialSec + ' 秒 · ' + (TIER_NAMES[tier] || '') + '</div>';
       }
-      // 激活码输入
-      if (tier === 'free' || isTrial) {
+      // 激活码输入（只要不是pro就显示，方便升级）
+      if (tier !== 'pro') {
+        var upgradeHint = tier === 'free' ? '激活码请联系开发者获取' : '已是' + TIER_NAMES[tier] + '，输入新码可升级';
         html += '<div style="display:flex;gap:8px;margin-bottom:6px">' +
           '<input type="text" id="activateInput" placeholder="输入激活码（如 BV3-XXXX-XXXX-XXXX）" autocomplete="off" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px;min-height:40px">' +
           '<button class="btn btn-primary btn-sm" onclick="var v=document.getElementById(&#39;activateInput&#39;).value;if(v)activateCode(v)" style="min-height:40px;padding:0 16px;font-size:14px;white-space:nowrap">激活</button>' +
         '</div>' +
-        '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">激活码请联系开发者获取 · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
+        '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">' + upgradeHint + ' · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
       }
-      if (tier !== 'free' && !isTrial) {
-        html += '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">已激活 · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
+      if (tier === 'pro') {
+        html += '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">👑 已是最高版本 · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
       }
       return html;
     })() +
@@ -7359,16 +7363,19 @@ function renderSettings() {
       '<div class="section-body" id="body_voice">' +
       '<div class="setting-item"><div><div class="setting-label">语音朗读</div><div class="setting-desc">使用手机 TTS 朗读，再次点击暂停</div></div>' +
         '<label class="toggle"><input type="checkbox" id="voiceToggle"' + (s.voiceEnabled ? ' checked' : '') + ' onchange="saveSetting(\'voiceEnabled\', this.checked)"><span class="slider"></span></label></div>' +
-      '<div class="setting-item"><div><div class="setting-label">做完题自动朗读答案</div><div class="setting-desc">全部填空后自动读出答案内容</div></div>' +
-        '<label class="toggle"><input type="checkbox" id="autoReadToggle"' + (s.autoReadAloud ? ' checked' : '') + ' onchange="saveSetting(\'autoReadAloud\', this.checked)"><span class="slider"></span></label></div>' +
+      (function() {
+        if (!hasFeature('autoReadAloud')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 做完题自动朗读答案</div><div class="setting-desc">需升级9.9元版解锁</div></div><span style="font-size:18px">🔒</span></div>';
+        return '<div class="setting-item"><div><div class="setting-label">做完题自动朗读答案</div><div class="setting-desc">全部填空后自动读出答案内容</div></div>' +
+          '<label class="toggle"><input type="checkbox" id="autoReadToggle"' + (s.autoReadAloud ? ' checked' : '') + ' onchange="saveSetting(\'autoReadAloud\', this.checked)"><span class="slider"></span></label></div>';
+      })() +
       '<div class="setting-item"><div><div class="setting-label">朗读声音</div><div class="setting-desc" id="voiceNameVal">' + (s.voiceName || '自动选择') + '</div></div>' +
         '<input type="hidden" id="voiceSelect" value="' + (s.voiceName || '') + '"><button class="btn btn-ghost btn-sm" id="voicePickBtn" onclick="showVoicePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">' + (s.voiceName || '自动选择') + ' ▾</button></div>' +
       '<div class="setting-item"><div><div class="setting-label">朗读模式</div><div class="setting-desc" id="readModeVal">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + '</div></div>' +
         '<input type="hidden" id="readModeSelect" value="' + (s.readMode||'once') + '"><button class="btn btn-ghost btn-sm" id="readModePickBtn" onclick="showReadModePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + ' ▾</button></div>' +
       '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读语速</div><div class="setting-desc" id="rateVal">' + (s.voiceRate || 0.9) + 'x</div></div>' +
-        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voiceRate || 0.9) + '" step="0.1" oninput="if(!hasFeature(&#39;voiceRatePitch&#39;)){showToast(&#39;🔒 语速/音调需9.9元版解锁&#39;);return} updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>' +
+        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voiceRate || 0.9) + '" step="0.1" oninput="if(!hasFeature(&#39;voiceRatePitch&#39;)){return} updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>' +
       '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读音调</div><div class="setting-desc" id="pitchVal">' + (s.voicePitch || 1.0) + 'x</div></div>' +
-        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voicePitch || 1.0) + '" step="0.1" oninput="if(!hasFeature(&#39;voiceRatePitch&#39;)){showToast(&#39;🔒 语速/音调需9.9元版解锁&#39;);return} updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div></div>' +
+        '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voicePitch || 1.0) + '" step="0.1" oninput="if(!hasFeature(&#39;voiceRatePitch&#39;)){return} updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div></div></div>' +
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'appearance\')"><span>外观</span><span class="section-arrow" id="arrow_appearance">▲</span></div>' +
       '<div class="section-body" id="body_appearance">' +
