@@ -919,7 +919,7 @@ function checkEveningMode() {
 }
 
 function saveExamDate(value) {
-  appData.settings.examDate = value || null; appData.settings.examDate = value || null;
+  appData.settings.examDate = value || null;
   saveData(appData);
   renderSettings();
   renderBanks(); // 刷新首页banner
@@ -7010,42 +7010,62 @@ function renderSettings() {
 
     // 学习计划 section
     (function() {
+      var examDateVal = ((appData.settings || {}).examDate || '');
+      var dailyTarget = (appData.settings || {}).dailyTarget || '';
+      var suggestedDaily = '';
+      var daysLeft = getExamDaysLeft();
+      if (examDateVal && daysLeft !== null && daysLeft > 0) {
+        var allCards = 0;
+        Object.values(appData.banks || {}).forEach(function(b) { allCards += (b.cards || []).length; });
+        if (allCards > 0) suggestedDaily = Math.ceil(allCards / daysLeft);
+      }
+      var planHtml = '';
+      // 考试日期（左日期 右倒计时）
+      planHtml += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+        '<div style="flex:1"><div class="setting-label">📅 考试日期</div>' +
+          '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:4px;width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px">' +
+        '</div>' +
+        '<div id="examCountdownBadge" style="padding:10px 16px;border:2px solid var(--border);border-radius:10px;font-size:15px;font-weight:700;white-space:nowrap;text-align:center;min-width:120px;margin-top:20px"></div>' +
+      '</div>';
+      // 晚间复习模式
+      planHtml += '<div style="margin-top:8px"><div class="setting-label">🌙 晚间复习模式</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">' +
+          '<input type="time" id="eveningStartInput" value="' + ((appData.settings || {}).eveningStart || '21:00') + '" onchange="saveEveningStart(this.value)" style="padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px;width:140px">' +
+          '<span style="font-size:12px;color:var(--text-tertiary)">到达时间后提醒复习</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">每天仅提醒一次，睡前记忆效果最佳</div>' +
+      '</div>';
+      // 每日目标
+      planHtml += '<div style="margin-top:10px"><div class="setting-label">每日目标（题数）</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">' +
+          '<input type="number" id="dailyTargetInput" value="' + dailyTarget + '" placeholder="' + (suggestedDaily || '自定义') + '" min="1" onchange="saveDailyTarget(parseInt(this.value)||0)" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px">' +
+          '<span style="font-size:12px;color:var(--text-tertiary);white-space:nowrap">题/天</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">留空则根据考试日期和未掌握题数自动计算</div>' +
+      '</div>';
+      // 学习日历热力图
+      planHtml += (function() {
+        var dates = (appData.settings || {}).studyDates || {};
+        var today = new Date();
+        var html = '<div style="margin-top:12px"><div class="setting-label">📊 学习记录（近12周）</div>';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:8px">';
+        for (var d = 83; d >= 0; d--) {
+          var dt = new Date(today);
+          dt.setDate(dt.getDate() - d);
+          var dateStr = dt.toISOString().substring(0, 10);
+          var count = dates[dateStr] || 0;
+          var color = count >= 20 ? '#2e7d32' : count >= 10 ? '#4caf50' : count >= 5 ? '#a5d6a7' : count > 0 ? '#c8e6c9' : '#e0e0e0';
+          var title = dateStr + (count > 0 ? ': ' + count + ' 题' : ': 未学习');
+          html += '<div style="width:12px;height:12px;border-radius:2px;background:' + color + '" title="' + title + '"></div>';
+          if (d % 7 === 0 && d > 0) html += '</div><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
+        }
+        html += '</div>';
+        html += '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;color:var(--text-tertiary)">少<span style="width:10px;height:10px;border-radius:2px;background:#e0e0e0"></span><span style="width:10px;height:10px;border-radius:2px;background:#c8e6c9"></span><span style="width:10px;height:10px;border-radius:2px;background:#a5d6a7"></span><span style="width:10px;height:10px;border-radius:2px;background:#4caf50"></span><span style="width:10px;height:10px;border-radius:2px;background:#2e7d32"></span>多</div>';
+        html += '</div>';
+        return html;
+      })();
       return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'studyplan\')"><span>📅 学习计划</span><span class="section-arrow" id="arrow_studyplan">▲</span></div>' +
         '<div class="section-body" id="body_studyplan">' + planHtml + '</div></div>';
-    })() +
-
-    // 今日学习摘要
-    (function() {
-      return '<div class="section"><div class="section-header" style="cursor:pointer" onclick="showTodaySummary()"><span style="font-weight:700;font-size:15px">📋 今日学习摘要</span><span style="font-size:13px;color:var(--text-secondary);margin-left:8px">' + (getTodaySummaryBrief() || '暂无数据') + '</span><span style="margin-left:auto;font-size:18px;color:var(--text-tertiary)">›</span></div></div>';
-    })() +
-
-    // 每日洞见
-    (function() {
-      var insight = getDailyInsight();
-      var preview = insight.length > 40 ? insight.substring(0, 40) + '…' : insight;
-      return '<div class="section"><div class="section-header" style="cursor:pointer" onclick="showDailyInsightCard()"><span style="font-weight:700;font-size:15px">💡 每日洞见</span><span style="font-size:13px;color:var(--text-secondary);margin-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">' + escapeHtml(preview) + '</span><span style="margin-left:auto;font-size:18px;color:var(--text-tertiary)">›</span></div></div>';
-    })() +
-
-    // 学习日历热力图
-    (function() {
-      var dates = appData.settings.studyDates || {};
-      var today = new Date();
-      var html = '<div style="margin-top:12px"><div class="setting-label">📊 学习记录（近12周）</div>';
-      html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:8px">';
-      for (var d = 83; d >= 0; d--) {
-        var dt = new Date(today);
-        dt.setDate(dt.getDate() - d);
-        var dateStr = dt.toISOString().substring(0, 10);
-        var count = dates[dateStr] || 0;
-        var color = count >= 20 ? '#2e7d32' : count >= 10 ? '#4caf50' : count >= 5 ? '#a5d6a7' : count > 0 ? '#c8e6c9' : '#e0e0e0';
-        var title = dateStr + (count > 0 ? ': ' + count + ' 题' : ': 未学习');
-        html += '<div style="width:12px;height:12px;border-radius:2px;background:' + color + '" title="' + title + '"></div>';
-        if (d % 7 === 0 && d > 0) html += '</div><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
-      }
-      html += '</div>';
-      html += '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;color:var(--text-tertiary)">少<span style="width:10px;height:10px;border-radius:2px;background:#e0e0e0"></span><span style="width:10px;height:10px;border-radius:2px;background:#c8e6c9"></span><span style="width:10px;height:10px;border-radius:2px;background:#a5d6a7"></span><span style="width:10px;height:10px;border-radius:2px;background:#4caf50"></span><span style="width:10px;height:10px;border-radius:2px;background:#2e7d32"></span>多</div>';
-      html += '</div>';
-      return html;
     })() +
 
     
@@ -7067,7 +7087,7 @@ function renderSettings() {
         return html;
       })() +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v22</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v23</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
