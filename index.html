@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v24 · 小阮出品</title>
+<title>挖空背诵工具 v25 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -6966,7 +6966,7 @@ function renderSettings() {
       var planHtml = '';
       // 考试日期
       planHtml += '<div style="margin-bottom:8px"><div class="setting-label">📅 考试日期</div>' +
-        '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:4px;width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px">' +
+        '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:4px;width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px;box-sizing:border-box">' +
       '</div>';
       // 晚间复习模式
       planHtml += '<div style="margin-top:8px"><div class="setting-label">🌙 晚间复习模式</div>' +
@@ -7009,11 +7009,45 @@ function renderSettings() {
         '<div class="section-body" id="body_studyplan">' + planHtml + '</div></div>';
     })() +
 
-    
+    // 每日洞见
+    (function() {
+      var insight = getDailyInsight();
+      var si = appData.settings.dailyInsight || {};
+      var preview = insight.length > 50 ? insight.substring(0, 50) + '...' : insight;
+      return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'dailyinsight\')"><span>💡 每日洞见</span><span class="section-arrow" id="arrow_dailyinsight">▲</span></div>' +
+        '<div class="section-body" id="body_dailyinsight">' +
+        '<div class="setting-item" style="cursor:pointer" onclick="showDailyInsightCard()">' +
+        '<div><div class="setting-label">' + escapeHtml(preview) + '</div>' +
+        '<div class="setting-desc" style="margin-top:4px">' + (si.refreshed ? '今日已刷新 · 点击查看完整内容' : '点击查看完整内容 · 每天可刷新一次') + '</div></div>' +
+        '<button onclick="event.stopPropagation();refreshDailyInsight()" style="background:var(--primary-light);border:1px solid var(--primary-soft);color:var(--primary);padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap"' +
+        (si.refreshed ? ' disabled style="background:var(--bg);border-color:var(--border);color:var(--text-tertiary);padding:6px 14px;border-radius:20px;font-size:13px;cursor:default;white-space:nowrap"' : '') +
+        '>🔄 换一条</button>' +
+        '</div></div></div>';
+    })() +
+
+    // 今日学习摘要
+    (function() {
+      var brief = getTodaySummaryBrief();
+      if (!brief) {
+        return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'todaysummary\')"><span>📋 今日学习摘要</span><span class="section-arrow" id="arrow_todaysummary">▲</span></div>' +
+          '<div class="section-body" id="body_todaysummary">' +
+          '<div class="setting-item" style="cursor:pointer" onclick="showTodaySummary()">' +
+          '<div><div class="setting-label">今天还没有学习记录</div>' +
+          '<div class="setting-desc">开始刷题后会在这里显示今日摘要</div></div></div>' +
+          '</div></div>';
+      }
+      return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'todaysummary\')"><span>📋 今日学习摘要</span><span class="section-arrow" id="arrow_todaysummary">▲</span></div>' +
+        '<div class="section-body" id="body_todaysummary">' +
+        '<div class="setting-item" style="cursor:pointer" onclick="showTodaySummary()">' +
+        '<div><div class="setting-label">' + escapeHtml(brief) + '</div>' +
+        '<div class="setting-desc">点击查看详细统计</div></div><div style="display:flex;align-items:center">→</div>' +
+        '</div></div></div>';
+    })() +
+
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v24</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v25</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
