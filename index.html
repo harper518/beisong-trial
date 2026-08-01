@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v27 · 小阮出品</title>
+<title>挖空背诵工具 v29 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -28,8 +28,8 @@
   --transition:0.2s cubic-bezier(.4,0,.2,1); --safe-bottom:env(safe-area-inset-bottom,16px);
 }
 /* ---- 主题色选择器 ---- */
-.color-dots { display:grid; grid-template-columns:repeat(5,30px); gap:10px; justify-content:start; }
-.color-dot { width:30px; height:30px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all .2s; display:inline-block; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.color-dots { display:grid; grid-template-columns:repeat(8,28px); gap:7px; justify-content:start; }
+.color-dot { width:28px; height:28px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all .2s; display:inline-block; box-shadow:0 1px 3px rgba(0,0,0,.15); }
 .color-dot.active { border-color:var(--text); transform:scale(1.18); box-shadow:0 2px 6px rgba(0,0,0,.25); }
 .color-dot:active { transform:scale(.92); }
 
@@ -95,6 +95,76 @@
   --text:#2d4a2d; --text-secondary:#6b8e6b;
   --primary:#6b9e6b; --primary-hover:#4a7c4a; --primary-light:#f0f8f0; --primary-soft:#e0f0e0;
   --border:#c8dcc8;
+}
+/* 墨染 */
+[data-color="ink"] {
+  --bg:#f5f5f5; --bg-card:#fff; --bg-input:#f5f5f5;
+  --text:#1a1a1a; --text-secondary:#666;
+  --primary:#4a4a4a; --primary-hover:#333; --primary-light:#f5f5f5; --primary-soft:#e8e8e8;
+  --border:#d4d4d4;
+}
+/* 苔青 */
+[data-color="moss"] {
+  --bg:#f2f7f2; --bg-card:#fff; --bg-input:#f2f7f2;
+  --text:#1a2e1a; --text-secondary:#5a7d5a;
+  --primary:#5a7d5a; --primary-hover:#4a6b4a; --primary-light:#f2f7f2; --primary-soft:#e0efe0;
+  --border:#c8dcc8;
+}
+/* 枯山水 */
+[data-color="zen"] {
+  --bg:#faf7f4; --bg-card:#fff; --bg-input:#faf7f4;
+  --text:#3a3028; --text-secondary:#8b7a6a;
+  --primary:#b8a089; --primary-hover:#a08870; --primary-light:#faf7f4; --primary-soft:#f2ece5;
+  --border:#e0d5c8;
+}
+/* 竹青 */
+[data-color="bamboo"] {
+  --bg:#f4f8f2; --bg-card:#fff; --bg-input:#f4f8f2;
+  --text:#1a2e1a; --text-secondary:#6b8e6b;
+  --primary:#7a9a6a; --primary-hover:#6a8a5a; --primary-light:#f4f8f2; --primary-soft:#e6f0e0;
+  --border:#c8dcc0;
+}
+/* 暖木棕 */
+[data-color="wood"] {
+  --bg:#fdf8f4; --bg-card:#fff; --bg-input:#fdf8f4;
+  --text:#3a2820; --text-secondary:#8b6a50;
+  --primary:#b8956a; --primary-hover:#a08050; --primary-light:#fdf8f4; --primary-soft:#f8ede0;
+  --border:#e8d5c0;
+}
+/* 深海蓝 */
+[data-color="ocean"] {
+  --bg:#f0f4f8; --bg-card:#fff; --bg-input:#f0f4f8;
+  --text:#1e3a5f; --text-secondary:#5c7c9e;
+  --primary:#1e3a5f; --primary-hover:#162d4a; --primary-light:#f0f4f8; --primary-soft:#e0e8f2;
+  --border:#d0dae8;
+}
+/* 珊瑚橘 */
+[data-color="coral"] {
+  --bg:#fef5f2; --bg-card:#fff; --bg-input:#fef5f2;
+  --text:#4a1e1a; --text-secondary:#9e5c4a;
+  --primary:#f0755a; --primary-hover:#e06048; --primary-light:#fef5f2; --primary-soft:#fde8e2;
+  --border:#f0d0c8;
+}
+/* 蜜桃 */
+[data-color="peach"] {
+  --bg:#fef8f5; --bg-card:#fff; --bg-input:#fef8f5;
+  --text:#4a2820; --text-secondary:#9e6a50;
+  --primary:#f0a58a; --primary-hover:#e89070; --primary-light:#fef8f5; --primary-soft:#fdf0e8;
+  --border:#f0d8c8;
+}
+/* 薰衣草 */
+[data-color="lavender"] {
+  --bg:#f8f6fb; --bg-card:#fff; --bg-input:#f8f6fb;
+  --text:#2a1a3a; --text-secondary:#7a6a9e;
+  --primary:#b8a9d4; --primary-hover:#a898c4; --primary-light:#f8f6fb; --primary-soft:#f0ecf6;
+  --border:#e0d8f0;
+}
+/* 雾蓝 */
+[data-color="mist"] {
+  --bg:#f5f8fa; --bg-card:#fff; --bg-input:#f5f8fa;
+  --text:#1a2a3a; --text-secondary:#6a7a8b;
+  --primary:#a0b4c8; --primary-hover:#8a9fb4; --primary-light:#f5f8fa; --primary-soft:#e8eff4;
+  --border:#d0dae5;
 }
 
 [data-theme="dark"] {
@@ -6810,9 +6880,9 @@ function renderSettings() {
   const s = appData.settings;
   const density = s.density || 'low';
 
-  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', rose: '玫红', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿' };
-  var colors = ['teal', 'purple', 'blue', 'rose', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage'];
-  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', rose: '#e11d48', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b' };
+  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', rose: '玫红', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', coral: '珊瑚橘', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝' };
+  var colors = ['teal', 'purple', 'blue', 'rose', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral', 'peach', 'lavender', 'mist'];
+  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', rose: '#e11d48', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8' };
 
   c.innerHTML =
     // 设置页顶部 header（开关打开时显示头像）
@@ -7160,7 +7230,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v28</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v29</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
