@@ -895,13 +895,31 @@ function getSetting(key, defVal) {
 
 function saveSetting(key, value) { appData.settings[key] = value; saveData(appData); applySettings(); }
 
-function saveExamDate(value) {
 function saveEveningStart(value) {
   appData.settings.eveningStart = value || null;
   saveData(appData);
 }
 
-  appData.settings.examDate = value || null;
+// 检查晚间复习模式
+function checkEveningMode() {
+  var eveningStart = (appData.settings || {}).eveningStart;
+  if (!eveningStart) return;
+  var now = new Date();
+  var nowHour = now.getHours();
+  var startHour = parseInt(eveningStart.split(":")[0]);
+  var today = now.toISOString().substring(0, 10);
+  var lastShown = sessionStorage.getItem("evening_shown_date");
+  if (lastShown === today) return;
+  if (nowHour >= startHour || nowHour < 5) {
+    sessionStorage.setItem("evening_shown_date", today);
+    setTimeout(function() {
+      showToast("🌙 睡前记忆黄金期！大脑在睡眠中会以20倍速重播记忆痕迹，现在学的内容更牢 💤");
+    }, 1500);
+  }
+}
+
+function saveExamDate(value) {
+  appData.settings.examDate = value || null; appData.settings.examDate = value || null;
   saveData(appData);
   renderSettings();
   renderBanks(); // 刷新首页banner
