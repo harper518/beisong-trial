@@ -1028,7 +1028,7 @@ function autoGenerateBlanks(cards, density, seed) {
 
     // 重新定位（上面的 located 被改了）
     const pts = locatePoints(a, pointTexts);
-    const blanks = [];
+    var blanks = [];
     for (let pi = 0; pi < Math.min(pts.length, allocation.length); pi++) {
       const pt = pts[pi];
       const need = allocation[pi];
