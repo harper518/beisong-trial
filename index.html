@@ -28,8 +28,8 @@
   --transition:0.2s cubic-bezier(.4,0,.2,1); --safe-bottom:env(safe-area-inset-bottom,16px);
 }
 /* ---- 主题色选择器 ---- */
-.color-dots { display:grid; grid-template-columns:repeat(6,24px); gap:8px; justify-content:start; }
-.color-dot { width:24px; height:24px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all .2s; display:inline-block; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+.color-dots { display:grid; grid-template-columns:repeat(8,20px); gap:5px; justify-content:start; }
+.color-dot { width:20px; height:20px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all .2s; display:inline-block; box-shadow:0 1px 3px rgba(0,0,0,.15); }
 .color-dot.active { border-color:var(--text); transform:scale(1.18); box-shadow:0 2px 6px rgba(0,0,0,.25); }
 .color-dot:active { transform:scale(.92); }
 
@@ -514,7 +514,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 
 @media (pointer: coarse) {
   .btn, .chip, .tab-item, .bank-item, .setting-item { min-height: 44px; }
-  .color-dot { min-height: 30px; min-width: 30px; }
+  .color-dot { min-height: 20px; min-width: 20px; }
   .btn-sm { min-height: 36px; }
   .desktop-only { display: none !important; }
 }
