@@ -862,7 +862,7 @@ body.focus-mode #cardText .blank-input { font-size:calc(var(--font-size) + 2px);
   <button class="tab-item" data-tab="practice" onclick="switchTab('practice')"><span class="tab-icon">📝</span>做题</button>
   <button class="tab-item" data-tab="browse" onclick="switchTab('browse')"><span class="tab-icon">📖</span>浏览</button>
   <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">📝</span>复习</button>
-  <button class="tab-item" data-tab="settings" onclick="switchTab('settings')"><span class="tab-icon">⚙️</span>设置</button>
+  <button class="tab-item" data-tab="settings" onclick="switchTab(&#39;settings&#39;)"><span class="tab-icon">⚙️</span>设置</button>
 </nav>
 
 <script>
@@ -950,7 +950,7 @@ function showTierCompare() {
   ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
   var tier = getTier();
   ov.innerHTML = '<div style="background:var(--bg-card);border-radius:16px;padding:20px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;font-size:13px;line-height:1.6">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="margin:0;font-size:17px">📊 版本功能对比</h3><button style="background:var(--border);border:none;border-radius:8px;padding:6px 12px;font-size:14px;cursor:pointer;min-height:36px" onclick="this.closest('div').parentElement.parentElement.remove()">✕</button></div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="margin:0;font-size:17px">📊 版本功能对比</h3><button style="background:var(--border);border:none;border-radius:8px;padding:6px 12px;font-size:14px;cursor:pointer;min-height:36px" onclick="this.closest(&#39;div&#39;).parentElement.parentElement.remove()">✕</button></div>' +
     '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">' +
     '<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px">功能</th><th style="padding:8px;background:' + (tier==='free'?'var(--primary-soft)':'') + '">🆓 免费</th><th style="padding:8px;background:' + (tier==='basic'?'var(--primary-soft)':'') + '">💰 ¥3/年</th><th style="padding:8px;background:' + (tier==='pro'?'var(--primary-soft)':'') + '">👑 ¥9.9/年</th></tr></thead>' +
     '<tbody>' +
@@ -1026,13 +1026,13 @@ function showActivationSuccess(tierName, expires) {
   var expiresStr = expires ? '到期：' + new Date(expires).toLocaleDateString('zh-CN') : '永久有效';
   var ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;padding:16px';
-  ov.addEventListener('click', function(e) { if (e.target === ov) { ov.remove(); switchTab('settings'); } });
+  ov.addEventListener('click', function(e) { if (e.target === ov) { ov.remove(); switchTab(&#39;settings&#39;); } });
   ov.innerHTML = '<div style="background:var(--bg-card);border-radius:16px;padding:30px;text-align:center;max-width:360px;width:100%">' +
     '<div style="font-size:60px;margin-bottom:16px">🎉</div>' +
     '<div style="font-size:20px;font-weight:800;margin-bottom:8px;color:var(--text)">升级成功！</div>' +
     '<div style="font-size:15px;color:var(--text-secondary);margin-bottom:4px">当前版本：<b>' + tierName + '</b></div>' +
     '<div style="font-size:13px;color:var(--text-tertiary);margin-bottom:20px">' + expiresStr + '</div>' +
-    '<button style="width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;min-height:44px" onclick="var ov=this.closest('div').parentElement;ov.remove();switchTab('settings')">开始使用</button>' +
+    '<button style="width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;min-height:44px" onclick="var ov=this.closest(&#39;div&#39;).parentElement;ov.remove();switchTab(&#39;settings&#39;)">开始使用</button>' +
     '</div>';
   document.body.appendChild(ov);
 }
@@ -1076,7 +1076,7 @@ function checkExpiryWarning() {
   if (!act || act.tier === 'free' || !act.expires) return '';
   var remaining = Math.ceil((act.expires - Date.now()) / 86400000);
   if (remaining <= 7 && remaining > 0) {
-    return '<div style="margin-top:8px;padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;font-size:12px;color:#856404">⏰ 你的版本将在 <b>' + remaining + '</b> 天后到期，到期后功能将退回免费版。<a href="#" onclick="event.preventDefault();document.getElementById('activateInput').focus()" style="color:var(--primary);font-weight:600">续费 →</a></div>';
+    return '<div style="margin-top:8px;padding:8px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;font-size:12px;color:#856404">⏰ 你的版本将在 <b>' + remaining + '</b> 天后到期，到期后功能将退回免费版。<a href="#" onclick="event.preventDefault();document.getElementById(&#39;activateInput&#39;).focus()" style="color:var(--primary);font-weight:600">续费 →</a></div>';
   }
   if (remaining <= 0 && remaining > -3) {
     return '<div style="margin-top:8px;padding:8px 12px;background:#ffe0e0;border:1px solid #e74c3c;border-radius:8px;font-size:12px;color:#a33">🔴 宽限期还剩 <b>' + (3 + remaining) + '</b> 天，请尽快续费！</div>';
@@ -7205,8 +7205,8 @@ function renderSettings() {
       // 试用按钮
       if (tier === 'free' && !isTrial) {
         html += '<div style="display:flex;gap:8px;margin-bottom:12px">';
-        if (!trialUsedBasic) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial('basic')">🎁 试用3元版</button>';
-        if (!trialUsedPro) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#7C3AED;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial('pro')">👑 试用9.9版</button>';
+        if (!trialUsedBasic) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial(&#39;basic&#39;)">🎁 试用3元版</button>';
+        if (!trialUsedPro) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#7C3AED;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial(&#39;pro&#39;)">👑 试用9.9版</button>';
         html += '</div>';
         if (!bothTrialsUsed) html += '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-bottom:8px">20分钟试用 · 每版本可各试用一次 · 无需激活码</div>';
       }
@@ -7218,7 +7218,7 @@ function renderSettings() {
       if (tier === 'free' || isTrial) {
         html += '<div style="display:flex;gap:8px;margin-bottom:6px">' +
           '<input type="text" id="activateInput" placeholder="输入激活码（如 BV3-XXXX-XXXX-XXXX）" autocomplete="off" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px;min-height:40px">' +
-          '<button class="btn btn-primary btn-sm" onclick="var v=document.getElementById('activateInput').value;if(v)activateCode(v)" style="min-height:40px;padding:0 16px;font-size:14px;white-space:nowrap">激活</button>' +
+          '<button class="btn btn-primary btn-sm" onclick="var v=document.getElementById(&#39;activateInput&#39;).value;if(v)activateCode(v)" style="min-height:40px;padding:0 16px;font-size:14px;white-space:nowrap">激活</button>' +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">激活码请联系开发者获取 · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
       }
