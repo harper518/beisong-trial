@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v16 · 小阮出品</title>
+<title>挖空背诵工具 v17 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -563,11 +563,36 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .bank-check-row .bank-check-box { width:22px; height:22px; border-radius:6px; border:2px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; transition:all .15s; }
 .bank-check-row.selected .bank-check-box { background:var(--primary); border-color:var(--primary); color:#fff; }
 
+/* ====== 环境锚定过渡页 ====== */
+.focus-overlay { position:fixed; top:0; left:0; width:100%; height:100dvh; background:rgba(0,0,0,.85); z-index:9998; display:flex; align-items:center; justify-content:center; animation:fadeIn .3s; }
+.focus-overlay.fadeout { animation:fadeOut .5s forwards; }
+.focus-overlay-content { text-align:center; color:#fff; }
+.focus-overlay-content .focus-text { font-size:20px; font-weight:300; letter-spacing:.05em; margin-top:16px; }
+.focus-overlay-content .focus-breath { width:60px; height:60px; margin:0 auto; border-radius:50%; background:rgba(255,255,255,.15); animation:focusBreath 4s ease-in-out infinite; }
+@keyframes focusBreath { 0%,100% { transform:scale(1); opacity:.3; } 50% { transform:scale(1.5); opacity:.6; } }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+
+/* ====== 专注模式 ====== */
+body.focus-mode .tab-bar { display:none !important; }
+body.focus-mode #page-practice { padding:12px; max-width:100%; }
+body.focus-mode .page.active { padding-top:env(safe-area-inset-top,12px); }
+body.focus-mode #practiceActive .btn-ghost,
+body.focus-mode #practiceActive .btn-icon { display:none !important; }
+body.focus-mode #practiceActive .flex.justify-between { opacity:.3; transition:opacity .3s; }
+body.focus-mode #practiceActive .flex.justify-between:active,
+body.focus-mode #practiceActive .flex.justify-between:focus-within { opacity:1; }
+body.focus-mode #cardText { font-size:calc(var(--font-size) + 2px); line-height:2; }
+body.focus-mode #cardText .blank-input { font-size:calc(var(--font-size) + 2px); padding:10px 6px; }
+.focus-toggle { position:fixed; top:8px; right:12px; z-index:100; font-size:18px; background:rgba(0,0,0,.5); color:#fff; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; display:none; align-items:center; justify-content:center; }
+body.focus-mode .focus-toggle { display:flex; }
+
 </style>
 </head>
 <body>
 
 <div class="toast-container" id="toastContainer"></div>
+<button class="focus-toggle" id="focusToggle" onclick="toggleFocusMode()" title="退出专注模式">✕</button>
 
 <!-- PWA 安装引导横幅（Android/桌面） -->
 <div class="pwa-install-banner" id="pwaInstallBanner">
@@ -636,7 +661,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   <button class="tab-item active" data-tab="banks" onclick="switchTab('banks')"><span class="tab-icon">📚</span>题库</button>
   <button class="tab-item" data-tab="practice" onclick="switchTab('practice')"><span class="tab-icon">📝</span>做题</button>
   <button class="tab-item" data-tab="browse" onclick="switchTab('browse')"><span class="tab-icon">📖</span>浏览</button>
-  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">❌</span>错题</button>
+  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">📝</span>复习</button>
   <button class="tab-item" data-tab="settings" onclick="switchTab('settings')"><span class="tab-icon">⚙️</span>设置</button>
 </nav>
 
@@ -885,6 +910,32 @@ function saveDailyTarget(value) {
   renderBanks();
 }
 
+function saveBedtimeReminder(value) {
+  appData.settings.bedtimeReminder = value || null;
+  saveData(appData);
+}
+
+// 检查睡前复习提醒
+function checkBedtimeReminder() {
+  var reminder = (appData.settings || {}).bedtimeReminder;
+  if (!reminder) return;
+  var now = new Date();
+  var nowTime = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+  var lastShown = sessionStorage.getItem('bedtime_shown_date');
+  var today = now.toISOString().substring(0, 10);
+  if (lastShown === today) return; // 今天已提醒过
+  // 在提醒时间前后30分钟内
+  var reminderParts = reminder.split(':');
+  var reminderMin = parseInt(reminderParts[0]) * 60 + parseInt(reminderParts[1]);
+  var nowMin = now.getHours() * 60 + now.getMinutes();
+  if (Math.abs(nowMin - reminderMin) <= 30) {
+    sessionStorage.setItem('bedtime_shown_date', today);
+    setTimeout(function() {
+      showToast('🌙 睡前复习效果最佳！大脑会在睡眠中巩固记忆 💤');
+    }, 1000);
+  }
+}
+
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,8); }
 
 // ==================== 学习计划辅助函数 ====================
@@ -974,6 +1025,48 @@ function getChapterRateColor(rate) {
   return 'red';
 }
 
+// ==================== 成就徽章系统 ====================
+var ACHIEVEMENTS = [
+  { id: 'first_practice', name: '初出茅庐', emoji: '🎖️', desc: '完成第一次练习', check: function() { return (appData.settings.roundCount || 0) >= 1; } },
+  { id: 'streak_3', name: '三日不断', emoji: '🔥', desc: '连续3天学习', check: function() { return getConsecutiveStudyDays() >= 3; } },
+  { id: 'correct_100', name: '百题斩', emoji: '💯', desc: '累计答对100题', check: function() { return (appData.settings.lifetimeCorrect || 0) >= 100; } },
+  { id: 'perfect_round', name: '百发百中', emoji: '🎯', desc: '单轮5题以上全部正确', check: function() { return !!(appData.settings._hasPerfectRound); } },
+  { id: 'master_50', name: '学富五车', emoji: '📚', desc: '掌握50道题', check: function() { var stats = countMasteredQuestions(); return stats.mastered >= 50; } }
+];
+
+function getConsecutiveStudyDays() {
+  var dates = appData.settings.studyDates || {};
+  var today = new Date();
+  var streak = 0;
+  for (var d = 0; d < 365; d++) {
+    var dt = new Date(today);
+    dt.setDate(dt.getDate() - d);
+    var dateStr = dt.toISOString().substring(0, 10);
+    if (dates[dateStr] && dates[dateStr] > 0) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function checkAchievements() {
+  if (!appData.settings.achievements) appData.settings.achievements = {};
+  var newlyUnlocked = [];
+  for (var i = 0; i < ACHIEVEMENTS.length; i++) {
+    var a = ACHIEVEMENTS[i];
+    if (appData.settings.achievements[a.id]) continue;
+    if (a.check()) {
+      appData.settings.achievements[a.id] = Date.now();
+      newlyUnlocked.push(a);
+    }
+  }
+  if (newlyUnlocked.length) {
+    saveData(appData);
+    for (var j = 0; j < newlyUnlocked.length; j++) {
+      showToast(newlyUnlocked[j].emoji + ' 成就解锁：' + newlyUnlocked[j].name + '！');
+    }
+  }
+}
+
 // ==================== 考前冲刺模式 ====================
 function getSprintPoolSize() {
   var count = 0;
@@ -1007,6 +1100,7 @@ function getSprintCards() {
       if (c.id in wb) include = true;
       if (c.srStage != null && c.srStage < 3) include = true;
       if (c.starred) include = true;
+      if (c.highFreq) include = true;
       if (include) {
         seen[c.id] = true;
         result.push({ card: c, bankId: banks[i].id, bankName: banks[i].name });
@@ -1019,6 +1113,58 @@ function getSprintCards() {
     var tmp = result[k]; result[k] = result[r]; result[r] = tmp;
   }
   return result;
+}
+
+// 环境锚定过渡页：开始练习前展示2秒呼吸动画，建立专注条件反射
+function showFocusTransition(callback) {
+  var ov = document.createElement('div');
+  ov.className = 'focus-overlay';
+  ov.innerHTML = '<div class="focus-overlay-content">' +
+    '<div class="focus-breath"></div>' +
+    '<div class="focus-text">深吸一口气，准备专注</div>' +
+  '</div>';
+  document.body.appendChild(ov);
+  setTimeout(function() {
+    ov.classList.add('fadeout');
+    setTimeout(function() { ov.remove(); callback(); }, 500);
+  }, 1800);
+}
+
+// 微习惯快速启动：随机抽N题开始练习
+function quickStartN(n) {
+  var allCards = [];
+  var banks = Object.values(appData.banks || {});
+  for (var i = 0; i < banks.length; i++) {
+    var cards = banks[i].cards || [];
+    for (var j = 0; j < cards.length; j++) {
+      allCards.push({ card: cards[j], bankId: banks[i].id, bankName: banks[i].name });
+    }
+  }
+  if (!allCards.length) { showToast('没有可用题目'); return; }
+  // 打乱
+  for (var k = allCards.length - 1; k > 0; k--) {
+    var r = Math.floor(Math.random() * (k + 1));
+    var tmp = allCards[k]; allCards[k] = allCards[r]; allCards[r] = tmp;
+  }
+  var picked = allCards.slice(0, Math.min(n, allCards.length));
+  var first = picked[0];
+  var qh = new Set();
+  practiceState = {
+    bankId: first.bankId, bankName: n === 1 ? '快速1题' : '热身' + n + '题',
+    cards: picked.map(function(x) { return x.card; }), index: 0,
+    mode: 'random-repeat',
+    answers: {}, revealed: new Set(),
+    questionHidden: qh, koujueExpanded: {},
+    total: picked.length,
+    _streak: 0,
+    _roundCorrect: 0, _roundWrong: 0, _newlyMastered: [],
+    answersHidden: false
+  };
+  $('practiceSetup').style.display = 'none';
+  $('practiceResult').style.display = 'none';
+  $('practiceActive').style.display = 'block';
+  switchTab('practice');
+  renderPracticeCard();
 }
 
 function startSprintMode() {
@@ -1909,6 +2055,7 @@ function initApp() {
     }, 800);
   }
 
+  checkBedtimeReminder();
   switchTab('banks');
   // showIntroModal() 已移除 — 不再弹出欢迎提示
   } catch(e) {
@@ -2118,7 +2265,16 @@ function renderBanks() {
   // 全局搜索栏
   var totalCards = 0;
   banks.forEach(function(b) { totalCards += b.cards.length; });
-  var searchHtml = examBannerHtml + sprintHtml + '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
+  // 微习惯入口
+  var microHtml = '';
+  if (totalCards > 0) {
+    microHtml = '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">' +
+      '<button class="btn btn-ghost btn-sm" onclick="quickStartN(3)" style="flex:1;min-width:120px;font-size:12px;padding:8px 10px;border:1px dashed var(--border);border-radius:8px;text-align:center">🔍 先来3题热热身</button>' +
+      '<button class="btn btn-ghost btn-sm" onclick="quickStartN(1)" style="flex:1;min-width:120px;font-size:12px;padding:8px 10px;border:1px dashed var(--border);border-radius:8px;text-align:center">💪 只做1题也行</button>' +
+    '</div>';
+  }
+
+  var searchHtml = examBannerHtml + sprintHtml + microHtml + '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
   c.innerHTML = searchHtml;
     c.innerHTML += banks.map((b, idx) => {
     const isFirst = idx === 0;
@@ -4028,9 +4184,9 @@ function renderPracticeSetup() {
       <div class="form-group">
         <label class="form-label">📋 出题排序</label>
         <div class="chip-group">
-          <span class="chip${wrongFirst ? ' active' : ''}" id="wrongFirstChip" onclick="toggleWrongFirst()">${wrongFirst ? '✅ 错题优先' : '📖 顺序出题'}</span>
+          <span class="chip${wrongFirst ? ' active' : ''}" id="wrongFirstChip" onclick="toggleWrongFirst()">${wrongFirst ? '✅ 复习优先' : '📖 顺序出题'}</span>
         </div>
-        <p class="form-hint">错题优先：答错的题和到期复习的题自动排在前面。关闭后按选定方式正常出题。</p>
+        <p class="form-hint">复习优先：待复习的题和薄弱题自动排在前面。关闭后按选定方式正常出题。</p>
       </div>
 
       <button class="btn btn-primary btn-block btn-lg" onclick="startPractice()">👊 开始刷题</button>
@@ -4122,7 +4278,7 @@ function toggleWrongFirst() {
   appData.settings.wrongFirst = wrongFirst;
   saveData(appData);
   var el = document.getElementById('wrongFirstChip');
-  if (el) { el.classList.toggle('active', wrongFirst); el.textContent = wrongFirst ? '✅ 错题优先' : '📖 顺序出题'; }
+  if (el) { el.classList.toggle('active', wrongFirst); el.textContent = wrongFirst ? '✅ 复习优先' : '📖 顺序出题'; }
 }
 
 function selectCount(n, el) {
@@ -4526,7 +4682,9 @@ function renderPracticeCard() {
       <span style="font-size:14px;font-weight:700;color:var(--text)">${cur} / ${total}</span>
       ${(st._isSprint || st._multiBanks) ? '<span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (st._cardBankMap && st._cardBankMap[st.index] ? st._cardBankMap[st.index].bankName : (st._isSprint ? '冲刺' : '混合')) + '</span>' : ''}
       <span id="timerDisplay" style="display:${timerMode === 'off' ? 'none' : ''};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 10px;line-height:1;min-width:44px;min-height:44px" onclick="toggleFocusMode()" title="专注模式">🧘</button>
       <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleStarCurrent()">${starIcon}</button>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 10px;line-height:1;min-width:44px;min-height:44px" onclick="toggleHighFreqCurrent()" title="标记为高频考点">${card.highFreq ? '🔥' : '🔹'}</button>
       <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--danger)" onclick="deleteCurrentCard()" title="删除此题">🗑️</button>
     </div>
 
@@ -4837,6 +4995,33 @@ function applyCheckToInputs(card) {
     saveData(appData);
   }
 
+  // 🧠 自适应难度：连续答对3次自动升密度，连续答错2次自动降密度
+  if (appData.settings.adaptiveDensity && bank && bankCard) {
+    if (!bankCard._adaptiveStreak) bankCard._adaptiveStreak = 0;
+    var curDensity = appData.settings.density || 'low';
+    if (!hasWrong) {
+      bankCard._adaptiveStreak = Math.max(0, bankCard._adaptiveStreak) + 1;
+      if (bankCard._adaptiveStreak >= 3 && curDensity === 'low' && !bankCard._manualBlanks) {
+        var newBlanks = autoGenerateBlanks(bankCard, 'high');
+        if (newBlanks && newBlanks.length > (bankCard.blanks || []).length) {
+          bankCard.blanks = newBlanks;
+          if (card) card.blanks = newBlanks;
+        }
+        bankCard._adaptiveStreak = 0;
+      }
+    } else {
+      bankCard._adaptiveStreak = Math.min(0, bankCard._adaptiveStreak) - 1;
+      if (bankCard._adaptiveStreak <= -2 && curDensity === 'high' && !bankCard._manualBlanks) {
+        var newBlanksLow = autoGenerateBlanks(bankCard, 'low');
+        if (newBlanksLow && newBlanksLow.length < (bankCard.blanks || []).length) {
+          bankCard.blanks = newBlanksLow;
+          if (card) card.blanks = newBlanksLow;
+        }
+        bankCard._adaptiveStreak = 0;
+      }
+    }
+  }
+
   // 统计本轮正确/错误
   if (!hasWrong) {
     practiceState._roundCorrect = (practiceState._roundCorrect || 0) + 1;
@@ -4878,6 +5063,23 @@ function toggleStarCurrent() {
   card.starred = !card.starred;
   const bank = appData.banks[practiceState.bankId];
   if (bank) { const c = bank.cards.find(x => x.id === card.id); if (c) c.starred = card.starred; }
+  saveData(appData);
+  renderPracticeCard();
+}
+
+function toggleFocusMode() {
+  document.body.classList.toggle('focus-mode');
+  var ft = document.getElementById('focusToggle');
+  if (document.body.classList.contains('focus-mode')) {
+    showToast('🧘 专注模式开启 · 点击右上角 ✕ 退出');
+  }
+}
+
+function toggleHighFreqCurrent() {
+  const card = practiceState.cards[practiceState.index];
+  card.highFreq = !card.highFreq;
+  const bank = appData.banks[practiceState.bankId];
+  if (bank) { const c = bank.cards.find(x => x.id === card.id); if (c) c.highFreq = card.highFreq; }
   saveData(appData);
   renderPracticeCard();
 }
@@ -5098,8 +5300,24 @@ function showPracticeResult() {
   const bank = appData.banks[st.bankId];
   const isSprint = sessionStorage.getItem('sprintMode') === '1';
 
-  // 记录每日完成数
-  if (st._roundCorrect) recordTodayCompleted(st._roundCorrect);
+  // 记录每日完成数和学习日历
+  if (st._roundCorrect) {
+    recordTodayCompleted(st._roundCorrect);
+    // 学习日历：记录今天有学习
+    if (!appData.settings.studyDates) appData.settings.studyDates = {};
+    var today = new Date().toISOString().substring(0, 10);
+    appData.settings.studyDates[today] = (appData.settings.studyDates[today] || 0) + st._roundCorrect;
+    // 累计正确数
+    appData.settings.lifetimeCorrect = (appData.settings.lifetimeCorrect || 0) + st._roundCorrect;
+  }
+  // 轮数统计
+  appData.settings.roundCount = (appData.settings.roundCount || 0) + 1;
+  // 完美轮检测
+  if (total >= 5 && (st._roundCorrect || 0) === total) {
+    appData.settings._hasPerfectRound = true;
+  }
+  // 检查成就
+  checkAchievements();
 
   // 更新顺序进度（仅非冲刺模式）
   if (!isSprint && st.mode === 'sequential') {
@@ -5271,7 +5489,7 @@ const MANUALS = {
 <div>• 睡前暗色模式 + 低亮度刷题，护眼且记忆效果好</div>
 <div>• <b>口诀</b> 辅助记忆：关键字点击展开查看完整版</div>
 <div>• 低密度适合初学、高密度适合考前冲刺</div>
-<div>• 错题本定期清零：设置 → 清空错题本</div>
+<div>• 错题本定期清零：设置 → 清空复习清单</div>
 <div>• 用 <code>@答案@</code> 手动标空比自动挖空更精准</div>
 <div>• 用 <b>← →</b> 把常用题库排最上面</div>
 </div>`},
@@ -5336,7 +5554,7 @@ const MANUALS = {
 <div>• 做题时点 💡 按钮查看口诀，帮助回忆</div>
 
 <div style="font-weight:700;margin-top:12px;color:var(--primary)">▎定期清理</div>
-<div>• 错题本定期清零：设置 → 清空错题本</div>
+<div>• 错题本定期清零：设置 → 清空复习清单</div>
 <div>• 用 ← → 按钮把常用题库排到前面</div>
 <div>• 已掌握的题库可以导出备份后删除，释放空间</div>
 
@@ -5421,7 +5639,7 @@ function showManualMenu() {
           '<p style="margin:0 0 4px">✏️ 用 <code>@关键词@</code> 手动标空比自动挖空更精准，推荐大题答案使用</p>' +
           '<p style="margin:0 0 4px">💡 每道题带<b>口诀</b>（用 | 分隔）：<code>题目|答案|口诀</code>，做题时点 💡 查看</p>' +
           '<p style="margin:0 0 4px">🌙 睡前暗色模式 + 低亮度刷题，护眼且记忆效果好；早上再复习一遍巩固</p>' +
-          '<p style="margin:0 0 4px">📊 错题本定期清零：设置 → 清空错题本；用 ← → 按钮把常用题库排前面</p>' +
+          '<p style="margin:0 0 4px">📊 错题本定期清零：设置 → 清空复习清单；用 ← → 按钮把常用题库排前面</p>' +
           '<p style="margin:0 0 4px">📦 <b>每周导出一份备份</b>，设置页点"📤 分享/导出备份文件"</p>' +
           '<p style="margin:0 0 4px">🔄 页面异常 → 设置页点<b>"检查更新"</b>（= 强制刷新，不丢数据）</p>' +
           '<p style="margin:0 0 4px">✏️ 题库名称<b>直接点击就能改名</b>，不用进编辑</p>' +
@@ -5524,7 +5742,7 @@ function showManualMenu() {
           '<p style="margin:0 0 6px"><b>错题显示</b> — 错误答案用红色下划线标出，正确答案用绿色高亮，一目了然。</p>' +
           '<p style="margin:0 0 6px"><b>间隔复习</b> — 基于遗忘曲线：答对晋级（1天→2天→4天→7天→✅掌握），答错降级重新开始。</p>' +
           '<p style="margin:0 0 6px"><b>📅 待复习提醒</b> — 到期的错题在刷题时自动排前面（需开启错题优先）。</p>' +
-          '<p style="margin:0"><b>清空错题</b> — 设置页提供"清空错题本"按钮，一次性清除所有错题记录。</p>' +
+          '<p style="margin:0"><b>清空错题</b> — 设置页提供"清空复习清单"按钮，一次性清除所有错题记录。</p>' +
         '</div>' +
       '</div>' +
 
@@ -5588,7 +5806,7 @@ function showManualMenu() {
           '<p style="margin:0 0 4px">💡 每道题带一句<b>口诀</b>，格式 <code>题目|答案|口诀</code>，做题时点 💡 按钮查看。</p>' +
           '<p style="margin:0 0 4px">🌙 <b>睡前记忆效果最好</b>——暗色模式 + 低亮度刷题，减少蓝光干扰；睡前刷一遍、早上复习一遍，间隔重复巩固。</p>' +
           '<p style="margin:0 0 4px">📊 低密度适合初学、高密度适合考前冲刺，做题中随时可调。</p>' +
-          '<p style="margin:0 0 4px">🧹 错题本定期清零（设置 → 清空错题本），用 ← → 按钮把常用题库排前面。</p>' +
+          '<p style="margin:0 0 4px">🧹 错题本定期清零（设置 → 清空复习清单），用 ← → 按钮把常用题库排前面。</p>' +
           '<p style="margin:0 0 4px">📱 手机/平板/电脑全设备适配，触控按钮 ≥44px，大屏居中显示。</p>' +
           '<p style="margin:0">📦 <b>每周导出一份备份</b>——这是唯一能保护你数据的方法。</p>' +
         '</div>' +
@@ -5949,7 +6167,7 @@ function renderBrowseDetail() {
       <div style="margin-bottom:12px;font-weight:500">${escNl(card.question)}</div>
       ${ansHidden ? `<div style="line-height:1.9;color:var(--text-tertiary)">答案已隐藏，点击 💐 按钮显示</div>` : (wrongDetail && wrongDetail.wrongIndices ? renderWrongCardInteractive(card, wrongDetail) : (card.answer ? `<div style="color:var(--text-secondary)">${escNl(card.answer)}</div>` : ''))}
     </div>
-    ${isWrong ? `<div class="text-center mt-10"><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeFromWrongBook('${card.id}')">🗑 移出错题本</button></div>` : ''}
+    ${isWrong ? `<div class="text-center mt-10"><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeFromWrongBook('${card.id}')">🗑 移出复习清单</button></div>` : ''}
     <div class="flex gap-8 mt-16">
       <button class="btn btn-ghost flex-1" onclick="browsePrev()"${st.index === 0 ? ' disabled style="opacity:.4"' : ''}>← 上一题</button>
       <button class="btn btn-ghost flex-1" onclick="browseNext()"${st.index >= total - 1 ? ' disabled style="opacity:.4"' : ''}>下一题 →</button>
@@ -5982,7 +6200,7 @@ function removeFromWrongBook(cardId) {
   const wbRemove = getWrongBook(bankId);
   delete wbRemove[cardId];
   saveData(appData);
-  showToast('已移出错题本');
+  showToast('已移出复习清单');
   renderBrowseDetail();
 }
 
@@ -6269,7 +6487,7 @@ function renderWrongBookStart() {
   });
 
   if (!banksWithWrong.length) {
-    c.innerHTML = '<div class="empty"><span class="icon">❌</span><h3>暂无错题</h3><p>做题时诊断后自动收集错题</p></div>';
+    c.innerHTML = '<div class="empty"><span class="icon">📝</span><h3>复习清单为空</h3><p>做题时答错的题目会自动收集到这里，方便针对性复习</p></div>';
     return;
   }
 
@@ -6296,7 +6514,7 @@ function renderWrongBookStart() {
   });
 
   let html = '<div class="flex justify-between items-center mb-16">';
-  html += '<h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em">错题本</h1>';
+  html += '<h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em">📝 复习清单</h1>';
   html += '<input type="hidden" id="wrongbookBankSelect" value="' + currentBankId + '">';
   var curBankName = currentData ? currentData.bank.name : '选择题库';
   html += '<button class="btn btn-ghost btn-sm" id="wrongbookBankBtn" onclick="pickWrongBookBank()" style="font-size:13px">' + escapeHtml(curBankName) + ' (' + currentData.wrongIds.length + '题) ▾</button></div>';
@@ -6341,7 +6559,7 @@ function removeFromWrongBookPage(cardId) {
   const wb = getWrongBook(bankId);
   delete wb[cardId];
   saveData(appData);
-  showToast('已移出错题本');
+  showToast('已移出复习清单');
   renderWrongBookStart();
 }
 
@@ -6470,7 +6688,7 @@ function renderSettings() {
           '<label class="btn btn-outline btn-block" style="margin-top:6px;cursor:pointer;display:block;text-align:center;min-height:38px;line-height:38px;padding:0">📂 上传 JSON 备份文件<input type="file" accept=".json" onchange="restoreFromJsonFile(this)" style="display:none"></label>' +
         '</div>' +
       '</div>' +
-      '<button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空错题本</button>' +
+      '<button class="btn btn-ghost btn-block" onclick="clearWrongBook()">🗑 清空复习清单</button>' +
     '</div></div></div>' +
 
     // 📊 存储状态
@@ -6559,7 +6777,10 @@ function renderSettings() {
         '<div class="segmented" id="settingsDensity">' +
           '<button class="seg' + (density === 'low' ? ' active' : '') + '" data-v="low" onclick="updateDensitySetting(\'low\', this)">低</button>' +
           '<button class="seg' + (density === 'high' ? ' active' : '') + '" data-v="high" onclick="updateDensitySetting(\'high\', this)">高</button>' +
-        '</div></div></div></div>' +
+        '</div></div>' +
+      '<div class="setting-item" style="margin-top:4px"><div><div class="setting-label">🧠 自适应难度</div><div class="setting-desc">连续答对3次自动提高挖空密度，连续答错2次自动降低</div></div>' +
+        '<label class="toggle"><input type="checkbox" id="adaptiveToggle"' + (s.adaptiveDensity ? ' checked' : '') + ' onchange="saveSetting(\'adaptiveDensity\', this.checked)"><span class="slider"></span></label></div>' +
+      '</div></div>' +
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'voice\')"><span>语音</span><span class="section-arrow" id="arrow_voice">▲</span></div>' +
       '<div class="section-body" id="body_voice">' +
@@ -6623,6 +6844,36 @@ function renderSettings() {
           '</div>' +
           '<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">留空则根据考试日期和未掌握题数自动计算</div>' +
         '</div>' +
+        '<div style="margin-top:12px"><div class="setting-label">🌙 睡前复习提醒</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-top:6px">' +
+            '<input type="time" id="bedtimeReminderInput" value="' + (s.bedtimeReminder || '') + '" onchange="saveBedtimeReminder(this.value)" style="padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px;width:140px">' +
+            '<span style="font-size:12px;color:var(--text-tertiary)">留空关闭提醒</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">设置后，每天到点打开工具时会提示"睡前复习效果最佳"</div>' +
+        '</div>' +
+        // 学习日历热力图
+        (function() {
+          var dates = appData.settings.studyDates || {};
+          var today = new Date();
+          var html = '<div style="margin-top:12px"><div class="setting-label">📊 学习记录（近12周）</div>';
+          html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:8px">';
+          for (var d = 83; d >= 0; d--) {
+            var dt = new Date(today);
+            dt.setDate(dt.getDate() - d);
+            var dateStr = dt.toISOString().substring(0, 10);
+            var count = dates[dateStr] || 0;
+            var color = count >= 20 ? '#2e7d32' : count >= 10 ? '#4caf50' : count >= 5 ? '#a5d6a7' : count > 0 ? '#c8e6c9' : '#e0e0e0';
+            var title = dateStr + (count > 0 ? ': ' + count + ' 题' : ': 未学习');
+            html += '<div style="width:12px;height:12px;border-radius:2px;background:' + color + '" title="' + title + '"></div>';
+            // 每周换行
+            if (d % 7 === 0 && d > 0) html += '</div><div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">';
+          }
+          html += '</div>';
+          // 图例
+          html += '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;color:var(--text-tertiary)">少<span style="width:10px;height:10px;border-radius:2px;background:#e0e0e0"></span><span style="width:10px;height:10px;border-radius:2px;background:#c8e6c9"></span><span style="width:10px;height:10px;border-radius:2px;background:#a5d6a7"></span><span style="width:10px;height:10px;border-radius:2px;background:#4caf50"></span><span style="width:10px;height:10px;border-radius:2px;background:#2e7d32"></span>多</div>';
+          html += '</div>';
+          return html;
+        })() +
       '</div>';
       return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'studyplan\')"><span>📅 学习计划</span><span class="section-arrow" id="arrow_studyplan">▲</span></div>' +
         '<div class="section-body" id="body_studyplan">' + planHtml + '</div></div>';
@@ -6630,8 +6881,23 @@ function renderSettings() {
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
+      // 成就展示
+      (function() {
+        var unlocked = appData.settings.achievements || {};
+        var html = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">';
+        var anyUnlocked = false;
+        for (var ai = 0; ai < ACHIEVEMENTS.length; ai++) {
+          var a = ACHIEVEMENTS[ai];
+          var isUnlocked = !!unlocked[a.id];
+          if (isUnlocked) anyUnlocked = true;
+          html += '<div style="background:' + (isUnlocked ? 'var(--primary-light)' : 'var(--bg-input)') + ';border-radius:8px;padding:6px 10px;text-align:center;font-size:11px;opacity:' + (isUnlocked ? '1' : '.4') + '"><div style="font-size:18px">' + a.emoji + '</div><div style="font-weight:600">' + a.name + '</div></div>';
+        }
+        html += '</div>';
+        if (!anyUnlocked) html += '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:10px">完成练习自动解锁成就</div>';
+        return html;
+      })() +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v16</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v17</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="clearAllData()"><div><div class="setting-label" style="color:var(--danger)">🗑️ 删除所有数据</div><div class="setting-desc">清空全部题库和设置，不可恢复</div></div><div style="display:flex;align-items:center;color:var(--danger)">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
@@ -6915,7 +7181,7 @@ async function doRestore() {
 }
 
 function clearWrongBook() {
-  showConfirm('清空错题本', '确定清空所有题库的错题记录吗？', () => {
+  showConfirm('清空复习清单', '确定清空所有题库的复习记录吗？', () => {
     appData.wrongBooks = {};
     saveData(appData);
     showToast('错题本已清空');
