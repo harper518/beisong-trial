@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>挖空背诵工具 v31 · 小阮出品</title>
+<title>挖空背诵工具 v32 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -208,19 +208,110 @@
   --primary:#8a9e8a; --primary-hover:#708870; --primary-light:#f4f6f4; --primary-soft:#e8ede8;
   --border:#d0d8d0;
 }
-/* 朱砂 */
-[data-color="cinnabar"] {
-  --bg:#fef5f2; --bg-card:#fff; --bg-input:#fef5f2;
-  --text:#3a1810; --text-secondary:#9e5040;
-  --primary:#c0392b; --primary-hover:#a03020; --primary-light:#fef5f2; --primary-soft:#fde8e2;
-  --border:#f0c8c0;
-}
 /* 暮紫 */
 [data-color="dusk"] {
   --bg:#f6f4f8; --bg-card:#fff; --bg-input:#f6f4f8;
   --text:#2a1a3a; --text-secondary:#7a6a8b;
   --primary:#6b5b7a; --primary-hover:#5a4a6a; --primary-light:#f6f4f8; --primary-soft:#ede8f2;
   --border:#d8d0e0;
+}
+/* 紫藤 */
+[data-color="wisteria"] {
+  --bg:#f6f4fa; --bg-card:#fff; --bg-input:#f6f4fa;
+  --text:#2a1a3a; --text-secondary:#7a6a9e;
+  --primary:#7b6ba8; --primary-hover:#6a5a98; --primary-light:#f6f4fa; --primary-soft:#ede8f6;
+  --border:#d8d0e8;
+}
+/* 靛青 */
+[data-color="indigo"] {
+  --bg:#f2f4fd; --bg-card:#fff; --bg-input:#f2f4fd;
+  --text:#1a1e3a; --text-secondary:#5a5e9e;
+  --primary:#3f51b5; --primary-hover:#3548a0; --primary-light:#f2f4fd; --primary-soft:#e0e4f8;
+  --border:#d0d4f0;
+}
+/* 榴红 */
+[data-color="garnet"] {
+  --bg:#fef4f4; --bg-card:#fff; --bg-input:#fef4f4;
+  --text:#3a1818; --text-secondary:#9e5050;
+  --primary:#e04550; --primary-hover:#d03040; --primary-light:#fef4f4; --primary-soft:#fde4e4;
+  --border:#f0c8c8;
+}
+/* 芥黄 */
+[data-color="mustard"] {
+  --bg:#fefaf2; --bg-card:#fff; --bg-input:#fefaf2;
+  --text:#3a2a10; --text-secondary:#8b6a30;
+  --primary:#d4a030; --primary-hover:#c09020; --primary-light:#fefaf2; --primary-soft:#fdf0d8;
+  --border:#e8d8b0;
+}
+/* 松石 */
+[data-color="turquoise"] {
+  --bg:#f2faf8; --bg-card:#fff; --bg-input:#f2faf8;
+  --text:#1a3a30; --text-secondary:#5a8b7a;
+  --primary:#2eb8a0; --primary-hover:#20a090; --primary-light:#f2faf8; --primary-soft:#d8f4ec;
+  --border:#c0e8d8;
+}
+/* 海松 */
+[data-color="seapine"] {
+  --bg:#f2f6f4; --bg-card:#fff; --bg-input:#f2f6f4;
+  --text:#1a2a20; --text-secondary:#5a7a6a;
+  --primary:#3c6e71; --primary-hover:#305e60; --primary-light:#f2f6f4; --primary-soft:#e0ece8;
+  --border:#c8d8d0;
+}
+/* 贝壳 */
+[data-color="shell"] {
+  --bg:#fef8f6; --bg-card:#fff; --bg-input:#fef8f6;
+  --text:#3a2018; --text-secondary:#9e6a50;
+  --primary:#f08070; --primary-hover:#e07060; --primary-light:#fef8f6; --primary-soft:#fdece8;
+  --border:#f0d4c8;
+}
+/* 赭石 */
+[data-color="ochre"] {
+  --bg:#fdf6f0; --bg-card:#fff; --bg-input:#fdf6f0;
+  --text:#3a2010; --text-secondary:#8b5a30;
+  --primary:#c07840; --primary-hover:#b06830; --primary-light:#fdf6f0; --primary-soft:#fae8d8;
+  --border:#e8d0b8;
+}
+/* 薄荷 */
+[data-color="mint"] {
+  --bg:#f4faf6; --bg-card:#fff; --bg-input:#f4faf6;
+  --text:#1a2a20; --text-secondary:#5a8b6a;
+  --primary:#98d4b8; --primary-hover:#80c4a0; --primary-light:#f4faf6; --primary-soft:#e4f4ec;
+  --border:#c8e8d4;
+}
+/* 杏色 */
+[data-color="apricot"] {
+  --bg:#fefaf6; --bg-card:#fff; --bg-input:#fefaf6;
+  --text:#3a2820; --text-secondary:#8b6a50;
+  --primary:#f0c098; --primary-hover:#e0b080; --primary-light:#fefaf6; --primary-soft:#fdf0e4;
+  --border:#f0dcc8;
+}
+/* 柔紫 */
+[data-color="lilac"] {
+  --bg:#faf8fc; --bg-card:#fff; --bg-input:#faf8fc;
+  --text:#2a1a3a; --text-secondary:#7a6a8b;
+  --primary:#c4b4d8; --primary-hover:#b4a4c8; --primary-light:#faf8fc; --primary-soft:#f2ecf8;
+  --border:#e0d8ec;
+}
+/* 雾粉 */
+[data-color="blush"] {
+  --bg:#fefafb; --bg-card:#fff; --bg-input:#fefafb;
+  --text:#3a1a28; --text-secondary:#8b5a6a;
+  --primary:#e4c4d0; --primary-hover:#d4b4c0; --primary-light:#fefafb; --primary-soft:#fdf0f4;
+  --border:#f0d8e0;
+}
+/* 冰蓝 */
+[data-color="ice"] {
+  --bg:#f6fafd; --bg-card:#fff; --bg-input:#f6fafd;
+  --text:#1a2a3a; --text-secondary:#5a7a9e;
+  --primary:#b4d4e8; --primary-hover:#a0c4d8; --primary-light:#f6fafd; --primary-soft:#e8f2f8;
+  --border:#d0e0f0;
+}
+/* 奶杏 */
+[data-color="butter"] {
+  --bg:#fefcf6; --bg-card:#fff; --bg-input:#fefcf6;
+  --text:#3a2a10; --text-secondary:#8b7030;
+  --primary:#f0dcb0; --primary-hover:#e0cca0; --primary-light:#fefcf6; --primary-soft:#fdf4e0;
+  --border:#f0e4c8;
 }
 
 [data-theme="dark"] {
@@ -1007,7 +1098,7 @@ var themePrimaryColors = {
   ink:'#4a4a4a', moss:'#5a7d5a', zen:'#b8a089', bamboo:'#7a9a6a', wood:'#b8956a',
   ocean:'#1e3a5f', coral:'#f0755a', peach:'#f0a58a', lavender:'#b8a9d4', mist:'#a0b4c8',
   snow:'#9e9e9e', amber:'#d4952a', sakura:'#e8a0b4', sky:'#7cb8e0', oat:'#c4a882',
-  sage2:'#8a9e8a', cinnabar:'#c0392b', dusk:'#6b5b7a'
+  sage2:'#8a9e8a', dusk:'#6b5b7a', wisteria:'#7b6ba8', indigo:'#3f51b5', garnet:'#e04550', mustard:'#d4a030', turquoise:'#2eb8a0', seapine:'#3c6e71', shell:'#f08070', ochre:'#c07840', mint:'#98d4b8', apricot:'#f0c098', lilac:'#c4b4d8', blush:'#e4c4d0', ice:'#b4d4e8', butter:'#f0dcb0'
 };
 function hexToLightTint(hex) {
   var r = parseInt(hex.substring(1,3), 16);
@@ -6962,9 +7053,9 @@ function renderSettings() {
   const s = appData.settings;
   const density = s.density || 'low';
 
-  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', rose: '玫红', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', coral: '珊瑚橘', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝', snow: '素白', amber: '琥珀金', sakura: '樱粉', sky: '天蓝', oat: '燕麦', sage2: '灰绿', cinnabar: '朱砂', dusk: '暮紫' };
-  var colors = ['teal', 'purple', 'blue', 'rose', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral', 'peach', 'lavender', 'mist', 'snow', 'amber', 'sakura', 'sky', 'oat', 'sage2', 'cinnabar', 'dusk'];
-  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', rose: '#e11d48', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', cinnabar: '#c0392b', dusk: '#6b5b7a' };
+  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', rose: '玫红', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', coral: '珊瑚橘', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝', snow: '素白', amber: '琥珀金', sakura: '樱粉', sky: '天蓝', oat: '燕麦', sage2: '灰绿', dusk: '暮紫', wisteria: '紫藤', indigo: '靛青', garnet: '榴红', mustard: '芥黄', turquoise: '松石', seapine: '海松', shell: '贝壳', ochre: '赭石', mint: '薄荷', apricot: '杏色', lilac: '柔紫', blush: '雾粉', ice: '冰蓝', butter: '奶杏' };
+  var colors = ['teal', 'purple', 'blue', 'rose', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral', 'peach', 'lavender', 'mist', 'snow', 'amber', 'sakura', 'sky', 'oat', 'sage2', 'dusk', 'wisteria', 'indigo', 'garnet', 'mustard', 'turquoise', 'seapine', 'shell', 'ochre', 'mint', 'apricot', 'lilac', 'blush', 'ice', 'butter'];
+  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', rose: '#e11d48', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', dusk: '#6b5b7a', wisteria: '#7b6ba8', indigo: '#3f51b5', garnet: '#e04550', mustard: '#d4a030', turquoise: '#2eb8a0', seapine: '#3c6e71', shell: '#f08070', ochre: '#c07840', mint: '#98d4b8', apricot: '#f0c098', lilac: '#c4b4d8', blush: '#e4c4d0', ice: '#b4d4e8', butter: '#f0dcb0' };
 
   c.innerHTML =
     // 设置页顶部 header（开关打开时显示头像）
@@ -7312,7 +7403,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v31</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v32</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
