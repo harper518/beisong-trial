@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v59 · 小阮出品</title>
+<title>挖空背诵工具 v60 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -2948,17 +2948,22 @@ function renameBankPrompt(el, id) {
 function editBank(id) {
   const bank = appData.banks[id];
   if (!bank) return;
-  // 准备卡片：从已有 blanks 恢复 _savedChars 标记
+  // 准备卡片：从已有 blanks 恢复 _savedChars / _savedCharsQ 标记
   const cards = bank.cards.map(c => {
-    const saved = {};
+    const saved = {}, savedQ = {};
     const q = (c.question || '').trim();
     const answerStart = q.length + 1;
     for (const b of (c.blanks || [])) {
-      const relStart = b.start - answerStart;
-      const relEnd = b.end - answerStart;
-      for (let j = relStart; j < relEnd; j++) saved[j] = true;
+      if (b.start < answerStart) {
+        // 题目区挖空
+        for (let j = b.start; j < b.end; j++) savedQ[j] = true;
+      } else {
+        const relStart = b.start - answerStart;
+        const relEnd = b.end - answerStart;
+        for (let j = relStart; j < relEnd; j++) saved[j] = true;
+      }
     }
-    return { ...c, _charSelected: {}, _savedChars: saved, _autoBlanks: null };
+    return { ...c, _charSelected: {}, _savedChars: saved, _charSelectedQ: {}, _savedCharsQ: savedQ, _autoBlanks: null };
   });
   previewData = { name: bank.name, cards, mode: 'manual', editBankId: id };
   showImportPreview(bank.name, cards);
@@ -3366,7 +3371,7 @@ function cleanMergeLines() {
 }
 
 function copyFormatPrompt() {
-  var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案 或 题目|答案|口诀\n3. 如果答案中需要挖空，用【关键词】标记要挖掉的位置（例：【叶绿体】）\n4. 挖空标记【关键词】只能放在答案里，不能放题目\n5. 一个答案里可以有多个【标记】，如：【细胞壁】【细胞膜】【细胞核】\n6. 每一道题的所有内容必须在同一行，不能换行\n7. 如有口诀，加在答案后面：题目|答案|口诀\n\n【重要】\n- 答案中不要出现 | 竖线符号，会被当成口诀分隔符\n- 答案中不要出现【】（除了标记挖空的地方）\n- 题目部分不要出现【】符号\n\n【输出示例】\n光合作用的场所是哪里|【叶绿体】|光→叶\n植物细胞的结构包括什么|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空\n- 用【关键词】标记挖空';
+  var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案 或 题目|答案|口诀\n3. 答案或题目中需要挖空的地方，用【关键词】标记（例：【叶绿体】）\n4. 题目和答案都可以用【】标记挖空\n5. 一个答案里可以有多个【标记】，如：【细胞壁】【细胞膜】【细胞核】\n6. 每一道题的所有内容必须在同一行，不能换行\n7. 如有口诀，加在答案后面：题目|答案|口诀\n\n【重要】\n- 答案中不要出现 | 竖线符号，会被当成口诀分隔符\n- 答案中不要出现【】（除了标记挖空的地方）\n- 题目和答案中都可以用【】标记要挖空的关键词\n\n【输出示例】\n光合作用的场所是哪里|【叶绿体】|光→叶\n植物细胞的结构包括什么|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空\n- 用【关键词】标记挖空';
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(prompt).then(function() { showToast('📋 格式话术已复制，可粘贴到豆包/AI使用'); });
   } else {
@@ -3376,34 +3381,59 @@ function copyFormatPrompt() {
 
 function parseMbakText(rawText) {
   const lines = rawText.split(/\n/), cards = [];
+  const RE_BLANK = /【([^】]*)】/g;
   for (const line of lines) {
     const t = line.trim(); if (!t) continue;
     // 支持 题目|答案 或 题目|答案|口诀 三段格式
     const parts = t.split('|');
-    const q = parts[0].trim();
+    const qMarked = parts[0].trim();
     const aMarked = (parts[1] || '').trim();
     const koujue = (parts[2] || '').trim();
-    if (!aMarked) { cards.push({ question: q, answer: '', koujue: koujue || undefined }); continue; }
-    if (!aMarked.includes('【')) { cards.push({ question: q, answer: aMarked, koujue: koujue || undefined }); continue; }
     const blanks = [];
-    let clean = '', p = 0;
-    const re = /【([^】]*)】/g;
-    let m;
-    while ((m = re.exec(aMarked)) !== null) {
-      clean += aMarked.substring(p, m.index);
-      const s = clean.length;
-      clean += m[1];
-      blanks.push({ start: s, end: s + m[1].length, text: m[1], isAnswer: true });
-      p = m.index + m[0].length;
+    var cleanQ = qMarked, cleanA = aMarked;
+
+    // 解析题目中的【】挖空（位置从0开始，不加偏移）
+    if (qMarked.includes('【')) {
+      RE_BLANK.lastIndex = 0;
+      var qClean = '', qp = 0, qm;
+      while ((qm = RE_BLANK.exec(qMarked)) !== null) {
+        qClean += qMarked.substring(qp, qm.index);
+        var qs = qClean.length;
+        qClean += qm[1];
+        blanks.push({ start: qs, end: qs + qm[1].length, text: qm[1], isAnswer: false });
+        qp = qm.index + qm[0].length;
+      }
+      qClean += qMarked.substring(qp);
+      cleanQ = qClean;
     }
-    clean += aMarked.substring(p);
-    // 空白位置矫正为 fullText 绝对位置（题目\n答案，需加上题目长度+1的偏移）
-    const answerStart = q.length + 1;
+
+    // 解析答案中的【】挖空（位置以答案内偏移计算，稍后加 answerStart）
+    if (aMarked && aMarked.includes('【')) {
+      RE_BLANK.lastIndex = 0;
+      var aClean = '', ap = 0, am;
+      while ((am = RE_BLANK.exec(aMarked)) !== null) {
+        aClean += aMarked.substring(ap, am.index);
+        var as = aClean.length;
+        aClean += am[1];
+        blanks.push({ start: as, end: as + am[1].length, text: am[1], isAnswer: true });
+        ap = am.index + am[0].length;
+      }
+      aClean += aMarked.substring(ap);
+      cleanA = aClean;
+    }
+
+    // 无挖空且无答案 → 跳过
+    if (!blanks.length && !cleanA) { cards.push({ question: cleanQ, answer: '', koujue: koujue || undefined }); continue; }
+
+    // 答案空白位置矫正：加上题目长度+1的偏移（fullText = q + '\n' + a）
+    var answerStart = cleanQ.length + 1;
     for (var bi = 0; bi < blanks.length; bi++) {
-      blanks[bi].start += answerStart;
-      blanks[bi].end += answerStart;
+      if (blanks[bi].isAnswer !== false) {
+        blanks[bi].start += answerStart;
+        blanks[bi].end += answerStart;
+      }
     }
-    cards.push({ question: q, answer: clean, blanks: blanks, koujue: koujue || undefined, fullText: q + '\n' + clean });
+    cards.push({ question: cleanQ, answer: cleanA, blanks: blanks, koujue: koujue || undefined, fullText: cleanQ + '\n' + cleanA, _manualBlanks: blanks.length ? true : undefined });
   }
   return cards;
 }
@@ -3585,7 +3615,7 @@ function doImport() {
     return { ...c, id: generateId(), fullText: ft,
       wrongCount: c.wrongCount || 0, correctCount: c.correctCount || 0,
       lastPracticed: c.lastPracticed || null, starred: c.starred || false,
-      _charSelected: {}, _savedChars: {},
+      _charSelected: {}, _savedChars: {}, _charSelectedQ: {}, _savedCharsQ: {},
       blanks: hasBlanks ? (c.blanks || []) : [] };
   });
 
@@ -3893,53 +3923,77 @@ function jumpToCardPage(idx) {
 let _wasDragging = false, _touchJustHappened = 0;
 var MERGE_MARKER = '​'; // 零宽空格，作为换行合并标记（1:1替换\n）
 function renderAnswerChars(card, idx) {
+  const q = card.question || '';
   const a = card.answer || '';
-  if (!a) return '<span style="color:var(--text-tertiary)">（无答案）</span>';
-  const sel = card._charSelected || {};
-  const saved = card._savedChars || {};
-  let h = `<div class="preview-answer-inner" style="touch-action:pan-y;user-select:none;-webkit-user-select:none"
-    ontouchstart="swipeSelectStart(event,${idx})"
-    ontouchmove="swipeSelectMove(event,${idx})"
-    ontouchend="swipeSelectEnd(${idx})"
-    onmousedown="mouseSelectStart(event,${idx})"
-    onmousemove="mouseSelectMove(event,${idx})"
-    onmouseup="mouseSelectEnd(${idx})"
-    onmouseleave="mouseSelectEnd(${idx})">`;
-  for (let i = 0; i < a.length; i++) {
-    const ch = a[i];
-    if (ch === '\\' && a[i+1] === 'n') { h += '<span class="newline-marker" data-nli="' + i + '" onclick="event.stopPropagation();mergeLineAt(' + idx + ',' + i + ')" title="点击合并上下行">↵</span>'; i++; continue; }
-    if (ch === '\n') { h += '<span class="newline-marker" data-nli="' + i + '" onclick="event.stopPropagation();mergeLineAt(' + idx + ',' + i + ')" title="点击合并上下行">↵</span>'; continue; }
-    if (ch === '​') { h += '<span class="merge-undo-dot" data-mgi="' + i + '" onclick="event.stopPropagation();unmergeLineAt(' + idx + ',' + i + ')" title="点击恢复换行">↩</span>'; continue; }
-    if (/\s/.test(ch)) { h += ' '; continue; }
-    if (saved[i]) {
-      const cls = sel[i] ? 'char-sel saved' : 'saved';
-      h += `<span class="preview-char ${cls}" data-ci="${i}" onclick="if(!_wasDragging&&Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})" style="background:var(--blank-bg);border-bottom:2px solid var(--blank-border);border-radius:2px">${escapeHtml(ch)}</span>`;
-    } else if (sel[i]) {
-      h += `<span class="preview-char char-sel" data-ci="${i}" onclick="if(!_wasDragging&&Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})">${escapeHtml(ch)}</span>`;
-    } else {
-      h += `<span class="preview-char" data-ci="${i}" onclick="if(!_wasDragging&&Date.now()-_touchJustHappened>400)toggleImportChar(${idx},${i})">${escapeHtml(ch)}</span>`;
-    }
+  if (!q && !a) return '<span style="color:var(--text-tertiary)">（无内容）</span>';
+  const selQ = card._charSelectedQ || {};
+  const savedQ = card._savedCharsQ || {};
+  const selA = card._charSelected || {};
+  const savedA = card._savedChars || {};
+  var h = '<div class="preview-answer-inner" style="touch-action:pan-y;user-select:none;-webkit-user-select:none"' +
+    ' ontouchstart="swipeSelectStart(event,' + idx + ')"' +
+    ' ontouchmove="swipeSelectMove(event,' + idx + ')"' +
+    ' ontouchend="swipeSelectEnd(' + idx + ')"' +
+    ' onmousedown="mouseSelectStart(event,' + idx + ')"' +
+    ' onmousemove="mouseSelectMove(event,' + idx + ')"' +
+    ' onmouseup="mouseSelectEnd(' + idx + ')"' +
+    ' onmouseleave="mouseSelectEnd(' + idx + ')">';
+
+  // ---- 题目区 ----
+  if (q) {
+    h += '<div style="font-size:11px;color:var(--text-tertiary);margin:2px 0 4px;font-weight:600">📌 题目</div>';
+    h += renderCharGrid(q, selQ, savedQ, idx, 'q');
+    h += '<div style="font-size:11px;color:var(--text-tertiary);margin:8px 0 4px;font-weight:600">── 答案 ──</div>';
+  }
+
+  // ---- 答案区 ----
+  if (!a) {
+    h += '<span style="color:var(--text-tertiary)">（无答案）</span>';
+  } else {
+    h += renderCharGrid(a, selA, savedA, idx, 'a');
   }
   h += '</div>';
   return h;
 }
 
-// 合并换行：将 \n 或 \n 替换为零宽空格标记
-function mergeLineAt(idx, pos) {
+function renderCharGrid(text, sel, saved, idx, section) {
+  var h = '';
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i];
+    if (ch === '\\' && text[i+1] === 'n') { h += '<span class="newline-marker" data-nli="' + i + '" data-section="' + section + '" onclick="event.stopPropagation();mergeLineAt(' + idx + ',' + i + ',\'' + section + '\')" title="点击合并上下行">↵</span>'; i++; continue; }
+    if (ch === '\n') { h += '<span class="newline-marker" data-nli="' + i + '" data-section="' + section + '" onclick="event.stopPropagation();mergeLineAt(' + idx + ',' + i + ',\'' + section + '\')" title="点击合并上下行">↵</span>'; continue; }
+    if (ch === '​') { h += '<span class="merge-undo-dot" data-mgi="' + i + '" data-section="' + section + '" onclick="event.stopPropagation();unmergeLineAt(' + idx + ',' + i + ',\'' + section + '\')" title="点击恢复换行">↩</span>'; continue; }
+    if (/\s/.test(ch)) { h += ' '; continue; }
+    if (saved[i]) {
+      var cls = sel[i] ? 'char-sel saved' : 'saved';
+      h += '<span class="preview-char ' + cls + '" data-ci="' + i + '" data-section="' + section + '" onclick="if(!_wasDragging&&Date.now()-_touchJustHappened>400)toggleImportChar(' + idx + ',' + i + ',\'' + section + '\')" style="background:var(--blank-bg);border-bottom:2px solid var(--blank-border);border-radius:2px">' + escapeHtml(ch) + '</span>';
+    } else if (sel[i]) {
+      h += '<span class="preview-char char-sel" data-ci="' + i + '" data-section="' + section + '" onclick="if(!_wasDragging&&Date.now()-_touchJustHappened>400)toggleImportChar(' + idx + ',' + i + ',\'' + section + '\')">' + escapeHtml(ch) + '</span>';
+    } else {
+      h += '<span class="preview-char" data-ci="' + i + '" data-section="' + section + '" onclick="if(!_wasDragging&&Date.now()-_touchJustHappened>400)toggleImportChar(' + idx + ',' + i + ',\'' + section + '\')">' + escapeHtml(ch) + '</span>';
+    }
+  }
+  return h;
+}
+
+// 合并换行：将 \\n 或 \n 替换为零宽空格标记
+function mergeLineAt(idx, pos, section) {
   var card = previewData.cards[idx];
   if (!card) return;
-  var a = card.answer || '';
-  if (pos < 0 || pos >= a.length) return;
-  var ch = a[pos];
-  // 处理 \n 双字符（字面量反斜杠n）和 \n 真正换行
-  if (ch === '\\' && a[pos + 1] === 'n') {
+  section = section || 'a';
+  var text = section === 'q' ? (card.question || '') : (card.answer || '');
+  if (pos < 0 || pos >= text.length) return;
+  var ch = text[pos];
+  // 处理 \\n 双字符（字面量反斜杠n）和 \n 真正换行
+  if (ch === '\\' && text[pos + 1] === 'n') {
     // 2字符 → 1字符 MERGE_MARKER，需要调整后续索引
-    var newA = a.substring(0, pos) + MERGE_MARKER + a.substring(pos + 2);
-    shiftCharKeys(card, pos + 1, -1); // pos+1之后的索引前移1
-    card.answer = newA;
+    var newText = text.substring(0, pos) + MERGE_MARKER + text.substring(pos + 2);
+    shiftCharKeys(card, pos + 1, -1, section);
+    if (section === 'q') card.question = newText; else card.answer = newText;
   } else if (ch === '\n') {
     // 1字符 → 1字符 MERGE_MARKER，无需调整索引
-    card.answer = a.substring(0, pos) + MERGE_MARKER + a.substring(pos + 1);
+    if (section === 'q') card.question = text.substring(0, pos) + MERGE_MARKER + text.substring(pos + 1);
+    else card.answer = text.substring(0, pos) + MERGE_MARKER + text.substring(pos + 1);
   } else {
     return; // 不是换行符
   }
@@ -3949,21 +4003,26 @@ function mergeLineAt(idx, pos) {
 }
 
 // 恢复换行：将零宽空格标记还原为 \n
-function unmergeLineAt(idx, pos) {
+function unmergeLineAt(idx, pos, section) {
   var card = previewData.cards[idx];
   if (!card) return;
-  var a = card.answer || '';
-  if (pos < 0 || pos >= a.length || a[pos] !== MERGE_MARKER) return;
+  section = section || 'a';
+  var text = section === 'q' ? (card.question || '') : (card.answer || '');
+  if (pos < 0 || pos >= text.length || text[pos] !== MERGE_MARKER) return;
   // 1字符 → 1字符，无需调整索引
-  card.answer = a.substring(0, pos) + '\n' + a.substring(pos + 1);
+  if (section === 'q') card.question = text.substring(0, pos) + '\n' + text.substring(pos + 1);
+  else card.answer = text.substring(0, pos) + '\n' + text.substring(pos + 1);
   if (!card._undoSnapshot) saveUndoSnapshot(card);
   document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
   document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
 }
 
 // 字符删除后调整 _charSelected 和 _savedChars 索引
-function shiftCharKeys(card, fromIdx, delta) {
-  ['_charSelected', '_savedChars'].forEach(function(key) {
+function shiftCharKeys(card, fromIdx, delta, section) {
+  section = section || 'a';
+  var selKey = section === 'q' ? '_charSelectedQ' : '_charSelected';
+  var savedKey = section === 'q' ? '_savedCharsQ' : '_savedChars';
+  [selKey, savedKey].forEach(function(key) {
     var obj = card[key] || {};
     var newObj = {};
     Object.keys(obj).forEach(function(k) {
@@ -3987,12 +4046,15 @@ function swipeSelectStart(e, idx) {
   const card = previewData.cards[idx];
   const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
   const ci = (el && el.dataset ? el.dataset.ci : undefined);
+  const section = (el && el.dataset ? el.dataset.section : 'a') || 'a';
   if (ci == null) return;
   const charIdx = parseInt(ci);
-  const isSaved = card._savedChars && card._savedChars[charIdx];
-  if (isSaved) toggleImportChar(idx, charIdx);
+  var savedKey = section === 'q' ? '_savedCharsQ' : '_savedChars';
+  var selKey = section === 'q' ? '_charSelectedQ' : '_charSelected';
+  const isSaved = card[savedKey] && card[savedKey][charIdx];
+  if (isSaved) toggleImportChar(idx, charIdx, section);
   // 暂不启动选择模式，等 move 判断方向
-  swipeSelectMode = { idx, adding: isSaved ? false : !(card._charSelected || {})[charIdx], removing: isSaved, started: false };
+  swipeSelectMode = { idx: idx, section: section, adding: isSaved ? false : !(card[selKey] || {})[charIdx], removing: isSaved, started: false };
 }
 
 function swipeSelectMove(e, idx) {
@@ -4001,16 +4063,19 @@ function swipeSelectMove(e, idx) {
   const dx = Math.abs(tx - swipeStartX), dy = Math.abs(ty - swipeStartY);
   if (dy > dx && dy > 5) { swipeSelectMode = null; return; }
   if (dx < 8 && dy < 8) return;
+  var section = swipeSelectMode.section;
   if (!swipeSelectMode.started) {
     swipeSelectMode.started = true;
     if (!swipeSelectMode.removing) {
       const el0 = document.elementFromPoint(swipeStartX, swipeStartY);
       const ci0 = (el0 && el0.dataset ? el0.dataset.ci : undefined);
-      if (ci0 != null) toggleImportChar(idx, parseInt(ci0));
+      if (ci0 != null) toggleImportChar(idx, parseInt(ci0), section);
     }
   }
   const card = previewData.cards[idx];
-  if (!card._charSelected) card._charSelected = {};
+  var selKey = section === 'q' ? '_charSelectedQ' : '_charSelected';
+  var savedKey = section === 'q' ? '_savedCharsQ' : '_savedChars';
+  if (!card[selKey]) card[selKey] = {};
   const steps = Math.max(Math.abs(tx - _lastTouchX), Math.abs(ty - _lastTouchY));
   for (let s = 0; s <= steps; s++) {
     const t = steps === 0 ? 1 : s / steps;
@@ -4021,10 +4086,10 @@ function swipeSelectMove(e, idx) {
     if (ci == null) continue;
     const charIdx = parseInt(ci);
     if (swipeSelectMode.removing) {
-      if (card._savedChars && card._savedChars[charIdx]) toggleImportChar(idx, charIdx);
+      if (card[savedKey] && card[savedKey][charIdx]) toggleImportChar(idx, charIdx, section);
     } else {
-      if (card._savedChars && card._savedChars[charIdx]) continue;
-      if (card._charSelected[charIdx] !== swipeSelectMode.adding) toggleImportChar(idx, charIdx);
+      if (card[savedKey] && card[savedKey][charIdx]) continue;
+      if (card[selKey][charIdx] !== swipeSelectMode.adding) toggleImportChar(idx, charIdx, section);
     }
   }
   _lastTouchX = tx; _lastTouchY = ty;
@@ -4034,13 +4099,15 @@ function swipeSelectMove(e, idx) {
 function swipeSelectEnd(idx) {
   // 没滑动的单击（去除模式在 start 已处理，这里跳过）
   if (swipeSelectMode && !swipeSelectMode.started && !swipeSelectMode.removing) {
+    var section = swipeSelectMode.section;
     const card = previewData.cards[idx];
     const el = document.elementFromPoint(swipeStartX, swipeStartY);
     const ci = (el && el.dataset ? el.dataset.ci : undefined);
     if (ci != null) {
       const charIdx = parseInt(ci);
-      if (!(card._savedChars && card._savedChars[charIdx])) {
-        toggleImportChar(idx, charIdx);
+      var savedKey = section === 'q' ? '_savedCharsQ' : '_savedChars';
+      if (!(card[savedKey] && card[savedKey][charIdx])) {
+        toggleImportChar(idx, charIdx, section);
       }
     }
   }
@@ -4055,12 +4122,15 @@ function mouseSelectStart(e, idx) {
   _wasDragging = true; // 阻止后续 onclick 重复触发
   const el = document.elementFromPoint(e.clientX, e.clientY);
   const ci = (el && el.dataset ? el.dataset.ci : undefined);
+  const section = (el && el.dataset ? el.dataset.section : 'a') || 'a';
   if (ci == null) { swipeSelectMode = null; return; }
   const charIdx = parseInt(ci);
   const card = previewData.cards[idx];
-  const isSaved = card._savedChars && card._savedChars[charIdx];
-  if (isSaved) toggleImportChar(idx, charIdx);
-  swipeSelectMode = { idx, adding: isSaved ? false : !(card._charSelected || {})[charIdx], removing: isSaved };
+  var savedKey = section === 'q' ? '_savedCharsQ' : '_savedChars';
+  var selKey = section === 'q' ? '_charSelectedQ' : '_charSelected';
+  const isSaved = card[savedKey] && card[savedKey][charIdx];
+  if (isSaved) toggleImportChar(idx, charIdx, section);
+  swipeSelectMode = { idx: idx, section: section, adding: isSaved ? false : !(card[selKey] || {})[charIdx], removing: isSaved };
 }
 function mouseSelectMove(e, idx) {
   if (!(e.buttons & 1)) { swipeSelectMode = null; return; }
@@ -4068,8 +4138,11 @@ function mouseSelectMove(e, idx) {
   const dx = Math.abs(e.clientX - swipeStartX), dy = Math.abs(e.clientY - swipeStartY);
   if (dx < 6 && dy < 6) return;
   _wasDragging = true;
+  var section = swipeSelectMode.section;
   const card = previewData.cards[idx];
-  if (!card._charSelected) card._charSelected = {};
+  var selKey = section === 'q' ? '_charSelectedQ' : '_charSelected';
+  var savedKey = section === 'q' ? '_savedCharsQ' : '_savedChars';
+  if (!card[selKey]) card[selKey] = {};
   // 插值：在上次位置和当前位置之间逐点检查，防止跳字
   const steps = Math.max(Math.abs(e.clientX - _lastX), Math.abs(e.clientY - _lastY));
   for (let s = 0; s <= steps; s++) {
@@ -4081,10 +4154,10 @@ function mouseSelectMove(e, idx) {
     if (ci == null) continue;
     const charIdx = parseInt(ci);
     if (swipeSelectMode.removing) {
-      if (card._savedChars && card._savedChars[charIdx]) toggleImportChar(idx, charIdx);
+      if (card[savedKey] && card[savedKey][charIdx]) toggleImportChar(idx, charIdx, section);
     } else {
-      if (card._savedChars && card._savedChars[charIdx]) continue;
-      if (card._charSelected[charIdx] !== swipeSelectMode.adding) toggleImportChar(idx, charIdx);
+      if (card[savedKey] && card[savedKey][charIdx]) continue;
+      if (card[selKey][charIdx] !== swipeSelectMode.adding) toggleImportChar(idx, charIdx, section);
     }
   }
   _lastX = e.clientX; _lastY = e.clientY;
@@ -4092,19 +4165,28 @@ function mouseSelectMove(e, idx) {
 }
 function mouseSelectEnd(idx) { swipeSelectMode = null; _wasDragging = false; }
 
-function toggleImportChar(idx, charIdx) {
+function toggleImportChar(idx, charIdx, section) {
   const card = previewData.cards[idx];
   previewData._activeIdx = idx;
-  if (!card._charSelected) card._charSelected = {};
+  section = section || 'a';
+  var selKey = section === 'q' ? '_charSelectedQ' : '_charSelected';
+  var savedKey = section === 'q' ? '_savedCharsQ' : '_savedChars';
+  if (!card[selKey]) card[selKey] = {};
   // 如果是已保存的字，点击取消该字所属的挖空
-  if (card._savedChars && card._savedChars[charIdx]) {
-    card._savedChars[charIdx] = false;
-    const a = (card.answer || '').trim();
-    const q = (card.question || '').trim();
-    const answerStart = q.length + 1;
-    card.blanks = (card.blanks || []).filter(b => {
-      const relStart = b.start - answerStart;
-      const relEnd = b.end - answerStart;
+  if (card[savedKey] && card[savedKey][charIdx]) {
+    card[savedKey][charIdx] = false;
+    var q = (card.question || '').trim();
+    var answerStart = q.length + 1;
+    card.blanks = (card.blanks || []).filter(function(b) {
+      var relStart, relEnd;
+      if (section === 'q') {
+        // 题目区挖空：位置在 [0, q.length]，无需偏移
+        relStart = b.start;
+        relEnd = b.end;
+      } else {
+        relStart = b.start - answerStart;
+        relEnd = b.end - answerStart;
+      }
       return !(charIdx >= relStart && charIdx < relEnd);
     });
     // 全部空被移除后清除手动标记
@@ -4113,46 +4195,74 @@ function toggleImportChar(idx, charIdx) {
     document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
     return;
   }
-  card._charSelected[charIdx] = !card._charSelected[charIdx];
-  // 用 data-ci 查找元素
-  const container = document.getElementById('pv-answer-' + idx);
+  card[selKey][charIdx] = !card[selKey][charIdx];
+  // 用 data-ci 和 data-section 查找元素
+  var container = document.getElementById('pv-answer-' + idx);
   if (container) {
-    const el = container.querySelector('[data-ci="' + charIdx + '"]');
-    if (el) el.classList.toggle('char-sel', card._charSelected[charIdx]);
+    var el = container.querySelector('[data-ci="' + charIdx + '"][data-section="' + section + '"]');
+    if (el) el.classList.toggle('char-sel', card[selKey][charIdx]);
   }
 }
 
 function saveCardSelection(idx) {
   const card = previewData.cards[idx];
-  const sel = card._charSelected || {};
-  if (!Object.values(sel).some(function(v) { return v; })) return;
+  const selQ = card._charSelectedQ || {};
+  const selA = card._charSelected || {};
+  const hasQ = Object.values(selQ).some(function(v) { return v; });
+  const hasA = Object.values(selA).some(function(v) { return v; });
+  if (!hasQ && !hasA) return;
   // 保存撤回快照（首次保存时）
   if (!card._undoSnapshot) saveUndoSnapshot(card);
 
   const q = (card.question || '').trim();
   const rawA = card.answer || '';
   const answerStart = q.length + 1;
+  if (!card.blanks) card.blanks = [];
 
-  // 仅取新选中的字，分组
-  const newIndices = Object.keys(sel).filter(k => sel[k]).map(Number).sort((a,b) => a-b);
+  // 处理题目选字 → blanks（位置在 [0, q.length]，不用加偏移）
+  if (hasQ) {
+    if (!card._savedCharsQ) card._savedCharsQ = {};
+    _saveSelectionGroups(card, selQ, 0, q, 'q');
+    card._charSelectedQ = {};
+  }
+
+  // 处理答案选字 → blanks（位置 + answerStart 偏移）
+  if (hasA) {
+    if (!card._savedChars) card._savedChars = {};
+    _saveSelectionGroups(card, selA, answerStart, rawA, 'a');
+    card._charSelected = {};
+  }
+
+  card._manualBlanks = true;
+  card.blanks.sort(function(a, b) { return a.start - b.start; });
+  // 从相邻独立空生成组合空
+  _rebuildCombinedBlanks(card);
+
+  document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
+  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
+}
+
+function _saveSelectionGroups(card, sel, offset, sourceText, section) {
+  const newIndices = Object.keys(sel).filter(function(k) { return sel[k]; }).map(Number).sort(function(a,b) { return a-b; });
   if (!newIndices.length) return;
   const newGroups = [];
-  let g = [newIndices[0]];
-  for (let i = 1; i < newIndices.length; i++) {
+  var g = [newIndices[0]];
+  for (var i = 1; i < newIndices.length; i++) {
     if (newIndices[i] === g[g.length - 1] + 1) g.push(newIndices[i]);
     else { newGroups.push(g); g = [newIndices[i]]; }
   }
   newGroups.push(g);
 
-  if (!card.blanks) card.blanks = [];
-  if (!card._savedChars) card._savedChars = {};
+  var savedKey = section === 'q' ? '_savedCharsQ' : '_savedChars';
+  if (!card[savedKey]) card[savedKey] = {};
 
-  for (const ng of newGroups) {
-    const ngStart = answerStart + ng[0];
-    const ngEnd = answerStart + ng[ng.length - 1] + 1;
+  for (var gi = 0; gi < newGroups.length; gi++) {
+    var ng = newGroups[gi];
+    var ngStart = offset + ng[0];
+    var ngEnd = offset + ng[ng.length - 1] + 1;
     // 查找与新组相邻或重叠的旧空白
-    let mergedStart = ngStart, mergedEnd = ngEnd;
-    card.blanks = card.blanks.filter(b => {
+    var mergedStart = ngStart, mergedEnd = ngEnd;
+    card.blanks = card.blanks.filter(function(b) {
       if (ngStart < b.end && b.start < ngEnd) {
         mergedStart = Math.min(mergedStart, b.start);
         mergedEnd = Math.max(mergedEnd, b.end);
@@ -4161,25 +4271,19 @@ function saveCardSelection(idx) {
       return true;
     });
     // 创建合并后的空白
-    const text = rawA.substring(mergedStart - answerStart, mergedEnd - answerStart).replace(/[\n]/g, '');
-    card.blanks.push({ start: mergedStart, end: mergedEnd, text, isAnswer: true });
-    card._manualBlanks = true;
+    var text = sourceText.substring(mergedStart - offset, mergedEnd - offset).replace(/[\n]/g, '');
+    card.blanks.push({ start: mergedStart, end: mergedEnd, text: text, isAnswer: section === 'a' });
     // 标记已保存
-    for (let i = mergedStart - answerStart; i < mergedEnd - answerStart; i++) card._savedChars[i] = true;
+    for (var j = mergedStart - offset; j < mergedEnd - offset; j++) card[savedKey][j] = true;
   }
-  card.blanks.sort((a, b) => a.start - b.start);
-  // 从相邻独立空生成组合空
-  _rebuildCombinedBlanks(card);
-  card._charSelected = {};
-
-  document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
-  document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
 }
 
 function clearCardSelection(idx) {
   const card = previewData.cards[idx];
   card._charSelected = {};
   card._savedChars = {};
+  card._charSelectedQ = {};
+  card._savedCharsQ = {};
   card.blanks = [];
   delete card._manualBlanks;
   document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
@@ -4192,7 +4296,7 @@ function getCardStatus(card, mode) {
   if (!ans) return 'empty';
   if (ans.length < 20) return 'short';
   if (mode === 'manual') {
-    var hasBlanks = (card.blanks && card.blanks.length > 0) || (card._savedChars && Object.keys(card._savedChars).length > 0);
+    var hasBlanks = (card.blanks && card.blanks.length > 0) || (card._savedChars && Object.keys(card._savedChars).length > 0) || (card._savedCharsQ && Object.keys(card._savedCharsQ).length > 0);
     if (!hasBlanks) return 'noBlanks';
   }
   return 'ok';
@@ -4257,6 +4361,8 @@ function undoCardEdit(idx) {
   card.blanks = snap.blanks ? snap.blanks.slice() : [];
   card._savedChars = snap._savedChars ? Object.assign({}, snap._savedChars) : {};
   card._charSelected = snap._charSelected ? Object.assign({}, snap._charSelected) : {};
+  card._savedCharsQ = snap._savedCharsQ ? Object.assign({}, snap._savedCharsQ) : {};
+  card._charSelectedQ = snap._charSelectedQ ? Object.assign({}, snap._charSelectedQ) : {};
   card._manualBlanks = snap._manualBlanks;
   card._autoBlanks = snap._autoBlanks;
   delete card._undoSnapshot;
@@ -4274,6 +4380,8 @@ function saveUndoSnapshot(card) {
     blanks: (card.blanks || []).slice(),
     _savedChars: Object.assign({}, card._savedChars || {}),
     _charSelected: Object.assign({}, card._charSelected || {}),
+    _savedCharsQ: Object.assign({}, card._savedCharsQ || {}),
+    _charSelectedQ: Object.assign({}, card._charSelectedQ || {}),
     _manualBlanks: card._manualBlanks,
     _autoBlanks: card._autoBlanks
   };
@@ -4281,13 +4389,13 @@ function saveUndoSnapshot(card) {
 
 function _rebuildCombinedBlanks(card) {
   // 先清除旧的组合空
-  card.blanks = (card.blanks || []).filter(b => !b._combined);
-  const blanks = card.blanks.slice().sort((a, b) => a.start - b.start);
+  card.blanks = (card.blanks || []).filter(function(b) { return !b._combined; });
+  var blanks = card.blanks.slice().sort(function(a, b) { return a.start - b.start; });
   if (blanks.length < 2) return;
   // 找相邻组（上一个 end == 下一个 start）
-  const groups = [];
-  let cur = [blanks[0]];
-  for (let i = 1; i < blanks.length; i++) {
+  var groups = [];
+  var cur = [blanks[0]];
+  for (var i = 1; i < blanks.length; i++) {
     if (blanks[i].start === cur[cur.length - 1].end) {
       cur.push(blanks[i]);
     } else {
@@ -4297,23 +4405,31 @@ function _rebuildCombinedBlanks(card) {
   }
   if (cur.length >= 2) groups.push(cur);
   if (!groups.length) return;
-  const q = (card.question || '').trim();
-  const answerStart = q.length + 1;
-  const rawA = card.answer || '';
+  var q = (card.question || '').trim();
+  var answerStart = q.length + 1;
+  var rawQ = card.question || '';
+  var rawA = card.answer || '';
   // 为每组相邻空生成所有连续子序列组合
-  for (const g of groups) {
-    for (let len = 2; len <= g.length; len++) {
-      for (let i = 0; i + len <= g.length; i++) {
-        const start = g[i].start;
-        const end = g[i + len - 1].end;
-        const text = rawA.substring(start - answerStart, end - answerStart).replace(/[\n]/g, '');
-        if (!card.blanks.some(b => b.start === start && b.end === end)) {
-          card.blanks.push({ start, end, text, isAnswer: true, _combined: true });
+  for (var gi = 0; gi < groups.length; gi++) {
+    var g = groups[gi];
+    for (var len = 2; len <= g.length; len++) {
+      for (var j = 0; j + len <= g.length; j++) {
+        var start = g[j].start;
+        var end = g[j + len - 1].end;
+        var isQ = start < answerStart; // 题目区或答案区
+        var text;
+        if (isQ) {
+          text = rawQ.substring(start, end).replace(/[\n]/g, '');
+        } else {
+          text = rawA.substring(start - answerStart, end - answerStart).replace(/[\n]/g, '');
+        }
+        if (!card.blanks.some(function(b) { return b.start === start && b.end === end; })) {
+          card.blanks.push({ start: start, end: end, text: text, isAnswer: !isQ, _combined: true });
         }
       }
     }
   }
-  card.blanks.sort((a, b) => a.start - b.start);
+  card.blanks.sort(function(a, b) { return a.start - b.start; });
 }
 
 function renderSavedInfo(card, idx) {
@@ -4323,16 +4439,21 @@ function renderSavedInfo(card, idx) {
 }
 function removeManualBlank(idx, bidx) {
   const card = previewData.cards[idx];
-  const blanks = (card.blanks || []).slice().sort((a, b) => a.start - b.start).filter(b => !b._combined);
+  const blanks = (card.blanks || []).slice().sort(function(a, b) { return a.start - b.start; }).filter(function(b) { return !b._combined; });
   const b = blanks[bidx];
   if (!b) return;
   // 从 blanks 中移除
-  card.blanks = (card.blanks || []).filter(x => x.start !== b.start || x.end !== b.end);
-  // 清除对应的 _savedChars 标记
+  card.blanks = (card.blanks || []).filter(function(x) { return x.start !== b.start || x.end !== b.end; });
+  // 清除对应的 _savedChars / _savedCharsQ 标记
   const q = (card.question || '').trim();
   const answerStart = q.length + 1;
-  const relStart = b.start - answerStart, relEnd = b.end - answerStart;
-  if (card._savedChars) { for (let j = relStart; j < relEnd; j++) card._savedChars[j] = false; }
+  if (b.start < answerStart) {
+    // 题目区挖空
+    if (card._savedCharsQ) { for (var j = b.start; j < b.end; j++) card._savedCharsQ[j] = false; }
+  } else {
+    var relStart = b.start - answerStart, relEnd = b.end - answerStart;
+    if (card._savedChars) { for (var j = relStart; j < relEnd; j++) card._savedChars[j] = false; }
+  }
   if (!card.blanks.length) delete card._manualBlanks;
   // 重建组合空
   if (card.blanks.length) _rebuildCombinedBlanks(card);
@@ -4426,8 +4547,9 @@ function editPreviewTitle(h2) {
 function closePreviewModal() {
   // 有未保存的选中字时才提醒
   const hasUnsaved = previewData && previewData.cards.some(c => {
-    const sel = c._charSelected || {};
-    return Object.values(sel).some(v => v);
+    const selA = c._charSelected || {};
+    const selQ = c._charSelectedQ || {};
+    return Object.values(selA).some(v => v) || Object.values(selQ).some(v => v);
   });
   if (hasUnsaved) {
     showConfirm('放弃编辑？', '有未保存的选中字，确定退出吗？', () => {
@@ -4511,6 +4633,8 @@ function saveEditPreviewCard(idx) {
   if (ansChanged || qChanged) {
     card._charSelected = {};
     card._savedChars = {};
+    card._charSelectedQ = {};
+    card._savedCharsQ = {};
     card.blanks = [];
   }
 
@@ -4527,7 +4651,7 @@ function confirmImport() {
   // 单题编辑模式（从刷题页进入）
   if (previewData._singleCardEdit) {
     const edited = previewData.cards[0];
-    delete edited._charSelected; delete edited._savedChars; delete edited._autoBlanks;
+    delete edited._charSelected; delete edited._savedChars; delete edited._charSelectedQ; delete edited._savedCharsQ; delete edited._autoBlanks;
     practiceState.cards[previewData._cardIdx] = edited;
     practiceState.revealed.delete(edited.id);
     delete practiceState.answers[edited.id];
@@ -4543,7 +4667,7 @@ function confirmImport() {
   }
   const { name, cards, mode, editBankId } = previewData;
   const cleaned = cards.map(c => {
-    delete c._charSelected; delete c._savedChars;
+    delete c._charSelected; delete c._savedChars; delete c._charSelectedQ; delete c._savedCharsQ;
     // 清理合并标记：从答案中移除零宽空格，调整空白位置
     var a = c.answer || '';
     if (a.indexOf(MERGE_MARKER) >= 0) {
@@ -5493,47 +5617,89 @@ function renderCardWithBlanks(card, revealed, hideQ) {
   const text = card.fullText || q + '\n' + a;
   const answerStart = q.length + 1; // +1 for \n
 
-  // 题目：点击可隐藏/显示
+  // 按区域分组空：题目区 vs 答案区
+  const allBlanks = card.blanks || [];
+  const qBlanksRaw = allBlanks.filter(function(b) { return b.start < answerStart; });
+  const aBlanksRaw = allBlanks.filter(function(b) { return b.start >= answerStart; });
+  const round = card._blankRound || 0;
+
+  // 题目区渲染
   let h = '';
   if (hideQ) {
-    h += `<div style="margin-bottom:10px;padding:8px;background:var(--bg-input);border-radius:6px;text-align:center;font-size:12px;color:var(--text-tertiary);cursor:pointer" onclick="event.stopPropagation();toggleQuestion()">题目已隐藏，点击显示</div>`;
+    h += '<div style="margin-bottom:10px;padding:8px;background:var(--bg-input);border-radius:6px;text-align:center;font-size:12px;color:var(--text-tertiary);cursor:pointer" onclick="event.stopPropagation();toggleQuestion()">题目已隐藏，点击显示</div>';
+  } else if (qBlanksRaw.length > 0) {
+    // 题目有挖空 → 渲染填空框
+    const qBlanks = resolveBlanksSub(qBlanksRaw, round);
+    var qh = '', qle = 0;
+    for (var qi = 0; qi < qBlanks.length; qi++) {
+      var bq = qBlanks[qi];
+      var sq = (practiceState.answers[card.id] || {})['q' + qi] || '';
+      qh += fmtAnswerSeg(text.substring(qle, bq.start), qle === 0);
+      if (revealed) {
+        qh += '<span class="revealed-text">' + escNl(bq.text) + '</span>';
+      } else {
+        qh += '<input type="text" class="blank-input" size="' + Math.max(bq.text.length, 2) + '" data-cid="' + card.id + '" data-bidx="q' + qi + '" data-ans="' + escapeHtml(bq.text).replace(/\n/g, ' ') + '" value="' + escapeHtml(sq) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
+      }
+      qle = bq.end;
+    }
+    qh += fmtAnswerSegLast(text.substring(qle, answerStart));
+    h += '<div style="margin-bottom:10px;line-height:1.9;cursor:pointer" onclick="event.stopPropagation();toggleQuestion()" title="点击隐藏题目">' + qh + '</div>';
   } else {
-    h += `<div style="margin-bottom:10px;line-height:1.6;cursor:pointer" onclick="event.stopPropagation();toggleQuestion()" title="点击隐藏题目">${escNl(q)}</div>`;
+    h += '<div style="margin-bottom:10px;line-height:1.6;cursor:pointer" onclick="event.stopPropagation();toggleQuestion()" title="点击隐藏题目">' + escNl(q) + '</div>';
   }
 
   // 分隔 + 答案区
   if (!a) return h;
-  h += `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-weight:600;letter-spacing:.5px">── 填空区 ──</div>`;
+  h += '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-weight:600;letter-spacing:.5px">── 填空区 ──</div>';
 
   // 用户主动隐藏 → 统一显示提示
   if (practiceState.answersHidden) {
-    h += `<div style="line-height:1.9;color:var(--text-tertiary)">答案已隐藏，点击 💐 按钮显示</div>`;
+    h += '<div style="line-height:1.9;color:var(--text-tertiary)">答案已隐藏，点击 💐 按钮显示</div>';
     return h;
   }
 
-  // 解决重叠空：分组后每组选一个
-  const blanks = resolveBlanks(card);
-  if (!blanks.length) {
-    h += `<div style="line-height:1.9">${escNl(a)}</div>`;
+  // 答案区无挖空 → 纯文本
+  if (!aBlanksRaw.length) {
+    h += '<div style="line-height:1.9">' + escNl(a) + '</div>';
     return h;
   }
 
   // 渲染答案，带挖空
-  let ah = '', le = answerStart;
-  for (let i = 0; i < blanks.length; i++) {
-    const b = blanks[i];
-    const saved = (practiceState.answers[card.id] || {})[i] || '';
-    ah += fmtAnswerSeg(text.substring(le, b.start), i === 0);
+  const aBlanks = resolveBlanksSub(aBlanksRaw, round);
+  var ah = '', le = answerStart;
+  for (var ai = 0; ai < aBlanks.length; ai++) {
+    var ba = aBlanks[ai];
+    var sa = (practiceState.answers[card.id] || {})[ai] || '';
+    ah += fmtAnswerSeg(text.substring(le, ba.start), ai === 0);
     if (revealed) {
-      ah += `<span class="revealed-text">${escNl(b.text)}</span>`;
+      ah += '<span class="revealed-text">' + escNl(ba.text) + '</span>';
     } else {
-      ah += `<input type="text" class="blank-input" size="${Math.max(b.text.length,2)}" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text).replace(/\n/g, ' ')}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
+      ah += '<input type="text" class="blank-input" size="' + Math.max(ba.text.length, 2) + '" data-cid="' + card.id + '" data-bidx="' + ai + '" data-ans="' + escapeHtml(ba.text).replace(/\n/g, ' ') + '" value="' + escapeHtml(sa) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
     }
-    le = b.end;
+    le = ba.end;
   }
   ah += fmtAnswerSegLast(text.substring(le));
-  h += `<div style="line-height:1.9">${ah}</div>`;
+  h += '<div style="line-height:1.9">' + ah + '</div>';
   return h;
+}
+
+// 空白分组解析（不含 _combined），用于指定区域的空白
+function resolveBlanksSub(blanks, round) {
+  if (!blanks || !blanks.length) return [];
+  var sorted = blanks.slice().filter(function(b) { return !b._combined; }).sort(function(a, b) { return a.start - b.start; });
+  if (!sorted.length) return [];
+  var groups = [];
+  for (var i = 0; i < sorted.length; i++) {
+    var b = sorted[i], added = false;
+    for (var j = 0; j < groups.length; j++) {
+      if (groups[j].some(function(gb) { return gb.start < b.end && b.start < gb.end; })) {
+        groups[j].push(b); added = true; break;
+      }
+    }
+    if (!added) groups.push([b]);
+  }
+  round = round || 0;
+  return groups.map(function(g) { return g[round % g.length]; });
 }
 
 // 解决重叠空：分组后每组选一个（_blankRound 控制轮换）
@@ -5871,14 +6037,20 @@ function editCurrentCardBlanks() {
   if (!card) return;
   const copy = JSON.parse(JSON.stringify(card));
   delete copy._blankRound;
-  const saved = {};
+  const saved = {}, savedQ = {};
   const q = (copy.question || "").trim();
   const answerStart = q.length + 1;
   for (const b of (copy.blanks || [])) {
-    for (let j = b.start - answerStart; j < b.end - answerStart; j++) saved[j] = true;
+    if (b.start < answerStart) {
+      for (let j = b.start; j < b.end; j++) savedQ[j] = true;
+    } else {
+      for (let j = b.start - answerStart; j < b.end - answerStart; j++) saved[j] = true;
+    }
   }
   copy._charSelected = {};
   copy._savedChars = saved;
+  copy._charSelectedQ = {};
+  copy._savedCharsQ = savedQ;
   copy._autoBlanks = null;
   previewData = { name: "单题编辑", cards: [copy], mode: "manual", _singleCardEdit: true, _cardIdx: practiceState.index };
   showImportPreview("单题编辑", [copy]);
@@ -7822,7 +7994,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v59</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v60</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -8057,6 +8229,8 @@ async function makeBackupCode() {
       delete card.fullText;       // = question + '\n' + answer，可重建
       delete card._charSelected;  // 编辑中间态，无需备份
       delete card._savedChars;
+      delete card._charSelectedQ;
+      delete card._savedCharsQ;
       delete card._autoBlanks;
     }
   }
