@@ -1593,7 +1593,7 @@ const STOP_WORDS = new Set(['的','了','是','在','和','与','或','对','从
 
 const CHAR_STOP = new Set(['的','了','是','和','与','或','对','在','中','上','下','等','并','则','以','可','能','会','要','有','无','及','被','把','从','到','由','让','向','同','为','因','所','而','且','虽','但','却','只','仅','又','再','还','也','就','都','很','更','最','极','较','太','非','不','没','将','已','正','着','过']);
 
-const TECH_CHARS = /[酶碱酸质体胞器官腺激素膜核基因蛋白链层壁骨骼脉瓣翅鞘壳齿爪鳍鳞根茎叶花果律则理病症炎瘤癌剂论定程件器仪网络数图表演示验证据测算计控制调节元子分离解合反应氧氢碳氮铁钙钠钾维生素矿纤脂淀粉糖盐溶液渗透呼光遗传变异免疫神经血淋代谢激荷蒙染色粒线核苷磷嘌呤嘧啶肽氨羧羟醛酮酯醚苯酚烃烯炔烷醇法权利义务责任罪刑罚诉审判宪政府议会选举立司行帝朝代战革命运动约条]/;
+const TECH_CHARS = /[酶碱酸质体胞器官腺激素膜核基因蛋白链层壁骨骼脉瓣翅鞘壳齿爪鳍鳞根茎叶花果律则理病症炎瘤癌剂论定程件器仪网络数图表演示验证据测算计控制调节元子分离解合反应氧氢碳氮铁钙钠钾维生素矿纤脂淀粉糖盐溶液渗透呼光遗传变异免疫神经血淋代谢激荷蒙染色粒线核苷磷嘌呤嘧啶肽氨羧羟醛酮酯醚苯酚烃烯炔烷醇法权利义务责任罪刑罚诉审判宪政府议会选举立司行帝朝代战革命运动约条德育思知教师身范品习贯养意志趣践]/;
 
 function hasTechChar(s) { return TECH_CHARS.test(s); }
 
@@ -1673,7 +1673,9 @@ function extractKeywords(text, count, seed) {
       if (/[性化法制论学观力体质感型式态物器术程期段点度率量数值系组群类种属科]$/.test(phrase)) score += 5;
       // 数字参与但不主导的词（如"3个"）适度加分
       if (/[\d一二三四五六七八九十百千万亿]/.test(phrase) && !/^\d+$/.test(phrase)) score += 3;
-      // 在逗号/分号/句号/换行后面紧跟的词（得分点开头）加分
+      // 得分点第1个字开头的词（通常是动词/动作词）大幅加分
+      if (i === 0) score += 8;
+      // 逗号/分号/句号/换行后面紧跟的词也加分
       if (i === 0 || /[，,。；;、\n]/.test(text[i - 1])) score += 5;
       // 括号内的内容通常是关键信息，加分
       if (i > 0 && (text[i - 1] === '（' || text[i - 1] === '(')) score += 10;
@@ -1690,14 +1692,31 @@ function extractKeywords(text, count, seed) {
       if (score >= 3) candidates.push({ start: i, end: i + len, text: phrase, score });
     }
   }
-  // 按分数降序，同分按长度降序（优先选长的、完整的词组）
-  candidates.sort((a, b) => b.score - a.score || b.text.length - a.text.length);
+  // 加权随机选择：分数越高的词被选中概率越大，但每次"换一批空"可能不同
   const selected = [], used = new Set();
-  for (const c of candidates) {
-    if (selected.length >= count) break;
-    let overlap = false;
-    for (let p = c.start; p < c.end; p++) { if (used.has(p)) { overlap = true; break; } }
-    if (!overlap) { selected.push(c); for (let p = c.start; p < c.end; p++) used.add(p); }
+  const pool = candidates.slice();
+  while (selected.length < count && pool.length > 0) {
+    // 筛掉与已选位置重叠的候选
+    const valid = pool.filter(function(c) {
+      for (var p = c.start; p < c.end; p++) { if (used.has(p)) return false; }
+      return true;
+    });
+    if (valid.length === 0) break;
+    // 以分数平方为权重（高分偏好的同时保留随机性）
+    var totalWeight = 0;
+    for (var vi = 0; vi < valid.length; vi++) { totalWeight += valid[vi].score * valid[vi].score; }
+    if (totalWeight <= 0) { selected.push(valid[0]); break; }
+    var roll = (rng ? rng() : Math.random()) * totalWeight;
+    var chosen = valid[0];
+    for (var vi2 = 0; vi2 < valid.length; vi2++) {
+      roll -= valid[vi2].score * valid[vi2].score;
+      if (roll <= 0) { chosen = valid[vi2]; break; }
+    }
+    selected.push(chosen);
+    for (var p2 = chosen.start; p2 < chosen.end; p2++) used.add(p2);
+    // 从池中移除（同位置避免下轮复选）
+    var rmIdx = pool.indexOf(chosen);
+    if (rmIdx >= 0) pool.splice(rmIdx, 1);
   }
   selected.sort((a, b) => a.start - b.start);
   return selected;
