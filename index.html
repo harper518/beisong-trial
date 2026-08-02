@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v57 · 小阮出品</title>
+<title>挖空背诵工具 v58 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -895,7 +895,7 @@ var TIER_PRICES = { basic: '¥3/年', pro: '¥9.9/年' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 57;
+var APP_VERSION = 58;
 var FREE_COLORS = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream'];
 var BASIC_COLORS = FREE_COLORS.concat(['sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral']);
 
@@ -3392,7 +3392,7 @@ function cleanMergeLines() {
 }
 
 function copyFormatPrompt() {
-  var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案 或 题目|答案|口诀\n3. 如果答案中需要挖空，用 @关键词@ 标记要挖掉的位置（例：@叶绿体@）\n4. 挖空标记 @关键词@ 只能放在答案里，不能放题目\n5. 一个答案里可以有多个 @标记@，如：@细胞壁@ @细胞膜@ @细胞核@\n6. 每一道题的所有内容必须在同一行，不能换行\n7. 如有口诀，加在答案后面：题目|答案|口诀\n\n【重要】\n- 答案中不要出现 | 竖线符号，会被当成口诀分隔符\n- 答案中不要出现 @ 符号（除了标记挖空的地方），普通 @ 请删掉\n\n【输出示例】\n光合作用的场所是哪里|@叶绿体@|光→叶\n植物细胞的结构包括什么|@细胞壁@ @细胞膜@ @细胞质@ @细胞核@\n1.简述教党62号文|1.坚持@育人导向@，突出@价值引领@ 2.坚持@遵循规律@，勇于@改革创新@|育人规律，问题协同\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空\n- 用 @关键词@ 标记挖空，不要用【】\n- 题目部分不要出现 @ 符号';
+  var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案 或 题目|答案|口诀\n3. 如果答案中需要挖空，用【关键词】标记要挖掉的位置（例：【叶绿体】）\n4. 挖空标记【关键词】只能放在答案里，不能放题目\n5. 一个答案里可以有多个【标记】，如：【细胞壁】【细胞膜】【细胞核】\n6. 每一道题的所有内容必须在同一行，不能换行\n7. 如有口诀，加在答案后面：题目|答案|口诀\n\n【重要】\n- 答案中不要出现 | 竖线符号，会被当成口诀分隔符\n- 答案中不要出现【】（除了标记挖空的地方）\n- 题目部分不要出现【】符号\n\n【输出示例】\n光合作用的场所是哪里|【叶绿体】|光→叶\n植物细胞的结构包括什么|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空\n- 用【关键词】标记挖空';
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(prompt).then(function() { showToast('📋 格式话术已复制，可粘贴到豆包/AI使用'); });
   } else {
@@ -6234,7 +6234,7 @@ const MANUALS = {
 <div style="font-weight:700;color:var(--primary)">▎题库</div>
 <div>• <b>导入</b>：粘贴文本，格式 <code>题目 答案</code>（空格/换行分隔），或上传 .txt 文件</div>
 <div style="color:#e91e63">• <b>🆕 #%格式导入</b>：题目前加 <code>#</code>、答案前加 <code>%</code>，多行答案每行一个 <code>%</code>，系统自动配对识别</div><div style="margin:4px 0 4px 20px;padding:8px 12px;background:var(--bg-input);border-radius:6px;font-size:13px;line-height:1.7">📝 <b>例子：</b><br><code style="color:#e91e63">#</code>光合作用的场所是哪里<br><code style="color:#e91e63">%</code>叶绿体<br><br><code style="color:#e91e63">#</code>植物细胞的结构包括什么<br><code style="color:#e91e63">%</code>细胞壁<br><code style="color:#e91e63">%</code>细胞膜<br><code style="color:#e91e63">%</code>细胞质<br><code style="color:#e91e63">%</code>细胞核</div>
-<div>• <b>手动挖空</b>：答案中写 <code>@关键词@</code> 标记要挖掉的位置，系统自动识别，不依赖自动生成</div>
+<div>• <b>手动挖空</b>：答案中写 <code>【关键词】</code> 标记要挖掉的位置，系统自动识别，不依赖自动生成</div>
 <div>• <b>排序</b>：题库卡片上的 <b>← →</b> 按钮调整题库前后顺序</div>
 <div>• <b>导出</b>：✏️编辑 / 📤导出纯文本 / 💾导出含挖空标记（方便再次导入）</div>
 
@@ -6272,13 +6272,13 @@ const MANUALS = {
 <div>• <b>口诀</b> 辅助记忆：关键字点击展开查看完整版</div>
 <div>• 低密度适合初学、高密度适合考前冲刺</div>
 <div>• 错题本定期清零：设置 → 清空复习清单</div>
-<div>• 用 <code>@答案@</code> 手动标空比自动挖空更精准</div>
+<div>• 用 <code>【答案】</code> 手动标空比自动挖空更精准</div>
 <div>• 用 <b>← →</b> 把常用题库排最上面</div>
 </div>`},
 
   simple: { title: '📋 简约说明书', content: `<div style="line-height:2">
 <div><b>导入</b>：粘贴「题目 答案」或上传 .txt；<span style="color:#e91e63">🆕 支持 <code>#题目</code> <code>%答案</code> 格式，例：<code>#光合作用</code> → <code>%叶绿体</code></span></div>
-<div><b>手动挖空</b>：答案中写 <code>@关键词@</code> 标记要挖的位置</div>
+<div><b>手动挖空</b>：答案中写 <code>【关键词】</code> 标记要挖的位置</div>
 <div><b>刷题</b>：填完自动诊断，回车手动诊断，⭐收藏 💡口诀</div>
 <div><b>错题</b>：答错自动进错题本，底部标签可复习</div>
 <div><b>备份</b>：设置 → 复制备份码 → 粘贴到别处保存</div>
@@ -6292,7 +6292,7 @@ const MANUALS = {
 <div>4. 导入前先备份，导入不可撤销</div>
 <div>5. 更新 HTML 版本数据不丢（同存储键），放心替换文件</div>
 <div>6. 导入文本含 tab 或特殊空白可能导致拆分异常</div>
-<div>7. 用 <code>@关键词@</code> 标注可跳过自动挖空，手动控制挖空位置</div>
+<div>7. 用 <code>【关键词】</code> 标注可跳过自动挖空，手动控制挖空位置</div>
 <div style="color:#e91e63">8. 🆕 导入支持 <code>#题目</code> <code>%答案</code> 格式，多行答案每行一个%</div>
 </div>`},
 
@@ -6320,8 +6320,8 @@ const MANUALS = {
 <div>• 简答题格式（编号开头为题目、内容为答案、口诀为背诵提示）无需加粗也能自动识别</div>
 
 <div style="font-weight:700;margin-top:12px;color:var(--primary)">▎手动挖空更精准</div>
-<div>• 答案中写 <code>@关键词@</code> 标记要挖的位置，比自动挖空更符合你的背诵重点</div>
-<div>• 例：<code>光合作用场所是 @叶绿体@ @类囊体薄膜@|光→叶</code></div>
+<div>• 答案中写 <code>【关键词】</code> 标记要挖的位置，比自动挖空更符合你的背诵重点</div>
+<div>• 例：<code>光合作用场所是【叶绿体】【类囊体薄膜】|光→叶</code></div>
 
 <div style="font-weight:700;margin-top:12px;color:var(--primary)">▎导入前先备份</div>
 <div>• 导入不可撤销，建议先在"设置 → 复制备份码"保存当前数据</div>
@@ -6395,7 +6395,7 @@ function showManualMenu() {
         '<div style="background:var(--bg-input);border-radius:10px;padding:12px 14px">' +
           '<p style="margin:0 0 6px"><b>📄 Word/WPS 智能导入</b>——上传 .docx 文件，<b>加粗文字自动转为【挖空】</b>，图片自动过滤，大纲结构自动配对（标题→题目、条目→答案）。上传前在 Word 里把关键词加粗（Ctrl+B），导入就自动标记好了。</p>' +
           '<p style="margin:0 0 6px"><b>📝 简答题格式</b>——编号开头=题目、后续=答案、口诀行=背诵提示。系统自动识别，适合政治/专业课大题。</p>' +
-          '<p style="margin:0 0 6px"><b>✏️ 手动挖空</b>——答案中写 <code>@关键词@</code>，导入时自动识别挖空位置，比自动挖空更精准。</p>' +
+          '<p style="margin:0 0 6px"><b>✏️ 手动挖空</b>——答案中写 <code>【关键词】</code>，导入时自动识别挖空位置，比自动挖空更精准。</p>' +
           '<p style="margin:0"><b>🧹 文本清洗</b>——粘贴前先用"合并断行/去空行"清洗，大幅提高解析成功率。</p>' +
         '</div>' +
       '</div>' +
@@ -6418,7 +6418,7 @@ function showManualMenu() {
         '<h4 style="font-size:15px;margin:0 0 8px;color:var(--primary)">💡 实操建议</h4>' +
         '<div style="background:var(--bg-input);border-radius:10px;padding:12px 14px">' +
           '<p style="margin:0 0 4px">📄 <b>Word 导入前先加粗关键词</b>（Ctrl+B），导入后自动变成【挖空】，省去手动标记</p>' +
-          '<p style="margin:0 0 4px">✏️ 用 <code>@关键词@</code> 手动标空比自动挖空更精准，推荐大题答案使用</p>' +
+          '<p style="margin:0 0 4px">✏️ 用 <code>【关键词】</code> 手动标空比自动挖空更精准，推荐大题答案使用</p>' +
           '<p style="margin:0 0 4px">💡 每道题带<b>口诀</b>（用 | 分隔）：<code>题目|答案|口诀</code>，做题时点 💡 查看</p>' +
           '<p style="margin:0 0 4px">🌙 睡前暗色模式 + 低亮度刷题，护眼且记忆效果好；早上再复习一遍巩固</p>' +
           '<p style="margin:0 0 4px">📊 错题本定期清零：设置 → 清空复习清单；用 ← → 按钮把常用题库排前面</p>' +
@@ -6476,7 +6476,7 @@ function showManualMenu() {
           '<p style="margin:0 0 6px"><b>＋ 导入</b> — 粘贴题目文本或上传文件（支持 .txt /.docx /.doc），粘贴后点击"预览"确认。支持多种格式智能识别。从 Word/WPS 复制的内容粘贴时自动识别加粗→【挖空】。</p>' +
           '<p style="margin:0 0 6px"><b>📋 导入格式</b> — 五种格式可选：① 自动检测（推荐）② 分隔符格式 <code>题目|答案|口诀</code> ③ 简答题格式（编号开头=题目）④ Q&A 格式（Q:/A:）⑤ #%格式（#题目 %答案）。导入预览可手动点击选字挖空。</p>' +
           '<p style="margin:0 0 6px"><b>📄 Word/WPS 智能导入</b> — 上传 .docx 文件时<b>自动识别加粗文字</b>并转为 <code>【关键词】</code> 挖空标记。图片自动过滤。大纲型内容（如一、标题 + 1. 2. 条目）自动配对：标题作题目、条目作答案。上传前在 Word 里 Ctrl+B 加粗关键词即可。</p>' +
-          '<p style="margin:0 0 6px"><b>✏️ 手动挖空</b> — 答案中写 <code>@关键词@</code> 标记要挖空的位置，导入预览时自动识别。比自动挖空更精准，推荐大题和精准背诵使用。例：<code>光合作用场所是 @叶绿体@ @类囊体薄膜@</code></p>' +
+          '<p style="margin:0 0 6px"><b>✏️ 手动挖空</b> — 答案中写 <code>【关键词】</code> 标记要挖空的位置，导入预览时自动识别。比自动挖空更精准，推荐大题和精准背诵使用。例：<code>光合作用场所是【叶绿体】【类囊体薄膜】</code></p>' +
           '<p style="margin:0 0 6px"><b>🤖 AI 格式话术</b> — 导入页点"AI格式话术"复制模板，发给豆包/Kimi/千问等 AI，让它按要求格式输出题目。删掉 AI 的寒暄废话再粘贴。</p>' +
           '<p style="margin:0 0 6px"><b>🧹 文本清洗</b> — 导入框下方提供两个工具：合并断行（修复硬换行导致格式断裂）、清除空行。粘贴前先清洗可大幅提高解析成功率。</p>' +
           '<p style="margin:0 0 6px"><b>📂 分开粘贴</b> — 题目和答案分别放在两个文本框，逐行配对。</p>' +
@@ -6584,7 +6584,7 @@ function showManualMenu() {
         '<h4 style="font-size:16px;margin:0 0 10px;color:var(--success)">💡 实操建议</h4>' +
         '<div style="background:var(--success-light);border:1px solid var(--success);border-radius:10px;padding:14px 16px">' +
           '<p style="margin:0 0 4px">📄 <b>Word 导入前先加粗关键词</b>（Ctrl+B），导入后自动变成【挖空】，省去手动标记的时间。没加粗也没关系，导入预览页可以手动点击选字挖空。</p>' +
-          '<p style="margin:0 0 4px">✏️ 用 <code>@关键词@</code> 手动标空比自动挖空更精准，推荐政治/专业课大题答案使用。</p>' +
+          '<p style="margin:0 0 4px">✏️ 用 <code>【关键词】</code> 手动标空比自动挖空更精准，推荐政治/专业课大题答案使用。</p>' +
           '<p style="margin:0 0 4px">💡 每道题带一句<b>口诀</b>，格式 <code>题目|答案|口诀</code>，做题时点 💡 按钮查看。</p>' +
           '<p style="margin:0 0 4px">🌙 <b>睡前记忆效果最好</b>——暗色模式 + 低亮度刷题，减少蓝光干扰；睡前刷一遍、早上复习一遍，间隔重复巩固。</p>' +
           '<p style="margin:0 0 4px">📊 低密度适合初学、高密度适合考前冲刺，做题中随时可调。</p>' +
@@ -6638,7 +6638,7 @@ function showManualMenu() {
         '· 导入时如遇格式问题，可在导入前用"文本清洗"工具（合并断行/清除空行）处理。<br>' +
         '· 养成定期导出备份的习惯——这是唯一能保护你数据的方法。留意设置页备份时间提醒。<br>' +
         '· Word 导入前先把关键词加粗（Ctrl+B），导入后自动变【挖空】。<br>' +
-        '· 用 @关键词@ 手动标记挖空比自动挖空更精准。<br>' +
+        '· 用【关键词】手动标记挖空比自动挖空更精准。<br>' +
         '· 题库名称直接点击即可重命名，无需进入编辑模式。<br>' +
         '· 刷题时用 ⭐ 星标收藏好题，错题页统一回顾。<br>' +
         '· 强制刷新（Ctrl+Shift+R）= 设置页"检查更新"，不丢数据。<br>' +
@@ -7887,7 +7887,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v57</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v58</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
