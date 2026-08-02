@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v60 · 小阮出品</title>
+<title>挖空背诵工具 v61 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -894,8 +894,8 @@ var TIER_EMOJI = { free: '🆓', basic: '💰', pro: '👑' };
 var TIER_PRICES = { basic: '¥3/年', pro: '¥9.9/年' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
-var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 60;
+var FREE_MAX_CARDS_PER_BANK = 120;
+var APP_VERSION = 61;
 var FREE_COLORS = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream'];
 var BASIC_COLORS = FREE_COLORS.concat(['sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral']);
 
@@ -968,7 +968,7 @@ function showTierCompare() {
     '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">' +
     '<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px">功能</th><th style="padding:8px;background:' + (tier==='free'?'var(--primary-soft)':'') + '">🆓 免费</th><th style="padding:8px;background:' + (tier==='basic'?'var(--primary-soft)':'') + '">💰 ¥3/年</th><th style="padding:8px;background:' + (tier==='pro'?'var(--primary-soft)':'') + '">👑 ¥9.9/年</th></tr></thead>' +
     '<tbody>' +
-    '<tr><td style="text-align:left;padding:6px">题库数 / 题数</td><td>2库×60题</td><td>无限制</td><td>无限制</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">题库数 / 题数</td><td>2库×120题</td><td>无限制</td><td>无限制</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">手动挖空</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">随机重复 / 顺序出题</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">随机不重复</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
@@ -1105,38 +1105,20 @@ function checkExpiryWarning() {
 const STORAGE_KEY = 'memorize_v2_trial_7666';
 
 function getPresetData_7666() {
-  const eduCards = [
-    { id:'p1', question:'1.简述 20 世纪以后教育的特点。（三级）', answer:'（1）教育的终身化。它包括各个年龄阶段的各种方式的教育。\\n（2）教育的全民化。教育必须面向所有的人，即人人都有接受教育的权利。\\n（3）教育的民主化。一方面让所有的人接受同样的教育，另一方面追求教育的自由化。\\n（4）教育的多元化。具体表现为培养目标的多元化、办学形式的多元化等。\\n（5）教育的现代化。教育的现代化是指现代科学技术在教育上的运用，并由此引起教育思想、教育观念的变化。', koujue:'全（全民化）民（民主化）多（多元化）现（现代化）身（终身化）', chapter:'教育学' },
-    { id:'p2', question:'2.简述生产力对教育的制约作用。（三级）', answer:'生产力对教育的制约作用——生产力水平决定教育发展水平。\\n①生产力水平决定教育的规模和速度。\\n②生产力制约人才培养的规格和教育结构。\\n③生产力制约教学内容、方法、组织形式与手段。', koujue:'龟（规模）速（速度）够（结构）防（方法）守（手段）', chapter:'教育学' },
-    { id:'p3', question:'3.简述政治经济制度对教育的制约。（一级）', answer:'(1)政治经济制度决定教育的性质\\n(2)政治经济制度决定教育的宗旨与目的\\n(3)政治经济制度决定教育的领导权\\n(4)政治经济制度决定受教育权\\n(5)政治经济制度决定教育内容和教育管理体制', koujue:'慕（宗旨与目的）容（教育内容和教育管理体制）姓（性质）两权（领导权和受教育权）', chapter:'教育学' },
-    { id:'p4', question:'4.简述教育的政治功能。（一级）', answer:'（1）教育培养出政治经济制度所需要的人才\\n（2）教育促进政治民主化\\n（3）教育通过宣传统治阶级的思想意识，创造一定的社会舆论环境来为政治服务\\n（4）教育通过传播一定的社会政治意识形态，完成年轻一代的政治社会化', koujue:'人（人才）鱼（社会舆论）公主（民主）促政治（政治社会化）', chapter:'教育学' },
-    { id:'p5', question:'5.简述教育的人口功能（二级）', answer:'（1）教育可减少人口数量，是控制人口增长的重要手段\\n（2）教育是提高人口素质的重要手段\\n（3）教育能够改善人口结构，调整人才构成和流动合理化', koujue:'质（素质）数（数量）够（人口结构）流动（流动合理化）', chapter:'教育学' }
-  ];
-  const medCards = [
-    { id:'m1', question:'1.窒息发生时的表现和抢救', answer:'窒息表现：咯血突然减少或中止，病人感胸闷、憋气、出冷汗，随即烦躁、表情紧张或惊恐、两手乱动或手指喉头，继而出现发绀、呼吸窘迫、全身抽搐、昏迷，甚至心跳、呼吸停止而死亡。\\n\\n窒息抢救：①对大咯血及意识不清的病人，应在病床旁备好急救设备，一旦病人出现窒息征象，应立即取头低脚高45°俯卧位，头偏向一侧，轻拍背部，迅速排出在气道和口咽部的血块，或直接刺激咽部以咳出血块。②必要时用吸痰管进行负压吸引。③给予高浓度吸氧。④做好气管插管或气管切开的准备与配合工作，以解除呼吸道阻塞。', koujue:'', chapter:'内科护理学' },
-    { id:'m2', question:'2.慢性肾衰的饮食护理', answer:'①饮食原则：优质低蛋白，充足热量，低盐，低钾，低磷饮食。\\n②蛋白质：慢性肾衰竭病人应限制蛋白质的摄入，且饮食中50%以上的蛋白质为优质蛋白，如鸡蛋，牛奶，瘦肉，鱼等动物蛋白，与豆制品等植物蛋白摄入比例一般为1：1。\\n③热量：供给病人足够的热量，以减少体内蛋白质的消耗，摄入热量的70%由碳水化合物供给，可选用热量高，蛋白质含量低的食物。\\n④其他：脂肪摄入不超过总热量的30%，一般每天钠摄入量不超过2g，低磷饮食，补充水溶性维生素和矿物质。', koujue:'', chapter:'内科护理学' },
-    { id:'m4', question:'4.稳定性心绞痛的临床表现', answer:'(1)部位：主要在胸骨体之后，可波及心前区，手掌大小范围，界限不很清楚，常放射至左肩、左臂内侧达环指和小指，或至颈、咽或下颌部。\\n(2)性质：胸痛常为压迫、发闷或紧缩性，也可有烧灼感，但不像针刺或刀割样锐性痛，偶伴濒死感。有些病人仅觉胸闷而非胸痛。发作时，病人往往不自觉地停止正在进行的活动，直至症状缓解。\\n(3)诱因：体力劳动、情绪激动、饱餐、寒冷、吸烟、心动过速、休克等均可诱发。疼痛多发生于劳力或情绪激动的当时，而不是在其之后发生。\\n(4)持续时间：疼痛一般持续数分钟至十余分钟，多为3~5分钟。\\n(5)缓解方式：一般在停止原来诱发症状的活动后即可缓解；舌下含服硝酸甘油等硝酸酯类药物也能在几分钟内缓解。', koujue:'', chapter:'内科护理学' },
-    { id:'m5', question:'5.高血压非药物治疗，并提出5类药物', answer:'高血压的非药物治疗的主要措施：(1)控制体重；(2)减少食物中钠盐的摄入量，并增加钾盐的摄入量；(3)减少脂肪摄入；(4)戒烟、限酒；(5)增加运动；(6)减轻精神压力，保持心理平衡；(7)必要时补充叶酸制剂。\\n\\n药物：利尿药，β受体拮抗药，钙通道阻滞药，血管紧张素转化酶抑制剂，血管紧张素II受体拮抗药。', koujue:'', chapter:'内科护理学' },
-    { id:'m6', question:'6.肺结核预防，治疗', answer:'控制传染源：控制传染源的关键是早期发现和彻底治愈肺结核病人。\\n切断传染途径：开窗通风，保持空气新鲜，合理处理容器和肺结核病人所使用的物品。\\n保护易感人群：卡介苗接种，化学药物预防。', koujue:'', chapter:'内科护理学' },
-    { id:'m7', question:'7.左心衰竭抢救', answer:'①体位：采取病人自感舒适的体位\\n②氧疗：适用于有低氧血症的病人，首先应保证有开放的气道，立即给予鼻导管高流量给氧\\n③救治准备：迅速开放静脉通道，留置导尿管，心电监护及血氧饱和度监测等\\n④遵医嘱用药：如吗啡，快速利尿药，血管扩张药等\\n⑤非药物治疗：无创机械通气或气管插管机械通气，应用于合并严重呼吸衰竭，经常规治疗不能改善者及心肺复苏病人\\n⑥出入量管理\\n⑦病情监测：严密检测血压，呼吸，血氧饱和度，心率，心电图\\n⑧心理护理\\n⑨做好基础护理与日常生活护理', koujue:'', chapter:'内科护理学' },
-    { id:'m8', question:'8.COPD的呼吸功能锻炼', answer:'（1）缩唇呼吸：缩唇呼吸的技巧是通过缩唇形成的微弱阻力来延长呼气时间，增加气道压力，延缓气道塌陷。病人闭嘴经鼻吸气，然后通过缩唇缓慢呼气，同时收缩腹部。吸气与呼气时间比为1:2或1:3。\\n（2）膈式或腹式呼吸：病人可取立位，平卧位或半卧位，两手分别放于前胸部和上腹部。用鼻缓慢吸气时，膈肌最大程度下降、腹肌松弛、腹部凸出、手感到腹部向上抬起。呼气时经口呼出，腹肌收缩、膈肌松弛、膈肌随腹腔内压增加而上抬，推动肺部气体排出，手感到腹部下降。', koujue:'', chapter:'内科护理学' },
-    { id:'m9', question:'9.促进有效排痰', answer:'包括有效咳嗽，气道湿化，胸部叩击，体位引流和机械吸痰。\\n①有效咳嗽适用于神志清楚，一般状况良好，能够配合的病人。\\n②气道湿化适用于痰液粘稠，不易咳出者，包括湿化治疗和雾化治疗两种方法。\\n③胸部叩击是通过叩击所产生的震动和重力作用，使滞留在气道内的分泌物松动移行到中心气道，通过咳嗽的方式排出体外。\\n④体位引流是通过适当的体位摆放，使病人受累肺段的支气管尽可能垂直于地面，利用重力的作用使支气管的分泌物流向气管，然后通过咳嗽等方式排出体外。\\n⑤机械吸痰适用于痰液粘稠无力咳出，意识不清或建立人工气道的病人。', koujue:'', chapter:'内科护理学' }
+  const fanliCards = [
+    { id:'f92', question:'92.简述贯彻说服教育法的要求。', answer:'（1）要有明确的目的性和针对性。\\n（2）要富有知识性和趣味性。\\n（3）注意时机，善于捕捉教育契机。\\n（4）以诚待人。', koujue:'地（目的性）震（针对性）知（知识性）趣（趣味性），奇迹（教育契机）成人', chapter:'教育学' },
+    { id:'f93', question:'93.简述贯彻榜样示范法的要求。', answer:'（1）选好学习的榜样。选好榜样是学习榜样的前提。我们应根据时代要求和学生实际情况，指导他们选择好学习的榜样，获得前进的明确方向和巨大动力。\\n（2）激起学生对榜样的敬慕之情。要使榜样能对学生产生激励作用，推动他们前进，就需要引导学生了解榜样。\\n（3）引导学生用榜样来调节行为，提高修养。要及时地把学生的情感、冲动引导到行动上来，把敬慕之情转化为道德行为和习惯，逐步巩固、加深这种情感。', koujue:'好（选好榜样）情（敬慕之情）行（调节行为）', chapter:'教育学' },
+    { id:'f94', question:'94.简述中学德育的途径。', answer:'（1）思想政治课与其他学科教学。\\n（2）社会实践活动。\\n（3）课外活动。\\n（4）共青团组织的活动。\\n（5）班会、校会、周会、晨会。\\n（6）班主任工作。', koujue:'一教（学科教学）二班（班会和班主任工作）三活', chapter:'教育学' },
+    { id:'f95', question:'95.简述班集体的发展阶段。', answer:'（1）组建阶段：学生初进学校，同学们尽管形式上同属一个班级，实际上是一个个孤立的个体。\\n（2）核心形成阶段：同学之间开始相互了解，在班主任的引导培养下，涌现出了一批积极分子。\\n（3）发展阶段：班集体已成为教育主体。多数学生无须外在监督，已能自己管理和教育自己。\\n（4）成熟阶段：班集体趋向成熟，学生积极参与班级活动，形成强有力的舆论和班风。', koujue:'组（组建阶段）合（核心形成阶段）法（发展阶段）术（成熟阶段）', chapter:'教育学' },
+    { id:'f96', question:'96.简述班集体形成标志。', answer:'（1）坚定正确的政治方向与明确的奋斗目标。\\n（2）健全的组织机构与坚强的领导核心。\\n（3）严格的规章制度与严明的组织纪律。\\n（4）正确的集体舆论与良好的班风。', koujue:'健全班风是组织的目标', chapter:'教育学' },
+    { id:'f97', question:'97.简述良好班集体的培养措施。', answer:'（1）确定班集体的发展目标。\\n（2）建立班集体的核心队伍。\\n（3）建立班集体的正常秩序。\\n（4）组织形式多样的教育活动。\\n（5）培养正确的舆论和良好的班风。', koujue:'目标（发展目标）核心（核心队伍），治（正常秩序）活（教育活动）班风', chapter:'教育学' },
+    { id:'f98', question:'98.简述班主任的个别教育工作。', answer:'班主任对优等生的个别教育工作：\\n（1）严格要求，防止自满。\\n（2）不断激励，提高抗挫折能力。\\n（3）消除嫉妒，公平竞争。\\n（4）发挥优势，带动全班。\\n口诀：严要求，常激励，消嫉妒，用优势\\n\\n班主任对中等生的个别教育工作：\\n（1）重视对中等生的教育。\\n（2）根据中等生的不同特点有的放矢地进行个别教育。\\n（3）给中等生创造充分展示自己才能的机会，增强他们的自信心。\\n口诀：重视个别（个别教育）与食（展示）材（才能）\\n\\n班主任对后进生的个别教育工作：\\n（1）关心热爱与严格要求相结合。\\n（2）培养和激发学习动机。\\n（3）善于发掘后进生身上的"闪光点"，增强其自信心和集体荣誉感。\\n（4）针对后进生的个别差异，因材施教。\\n（5）对后进生的教育要持之以恒。', koujue:'恒（持之以恒）心（关心热爱）才（因材施教）发（培养与激发）光（闪光点）', chapter:'教育学' },
+    { id:'f99', question:'99.简述维持课堂纪律的策略。', answer:'（1）建立有效的课堂规则。\\n（2）合理组织课堂教学。\\n（3）做好课堂监控。\\n（4）培养学生的自律品质。', koujue:'自（自律）建（课堂监控）贵（规则）族（合理组织）', chapter:'教育学' },
+    { id:'f100', question:'100.简述教师教学能力的结构。', answer:'（1）教学认知能力。教学认知能力主要是指教师对教学目标、教学任务、学习者的特点、某一具体内容的教学方法与策略的选择以及教学情境的分析和判断能力。\\n（2）教学设计能力。教学设计能力是指教师事先对课堂教学的目标、内容、方法等重要的教学因素进行周密而详细的计划和安排。\\n（3）教学操作能力。教学操作能力主要是指教师在实现教学目标的过程中解决具体教学问题的能力。\\n（4）教学监控能力。教学监控能力是指教师为了保证教学成功，达到预期的教学目标，而在教学的全过程中，将教学活动本身作为意识的对象，不断对其进行积极、主动的计划、检查、评价、反馈、控制和调节的能力。', koujue:'自（教学认知能力）己（教学设计能力）操（教学操作能力）控（教学监控能力）', chapter:'教育学' }
   ];
   return {
     banks: {
-      'preset_edu': { id:'preset_edu', name:'教育学简答题（示例）', createdAt: Date.now(), updatedAt: Date.now(), cards: eduCards },
-      'preset_med': { id:'preset_med', name:'内科护理学简答题（示例）', createdAt: Date.now()+1000, updatedAt: Date.now()+1000, cards: medCards },
-      'preset_fanli': { id:'preset_fanli', name:'范例', createdAt: Date.now()+2000, updatedAt: Date.now()+2000, cards: [
-        { id:'f92', question:'92.简述贯彻说服教育法的要求。', answer:'（1）要有明确的目的性和针对性。\\n（2）要富有知识性和趣味性。\\n（3）注意时机，善于捕捉教育契机。\\n（4）以诚待人。', koujue:'地（目的性）震（针对性）知（知识性）趣（趣味性），奇迹（教育契机）成人', chapter:'教育学' },
-        { id:'f93', question:'93.简述贯彻榜样示范法的要求。', answer:'（1）选好学习的榜样。选好榜样是学习榜样的前提。我们应根据时代要求和学生实际情况，指导他们选择好学习的榜样，获得前进的明确方向和巨大动力。\\n（2）激起学生对榜样的敬慕之情。要使榜样能对学生产生激励作用，推动他们前进，就需要引导学生了解榜样。\\n（3）引导学生用榜样来调节行为，提高修养。要及时地把学生的情感、冲动引导到行动上来，把敬慕之情转化为道德行为和习惯，逐步巩固、加深这种情感。', koujue:'好（选好榜样）情（敬慕之情）行（调节行为）', chapter:'教育学' },
-        { id:'f94', question:'94.简述中学德育的途径。', answer:'（1）思想政治课与其他学科教学。\\n（2）社会实践活动。\\n（3）课外活动。\\n（4）共青团组织的活动。\\n（5）班会、校会、周会、晨会。\\n（6）班主任工作。', koujue:'一教（学科教学）二班（班会和班主任工作）三活', chapter:'教育学' },
-        { id:'f95', question:'95.简述班集体的发展阶段。', answer:'（1）组建阶段：学生初进学校，同学们尽管形式上同属一个班级，实际上是一个个孤立的个体。\\n（2）核心形成阶段：同学之间开始相互了解，在班主任的引导培养下，涌现出了一批积极分子。\\n（3）发展阶段：班集体已成为教育主体。多数学生无须外在监督，已能自己管理和教育自己。\\n（4）成熟阶段：班集体趋向成熟，学生积极参与班级活动，形成强有力的舆论和班风。', koujue:'组（组建阶段）合（核心形成阶段）法（发展阶段）术（成熟阶段）', chapter:'教育学' },
-        { id:'f96', question:'96.简述班集体形成标志。', answer:'（1）坚定正确的政治方向与明确的奋斗目标。\\n（2）健全的组织机构与坚强的领导核心。\\n（3）严格的规章制度与严明的组织纪律。\\n（4）正确的集体舆论与良好的班风。', koujue:'健全班风是组织的目标', chapter:'教育学' },
-        { id:'f97', question:'97.简述良好班集体的培养措施。', answer:'（1）确定班集体的发展目标。\\n（2）建立班集体的核心队伍。\\n（3）建立班集体的正常秩序。\\n（4）组织形式多样的教育活动。\\n（5）培养正确的舆论和良好的班风。', koujue:'目标（发展目标）核心（核心队伍），治（正常秩序）活（教育活动）班风', chapter:'教育学' },
-        { id:'f98', question:'98.简述班主任的个别教育工作。', answer:'班主任对优等生的个别教育工作：\\n（1）严格要求，防止自满。\\n（2）不断激励，提高抗挫折能力。\\n（3）消除嫉妒，公平竞争。\\n（4）发挥优势，带动全班。\\n口诀：严要求，常激励，消嫉妒，用优势\\n\\n班主任对中等生的个别教育工作：\\n（1）重视对中等生的教育。\\n（2）根据中等生的不同特点有的放矢地进行个别教育。\\n（3）给中等生创造充分展示自己才能的机会，增强他们的自信心。\\n口诀：重视个别（个别教育）与食（展示）材（才能）\\n\\n班主任对后进生的个别教育工作：\\n（1）关心热爱与严格要求相结合。\\n（2）培养和激发学习动机。\\n（3）善于发掘后进生身上的"闪光点"，增强其自信心和集体荣誉感。\\n（4）针对后进生的个别差异，因材施教。\\n（5）对后进生的教育要持之以恒。', koujue:'恒（持之以恒）心（关心热爱）才（因材施教）发（培养与激发）光（闪光点）', chapter:'教育学' },
-        { id:'f99', question:'99.简述维持课堂纪律的策略。', answer:'（1）建立有效的课堂规则。\\n（2）合理组织课堂教学。\\n（3）做好课堂监控。\\n（4）培养学生的自律品质。', koujue:'自（自律）建（课堂监控）贵（规则）族（合理组织）', chapter:'教育学' },
-        { id:'f100', question:'100.简述教师教学能力的结构。', answer:'（1）教学认知能力。教学认知能力主要是指教师对教学目标、教学任务、学习者的特点、某一具体内容的教学方法与策略的选择以及教学情境的分析和判断能力。\\n（2）教学设计能力。教学设计能力是指教师事先对课堂教学的目标、内容、方法等重要的教学因素进行周密而详细的计划和安排。\\n（3）教学操作能力。教学操作能力主要是指教师在实现教学目标的过程中解决具体教学问题的能力。\\n（4）教学监控能力。教学监控能力是指教师为了保证教学成功，达到预期的教学目标，而在教学的全过程中，将教学活动本身作为意识的对象，不断对其进行积极、主动的计划、检查、评价、反馈、控制和调节的能力。', koujue:'自（教学认知能力）己（教学设计能力）操（教学操作能力）控（教学监控能力）', chapter:'教育学' }
-      ] }
+      'preset_fanli': { id:'preset_fanli', name:'范例', createdAt: Date.now(), updatedAt: Date.now(), cards: fanliCards }
     },
     settings: { density:'low', darkMode:false, fontSize:16, voiceEnabled:false, voiceRate:0.9, voicePitch:1.0 },
     seqProgress: {}, favorites: {}, wrongBooks: {}
@@ -2120,7 +2102,7 @@ function shareExportText(btn, title) {
     });
   }
 }
-function showToast(msg) { const c = $('toastContainer'); if (!c) return; const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; c.appendChild(t); setTimeout(function() { t.remove(); }, 2300); }
+function showToast(msg, duration) { const c = $('toastContainer'); if (!c) return; const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; c.appendChild(t); setTimeout(function() { t.remove(); }, duration || 2300); }
 
 function showBackupDetailToast(title) {
   var c = $('toastContainer'); if (!c) return;
@@ -4646,8 +4628,31 @@ function saveEditPreviewCard(idx) {
 }
 
 function confirmImport() {
-  // 免费版检查题目上限
-  if (getTier() === 'free') { var totalCards = 0; Object.values(appData.banks || {}).forEach(function(b) { totalCards += (b.cards || []).length; }); if (previewData.cards && totalCards + previewData.cards.length > FREE_MAX_BANKS * FREE_MAX_CARDS_PER_BANK) { showToast('🔒 免费版最多' + FREE_MAX_BANKS + '个题库×' + FREE_MAX_CARDS_PER_BANK + '题，当前' + totalCards + '题，无法导入更多。请升级解锁'); closePreviewModal(); return; } }
+  // 免费版检查：题库数量上限 + 单库题目上限
+  if (getTier() === 'free') {
+    // 新建题库时检查题库数量
+    if (!previewData.editBankId) {
+      var bankCount = Object.keys(appData.banks || {}).length;
+      if (bankCount >= FREE_MAX_BANKS) {
+        showToast('🔒 免费版最多' + FREE_MAX_BANKS + '个题库，当前已有' + bankCount + '个。请升级解锁', 5000);
+        closePreviewModal(); return;
+      }
+    }
+    // 检查单库题目上限
+    if (previewData.editBankId) {
+      var bank = appData.banks[previewData.editBankId];
+      var existing = bank ? (bank.cards || []).length : 0;
+      if (previewData.cards && previewData.cards.length > FREE_MAX_CARDS_PER_BANK) {
+        showToast('🔒 免费版每题库最多' + FREE_MAX_CARDS_PER_BANK + '题，当前题库已有' + existing + '题。请升级解锁', 5000);
+        closePreviewModal(); return;
+      }
+    } else {
+      if (previewData.cards && previewData.cards.length > FREE_MAX_CARDS_PER_BANK) {
+        showToast('🔒 免费版每题库最多' + FREE_MAX_CARDS_PER_BANK + '题。请升级解锁', 5000);
+        closePreviewModal(); return;
+      }
+    }
+  }
   if (!previewData) return;
   // 所有版本均可导入
   // 单题编辑模式（从刷题页进入）
@@ -7997,7 +8002,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v60</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v61</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
