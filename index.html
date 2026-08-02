@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v48 · 小阮出品</title>
+<title>挖空背诵工具 v49 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -7687,14 +7687,16 @@ function renderSettings() {
       var html = '<div class="section">' +
         '<div class="section-header section-title" onclick="toggleInline(\'dailyInsightBody\')" style="cursor:pointer">' +
           '<span>💡 每日洞见</span>' +
+          '<span id="dailyInsightArrow" style="font-size:12px;color:var(--text-tertiary);transition:transform .2s">▸</span>' +
         '</div>' +
         '<div id="dailyInsightBody" class="section-body" style="display:none">' +
-          '<div style="background:var(--bg);border-radius:14px;padding:20px 18px;margin-bottom:10px">' +
-            '<div style="font-size:16px;line-height:2;color:var(--text)">' + escapeHtml(insight) + '</div>' +
+          '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px 18px;margin-bottom:10px;box-shadow:var(--shadow-sm)">' +
+            '<div style="font-size:15px;line-height:2;color:var(--text)">' + escapeHtml(insight) + '</div>' +
           '</div>' +
-          '<div style="display:flex;justify-content:flex-end">' +
+          '<div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:4px">' +
+            '<span style="font-size:11px;color:var(--text-tertiary)">每日洞见 · 基于认知科学与心理学</span>' +
             (canRefresh
-              ? '<button onclick="event.stopPropagation();refreshDailyInsight();var b=document.getElementById(\'dailyInsightBody\');if(b)b.style.display=\'block\'" style="background:var(--primary-light);border:1px solid var(--primary-soft);color:var(--primary);padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap">🔄 换一条</button>'
+              ? '<button onclick="event.stopPropagation();refreshDailyInsight();var b=document.getElementById(\'dailyInsightBody\');if(b)b.style.display=\'block\'" style="background:var(--bg-card);border:1px solid var(--primary);color:var(--primary);padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap">🔄 换一条</button>'
               : '<span style="font-size:11px;color:var(--text-tertiary)">今日已刷新</span>') +
           '</div>' +
         '</div>' +
@@ -7728,15 +7730,16 @@ function renderSettings() {
       var html = '<div class="section">' +
         '<div class="section-header section-title" onclick="toggleInline(\'todaySummaryBody\')" style="cursor:pointer">' +
           '<span>📋 今日学习摘要</span>' +
+          '<span id="todaySummaryArrow" style="font-size:12px;color:var(--text-tertiary);transition:transform .2s">▸</span>' +
         '</div>' +
         '<div id="todaySummaryBody" class="section-body" style="display:none">' +
           '<p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">' + today + '</p>' +
-          '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:14px;flex-wrap:wrap">' +
-            '<div style="text-align:center;background:var(--bg);border-radius:14px;padding:14px 16px;min-width:70px"><div style="font-size:24px;font-weight:800;color:var(--primary)">' + Math.floor(duration / 60) + '</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px">分钟</div></div>' +
-            '<div style="text-align:center;background:var(--bg);border-radius:14px;padding:14px 16px;min-width:70px"><div style="font-size:24px;font-weight:800;color:var(--primary)">' + todayCards + '</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px">今日做题</div></div>' +
-            '<div style="text-align:center;background:var(--bg);border-radius:14px;padding:14px 16px;min-width:70px"><div style="font-size:24px;font-weight:800;color:var(--primary)">' + (totalCards > 0 ? Math.round(mastered / totalCards * 100) : 0) + '%</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px">总掌握率</div></div>' +
+          '<div style="display:flex;justify-content:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">' +
+            '<div style="text-align:center;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;min-width:70px;box-shadow:var(--shadow-sm)"><div style="font-size:24px;font-weight:800;color:var(--primary)">' + Math.floor(duration / 60) + '</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px">分钟</div></div>' +
+            '<div style="text-align:center;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;min-width:70px;box-shadow:var(--shadow-sm)"><div style="font-size:24px;font-weight:800;color:var(--primary)">' + todayCards + '</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px">今日做题</div></div>' +
+            '<div style="text-align:center;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;min-width:70px;box-shadow:var(--shadow-sm)"><div style="font-size:24px;font-weight:800;color:var(--primary)">' + (totalCards > 0 ? Math.round(mastered / totalCards * 100) : 0) + '%</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px">总掌握率</div></div>' +
           '</div>' +
-          '<div style="background:var(--bg);border-radius:12px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;font-size:13px">' +
+          '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;font-size:13px;box-shadow:var(--shadow-sm)">' +
             (dailyTarget > 0 ? '<span>🎯 目标 ' + todayCards + '/' + dailyTarget + ' 题' + (todayCards >= dailyTarget ? ' ✅' : '') + '</span>' : '') +
             '<span>📱 切屏 ' + switches + ' 次</span>' +
             '<span>📦 总题库 ' + totalCards + ' 题</span>' +
@@ -7750,7 +7753,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v48</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v49</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -7778,6 +7781,13 @@ function toggleInline(id) {
     el.style.display = 'block';
   } else {
     el.style.display = 'none';
+  }
+  // 更新对应箭头
+  var arrowMap = { dailyInsightBody: 'dailyInsightArrow', todaySummaryBody: 'todaySummaryArrow' };
+  var arrowId = arrowMap[id];
+  if (arrowId) {
+    var arrow = document.getElementById(arrowId);
+    if (arrow) arrow.style.transform = el.style.display === 'none' ? '' : 'rotate(90deg)';
   }
 }
 
