@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v51 · 小阮出品</title>
+<title>挖空背诵工具 v52 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -895,6 +895,7 @@ var TIER_PRICES = { basic: '¥3/年', pro: '¥9.9/年' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
+var APP_VERSION = 52;
 var FREE_COLORS = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream'];
 var BASIC_COLORS = FREE_COLORS.concat(['sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral']);
 
@@ -1757,18 +1758,18 @@ function autoGenerateBlanks(cards, density, seed) {
       while ((m = re.exec(a)) !== null) {
         blanks.push({ text: m[1], isAnswer: true });
       }
-      // 去除 @ 符号（仅去除配对@...@中的@），构建干净文本后重新定位
+      // 去除 @ 符号，构建干净文本；在原始答案中定位标记防止重复文字错位
       const cleanA = a.replace(/@([^@]+)@/g, '$1');
       const cleanFt = q + '\n' + cleanA;
-      let searchFrom = answerStart;
-      for (const b of blanks) {
-        const idx = cleanA.indexOf(b.text, searchFrom - answerStart);
-        if (idx >= 0) {
-          b.start = answerStart + idx;
-          b.end = answerStart + idx + b.text.length;
-          searchFrom = answerStart + idx + b.text.length;
-        }
-        // 定位失败则跳过，避免生成幽灵空格
+      // 在原始答案中逐个定位 @keyword@，计算偏移量
+      const re2 = /@([^@]+)@/g;
+      let m2, bi = 0;
+      while ((m2 = re2.exec(a)) !== null && bi < blanks.length) {
+        const b = blanks[bi];
+        const shift = bi * 2; // 前面已移除的 @ 数量（每对 @@ 移除 2 个）
+        b.start = answerStart + m2.index - shift;
+        b.end = b.start + b.text.length;
+        bi++;
       }
       blanks = blanks.filter(b => b.start !== undefined);
       return { ...card, fullText: cleanFt, blanks: blanks };
@@ -2389,6 +2390,11 @@ let timerInterval = null;
 let timerRemaining = 0;
 let practiceStartTime = 0;
 let practiceSwitches = 0;
+let practiceStopwatchInterval = null;
+let practiceElapsed = 0; // 做题秒表（累计秒数）
+let pomodoroInterval = null;
+let pomodoroRemaining = 0; // 番茄钟倒计时（秒）
+let pomodoroActive = false;
 let wrongFirst = true; // 错题优先排序（默认开启）
 
 // ==================== 初始化 ====================
@@ -3589,6 +3595,45 @@ function doImport() {
     firstAnswerLength: (cards[0].answer || '').length
   };
   console.log('[导入诊断]', JSON.stringify(importStats));
+
+  // 🏷️ 检测 @关键词@ 手动标记（导入时自动识别，无需预览切换模式）
+  if (!hasBlanks) {
+    var hasAtMarkers = cards.some(function(c) {
+      var aChk = (c.answer || '');
+      var atCount = (aChk.match(/@/g) || []).length;
+      return atCount >= 2 && atCount % 2 === 0 && /@[^@]+@/.test(aChk);
+    });
+    if (hasAtMarkers) {
+      cards = cards.map(function(c) {
+        var q2 = (c.question || '').trim();
+        var a2 = (c.answer || '').trim();
+        var blanks2 = [];
+        var reA = /@([^@]+)@/g;
+        var mA;
+        while ((mA = reA.exec(a2)) !== null) {
+          blanks2.push({ text: mA[1], isAnswer: true });
+        }
+        if (blanks2.length) {
+          var cleanA2 = a2.replace(/@([^@]+)@/g, '$1');
+          var ansStart2 = q2.length + 1;
+          var reA2 = /@([^@]+)@/g;
+          var mA2, bi2 = 0;
+          while ((mA2 = reA2.exec(a2)) !== null && bi2 < blanks2.length) {
+            var b2 = blanks2[bi2];
+            var shift2 = bi2 * 2;
+            b2.start = ansStart2 + mA2.index - shift2;
+            b2.end = b2.start + b2.text.length;
+            bi2++;
+          }
+          blanks2 = blanks2.filter(function(b2) { return b2.start !== undefined; });
+          return { ...c, question: q2, answer: cleanA2, fullText: q2 + '\n' + cleanA2, blanks: blanks2 };
+        }
+        return c;
+      });
+      hasBlanks = true;
+      showToast('导入含挖空文本（@标记）');
+    }
+  }
 
   cards = cards.map(c => {
     c.question = (c.question || '').trim();
@@ -4861,6 +4906,22 @@ function startTimer() {
 function stopTimer() {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
 }
+function updatePomodoroDisplay() {
+  var pd = document.getElementById('pomodoroDisplay');
+  if (!pd) return;
+  if (!pomodoroActive) { pd.style.display = 'none'; return; }
+  pd.style.display = '';
+  var m = Math.floor(pomodoroRemaining / 60);
+  var s = pomodoroRemaining % 60;
+  pd.textContent = '🍅 ' + m + ':' + (s < 10 ? '0' : '') + s;
+  if (pomodoroRemaining <= 60) {
+    pd.style.background = 'var(--danger-light)'; pd.style.color = 'var(--danger)';
+  } else if (pomodoroRemaining <= 300) {
+    pd.style.background = 'var(--warning-light)'; pd.style.color = '#92400e';
+  } else {
+    pd.style.background = 'var(--primary-light)'; pd.style.color = 'var(--primary)';
+  }
+}
 function updateTimerDisplay() {
   var display = document.getElementById('timerDisplay');
   if (!display) return;
@@ -5100,6 +5161,45 @@ function startPracticeSetup(bankId) {
 function startPractice() {
   practiceStartTime = Date.now();
   practiceSwitches = 0;
+  practiceElapsed = 0;
+  if (practiceStopwatchInterval) clearInterval(practiceStopwatchInterval);
+  practiceStopwatchInterval = setInterval(function() {
+    practiceElapsed++;
+    var sw = document.getElementById('stopwatchDisplay');
+    if (sw) {
+      var m = Math.floor(practiceElapsed / 60);
+      var s = practiceElapsed % 60;
+      sw.textContent = '⏱ ' + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+  }, 1000);
+  // 🍅 番茄钟倒计时
+  if (getSetting('pomodoro', false)) {
+    if (pomodoroInterval) clearInterval(pomodoroInterval);
+    var durMin = getSetting('pomodoroDuration', 25);
+    pomodoroRemaining = durMin * 60;
+    pomodoroActive = true;
+    updatePomodoroDisplay();
+    pomodoroInterval = setInterval(function pomoCountdown() {
+      pomodoroRemaining--;
+      updatePomodoroDisplay();
+      if (pomodoroRemaining <= 0) {
+        clearInterval(pomodoroInterval); pomodoroInterval = null;
+        pomodoroActive = false;
+        appData.settings.tomatoGarden = (appData.settings.tomatoGarden || 0) + 1;
+        saveData(appData);
+        showToast('🍅 番茄钟完成！已收获 ' + appData.settings.tomatoGarden + ' 个番茄');
+        setTimeout(function() {
+          if (!pomodoroActive && getSetting('pomodoro', false) && document.getElementById('practiceActive').style.display !== 'none') {
+            var dm2 = getSetting('pomodoroDuration', 25);
+            pomodoroRemaining = dm2 * 60;
+            pomodoroActive = true;
+            updatePomodoroDisplay();
+            pomodoroInterval = setInterval(pomoCountdown, 1000);
+          }
+        }, 2000);
+      }
+    }, 1000);
+  }
   applyFocusMode();
   // 冲刺模式：使用冲刺题目池
   var isSprint = sessionStorage.getItem('sprintMode') === '1';
@@ -5311,6 +5411,8 @@ function renderPracticeCard() {
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()" style="padding:4px 8px;font-size:18px" title="返回">🏠</button>
       <span style="font-size:14px;font-weight:700;color:var(--text)">${cur} / ${total}</span>
       ${(st._isSprint || st._multiBanks) ? '<span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (st._cardBankMap && st._cardBankMap[st.index] ? st._cardBankMap[st.index].bankName : (st._isSprint ? '冲刺' : '混合')) + '</span>' : ''}
+      <span id="stopwatchDisplay" style="font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center;background:var(--bg-input);color:var(--text-secondary)">⏱ 0:00</span>
+      <span id="pomodoroDisplay" style="display:${getSetting('pomodoro', false) ? '' : 'none'};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
       <span id="timerDisplay" style="display:${timerMode === 'off' ? 'none' : ''};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
       <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleStarCurrent()">${starIcon}</button>
       <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--danger)" onclick="deleteCurrentCard()" title="删除此题">🗑️</button>
@@ -5950,6 +6052,8 @@ function doSpeakCard() {
 // ==================== 做题结果 ====================
 function showPracticeResult() {
   stopTimer();
+  if (practiceStopwatchInterval) { clearInterval(practiceStopwatchInterval); practiceStopwatchInterval = null; }
+  if (pomodoroInterval) { clearInterval(pomodoroInterval); pomodoroInterval = null; pomodoroActive = false; }
   document.body.classList.remove('focus-mode');
   const st = practiceState;
   const total = st.total;
@@ -7554,8 +7658,24 @@ function renderSettings() {
 
       (function() {
         if (!hasFeature('pomodoro')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 番茄钟模式</div><div class="setting-desc">需升级9.9元版解锁</div></div><span style="font-size:18px">🔒</span></div>';
-        return '<div class="setting-item"><div><div class="setting-label">🍅 番茄钟模式</div><div class="setting-desc">练习期间切屏3次自动暂停，保护专注力</div></div>' +
-          '<label class="toggle"><input type="checkbox" id="pomodoroToggle"' + (s.pomodoro ? ' checked' : '') + ' onchange="saveSetting(\'pomodoro\', this.checked)"><span class="slider"></span></label></div>';
+        var pd = getSetting('pomodoroDuration', 25);
+        var bd = getSetting('pomodoroBreak', 5);
+        var pomoOn = s.pomodoro ? true : false;
+        var h = '<div class="setting-item"><div><div class="setting-label">🍅 番茄钟模式</div><div class="setting-desc">专注计时+番茄乐园，完成计时收获番茄</div></div>' +
+          '<label class="toggle"><input type="checkbox" id="pomodoroToggle"' + (pomoOn ? ' checked' : '') + ' onchange="togglePomodoro(this.checked)"><span class="slider"></span></label></div>';
+        // 番茄钟设置（开启时显示）
+        h += '<div id="pomodoroSettings" style="display:' + (pomoOn ? 'block' : 'none') + ';margin-top:2px;padding:12px 14px;background:var(--bg-input);border-radius:10px">';
+        h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:13px;color:var(--text-secondary)">🍅 专注时长</span>' +
+          '<div style="display:flex;align-items:center;gap:4px"><input type="number" id="pomodoroDuration" value="' + pd + '" min="5" max="120" step="5" onchange="savePomodoroDuration(parseInt(this.value)||25)" style="width:56px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--bg-card);color:var(--text)"><span style="font-size:12px;color:var(--text-tertiary)">分钟</span></div></div>';
+        h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:13px;color:var(--text-secondary)">☕ 休息时长</span>' +
+          '<div style="display:flex;align-items:center;gap:4px"><input type="number" id="pomodoroBreak" value="' + bd + '" min="1" max="30" step="1" onchange="savePomodoroBreak(parseInt(this.value)||5)" style="width:56px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--bg-card);color:var(--text)"><span style="font-size:12px;color:var(--text-tertiary)">分钟</span></div></div>';
+        // 番茄乐园入口
+        var tomatoCount = (appData.settings || {}).tomatoGarden || 0;
+        h += '<div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border)">' +
+          '<span style="font-size:13px;color:var(--text-secondary)">🍅 番茄乐园</span>' +
+          '<span style="font-size:13px;font-weight:700;color:var(--text)">已收获 ' + tomatoCount + ' 个番茄 <span style="cursor:pointer;color:var(--primary);margin-left:8px" onclick="showTomatoGarden()">查看 →</span></span></div>';
+        h += '</div>';
+        return h;
       })() +    '</div></div>' +
 
     // 学习计划 section
@@ -7751,8 +7871,8 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v51</div></div></div>' +
-      '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v52</div></div></div>' +
+      '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
   var collapsed = s.collapsedSections || {};
@@ -7760,6 +7880,7 @@ function renderSettings() {
     if (collapsed[k]) applyCollapseState(k, true);
   });
   loadVoices();
+  setTimeout(function() { checkForUpdateDot(); }, 1000);
 }
 
 // 折叠/展开 section，状态持久化到 settings
@@ -7844,6 +7965,71 @@ function handleAvatarUpload(el) {
   };
   reader.readAsDataURL(file);
   el.value = '';
+}
+
+// ====== 番茄钟 ======
+function togglePomodoro(val) {
+  saveSetting('pomodoro', val);
+  var ps = document.getElementById('pomodoroSettings');
+  if (ps) ps.style.display = val ? 'block' : 'none';
+}
+function savePomodoroDuration(val) {
+  if (val < 5) val = 5; if (val > 120) val = 120;
+  document.getElementById('pomodoroDuration').value = val;
+  saveSetting('pomodoroDuration', val);
+}
+function savePomodoroBreak(val) {
+  if (val < 1) val = 1; if (val > 30) val = 30;
+  document.getElementById('pomodoroBreak').value = val;
+  saveSetting('pomodoroBreak', val);
+}
+function showTomatoGarden() {
+  var count = (appData.settings || {}).tomatoGarden || 0;
+  var ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.id = 'tomatoGardenModal';
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+  var tomatoesHtml = '';
+  if (count === 0) {
+    tomatoesHtml = '<div style="text-align:center;padding:40px 20px;color:var(--text-tertiary)"><div style="font-size:48px;margin-bottom:12px">🍅</div><div style="font-size:15px">还没有收获番茄</div><div style="font-size:13px;margin-top:4px">开启番茄钟，完成专注计时即可收获番茄</div></div>';
+  } else {
+    var rows = Math.ceil(count / 8);
+    tomatoesHtml = '<div style="text-align:center;padding:20px">';
+    for (var r = 0; r < rows; r++) {
+      tomatoesHtml += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:8px">';
+      for (var c = 0; c < 8 && (r * 8 + c) < count; c++) {
+        tomatoesHtml += '<span style="font-size:28px">🍅</span>';
+      }
+      tomatoesHtml += '</div>';
+    }
+    tomatoesHtml += '</div>';
+  }
+  ov.innerHTML = '<div style="background:var(--bg-card);border-radius:16px;padding:24px;max-width:380px;width:100%;max-height:80dvh;overflow-y:auto">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+      '<h3 style="margin:0;font-size:18px">🍅 番茄乐园</h3>' +
+      '<button onclick="document.getElementById(\'tomatoGardenModal\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;min-width:44px;min-height:44px">✕</button>' +
+    '</div>' +
+    '<div style="text-align:center;margin-bottom:12px;font-size:14px;color:var(--text-secondary)">累计收获：<b style="font-size:20px;color:var(--danger)">' + count + '</b> 个番茄</div>' +
+    tomatoesHtml +
+    '<div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-tertiary)">开启番茄钟，每完成一次专注计时 +1 🍅</div>' +
+  '</div>';
+  document.body.appendChild(ov);
+}
+
+// 检查更新红点：fetch version.json 对比本地版本
+function checkForUpdateDot() {
+  try {
+    fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r) { if (r.ok) return r.json(); throw new Error('no-version-file'); })
+      .then(function(data) {
+        if (data && data.version && data.version > APP_VERSION) {
+          var dot = document.getElementById('updateDot');
+          if (dot) { dot.style.display = 'inline-block'; dot.title = '有新版本 v' + data.version; }
+        }
+      })
+      .catch(function() { /* 无网络或无文件，忽略 */ });
+  } catch(e) {}
 }
 
 	function checkUpdate() {
