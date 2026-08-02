@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v42 · 小阮出品</title>
+<title>挖空背诵工具 v43 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -3631,7 +3631,7 @@ function showImportPreview(name, cards, stats) {
       '</div>' + warningHtml + '</div>';
   }
 
-  let html = `<button onclick="scrollPreviewToTop()" id="previewTopBtn" style="position:fixed;bottom:24px;right:20px;z-index:99999;width:44px;height:44px;border-radius:50%;background:var(--bg-card);border:2px solid var(--primary);font-size:20px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center" title="回到顶部">🔝</button>
+  let html = `<button onclick="scrollPreviewToTop()" id="previewTopBtn" style="position:fixed;top:20px;right:20px;z-index:99999;width:44px;height:44px;border-radius:50%;background:var(--bg-card);border:2px solid var(--primary);font-size:20px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center" title="回到顶部">🔝</button>
 <div class="modal" style="display:flex;flex-direction:column;max-height:88dvh">
     <div class="modal-header"><h2 class="modal-title" onclick="editPreviewTitle(this)" title="点击修改标题" style="cursor:pointer">预览：${escapeHtml(name)}</h2><button class="btn btn-ghost btn-sm" style="min-width:40px;padding:8px" onclick="closePreviewModal()">✕</button></div>
     <div id="previewScroll" style="overflow-y:auto;flex:1;min-height:0;padding:0 2px">
@@ -7741,7 +7741,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v42</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v43</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
