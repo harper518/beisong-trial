@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v41 · 小阮出品</title>
+<title>挖空背诵工具 v42 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -3649,7 +3649,6 @@ function showImportPreview(name, cards, stats) {
       <input type="number" id="previewJumpInput" min="1" placeholder="1" style="width:48px;padding:4px 8px;border:2px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;text-align:center" onkeydown="if(event.key==='Enter')jumpToPreviewCard()">
       <span style="font-size:12px;color:var(--text-secondary)">/ ${cards.length}</span>
       <button class="btn btn-sm btn-ghost" onclick="jumpToPreviewCard()" style="padding:4px 8px;font-size:11px">GO</button>
-      <button class="btn btn-sm btn-ghost" onclick="scrollPreviewToTop()" style="padding:4px 8px;font-size:11px">🔝 顶部</button>
       <span style="flex:1"></span>
       <span style="font-size:12px;color:var(--text-secondary)" id="problemCount"></span>
       <button class="btn btn-sm btn-ghost" onclick="jumpToProblemCard(-1)" style="padding:4px 8px;font-size:11px" title="上一个问题">⬆</button>
@@ -7742,7 +7741,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v41</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v42</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
