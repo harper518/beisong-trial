@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v47 · 小阮出品</title>
+<title>挖空背诵工具 v48 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -367,9 +367,9 @@ html{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   font-size:var(--font-size);line-height:1.6;color:var(--text);background:var(--bg);
   -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
-  min-height:100dvh;
+  min-height:100dvh;margin:0;padding:0;
 }
-body{max-width:480px;margin:0 auto;min-height:100dvh;padding-bottom:calc(72px + var(--safe-bottom));overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y}
+body{margin:0;padding:0;max-width:480px;margin-left:auto;margin-right:auto;min-height:100dvh;padding-bottom:calc(72px + var(--safe-bottom));overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y}
 input,textarea,select,button{font-family:inherit;font-size:inherit}
 input[type="text"],input[type="search"],textarea{user-select:text;-webkit-user-select:text}
 
@@ -445,7 +445,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .practice-card{background:var(--bg-card);border-radius:var(--radius);padding:14px 14px;box-shadow:var(--shadow-md);border:1px solid var(--border);min-height:100px;margin-bottom:10px;position:relative}
 .practice-card .card-text{font-size:var(--font-size-lg);line-height:2.0;word-break:break-word;overflow-wrap:break-word;overflow-x:hidden}
 .practice-card .blank-input{
-  display:inline-block;min-width:28px;max-width:80px;
+  display:inline-block;min-width:28px;max-width:240px;
   padding:2px 4px;border:none;border-bottom:2px dashed var(--blank-border);
   background:var(--blank-bg);border-radius:4px 4px 0 0;
   font-size:var(--font-size-lg);font-weight:500;line-height:1.5;
@@ -460,6 +460,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .practice-card .blank-input.revealed{
   border-bottom-color:var(--success);border-bottom-style:solid;
   background:var(--blank-revealed-bg);color:var(--blank-revealed-text);
+  max-width:none !important;text-align:left;
 }
 .practice-card .blank-input.peeked{
   max-width:none !important;min-width:auto;text-align:left;
@@ -469,10 +470,12 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .practice-card .blank-input.correct{
   border-bottom-color:var(--success);border-bottom-style:solid;
   background:var(--success-light);
+  max-width:none !important;text-align:left;
 }
 .practice-card .blank-input.wrong{
   border-bottom-color:var(--danger);border-bottom-style:solid;
   background:var(--danger-light);color:var(--danger);
+  max-width:none !important;text-align:left;
 }
 .practice-card .revealed-text{color:var(--blank-revealed-text);font-weight:700;padding:1px 3px;border-radius:3px;background:var(--blank-revealed-bg)}
 
@@ -5473,7 +5476,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     if (revealed) {
       ah += `<span class="revealed-text">${escNl(b.text)}</span>`;
     } else {
-      ah += `<input type="text" class="blank-input" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text).replace(/\n/g, ' ')}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
+      ah += `<input type="text" class="blank-input" size="${Math.max(b.text.length,2)}" data-cid="${card.id}" data-bidx="${i}" data-ans="${escapeHtml(b.text).replace(/\n/g, ' ')}" value="${escapeHtml(saved)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">`;
     }
     le = b.end;
   }
@@ -7747,7 +7750,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v47</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v48</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
