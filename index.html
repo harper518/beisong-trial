@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v44 · 小阮出品</title>
+<title>挖空背诵工具 v45 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1670,7 +1670,7 @@ function extractKeywords(text, count, seed) {
       // 中英文混合（如"DNA复制"）加分
       if (/[A-Za-z]/.test(phrase)) score += 6;
       // 概念后缀加分：以学科特征字结尾的词更可能是完整考点，长词加分更多确保"现代化"不挖成"现代"
-      if (/[性化法制论学观力体质感型式态物器术程期段点度率量数值系组群类种属科德育养践统义理]$/.test(phrase)) score += 5 + len;
+      if (/[性化法制论学观力体质感型式态物器术程期段点度率量数值系组群类种属科德育养践统义理识动惯求律念素]$/.test(phrase)) score += 5 + len;
       // 数字参与但不主导的词（如"3个"）适度加分
       if (/[\d一二三四五六七八九十百千万亿]/.test(phrase) && !/^\d+$/.test(phrase)) score += 3;
       // 得分点第1个字开头的词（通常是动词/动作词）大幅加分
@@ -1685,6 +1685,11 @@ function extractKeywords(text, count, seed) {
       if (techCount >= 2) score += 4;
       // 惩罚虚词
       score -= (phrase.match(/[的了是在和与或对中上下等所被把让向同及着过]/g) || []).length * 4;
+      // 四字固定搭配保护（如"严于律己""知行统一"）：含1个虚词但整体是学科概念的，加分防拆散
+      if (len === 4 && hasTechChar(phrase)) {
+        var _funcCount = (phrase.match(/[的了是在和与或对中上下等所被把让向同及着过于]/g) || []).length;
+        if (_funcCount === 1) score += 8;
+      }
       // 扣分：包含括号的短语（优先选括号内纯净内容）
       if (/[（）()]/.test(phrase)) score -= 25;
       // 随机扰动
@@ -7741,7 +7746,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v44</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v45</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
