@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v40 · 小阮出品</title>
+<title>挖空背诵工具 v41 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1652,7 +1652,7 @@ function extractKeywords(text, count, seed) {
   const rng = seed != null ? seededRandom(seed) : null;
   const candidates = [];
 
-  for (let len = 8; len >= 2; len--) {
+  for (let len = 12; len >= 2; len--) {
     for (let i = 0; i <= text.length - len; i++) {
       const phrase = text.substring(i, i + len);
       if (STOP_WORDS.has(phrase)) continue;
@@ -1669,8 +1669,8 @@ function extractKeywords(text, count, seed) {
       if (hasTechChar(phrase)) score += 12;
       // 中英文混合（如"DNA复制"）加分
       if (/[A-Za-z]/.test(phrase)) score += 6;
-      // 概念后缀加分：以学科特征字结尾的词更可能是考点
-      if (/[性化法制论学观力体质感型式态物器术程期段点度率量数值系组群类种属科]$/.test(phrase)) score += 5;
+      // 概念后缀加分：以学科特征字结尾的词更可能是完整考点，长词加分更多确保"现代化"不挖成"现代"
+      if (/[性化法制论学观力体质感型式态物器术程期段点度率量数值系组群类种属科德育养践]$/.test(phrase)) score += 5 + len;
       // 数字参与但不主导的词（如"3个"）适度加分
       if (/[\d一二三四五六七八九十百千万亿]/.test(phrase) && !/^\d+$/.test(phrase)) score += 3;
       // 得分点第1个字开头的词（通常是动词/动作词）大幅加分
@@ -7742,7 +7742,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v40</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v41</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()"><div><div class="setting-label">🔄 检查更新</div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
