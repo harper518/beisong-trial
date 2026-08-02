@@ -3998,6 +3998,7 @@ function mergeLineAt(idx, pos, section) {
     return; // 不是换行符
   }
   if (!card._undoSnapshot) saveUndoSnapshot(card);
+  card.fullText = (card.question || '') + '\n' + (card.answer || '');
   document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
   document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
 }
@@ -4013,6 +4014,7 @@ function unmergeLineAt(idx, pos, section) {
   if (section === 'q') card.question = text.substring(0, pos) + '\n' + text.substring(pos + 1);
   else card.answer = text.substring(0, pos) + '\n' + text.substring(pos + 1);
   if (!card._undoSnapshot) saveUndoSnapshot(card);
+  card.fullText = (card.question || '') + '\n' + (card.answer || '');
   document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
   document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
 }
@@ -4214,7 +4216,7 @@ function saveCardSelection(idx) {
   // 保存撤回快照（首次保存时）
   if (!card._undoSnapshot) saveUndoSnapshot(card);
 
-  const q = (card.question || '').trim();
+  const q = card.question || '';
   const rawA = card.answer || '';
   const answerStart = q.length + 1;
   if (!card.blanks) card.blanks = [];
@@ -5602,20 +5604,21 @@ function fmtAnswerSegLast(seg) {
 }
 
 function renderCardWithBlanks(card, revealed, hideQ) {
-  const q = card.question.trim();
-  let a = card.answer.trim();
+  const q = card.question || '';
+  let a = (card.answer || '').trim();
   // 答案首行与题目重复时跳过（fallback路径，fullText已在autoGenerateBlanks中处理）
+  const qTrim = q.trim();
   if (!card.fullText) {
     var aNl2 = a.indexOf('\n');
     if (aNl2 > 0) {
       var aFirstLine2 = a.substring(0, aNl2).trim();
-      if (aFirstLine2 === q || (aFirstLine2.length > 1 && q.includes(aFirstLine2)) || (q.length > 1 && aFirstLine2.includes(q))) {
+      if (aFirstLine2 === qTrim || (aFirstLine2.length > 1 && qTrim.includes(aFirstLine2)) || (qTrim.length > 1 && aFirstLine2.includes(qTrim))) {
         a = a.substring(aNl2 + 1).trim();
       }
     }
   }
   const text = card.fullText || q + '\n' + a;
-  const answerStart = q.length + 1; // +1 for \n
+  const answerStart = q.length + 1; // +1 for \n (use untrimmed length matching fullText)
 
   // 按区域分组空：题目区 vs 答案区
   const allBlanks = card.blanks || [];
