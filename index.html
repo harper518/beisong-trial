@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v66 · 小阮出品</title>
+<title>挖空背诵工具 v67 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -895,7 +895,7 @@ var TIER_PRICES = { basic: '¥3/年', pro: '¥9.9/年' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 120;
-var APP_VERSION = 66;
+var APP_VERSION = 67;
 var FREE_COLORS = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream'];
 var BASIC_COLORS = FREE_COLORS.concat(['sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral']);
 
@@ -1009,6 +1009,7 @@ function showTierCompare() {
 function activateCode(input) {
   var code = formatActivationCode(input);
   if (code.length < 14) { return showToast('❌ 激活码格式不正确'); }
+  if (window._track) window._track('upgradeClick');
   sha256Browser(code).then(function(hash) {
     // 检查管理码（硬编码，不走网络）
     if (ADMIN_HASHES[hash]) {
@@ -1062,6 +1063,7 @@ function startTrial(tier) {
   if (act[usedKey]) { showToast('该版本已试用过，每版本仅可试用一次'); return; }
   if (act._isTrial) { showToast('试用已在进行中'); return; }
   if (act.tier && act.tier !== 'free') { showToast('您已是付费用户，无需试用'); return; }
+  if (window._track) window._track('trialClick');
   var now = Date.now();
   act.tier = tier;
   act._isTrial = true;
@@ -4731,6 +4733,7 @@ function confirmImport() {
     saveData(appData);
     previewData = null; const m = $('previewModal'); if (m) m.remove();
     showToast(`导入成功！${cleaned.length} 题`);
+    if (window._track) window._track('importDone');
   }
   renderBanks();
 }
@@ -5075,6 +5078,7 @@ function selectHideQ(val, el) {
 function selectDrawMode(mode, el) {
   if (getTier() === 'free' && mode === 'random-norepeat') { return; }
   drawMode = mode;
+  if (window._track) window._track('modePick');
   document.querySelectorAll('#drawModeChips .chip').forEach(c => c.classList.remove('active'));
   if (el) el.classList.add('active');
   document.getElementById('drawModeDesc').textContent = {
@@ -5285,6 +5289,7 @@ function startPracticeSetup(bankId) {
 
 // ==================== 做题 - 开始 ====================
 function startPractice() {
+  if (window._track) window._track('roundStart');
   practiceStartTime = Date.now();
   practiceSwitches = 0;
   practiceElapsed = 0;
@@ -6175,6 +6180,7 @@ function speakCard() {
 }
 
 function doSpeakCard() {
+  if (window._track) window._track('voiceUse');
   const card = practiceState.cards[practiceState.index];
   if (!card) return;
   const ss = window.speechSynthesis;
@@ -6234,6 +6240,7 @@ function doSpeakCard() {
 
 // ==================== 做题结果 ====================
 function showPracticeResult() {
+  if (window._track) window._track('roundDone');
   stopTimer();
   if (practiceStopwatchInterval) { clearInterval(practiceStopwatchInterval); practiceStopwatchInterval = null; }
   if (pomodoroInterval) { clearInterval(pomodoroInterval); pomodoroInterval = null; pomodoroActive = false; }
@@ -8056,7 +8063,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v66</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v67</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -8536,6 +8543,8 @@ function clearAllData() {
   function send(evt) {
     fetch(TRACK_URL, { method: 'POST', body: JSON.stringify({ event: evt, tool: TOOL, deviceId: deviceId }), headers: { 'Content-Type': 'application/json' } }).catch(function(){});
   }
+  // 暴露全局埋点函数
+  window._track = send;
   try {
     send('pageView');
     if (window.matchMedia('(display-mode: standalone)').matches) { send('pwaOpen'); }
