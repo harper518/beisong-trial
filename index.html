@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v65 · 小阮出品</title>
+<title>挖空背诵工具 v66 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -883,7 +883,7 @@ var TIER_FEATURES = {
   basic: ['unlimitedBanks', 'unlimitedQuestions', 'randomNorepeat', 'perQuestionTimer', 'totalTimer',
           'hideQuestion', 'fullVoice', 'readModeSelect', 'shareFile', 'fullSr',
           'heatmap', 'dailySummary', 'wrongFirst', 'bankMerge', 'mixedBank',
-          '16colors', 'koujue', 'voiceRatePitch'],
+          '16colors', 'koujue', 'voiceRatePitch', 'startFrom'],
   pro:   ['mixedBank', 'focusMode', 'pomodoro', 'adaptiveDifficulty', 'achievements',
           'comboSystem', 'allColors', 'dailyInsight', 'avatar',
           'chapterHeatmap', 'categoryFilter', 'sprintMode', 'starCard',
@@ -895,7 +895,7 @@ var TIER_PRICES = { basic: '¥3/年', pro: '¥9.9/年' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 120;
-var APP_VERSION = 65;
+var APP_VERSION = 66;
 var FREE_COLORS = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream'];
 var BASIC_COLORS = FREE_COLORS.concat(['sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral']);
 
@@ -971,6 +971,7 @@ function showTierCompare() {
     '<tr><td style="text-align:left;padding:6px">题库数 / 题数</td><td>2库×120题</td><td>无限制</td><td>无限制</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">手动挖空</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">随机重复 / 顺序出题</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">顺序模式自选起始题号</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">随机不重复</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">每题限时 / 总时间</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">隐藏题目</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
@@ -2339,6 +2340,7 @@ let batchSize = appData.settings.roundSize != null ? appData.settings.roundSize 
 let categoryFilter = null; // null=全选，Set=选中分类
 let kjCategoryFilter = null; // 口诀页分类筛选
 let drawMode = 'random-norepeat';
+let startFrom = 0; // 0=自动（从上次进度继续），>0=从指定题号开始
 let hideQuestionStart = false;
 let timerMode = 'off'; // 'off' | 'perQuestion' | 'total'
 let timerSeconds = 75;
@@ -4855,6 +4857,16 @@ function renderPracticeSetup() {
     </div>`;
   }
 
+  // 起始题号（仅顺序模式，basic版起可用）
+  let startFromHtml = '';
+  if (drawMode === 'sequential') {
+    const locked = isTierLocked('startFrom');
+    startFromHtml = `<div id="startFromRow" style="display:flex;margin-top:8px;padding:8px 12px;background:var(--success-light, #ECFDF5);border-radius:8px;font-size:13px;align-items:center;gap:8px;opacity:${locked ? '0.4' : '1'};pointer-events:${locked ? 'none' : 'auto'}">
+      <span>起始题号：</span><input type="number" id="startFromInput" placeholder="自动" min="1" value="${startFrom > 0 ? startFrom : ''}" onchange="updateStartFrom()" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--bg-input);color:var(--text)"${locked ? ' disabled' : ''}>
+      <span style="font-size:11px;color:var(--text-secondary)">留空从上次进度继续</span>
+    </div>`;
+  }
+
   c.innerHTML = `<div style="text-align:center;padding:8px 0 4px"><h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em">开始刷题</h1></div>
     <div class="card" style="padding:20px">
       <div class="form-group">
@@ -4896,6 +4908,7 @@ function renderPracticeSetup() {
         </div>
         <p class="form-hint" id="drawModeDesc">随机抽题不重复，全部做完才重置</p>
         ${seqHtml}
+        ${startFromHtml}
       </div>
       <div class="form-group">
         <label class="form-label">🌸 题目显示</label>
@@ -5072,6 +5085,25 @@ function selectDrawMode(mode, el) {
   const seqDiv = document.getElementById('seqInfo');
   if (seqDiv) seqDiv.style.display = mode === 'sequential' ? '' : 'none';
   else if (mode === 'sequential') onBankChange(false);
+  // 起始题号行
+  const sfRow = document.getElementById('startFromRow');
+  if (mode === 'sequential') {
+    if (sfRow) {
+      sfRow.style.display = 'flex';
+    } else {
+      onBankChange(false);
+    }
+  } else {
+    if (sfRow) sfRow.style.display = 'none';
+  }
+}
+
+function updateStartFrom() {
+  var input = document.getElementById('startFromInput');
+  if (!input) return;
+  var val = parseInt(input.value);
+  if (isNaN(val) || val < 1) { startFrom = 0; input.value = ''; }
+  else { startFrom = val; }
 }
 
 function changeSetupDensity(val, el) {
@@ -5097,8 +5129,22 @@ function onBankChange(resetFilter = true) {
     </div>`;
     if (seqDiv) seqDiv.outerHTML = html;
     else { const chips = document.getElementById('drawModeChips'); if (chips) chips.parentElement.insertAdjacentHTML('afterend', html); }
-  } else if (seqDiv) {
-    seqDiv.style.display = 'none';
+
+    // 起始题号行
+    const sfRow = document.getElementById('startFromRow');
+    if (!sfRow) {
+      const locked = isTierLocked('startFrom');
+      const sfHtml = `<div id="startFromRow" style="display:flex;margin-top:8px;padding:8px 12px;background:var(--success-light, #ECFDF5);border-radius:8px;font-size:13px;align-items:center;gap:8px;opacity:${locked ? '0.4' : '1'};pointer-events:${locked ? 'none' : 'auto'}">
+        <span>起始题号：</span><input type="number" id="startFromInput" placeholder="自动" min="1" value="${startFrom > 0 ? startFrom : ''}" onchange="updateStartFrom()" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--bg-input);color:var(--text)"${locked ? ' disabled' : ''}>
+        <span style="font-size:11px;color:var(--text-secondary)">留空从上次进度继续</span>
+      </div>`;
+      const seqEl = document.getElementById('seqInfo');
+      if (seqEl) seqEl.insertAdjacentHTML('afterend', sfHtml);
+    }
+  } else {
+    if (seqDiv) seqDiv.style.display = 'none';
+    const sfRow = document.getElementById('startFromRow');
+    if (sfRow) sfRow.style.display = 'none';
   }
   // 更新分类筛选
   renderCategoryFilter(bankId);
@@ -5382,16 +5428,23 @@ function startPractice() {
   const count = batchSize === 0 ? pool.length : Math.min(batchSize, pool.length);
   let selected;
 
+  var _actualStartPos = 0; // 记录本轮实际起始位置，用于进度保存
   if (drawMode === 'sequential') {
-    const pos = getSeqProgress(bankId);
-    if (pos >= pool.length) {
-      if (!confirm('题库已全部做完一轮，是否重置进度从头开始？')) return;
-      appData.seqProgress[bankId] = 0;
-      saveData(appData);
-      selected = [...pool.slice(0, count)];
+    var pos;
+    if (!isTierLocked('startFrom') && startFrom > 0) {
+      pos = startFrom - 1; // 用户填的是从1开始的题号，转成0-based索引
+      if (pos >= pool.length) { showToast('起始题号超出题库范围（共' + pool.length + '题）'); return; }
     } else {
-      selected = [...pool.slice(pos, Math.min(pos + count, pool.length))];
+      pos = getSeqProgress(bankId);
+      if (pos >= pool.length) {
+        if (!confirm('题库已全部做完一轮，是否重置进度从头开始？')) return;
+        appData.seqProgress[bankId] = 0;
+        saveData(appData);
+        pos = 0;
+      }
     }
+    _actualStartPos = pos;
+    selected = [...pool.slice(pos, Math.min(pos + count, pool.length))];
   } else if (drawMode === 'random-norepeat') {
     if (!appData.doneSets) appData.doneSets = {};
     if (!appData.doneSets[bankId]) appData.doneSets[bankId] = [];
@@ -5442,7 +5495,8 @@ function startPractice() {
     total: selected.length,
     _streak: 0,
     _roundCorrect: 0, _roundWrong: 0, _newlyMastered: [],
-    answersHidden: false
+    answersHidden: false,
+    _actualStartPos: _actualStartPos
   };
 
   $('practiceSetup').style.display = 'none';
@@ -6217,9 +6271,9 @@ function showPracticeResult() {
 
   // 更新顺序进度（仅非冲刺模式）
   if (!isSprint && st.mode === 'sequential') {
-    const pos = getSeqProgress(st.bankId);
+    const startPos = (st._actualStartPos !== undefined) ? st._actualStartPos : getSeqProgress(st.bankId);
         const filteredLen = getFilteredCards(bank).length;
-    appData.seqProgress[st.bankId] = Math.min(pos + total, filteredLen || (bank && bank.cards ? bank.cards.length : 0) || 0);
+    appData.seqProgress[st.bankId] = Math.min(startPos + total, filteredLen || (bank && bank.cards ? bank.cards.length : 0) || 0);
   }
   // 更新随机不重复的已完成集
   if (!isSprint && st.mode === 'random-norepeat') {
@@ -8002,7 +8056,7 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v65</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v66</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
