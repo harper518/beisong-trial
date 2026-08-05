@@ -1,5 +1,5 @@
 /* ====== 挖空背诵工具 Service Worker ====== */
-var CACHE_NAME = 'beisong-trial-v67';
+var CACHE_NAME = 'beisong-trial-v68';
 
 // CDN 静态资源（缓存优先）
 var CDN_URLS = [
@@ -55,9 +55,16 @@ self.addEventListener('fetch', function(e) {
     return;
   }
 
-  // 自有文件（HTML/manifest/icon）：网络优先，确保总是最新
+  // 自有文件：网络优先，成功后自动缓存，网络失败时回退缓存
+  // 首次访问成功后，下次即使 GitHub Pages 不可达也能从缓存打开
   e.respondWith(
-    fetch(e.request).catch(function() {
+    fetch(e.request).then(function(response) {
+      if (response && response.status === 200) {
+        var cloned = response.clone();
+        caches.open(CACHE_NAME).then(function(c) { c.put(e.request, cloned); });
+      }
+      return response;
+    }).catch(function() {
       return caches.match(e.request).then(function(r) { return r || Response.error(); });
     })
   );
