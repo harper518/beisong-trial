@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v68 · 小阮出品</title>
+<title>挖空背诵工具 v70 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -796,10 +796,12 @@ body.focus-mode .page.active { padding-top:env(safe-area-inset-top,12px); }
 body.focus-mode #practiceActive .btn-ghost,
 body.focus-mode #practiceActive .btn-icon { display:none !important; }
 body.focus-mode #practiceActive .flex.justify-between { display:none !important; }
-#focusExitBtn { display:none; position:fixed; top:12px; left:12px; z-index:100; width:44px; height:44px; border-radius:50%; background:rgba(0,0,0,.25); color:#fff; border:none; font-size:20px; cursor:pointer; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+#focusExitBtn { display:none; position:fixed; top:12px; right:12px; z-index:100; width:44px; height:44px; border-radius:50%; background:rgba(0,0,0,.25); color:#fff; border:none; font-size:20px; cursor:pointer; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
 body.focus-mode #focusExitBtn { display:flex; }
-body.focus-mode #cardText { font-size:calc(var(--font-size) + 2px); line-height:2; }
-body.focus-mode #cardText .blank-input { font-size:calc(var(--font-size) + 2px); padding:10px 6px; }
+#focusStarBtn { display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:100; width:44px; height:44px; border-radius:50%; background:rgba(0,0,0,.25); color:#fff; border:none; font-size:22px; cursor:pointer; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+body.focus-mode #focusStarBtn { display:flex; }
+body.focus-mode #cardText { line-height:2; }
+/* 专注模式下挖空框保持和正常模式一致 */
 </style>
 </head>
 <body>
@@ -838,9 +840,7 @@ body.focus-mode #cardText .blank-input { font-size:calc(var(--font-size) + 2px);
     <button class="btn btn-outline" onclick="showMergeModal()" style="padding:10px 18px">🔀 合并</button>
   </div>
   <div id="banksContainer"></div>
-  <input type="file" id="csvFileInput" class="file-input" accept=".csv,.txt,.md" onchange="handleFileImport(this)">
-  <input type="file" id="wordFileInput" class="file-input" accept=".docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword" onchange="handleWordImport(this)">
-  <input type="file" id="pdfFileInput" class="file-input" accept=".pdf,application/pdf" onchange="handlePdfImport(this)">
+  <input type="file" id="unifiedFileInput" class="file-input" accept=".csv,.txt,.md,.docx,.doc,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword" onchange="handleUnifiedFileImport(this)">
   <input type="file" id="fileQuestionsInput" class="file-input" accept=".csv,.txt,.md" onchange="handleSplitFileImportQ(this)">
   <input type="file" id="fileAnswersInput" class="file-input" accept=".csv,.txt,.md" onchange="handleSplitFileImportA(this)">
   <input type="file" id="avatarFileInput" class="file-input" accept="image/*" onchange="handleAvatarUpload(this)">
@@ -849,6 +849,7 @@ body.focus-mode #cardText .blank-input { font-size:calc(var(--font-size) + 2px);
 <!-- ====== 做题页面 ====== -->
 <div class="page" id="page-practice">
   <button id="focusExitBtn" onclick="backToPracticeSetup()" title="退出专注模式">✕</button>
+  <button id="focusStarBtn" onclick="toggleStarCurrent()" title="收藏">☆</button>
   <div id="practiceSetup"></div>
   <div id="practiceActive" style="display:none"></div>
   <div id="practiceResult" style="display:none"></div>
@@ -895,7 +896,7 @@ var TIER_PRICES = { basic: '¥3/年', pro: '¥9.9/年' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 120;
-var APP_VERSION = 68;
+var APP_VERSION = 70;
 var FREE_COLORS = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream'];
 var BASIC_COLORS = FREE_COLORS.concat(['sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral']);
 
@@ -1211,34 +1212,21 @@ function getSetting(key, defVal) {
 
 function saveSetting(key, value) { appData.settings[key] = value; saveData(appData); applySettings(); }
 
-function saveEveningStart(value) {
-  appData.settings.eveningStart = value || null;
-  saveData(appData);
-}
+function saveEveningStart(value) { /* v70 已移除晚间复习模式 */ }
 
-// 检查晚间复习模式
-function checkEveningMode() {
-  var eveningStart = (appData.settings || {}).eveningStart;
-  if (!eveningStart) return;
-  var now = new Date();
-  var nowHour = now.getHours();
-  var startHour = parseInt(eveningStart.split(":")[0]);
-  var today = now.toISOString().substring(0, 10);
-  var lastShown = sessionStorage.getItem("evening_shown_date");
-  if (lastShown === today) return;
-  if (nowHour >= startHour || nowHour < 5) {
-    sessionStorage.setItem("evening_shown_date", today);
-    setTimeout(function() {
-      showToast("🌙 睡前记忆黄金期！大脑在睡眠中会以20倍速重播记忆痕迹，现在学的内容更牢 💤");
-    }, 1500);
-  }
-}
+// 检查晚间复习模式（v70 已移除）
+function checkEveningMode() { /* v70 已移除晚间复习模式 */ }
 
 function saveExamDate(value) {
   appData.settings.examDate = value || null;
   saveData(appData);
   renderSettings();
   renderBanks(); // 刷新首页banner
+}
+
+function saveAuthorNote(value) {
+  appData.settings.authorNote = value || '';
+  debouncedSaveData(appData);
 }
 
 function saveDailyTarget(value) {
@@ -1389,6 +1377,69 @@ function getChapterStats(bankId) {
   return result;
 }
 
+function showChapterManager(bankId) {
+  if (!hasFeature('chapterHeatmap')) return;
+  var bank = appData.banks[bankId];
+  if (!bank) return;
+  var stats = getChapterStats(bankId);
+  var cards = bank.cards || [];
+  if (!stats.length) { showToast('暂无章节数据'); return; }
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:480px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:80dvh;overflow-y:auto;padding:20px">' +
+    '<h3 style="margin:0 0 8px;font-size:18px">⚙️ 章节管理</h3>' +
+    '<p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">' + escapeHtml(bank.name) + ' · 共 ' + stats.length + ' 个章节</p>';
+  for (var i = 0; i < stats.length; i++) {
+    var s = stats[i];
+    var cid = 'ch_' + i;
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">' +
+      '<span style="flex:1;font-size:14px;font-weight:500">' + escapeHtml(s.name) + ' <span style="color:var(--text-tertiary);font-size:12px">(' + s.total + '题)</span></span>' +
+      '<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:4px 8px" onclick="renameChapter(\'' + bankId + '\',\'' + escapeHtml(s.name).replace(/'/g,"\\'") + '\',this)">✏️ 重命名</button>' +
+      (i > 0 ? '<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:4px 8px;color:var(--danger)" onclick="mergeChapterInto(\'' + bankId + '\',\'' + escapeHtml(s.name).replace(/'/g,"\\'") + '\',\'' + escapeHtml(stats[0].name).replace(/'/g,"\\'") + '\',this)">📦 合并</button>' : '') +
+      '</div>';
+  }
+  html += '<div style="margin-top:16px"><button class="btn btn-primary btn-block" onclick="showNewChapterInput(\'' + bankId + '\',this)" style="font-size:14px">➕ 新建章节</button></div>';
+  html += '</div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
+
+function renameChapter(bankId, oldName, btn) {
+  var newName = prompt('重命名章节「' + oldName + '」为：', oldName);
+  if (!newName || newName.trim() === oldName || !newName.trim()) return;
+  newName = newName.trim();
+  var bank = appData.banks[bankId];
+  var cards = bank.cards || [];
+  var count = 0;
+  for (var i = 0; i < cards.length; i++) {
+    if ((cards[i].chapter || '未分类') === oldName) { cards[i].chapter = newName; count++; }
+  }
+  saveData(appData);
+  showToast('✅ 已更新 ' + count + ' 题 → 「' + newName + '」');
+  btn.closest('.modal-overlay').remove();
+}
+
+function mergeChapterInto(bankId, fromName, toName, btn) {
+  if (!confirm('将「' + fromName + '」的全部题目合并到「' + toName + '」？\n此操作不可撤销。')) return;
+  var bank = appData.banks[bankId];
+  var cards = bank.cards || [];
+  var count = 0;
+  for (var i = 0; i < cards.length; i++) {
+    if ((cards[i].chapter || '未分类') === fromName) { cards[i].chapter = toName; count++; }
+  }
+  saveData(appData);
+  showToast('✅ 已合并 ' + count + ' 题 → 「' + toName + '」');
+  btn.closest('.modal-overlay').remove();
+}
+
+function showNewChapterInput(bankId, btn) {
+  var name = prompt('请输入新章节名称：');
+  if (!name || !name.trim()) return;
+  showToast('✅ 章节「' + name.trim() + '」已创建（导入题目时可指定此章节）');
+  // 章节是通过导入时设置的，这里只是提示用户
+  btn.closest('.modal-overlay').remove();
+}
+
 function getChapterRateColor(rate) {
   if (rate >= 0.8) return 'green';
   if (rate >= 0.6) return 'yellow';
@@ -1506,10 +1557,11 @@ function startSprintMode() {
   if (!hasFeature('sprintMode')) { return; }
   var pool = getSprintCards();
   if (!pool.length) { showToast('没有需要冲刺的题目，继续加油！'); return; }
-  // 切换到做题页，使用冲刺模式
+  // 切换到做题页并直接开始
   sessionStorage.setItem('sprintMode', '1');
   sessionStorage.setItem('sprintPool', JSON.stringify(pool.map(function(x) { return { id: x.card.id, bankId: x.bankId, bankName: x.bankName }; })));
   switchTab('practice');
+  setTimeout(function() { startPractice(); }, 100);
 }
 
 // ==================== 章节掌握度视图 ====================
@@ -1521,7 +1573,7 @@ function renderChapterHeatmap(bankId) {
   if (!bank) return '<div class="empty"><span class="icon">📊</span><h3>题库不存在</h3></div>';
   var stats = getChapterStats(bankId);
   if (!stats.length) return '<div class="empty"><span class="icon">📊</span><h3>暂无章节数据</h3><p>题库卡片未设置章节信息</p></div>';
-  var html = '<div style="margin-bottom:6px;font-size:13px;color:var(--text-tertiary)">📊 ' + escapeHtml(bank.name) + ' · 章节掌握度</div>';
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:13px;color:var(--text-tertiary)">📊 ' + escapeHtml(bank.name) + ' · 章节掌握度</span>' + (hasFeature('chapterHeatmap') ? '<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();showChapterManager(\'' + bankId + '\')" style="font-size:12px;padding:4px 10px">⚙️ 章节管理</button>' : '') + '</div>';
   for (var i = 0; i < stats.length; i++) {
     var s = stats[i];
     var rate = s.total > 0 ? s.mastered / s.total : 0;
@@ -2788,6 +2840,7 @@ function renderBanks() {
   var daysLeft = getExamDaysLeft();
   var todayCompleted = getTodayCompleted();
   var dailyTarget = getDailyTarget();
+  // 考试倒计时（仅设置了考试日期时显示）
   if (daysLeft !== null) {
     var bannerClass = daysLeft > 30 ? 'green' : daysLeft > 7 ? 'yellow' : daysLeft > 0 ? 'red' : 'gray';
     var bannerEmoji = daysLeft > 30 ? '📅' : daysLeft > 7 ? '📅' : daysLeft > 0 ? '🚨' : '✅';
@@ -2797,21 +2850,22 @@ function renderBanks() {
       var pct = Math.min(100, Math.round((todayCompleted / dailyTarget) * 100));
       progressHtml = '<div class="exam-banner-progress"><div class="exam-banner-progress-fill" style="width:' + pct + '%"></div></div>';
     }
-    var todayDur = getTodayDuration();
-    var todaySw = getTodaySwitches();
-    var dailyStatsHtml = '';
-    if (todayDur > 0 || todaySw > 0 || dailyTarget > 0) {
-      var parts = [];
-      if (dailyTarget > 0) parts.push('今日已完成 ' + todayCompleted + '/' + dailyTarget + ' 题' + (todayCompleted >= dailyTarget ? ' ✅' : ''));
-      if (todayDur > 0) parts.push('⏱ ' + fmtDuration(todayDur));
-      if (todaySw > 0) parts.push('📱 切屏 ' + todaySw + ' 次');
-      dailyStatsHtml = '<div class="exam-banner-sub">' + parts.join(' · ') + '</div>';
-    }
     examBannerHtml = '<div class="exam-banner ' + bannerClass + '" onclick="switchTab(\'practice\')">' +
       '<div class="exam-banner-main">' +
         '<div class="exam-banner-title">' + bannerEmoji + ' ' + bannerText + '</div>' +
       '</div>' +
     '</div>';
+  }
+  // 今日学习统计（始终显示）
+  var todayDur = getTodayDuration();
+  var todaySw = getTodaySwitches();
+  var dailyStatsHtml = '';
+  if (todayDur > 0 || todaySw > 0 || dailyTarget > 0) {
+    var parts = [];
+    if (dailyTarget > 0) parts.push('今日已完成 ' + todayCompleted + '/' + dailyTarget + ' 题' + (todayCompleted >= dailyTarget ? ' ✅' : ''));
+    if (todayDur > 0) parts.push('⏱ ' + fmtDuration(todayDur));
+    if (todaySw > 0) parts.push('📱 切屏 ' + todaySw + ' 次');
+    dailyStatsHtml = '<div style="padding:8px 14px;margin-bottom:8px;border-radius:12px;background:var(--bg-card);font-size:13px;color:var(--text-secondary);text-align:center">' + parts.join(' · ') + '</div>';
   }
   // 冲刺入口（始终显示，或考试30天内强调显示）
   var sprintHtml = '';
@@ -2832,7 +2886,7 @@ function renderBanks() {
   // 全局搜索栏
   var totalCards = 0;
   banks.forEach(function(b) { totalCards += b.cards.length; });
-  var searchHtml = examBannerHtml + sprintHtml + '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
+  var searchHtml = examBannerHtml + sprintHtml + dailyStatsHtml + '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
   c.innerHTML = searchHtml;
     c.innerHTML += banks.map((b, idx) => {
     const isFirst = idx === 0;
@@ -2852,6 +2906,7 @@ function renderBanks() {
         <button class="btn-icon" onclick="event.stopPropagation();editBank('${b.id}')" title="编辑挖空">✏️</button>
         <button class="btn-icon" onclick="event.stopPropagation();exportBank('${b.id}')" title="导出文本">📤</button>
         <button class="btn-icon" onclick="event.stopPropagation();exportBankFull('${b.id}')" title="导出含挖空">💾</button>
+        <button class="btn-icon" onclick="event.stopPropagation();exportBankBlanksHidden('${b.id}')" title="导出隐藏挖空">📝</button>
         <button class="btn-icon" onclick="event.stopPropagation();deleteBankConfirm('${b.id}')" title="删除">🗑️</button>
       </div>
     </div>`;
@@ -2988,6 +3043,36 @@ function exportBankFull(id) {
   showExportModal(bank.name + '（挖空）', lines.join('\n'));
 }
 
+function exportBankBlanksHidden(id) {
+  if (!hasFeature('shareFile')) { showToast('基础版及以上支持导出，请升级版本'); return; }
+  const bank = appData.banks[id];
+  if (!bank) return;
+  // 导出为纯文本，挖空处用 _ 代替原文
+  const lines = [];
+  for (const c of bank.cards) {
+    const q = c.question.trim();
+    const a = c.answer.trim();
+    const blanks = (c.blanks || []).filter(b => !b._combined).sort((a, b) => a.start - b.start);
+    if (!blanks.length) { lines.push(q + '|' + a); continue; }
+    const ft = c.fullText || q + '\n' + a;
+    const aStart = q.length + 1;
+    let out = '', p = aStart;
+    for (const b of blanks) {
+      // 根据原文长度生成下划线
+      const len = (b.text || '').length;
+      let uline;
+      if (len <= 2) uline = '___';
+      else if (len <= 6) uline = '_____';
+      else uline = '_'.repeat(Math.ceil(len * 0.7));
+      out += ft.substring(p, b.start) + uline;
+      p = b.end;
+    }
+    out += ft.substring(p);
+    lines.push(q + '|' + out.substring(aStart));
+  }
+  showExportModal(bank.name + '（挖空隐藏）', lines.join('\n'));
+}
+
 // ==================== 导入 ====================
 var _importFormat = 'auto';
 function showImportModal() {
@@ -3008,14 +3093,13 @@ function showImportModal() {
       '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="pasteFromTextarea(\'importTextarea\')">📋 粘贴</button>' +
       '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="copyFromTextarea(\'importTextarea\')">📝 复制</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:12px;flex:1;color:var(--danger)" onclick="clearTextareaById(\'importTextarea\')">🗑 清空</button>' +
-      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="document.getElementById(\'csvFileInput\').click()">📂 上传</button>' +
+      '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="document.getElementById(\'unifiedFileInput\').click()">📂 上传</button>' +
     '</div>' +
     '<div class="flex gap-6 mt-6" style="align-items:center;flex-wrap:wrap">' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanEmptyLines()">🧹 去空行</button>' +
       '<button class="btn btn-sm desktop-only" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="pasteRichText()">📋 富文本</button>' +
-      '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="document.getElementById(\'wordFileInput\').click()">📄 Word</button>' +
-	      '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="document.getElementById(\'pdfFileInput\').click()">📄 PDF</button>' +
+      '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="document.getElementById(\'unifiedFileInput\').click()">📂 上传文件</button>' +
       '<span style="flex:1"></span>' +
     '</div>' +
     '<div class="flex gap-6 mt-6" style="align-items:center">' +
@@ -3129,6 +3213,24 @@ async function handleSplitFileImportA(el) {
   var ta = document.getElementById('importAnswers');
   if (ta) ta.value = text;
   showToast('答案文件已加载（' + text.length + ' 字符）');
+  el.value = '';
+}
+
+// 统一文件导入入口：自动检测格式并分发到对应 handler
+async function handleUnifiedFileImport(el) {
+  var file = el.files[0]; if (!file) return;
+  var name = file.name.toLowerCase();
+  var ext = name.substring(name.lastIndexOf('.'));
+  // 构造一个类似 input 的临时对象传给各 handler
+  var fakeEl = { files: [file], value: '' };
+  if (ext === '.docx' || ext === '.doc') {
+    handleWordImport(fakeEl);
+  } else if (ext === '.pdf') {
+    handlePdfImport(fakeEl);
+  } else {
+    // .txt, .csv, .md 等文本格式
+    handleFileImport(fakeEl);
+  }
   el.value = '';
 }
 
@@ -5550,7 +5652,7 @@ function renderPracticeCard() {
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()" style="padding:4px 8px;font-size:18px" title="返回">🏠</button>
       <span style="font-size:14px;font-weight:700;color:var(--text)">${cur} / ${total}</span>
       ${(st._isSprint || st._multiBanks) ? '<span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (st._cardBankMap && st._cardBankMap[st.index] ? st._cardBankMap[st.index].bankName : (st._isSprint ? '冲刺' : '混合')) + '</span>' : ''}
-      <span id="stopwatchDisplay" style="font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center;background:var(--bg-input);color:var(--text-secondary)">⏱ 0:00</span>
+      <span id="stopwatchDisplay" style="display:${timerMode==='off'?'none':''};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center;background:var(--bg-input);color:var(--text-secondary)">⏱ 0:00</span>
       <span id="pomodoroDisplay" style="display:${getSetting('pomodoro', false) ? '' : 'none'};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
       <span id="timerDisplay" style="display:${timerMode === 'off' ? 'none' : ''};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
       <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleStarCurrent()">${starIcon}</button>
@@ -5651,6 +5753,9 @@ function renderPracticeCard() {
       });
     });
   }
+  // 更新专注模式收藏按钮图标
+  var fsb = document.getElementById('focusStarBtn');
+  if (fsb) fsb.textContent = card.starred ? '⭐' : '☆';
 }
 
 // 在 ①②③ 序号前插入换行（保留序号不被挖空吃掉）
@@ -6391,16 +6496,27 @@ function showInfoModal(title, htmlMsg, btnText) {
 function switchManualTab(tab) {
   var quickEl = document.getElementById('manualTabQuick');
   var fullEl = document.getElementById('manualTabFull');
+  var authorEl = document.getElementById('manualTabAuthor');
   var tabs = document.querySelectorAll('.manual-tab');
+  // 隐藏所有
+  if (quickEl) quickEl.style.display = 'none';
+  if (fullEl) fullEl.style.display = 'none';
+  if (authorEl) authorEl.style.display = 'none';
+  // 重置所有 tab 按钮
+  for (var t = 0; t < tabs.length; t++) {
+    tabs[t].style.background = 'transparent';
+    tabs[t].style.color = 'var(--text-secondary)';
+    tabs[t].style.fontWeight = '400';
+  }
+  // 激活目标 tab
   if (tab === 'quick') {
     if (quickEl) quickEl.style.display = '';
-    if (fullEl) fullEl.style.display = 'none';
     if (tabs[0]) { tabs[0].style.background = 'var(--primary)'; tabs[0].style.color = '#fff'; tabs[0].style.fontWeight = '600'; }
-    if (tabs[1]) { tabs[1].style.background = 'transparent'; tabs[1].style.color = 'var(--text-secondary)'; tabs[1].style.fontWeight = '400'; }
+  } else if (tab === 'author') {
+    if (authorEl) { authorEl.style.display = ''; authorEl.innerHTML = '<div style="line-height:1.9;padding:4px 0">' + (appData.settings.authorNote || '作者还没有留下任何话...') + '</div>'; }
+    if (tabs[2]) { tabs[2].style.background = 'var(--primary)'; tabs[2].style.color = '#fff'; tabs[2].style.fontWeight = '600'; }
   } else {
-    if (quickEl) quickEl.style.display = 'none';
     if (fullEl) fullEl.style.display = '';
-    if (tabs[0]) { tabs[0].style.background = 'transparent'; tabs[0].style.color = 'var(--text-secondary)'; tabs[0].style.fontWeight = '400'; }
     if (tabs[1]) { tabs[1].style.background = 'var(--primary)'; tabs[1].style.color = '#fff'; tabs[1].style.fontWeight = '600'; }
   }
 }
@@ -6527,7 +6643,7 @@ function showManualMenu() {
   ov.innerHTML = '<div class="modal" style="animation:none;max-width:560px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:0;border-radius:var(--radius);max-height:88dvh;display:flex;flex-direction:column">' +
     '<div style="padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center">' +
       '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0"><h3 style="font-size:18px;margin:0;white-space:nowrap">📖 使用说明</h3>' +
-      '<div style="display:flex;background:var(--bg-input);border-radius:8px;padding:3px;flex-shrink:0"><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:var(--primary);color:#fff;font-weight:600;min-height:30px;transition:all .15s" onclick="switchManualTab(\'quick\')">⚡ 速览</button><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:transparent;color:var(--text-secondary);min-height:30px;transition:all .15s" onclick="switchManualTab(\'full\')">📋 详细</button></div></div>' +
+      '<div style="display:flex;background:var(--bg-input);border-radius:8px;padding:3px;flex-shrink:0"><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:var(--primary);color:#fff;font-weight:600;min-height:30px;transition:all .15s" onclick="switchManualTab(\'quick\')">⚡ 速览</button><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:transparent;color:var(--text-secondary);min-height:30px;transition:all .15s" onclick="switchManualTab(\'full\')">📋 详细</button><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:transparent;color:var(--text-secondary);min-height:30px;transition:all .15s" onclick="switchManualTab(\'author\')">💬 作者</button></div></div>' +
       '<button class="btn btn-ghost btn-sm" onclick="this.closest(\'.modal-overlay\').remove()" style="font-size:20px;padding:4px 8px;min-width:44px;min-height:44px;flex-shrink:0">✕</button>' +
     '</div>' +
     // ⚡ 速览版
@@ -6824,6 +6940,10 @@ function showManualMenu() {
       '</div>' +
 
     '</div>' +
+    // 💬 作者有话说 tab
+    '<div id="manualTabAuthor" style="overflow-y:auto;flex:1;padding:16px 18px 24px;font-size:14px;line-height:1.7;color:var(--text);display:none">' +
+      '<div style="line-height:1.9;padding:4px 0">' + (appData.settings.authorNote || '作者还没有留下任何话...') + '</div>' +
+    '</div>' +
   '</div>';
   document.body.appendChild(ov);
   ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
@@ -6897,7 +7017,7 @@ function renderBrowseStart() {
     </button>
   </div>
   <div style="margin-bottom:10px">
-    <input type="search" id="browseSearchInput" placeholder="🔍 搜索题目..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doBrowseSearch()">
+    <input type="search" id="browseSearchInput" placeholder="🔍 只搜当前题库" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doBrowseSearch()">
   </div>
   <div class="browse-tabs" id="browseTabs">
     <button class="browse-tab active" id="browseTabList" onclick="switchBrowseTab('list')">📋 题目列表</button>
@@ -6988,7 +7108,7 @@ function changeBrowseBank() {
   var kjCount = bank.cards.filter(function(c) { return c.koujue; }).length;
   browseState = { bankId: bankId, bankName: bank.name, cards: bank.cards, index: 0, view: 'list', filter: 'all', starSub: 'all', searchQuery: '', _filteredCards: bank.cards, answersHidden: false };
   var c = $('browseContainer');
-  c.innerHTML = '<div class="flex justify-between items-center mb-10"><h1 style="font-size:20px;font-weight:800">📖 目录</h1><input type="hidden" id="browseBankSelect" value="' + bankId + '"><button class="btn btn-ghost btn-sm" onclick="showBankPicker(document.getElementById(\'browseBankSelect\').value, function(bid){document.getElementById(\'browseBankSelect\').value=bid;changeBrowseBank()})" style="font-size:13px">' + escapeHtml(bank.name) + ' ▾</button></div><div style="margin-bottom:10px"><input type="search" id="browseSearchInput" placeholder="🔍 搜索题目..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doBrowseSearch()"></div><div class="browse-tabs" id="browseTabs"><button class="browse-tab active" id="browseTabList" onclick="switchBrowseTab(\'list\')">📋 题目列表</button><button class="browse-tab" id="browseTabChapters" onclick="switchBrowseTab(\'chapters\')">📊 章节掌握度</button></div><div id="browseTabContent" style="display:none"></div><div id="browseFilterArea"><div class="chip-group mb-12" id="browseFilterChips"><span class="chip active" data-filter="all" onclick="setBrowseFilter(\'all\', this)">全部</span><span class="chip" data-filter="star" onclick="setBrowseFilter(\'star\', this)">⭐ 收藏' + (favCount ? ' · ' + favCount : '') + '</span><span class="chip" data-filter="koujue" onclick="setBrowseFilter(\'koujue\', this)">💡 口诀' + (kjCount ? ' · ' + kjCount : '') + '</span></div><div class="chip-group mb-12" id="browseStarSubChips" style="display:none;flex-wrap:nowrap;overflow-x:auto"><span class="chip active" data-sub="all" onclick="setStarSubFilter(\'all\', this)">全部</span><span class="chip" data-sub="question" onclick="setStarSubFilter(\'question\', this)">📝 题目</span><span class="chip" data-sub="koujue" onclick="setStarSubFilter(\'koujue\', this)">💡 口诀</span><span class="chip" data-sub="wrong" onclick="setStarSubFilter(\'wrong\', this)">❌ 错题</span></div><div id="browseActive"></div></div>';
+  c.innerHTML = '<div class="flex justify-between items-center mb-10"><h1 style="font-size:20px;font-weight:800">📖 目录</h1><input type="hidden" id="browseBankSelect" value="' + bankId + '"><button class="btn btn-ghost btn-sm" onclick="showBankPicker(document.getElementById(\'browseBankSelect\').value, function(bid){document.getElementById(\'browseBankSelect\').value=bid;changeBrowseBank()})" style="font-size:13px">' + escapeHtml(bank.name) + ' ▾</button></div><div style="margin-bottom:10px"><input type="search" id="browseSearchInput" placeholder="🔍 只搜当前题库" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doBrowseSearch()"></div><div class="browse-tabs" id="browseTabs"><button class="browse-tab active" id="browseTabList" onclick="switchBrowseTab(\'list\')">📋 题目列表</button><button class="browse-tab" id="browseTabChapters" onclick="switchBrowseTab(\'chapters\')">📊 章节掌握度</button></div><div id="browseTabContent" style="display:none"></div><div id="browseFilterArea"><div class="chip-group mb-12" id="browseFilterChips"><span class="chip active" data-filter="all" onclick="setBrowseFilter(\'all\', this)">全部</span><span class="chip" data-filter="star" onclick="setBrowseFilter(\'star\', this)">⭐ 收藏' + (favCount ? ' · ' + favCount : '') + '</span><span class="chip" data-filter="koujue" onclick="setBrowseFilter(\'koujue\', this)">💡 口诀' + (kjCount ? ' · ' + kjCount : '') + '</span></div><div class="chip-group mb-12" id="browseStarSubChips" style="display:none;flex-wrap:nowrap;overflow-x:auto"><span class="chip active" data-sub="all" onclick="setStarSubFilter(\'all\', this)">全部</span><span class="chip" data-sub="question" onclick="setStarSubFilter(\'question\', this)">📝 题目</span><span class="chip" data-sub="koujue" onclick="setStarSubFilter(\'koujue\', this)">💡 口诀</span><span class="chip" data-sub="wrong" onclick="setStarSubFilter(\'wrong\', this)">❌ 错题</span></div><div id="browseActive"></div></div>';
   renderBrowseList();
 }
 
@@ -7626,7 +7746,7 @@ function renderSettings() {
     // 设置页顶部 header（开关打开时显示头像）
     (s.showAvatar ? '<div class="settings-header">' +
       '<span class="settings-header-title">设置</span>' +
-      '<div class="avatar-circle" onclick="document.getElementById(\'avatarFileInput\').click()" title="点击上传头像">' +
+      '<div class="avatar-circle" onclick="showAvatarPicker()" title="点击管理头像">' +
         (s.avatarData ? '<img src="' + s.avatarData + '" alt="头像">' : '<span class="avatar-placeholder">📷</span>') +
       '</div></div>' : '') +
         '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'dataMgmt\')"><span>📦 数据管理</span><span class="section-arrow" id="arrow_dataMgmt">▲</span></div>' +
@@ -7887,14 +8007,6 @@ function renderSettings() {
       planHtml += '<div style="margin-bottom:8px"><div class="setting-label">📅 考试日期</div>' +
         '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:4px;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px;box-sizing:border-box;max-width:220px">' +
       '</div>';
-      // 晚间复习模式
-      planHtml += '<div style="margin-top:8px"><div class="setting-label">🌙 晚间复习模式</div>' +
-        '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">' +
-          '<input type="time" id="eveningStartInput" value="' + ((appData.settings || {}).eveningStart || '21:00') + '" onchange="saveEveningStart(this.value)" style="padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:14px;width:140px">' +
-          '<span style="font-size:12px;color:var(--text-tertiary)">到达时间后提醒复习</span>' +
-        '</div>' +
-        '<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">每天仅提醒一次，睡前记忆效果最佳</div>' +
-      '</div>';
       // 每日目标
       planHtml += '<div style="margin-top:10px"><div class="setting-label">每日目标（题数）</div>' +
         '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">' +
@@ -8063,7 +8175,8 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v68</div></div></div>' +
+      (hasFeature('dailyInsight') ? '<div class="setting-item" style="flex-direction:column;align-items:stretch"><div class="setting-label">💬 作者留言</div><div class="setting-desc" style="margin-bottom:6px">此处填写的内容将显示在「使用说明 → 作者有话说」中</div><textarea id="authorNoteInput" placeholder="写给使用者的话..." style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div>' : '') +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v70</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -8118,14 +8231,8 @@ function applyCollapseState(sectionId, isCollapsed) {
 // 头像开关
 function toggleAvatar(checked) {
   saveSetting('showAvatar', checked);
-  if (!checked) {
-    // 关闭时清除头像数据
-    appData.settings.avatarData = '';
-    debouncedSaveData(appData);
-    renderSettings();
-  } else {
-    renderSettings();
-  }
+  // v70: 关闭头像不再清除数据，方便再次开启时恢复
+  renderSettings();
 }
 
 // 头像上传
@@ -8148,6 +8255,13 @@ function handleAvatarUpload(el) {
       var ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
       var dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      // 存储历史头像（保留最近2个）
+      if (!appData.settings.avatarHistory) appData.settings.avatarHistory = [];
+      var currentData = appData.settings.avatarData;
+      if (currentData && currentData !== dataUrl && appData.settings.avatarHistory.indexOf(currentData) === -1) {
+        appData.settings.avatarHistory.unshift(currentData);
+        appData.settings.avatarHistory = appData.settings.avatarHistory.slice(0, 2);
+      }
       appData.settings.avatarData = dataUrl;
       debouncedSaveData(appData);
       renderSettings();
@@ -8157,6 +8271,37 @@ function handleAvatarUpload(el) {
   };
   reader.readAsDataURL(file);
   el.value = '';
+}
+
+// 头像选择器（当前+历史+上传）
+function showAvatarPicker() {
+  if (!hasFeature('avatar')) return;
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var currentData = appData.settings.avatarData || '';
+  var history = (appData.settings.avatarHistory || []).filter(function(d) { return d !== currentData; });
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:420px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:80dvh;overflow-y:auto;padding:20px"><h3 style="margin-bottom:4px;font-size:18px">🎭 头像设置</h3><p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">选择或上传头像</p>';
+  // 当前头像
+  if (currentData) {
+    html += '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:6px">当前头像</div>' +
+      '<img src="' + currentData + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)"></div>';
+  }
+  // 历史头像
+  if (history.length) {
+    html += '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-tertiary);margin-bottom:6px">历史头像</div><div style="display:flex;gap:10px;flex-wrap:wrap">';
+    for (var i = 0; i < history.length; i++) {
+      html += '<img src="' + history[i] + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;cursor:pointer;border:2px solid var(--border)" onclick="appData.settings.avatarData=\'' + history[i] + '\';debouncedSaveData(appData);renderSettings();this.closest(\'.modal-overlay\').remove();showToast(\'✅ 已切换头像\')">';
+    }
+    html += '</div></div>';
+  }
+  // 上传新头像
+  html += '<button class="btn btn-primary btn-block" style="font-size:14px" onclick="document.getElementById(\'avatarFileInput\').click();this.closest(\'.modal-overlay\').remove()">📷 上传新头像</button>';
+  if (currentData) {
+    html += '<button class="btn btn-ghost btn-block" style="font-size:13px;color:var(--danger);margin-top:8px" onclick="appData.settings.avatarData=\'\';appData.settings.avatarHistory=[];debouncedSaveData(appData);renderSettings();this.closest(\'.modal-overlay\').remove();showToast(\'🗑 头像已移除\')">🗑 移除头像</button>';
+  }
+  html += '</div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
 }
 
 // ====== 番茄钟 ======
@@ -8247,7 +8392,12 @@ function updateVoiceRate(val) { appData.settings.voiceRate = val; applySettings(
 function updateVoicePitch(val) { appData.settings.voicePitch = val; applySettings(); debouncedSaveData(appData); document.getElementById('pitchVal').textContent = val + 'x'; }
 function updateVoiceName(val) {
   saveSetting('voiceName', val || '');
-  document.getElementById('voiceNameVal').textContent = val || '自动选择';
+  var descEl = document.getElementById('voiceNameVal');
+  if (descEl) descEl.textContent = val || '自动选择';
+  var btnEl = document.getElementById('voicePickBtn');
+  if (btnEl) btnEl.textContent = (val || '自动选择') + ' ▾';
+  var selEl = document.getElementById('voiceSelect');
+  if (selEl) selEl.value = val || '';
 }
 
 function updateReadMode(val) {
