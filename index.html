@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v79 · 小阮出品</title>
+<title>挖空背诵工具 v80 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1696,20 +1696,84 @@ function updateCmBtns() {
   setBtn(galBtn, _cmFilter === 'images' && _cmViewMode === 'gallery');
 }
 
+var _cmGalleryIdx = 0;
+var _cmGalleryOverlay = null;
+var _cmTouchStartX = 0;
+
 function showCmGalleryDetail(idx) {
+  _cmGalleryIdx = idx;
   var d = _cmGalleryData[idx];
   if (!d) return;
+
+  // 移除旧浮层
+  if (_cmGalleryOverlay) { _cmGalleryOverlay.remove(); }
+
   var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:20px;box-sizing:border-box';
-  ov.innerHTML = '<div style="max-width:500px;width:100%;max-height:90vh;overflow-y:auto;background:var(--bg-card);border-radius:16px;padding:20px;cursor:default" onclick="event.stopPropagation()">' +
-    '<img src="' + d.image + '" style="width:100%;max-height:60vh;object-fit:contain;border-radius:10px;margin-bottom:14px">' +
-    '<div style="font-weight:600;font-size:16px;margin-bottom:4px;color:var(--text)">' + escapeHtml(d.nickname) + '</div>' +
-    '<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">' + escapeHtml(d.date) + '</div>' +
-    '<div style="font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word">' + escapeHtml(d.text) + '</div>' +
-    '<button onclick="this.closest(\'div\').parentElement.remove()" style="margin-top:14px;width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;cursor:pointer">关闭</button>' +
-  '</div>';
-  ov.onclick = function() { ov.remove(); };
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;touch-action:pan-y';
+  ov.id = 'cmGalleryOverlay';
+  _cmGalleryOverlay = ov;
+
+  renderGalleryContent(ov, idx);
+  ov.addEventListener('click', function(e) { if (e.target === ov) closeCmGallery(); });
+  // 触屏滑动
+  ov.addEventListener('touchstart', function(e) { _cmTouchStartX = e.touches[0].clientX; }, {passive: true});
+  ov.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - _cmTouchStartX;
+    if (Math.abs(dx) > 60) {
+      if (dx < 0 && _cmGalleryIdx < _cmGalleryData.length - 1) navigateGallery(1);
+      else if (dx > 0 && _cmGalleryIdx > 0) navigateGallery(-1);
+    }
+  });
+  // 键盘左右键
+  ov.setAttribute('tabindex', '0');
+  ov.focus();
+  ov.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' && _cmGalleryIdx < _cmGalleryData.length - 1) navigateGallery(1);
+    if (e.key === 'ArrowLeft' && _cmGalleryIdx > 0) navigateGallery(-1);
+    if (e.key === 'Escape') closeCmGallery();
+  });
+
   document.body.appendChild(ov);
+}
+
+function renderGalleryContent(ov, idx) {
+  var d = _cmGalleryData[idx];
+  var total = _cmGalleryData.length;
+  var hasPrev = idx > 0;
+  var hasNext = idx < total - 1;
+
+  var html = '<div style="max-width:520px;width:100%;max-height:90vh;overflow-y:auto;background:var(--bg-card);border-radius:16px;padding:20px;cursor:default;position:relative" onclick="event.stopPropagation()">' +
+    // 计数器 + 关闭
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+      '<span style="font-size:12px;color:var(--text-tertiary)">' + (idx + 1) + ' / ' + total + '</span>' +
+      '<button onclick="closeCmGallery()" style="background:rgba(0,0,0,0.4);border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px 10px;border-radius:20px;line-height:1">✕</button>' +
+    '</div>' +
+    // 图片区
+    '<div style="position:relative;display:flex;align-items:center;justify-content:center">' +
+      (hasPrev ? '<button onclick="navigateGallery(-1)" style="position:absolute;left:0;z-index:1;background:rgba(0,0,0,0.5);color:#fff;border:none;font-size:28px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">‹</button>' : '') +
+      '<img src="' + d.image + '" style="width:100%;max-height:55vh;object-fit:contain;border-radius:10px">' +
+      (hasNext ? '<button onclick="navigateGallery(1)" style="position:absolute;right:0;z-index:1;background:rgba(0,0,0,0.5);color:#fff;border:none;font-size:28px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">›</button>' : '') +
+    '</div>' +
+    // 信息区
+    '<div style="font-weight:600;font-size:16px;margin-top:12px;color:var(--text)">' + escapeHtml(d.nickname) + '</div>' +
+    '<div style="font-size:12px;color:var(--text-tertiary);margin-top:2px">' + escapeHtml(d.date) + '</div>' +
+    '<div style="font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word;margin-top:6px">' + escapeHtml(d.text) + '</div>' +
+    '<button onclick="closeCmGallery()" style="margin-top:12px;width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;cursor:pointer">关闭</button>' +
+  '</div>';
+
+  ov.innerHTML = html;
+}
+
+function navigateGallery(delta) {
+  var newIdx = _cmGalleryIdx + delta;
+  if (newIdx < 0 || newIdx >= _cmGalleryData.length) return;
+  _cmGalleryIdx = newIdx;
+  if (_cmGalleryOverlay) renderGalleryContent(_cmGalleryOverlay, newIdx);
+}
+
+function closeCmGallery() {
+  if (_cmGalleryOverlay) { _cmGalleryOverlay.remove(); _cmGalleryOverlay = null; }
+  _cmGalleryIdx = 0;
 }
 
 function loadCommunityMessages() {
@@ -8782,7 +8846,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">点击展开编辑，内容显示在「使用说明 → 作者」中</div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onclick="event.stopPropagation()" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v79</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v80</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
