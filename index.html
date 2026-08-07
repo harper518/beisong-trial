@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v83 · 小阮出品</title>
+<title>挖空背诵工具 v84 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -790,6 +790,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 
 /* ====== 专注模式 ====== */
 body.focus-mode .tab-bar { display:none !important; }
+body.focus-mode #cmFloatBtn { display:none !important; }
 body.focus-mode #page-practice { padding:12px; max-width:100%; }
 body.focus-mode .page.active { padding-top:env(safe-area-inset-top,12px); }
 body.focus-mode #practiceActive .btn-ghost,
@@ -862,6 +863,9 @@ body.focus-mode #cardText { line-height:2; }
 <!-- ====== 口诀页面 ====== -->
 <div class="page" id="page-koujue"><div id="koujueContainer"></div></div>
 
+<!-- ====== 资料页面 ====== -->
+<div class="page" id="page-ziliao"><div id="ziliaoContainer"></div></div>
+
 <!-- ====== 设置页面 ====== -->
 <div class="page" id="page-settings">
   <h1 style="font-size:24px;font-weight:800;margin-bottom:20px;letter-spacing:-.02em">设置</h1>
@@ -873,9 +877,13 @@ body.focus-mode #cardText { line-height:2; }
   <button class="tab-item active" data-tab="banks" onclick="switchTab('banks')"><span class="tab-icon">📚</span>题库</button>
   <button class="tab-item" data-tab="practice" onclick="switchTab('practice')"><span class="tab-icon">📝</span>做题</button>
   <button class="tab-item" data-tab="browse" onclick="switchTab('browse')"><span class="tab-icon">📖</span>浏览</button>
-  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">📝</span>复习</button>
+  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">🔄</span>复习</button>
+  <button class="tab-item" data-tab="ziliao" onclick="switchTab('ziliao')"><span class="tab-icon">📒</span>资料</button>
   <button class="tab-item" data-tab="settings" onclick="switchTab(&#39;settings&#39;)"><span class="tab-icon">⚙️</span>设置</button>
 </nav>
+
+<!-- ====== 同行圈悬浮按钮 ====== -->
+<button id="cmFloatBtn" onclick="showCommunityBoard()" title="同行圈" style="position:fixed;bottom:calc(80px + var(--safe-bottom,0px));right:16px;width:52px;height:52px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:22px;cursor:pointer;z-index:99;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center">💬</button>
 
 <script>
 // ==================== 版本激活系统 ====================
@@ -2246,6 +2254,420 @@ function reportMessage(msgId, btnEl) {
 function isCmMsgReported(msgId) {
   var reported = JSON.parse(localStorage.getItem('cm_reported_ids') || '[]');
   return reported.indexOf(msgId) !== -1;
+}
+
+// ==================== 资料页（笔记 + 图库 + 思维导图） ====================
+// Pro 功能门槛
+function canUseZiliao() {
+  var act = appData.activation || {};
+  return act.codeHash && act.tier === 'pro';
+}
+
+// ====== IndexedDB ======
+function openZiliaoDB() {
+  return new Promise(function(resolve, reject) {
+    var req = indexedDB.open('ziliao_db', 1);
+    req.onupgradeneeded = function(e) {
+      var db = e.target.result;
+      if (!db.objectStoreNames.contains('notes')) {
+        db.createObjectStore('notes', { keyPath: 'id', autoIncrement: true });
+      }
+      if (!db.objectStoreNames.contains('photos')) {
+        db.createObjectStore('photos', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = function(e) { resolve(e.target.result); };
+    req.onerror = function() { reject(req.error); };
+  });
+}
+
+function dbPut(storeName, data) {
+  return openZiliaoDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).put(data);
+      tx.oncomplete = function() { db.close(); resolve(); };
+      tx.onerror = function() { db.close(); reject(tx.error); };
+    });
+  });
+}
+
+function dbGetAll(storeName) {
+  return openZiliaoDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(storeName, 'readonly');
+      var req = tx.objectStore(storeName).getAll();
+      req.onsuccess = function() { db.close(); resolve(req.result || []); };
+      req.onerror = function() { db.close(); reject(req.error); };
+    });
+  });
+}
+
+function dbDelete(storeName, id) {
+  return openZiliaoDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).delete(id);
+      tx.oncomplete = function() { db.close(); resolve(); };
+      tx.onerror = function() { db.close(); reject(tx.error); };
+    });
+  });
+}
+
+function dbClearBank(storeName, bankId) {
+  return openZiliaoDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(storeName, 'readwrite');
+      var store = tx.objectStore(storeName);
+      var req = store.getAll();
+      req.onsuccess = function() {
+        var all = req.result || [];
+        var toDelete = all.filter(function(r) { return r.bankId === bankId; });
+        var deleted = 0;
+        toDelete.forEach(function(r) { store.delete(r.id); deleted++; });
+        tx.oncomplete = function() { db.close(); resolve(deleted); };
+        tx.onerror = function() { db.close(); reject(tx.error); };
+      };
+      req.onerror = function() { db.close(); reject(req.error); };
+    });
+  });
+}
+
+// ====== 资料页状态 ======
+var _zlSubTab = 'notes'; // 'notes' | 'photos'
+var _zlBankId = '';
+var _zlEditingNote = null; // note object being edited, null = new
+var _zlNoteContent = '';
+var _zlNoteTitle = '';
+var _zlViewMode = 'edit'; // 'edit' | 'mindmap'
+var _zlMarkmapLoaded = false;
+
+// ====== 主渲染 ======
+function renderZiliao() {
+  var container = document.getElementById('ziliaoContainer');
+  if (!container) return;
+
+  // 检查 Pro 权限
+  if (!canUseZiliao()) {
+    container.innerHTML = '<div style="padding:40px 20px;text-align:center">' +
+      '<div style="font-size:48px;margin-bottom:16px">🔒</div>' +
+      '<h2 style="color:var(--text);margin-bottom:8px">全能领航版功能</h2>' +
+      '<p style="color:var(--text-secondary);font-size:14px;margin-bottom:20px">笔记、思维导图、图库是 Pro 专属功能<br>升级到全能领航版（9.9元）即可使用</p>' +
+      '<button onclick="switchTab(\'settings\')" style="background:var(--primary);color:#fff;border:none;padding:10px 28px;border-radius:20px;font-size:14px;cursor:pointer;min-height:44px">去升级 →</button>' +
+    '</div>';
+    return;
+  }
+
+  // 默认选中第一个题库
+  var bankIds = Object.keys(appData.banks || {});
+  if (!_zlBankId && bankIds.length > 0) _zlBankId = bankIds[0];
+
+  var bankOptions = '';
+  for (var i = 0; i < bankIds.length; i++) {
+    var bid = bankIds[i];
+    var b = appData.banks[bid];
+    bankOptions += '<option value="' + bid + '"' + (_zlBankId === bid ? ' selected' : '') + '>' + escapeHtml(b.name || bid) + '</option>';
+  }
+
+  var html = '<div style="padding-bottom:80px">' +
+    '<h1 style="font-size:22px;font-weight:800;margin-bottom:14px;letter-spacing:-.02em">📒 资料</h1>' +
+    // 题库选择
+    '<div style="margin-bottom:14px">' +
+      '<select id="zlBankSelect" onchange="_zlBankId=this.value;_zlEditingNote=null;renderZiliaoContent()" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;min-height:44px">' +
+        (bankOptions || '<option value="">无题库</option>') +
+      '</select>' +
+    '</div>' +
+    // 子Tab
+    '<div style="display:flex;gap:8px;margin-bottom:14px">' +
+      '<button id="zlTabNotes" onclick="_zlSubTab=\'notes\';_zlViewMode=\'edit\';renderZiliaoContent()" style="flex:1;padding:10px;border:2px solid ' + (_zlSubTab === 'notes' ? 'var(--primary)' : 'var(--border)') + ';border-radius:10px;background:' + (_zlSubTab === 'notes' ? 'var(--primary-light)' : 'var(--bg-card)') + ';color:' + (_zlSubTab === 'notes' ? 'var(--primary)' : 'var(--text-secondary)') + ';font-size:14px;cursor:pointer;font-weight:' + (_zlSubTab === 'notes' ? '700' : '400') + ';min-height:44px">📝 笔记</button>' +
+      '<button id="zlTabPhotos" onclick="_zlSubTab=\'photos\';renderZiliaoContent()" style="flex:1;padding:10px;border:2px solid ' + (_zlSubTab === 'photos' ? 'var(--primary)' : 'var(--border)') + ';border-radius:10px;background:' + (_zlSubTab === 'photos' ? 'var(--primary-light)' : 'var(--bg-card)') + ';color:' + (_zlSubTab === 'photos' ? 'var(--primary)' : 'var(--text-secondary)') + ';font-size:14px;cursor:pointer;font-weight:' + (_zlSubTab === 'photos' ? '700' : '400') + ';min-height:44px">📷 图库</button>' +
+    '</div>' +
+    '<div id="zlContentArea"></div>' +
+  '</div>';
+
+  container.innerHTML = html;
+  _zlMarkmapLoaded = false;
+  renderZiliaoContent();
+}
+
+function renderZiliaoContent() {
+  if (_zlSubTab === 'photos') renderPhotoGallery();
+  else renderNoteList();
+}
+
+// ====== 笔记列表 ======
+function renderNoteList() {
+  var area = document.getElementById('zlContentArea');
+  if (!area) return;
+  if (!_zlBankId) { area.innerHTML = '<p style="color:var(--text-tertiary);text-align:center;padding:30px">请先选择一个题库</p>'; return; }
+
+  dbGetAll('notes').then(function(all) {
+    var notes = all.filter(function(n) { return n.bankId === _zlBankId; });
+    notes.sort(function(a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
+
+    var html = '<button onclick="startNewNote()" style="width:100%;padding:12px;border:2px dashed var(--border);border-radius:10px;background:var(--bg);color:var(--text-secondary);font-size:14px;cursor:pointer;margin-bottom:12px;min-height:44px">＋ 新建笔记</button>';
+
+    if (notes.length === 0) {
+      html += '<p style="color:var(--text-tertiary);text-align:center;padding:30px">📝 还没有笔记<br>点击上方按钮新建</p>';
+    } else {
+      html += '<div style="display:flex;flex-direction:column;gap:8px">';
+      for (var i = 0; i < notes.length; i++) {
+        var n = notes[i];
+        var d = n.updatedAt ? n.updatedAt.substring(0, 10) : '';
+        html += '<div onclick="editNote(' + n.id + ')" style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer">' +
+          '<div style="font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px">' + escapeHtml(n.title || '无标题') + '</div>' +
+          '<div style="font-size:11px;color:var(--text-tertiary)">' + d + ' · ' + (n.content ? n.content.substring(0, 60).replace(/\n/g, ' ') + '...' : '空笔记') + '</div>' +
+        '</div>';
+      }
+      html += '</div>';
+    }
+    area.innerHTML = html;
+  }).catch(function() {
+    area.innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px">加载笔记失败</p>';
+  });
+}
+
+function startNewNote() {
+  _zlEditingNote = null;
+  _zlNoteTitle = '';
+  _zlNoteContent = '';
+  _zlViewMode = 'edit';
+  renderNoteEditor();
+}
+
+function editNote(id) {
+  dbGetAll('notes').then(function(all) {
+    var n = null;
+    for (var i = 0; i < all.length; i++) { if (all[i].id === id) { n = all[i]; break; } }
+    if (!n) { showToast('笔记不存在'); return; }
+    _zlEditingNote = n;
+    _zlNoteTitle = n.title || '';
+    _zlNoteContent = n.content || '';
+    _zlViewMode = 'edit';
+    renderNoteEditor();
+  }).catch(function() { showToast('加载笔记失败'); });
+}
+
+// ====== 笔记编辑器 ======
+function renderNoteEditor() {
+  var area = document.getElementById('zlContentArea');
+  if (!area) return;
+
+  var viewToggle = '<button onclick="_zlViewMode=\'edit\';renderNoteEditor()" style="padding:6px 14px;border:1px solid ' + (_zlViewMode === 'edit' ? 'var(--primary)' : 'var(--border)') + ';border-radius:6px;background:' + (_zlViewMode === 'edit' ? 'var(--primary-light)' : 'var(--bg)') + ';color:' + (_zlViewMode === 'edit' ? 'var(--primary)' : 'var(--text-secondary)') + ';font-size:12px;cursor:pointer;min-height:36px">📝 大纲</button>' +
+    '<button onclick="switchToMindMap()" style="padding:6px 14px;border:1px solid ' + (_zlViewMode === 'mindmap' ? 'var(--primary)' : 'var(--border)') + ';border-radius:6px;background:' + (_zlViewMode === 'mindmap' ? 'var(--primary-light)' : 'var(--bg)') + ';color:' + (_zlViewMode === 'mindmap' ? 'var(--primary)' : 'var(--text-secondary)') + ';font-size:12px;cursor:pointer;min-height:36px">🧠 导图</button>';
+
+  var html = '<button onclick="renderNoteList()" style="background:none;border:none;color:var(--primary);font-size:13px;cursor:pointer;padding:4px 0;margin-bottom:8px">← 返回笔记列表</button>' +
+    '<input id="zlNoteTitleInput" placeholder="笔记标题" value="' + escapeHtml(_zlNoteTitle) + '" oninput="_zlNoteTitle=this.value" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:16px;font-weight:600;margin-bottom:10px;box-sizing:border-box;min-height:44px">' +
+    '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">' + viewToggle +
+      '<span style="flex:1"></span>' +
+      '<button onclick="deleteCurrentNote()" style="background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer;min-height:36px">🗑 删除</button>' +
+    '</div>';
+
+  if (_zlViewMode === 'mindmap') {
+    html += '<div id="zlMindMapContainer" style="width:100%;min-height:400px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);overflow:hidden;position:relative">' +
+      '<div id="zlMindMapTarget" style="width:100%;height:100%;min-height:400px"></div>' +
+      '<p style="position:absolute;bottom:8px;right:12px;font-size:10px;color:var(--text-tertiary)">🖐 可拖拽 · 🔍 双指缩放 · 👆 点击折叠</p>' +
+    '</div>';
+    // 延迟加载 markmap
+    setTimeout(function() { loadMarkmap(); }, 100);
+  } else {
+    html += '<textarea id="zlNoteEditor" placeholder="写笔记...&#10;&#10;支持 Markdown 语法：&#10;# 一级标题&#10;## 二级标题&#10;- 列表项&#10;1. 编号列表&#10;**加粗** *斜体*" oninput="_zlNoteContent=this.value" style="width:100%;min-height:300px;padding:14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;line-height:1.7;resize:vertical;box-sizing:border-box;font-family:inherit">' + escapeHtml(_zlNoteContent) + '</textarea>';
+  }
+
+  html += '<div style="display:flex;gap:10px;margin-top:10px">' +
+    '<button onclick="saveCurrentNote()" style="flex:1;background:var(--primary);color:#fff;border:none;padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;min-height:44px">💾 保存笔记</button>' +
+    '<button onclick="renderNoteList()" style="padding:12px 20px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text-secondary);font-size:14px;cursor:pointer;min-height:44px">取消</button>' +
+  '</div>';
+
+  area.innerHTML = html;
+}
+
+function saveCurrentNote() {
+  var title = (_zlNoteTitle || '').trim();
+  var content = (_zlNoteContent || '').trim();
+  // 从 textarea 同步最新内容
+  var ta = document.getElementById('zlNoteEditor');
+  if (ta) { content = ta.value.trim(); _zlNoteContent = content; }
+  var ti = document.getElementById('zlNoteTitleInput');
+  if (ti) { title = ti.value.trim(); _zlNoteTitle = title; }
+  if (!title) { showToast('请输入笔记标题'); return; }
+
+  var now = new Date().toISOString();
+  var data = {
+    bankId: _zlBankId,
+    title: title,
+    content: content,
+    updatedAt: now
+  };
+  if (_zlEditingNote && _zlEditingNote.id) {
+    data.id = _zlEditingNote.id;
+    data.createdAt = _zlEditingNote.createdAt || now;
+  } else {
+    data.createdAt = now;
+  }
+
+  dbPut('notes', data).then(function() {
+    showToast('✅ 笔记已保存');
+    _zlEditingNote = null;
+    renderNoteList();
+  }).catch(function() {
+    showToast('保存失败，请重试');
+  });
+}
+
+function deleteCurrentNote() {
+  if (!_zlEditingNote || !_zlEditingNote.id) { showToast('笔记尚未保存'); return; }
+  if (!confirm('确定删除笔记「' + (_zlEditingNote.title || '无标题') + '」吗？此操作不可恢复。')) return;
+  dbDelete('notes', _zlEditingNote.id).then(function() {
+    showToast('已删除');
+    _zlEditingNote = null;
+    renderNoteList();
+  }).catch(function() { showToast('删除失败'); });
+}
+
+// ====== 思维导图 (markmap) ======
+function switchToMindMap() {
+  _zlViewMode = 'mindmap';
+  // 先同步 textarea 到变量
+  var ta = document.getElementById('zlNoteEditor');
+  if (ta) { _zlNoteContent = ta.value; }
+  renderNoteEditor();
+}
+
+function loadMarkmap() {
+  if (_zlMarkmapLoaded) {
+    renderMarkmapFromContent();
+    return;
+  }
+  var container = document.getElementById('zlMindMapTarget');
+  if (!container) return;
+  container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:400px;color:var(--text-tertiary);font-size:14px">⏳ 加载思维导图组件...</div>';
+
+  // 加载 markmap 依赖 (d3 + markmap)
+  var scripts = [
+    'https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js',
+    'https://cdn.jsdelivr.net/npm/markmap-view@0.17.0/dist/browser/index.js'
+  ];
+  var loaded = 0;
+  function loadScript(idx) {
+    if (idx >= scripts.length) { _zlMarkmapLoaded = true; renderMarkmapFromContent(); return; }
+    var s = document.createElement('script');
+    s.src = scripts[idx];
+    s.onload = function() { loaded++; loadScript(idx + 1); };
+    s.onerror = function() { container.innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px">思维导图组件加载失败，请检查网络连接</p>'; };
+    document.head.appendChild(s);
+  }
+  loadScript(0);
+}
+
+function renderMarkmapFromContent() {
+  var container = document.getElementById('zlMindMapTarget');
+  if (!container) return;
+  var content = _zlNoteContent;
+  // 同步 textarea
+  var ta = document.getElementById('zlNoteEditor');
+  if (ta) { content = ta.value; _zlNoteContent = content; }
+  if (!content.trim()) {
+    container.innerHTML = '<p style="color:var(--text-tertiary);text-align:center;padding:30px">先写点内容再切换到导图视图吧～</p>';
+    return;
+  }
+
+  try {
+    // markmap 需要在全局有 markmap
+    var mm = window.markmap;
+    if (!mm) { container.innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px">导图组件未加载</p>'; return; }
+
+    // 使用 markmap.Transformer 和 markmap.Markmap
+    var transformer = new mm.Transformer();
+    var data = transformer.transform(content);
+    var currentSVG = container.querySelector('svg');
+    if (currentSVG) currentSVG.remove();
+
+    var mmInstance = mm.Markmap.create(container, {}, data);
+    // 适配移动端触控
+    var svgEl = container.querySelector('svg');
+    if (svgEl) {
+      svgEl.style.width = '100%';
+      svgEl.style.height = '100%';
+      svgEl.style.minHeight = '400px';
+    }
+  } catch(e) {
+    console.error('Markmap render error:', e);
+    container.innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px">导图渲染失败</p>';
+  }
+}
+
+// ====== 图库 ======
+function renderPhotoGallery() {
+  var area = document.getElementById('zlContentArea');
+  if (!area) return;
+  if (!_zlBankId) { area.innerHTML = '<p style="color:var(--text-tertiary);text-align:center;padding:30px">请先选择一个题库</p>'; return; }
+
+  dbGetAll('photos').then(function(all) {
+    var photos = all.filter(function(p) { return p.bankId === _zlBankId; });
+    photos.sort(function(a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+
+    var html = '<div style="margin-bottom:12px">' +
+      '<input type="file" id="zlPhotoInput" accept="image/*" onchange="handleZlPhotoUpload(this)" style="display:none">' +
+      '<button onclick="document.getElementById(\'zlPhotoInput\').click()" style="width:100%;padding:12px;border:2px dashed var(--border);border-radius:10px;background:var(--bg);color:var(--text-secondary);font-size:14px;cursor:pointer;min-height:44px">📷 上传照片（拍照/相册）</button>' +
+    '</div>';
+
+    if (photos.length === 0) {
+      html += '<p style="color:var(--text-tertiary);text-align:center;padding:30px">📷 还没有照片<br>点击上方按钮上传</p>';
+    } else {
+      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">';
+      for (var i = 0; i < photos.length; i++) {
+        var p = photos[i];
+        html += '<div style="position:relative;aspect-ratio:1;overflow:hidden;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:var(--bg-card)" onclick="viewZlPhoto(' + p.id + ')">' +
+          '<img src="' + (p.thumbnail || p.fullImage) + '" loading="lazy" style="width:100%;height:100%;object-fit:cover">' +
+          '<button onclick="event.stopPropagation();deleteZlPhoto(' + p.id + ')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.5);color:#fff;border:none;font-size:10px;width:24px;height:24px;border-radius:50%;cursor:pointer;line-height:1">✕</button>' +
+        '</div>';
+      }
+      html += '</div>';
+    }
+    area.innerHTML = html;
+  }).catch(function() {
+    area.innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px">加载图库失败</p>';
+  });
+}
+
+function handleZlPhotoUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (!file.type.match(/image\//)) { showToast('请选择图片文件'); input.value = ''; return; }
+  compressImage(file, function(result) {
+    var now = new Date().toISOString();
+    dbPut('photos', {
+      bankId: _zlBankId,
+      thumbnail: result.thumbnail || '',
+      fullImage: result.full || result.thumbnail || '',
+      caption: '',
+      createdAt: now
+    }).then(function() {
+      showToast('✅ 照片已保存');
+      renderPhotoGallery();
+    }).catch(function() {
+      showToast('保存失败，请重试');
+    });
+  });
+  input.value = '';
+}
+
+function viewZlPhoto(id) {
+  dbGetAll('photos').then(function(all) {
+    var p = null;
+    for (var i = 0; i < all.length; i++) { if (all[i].id === id) { p = all[i]; break; } }
+    if (!p) { showToast('照片不存在'); return; }
+    showFullImage(p.fullImage || p.thumbnail);
+  }).catch(function() { showToast('加载照片失败'); });
+}
+
+function deleteZlPhoto(id) {
+  if (!confirm('确定删除这张照片吗？')) return;
+  dbDelete('photos', id).then(function() {
+    showToast('已删除');
+    renderPhotoGallery();
+  }).catch(function() { showToast('删除失败'); });
 }
 
 // ==================== 章节掌握度计算 ====================
@@ -3736,6 +4158,7 @@ function switchTab(name) {
   }
   else if (name === 'browse') renderBrowseStart();
   else if (name === 'wrongbook') renderWrongBookStart();
+  else if (name === 'ziliao') { renderZiliao(); }
   else if (name === 'settings') { renderSettings(); setTimeout(loadVoices, 300); }
 }
 
@@ -3974,6 +4397,9 @@ function renameBankPrompt(el, id) {
     delete appData.wrongBooks[id];
     delete appData.favorites[id];
     saveData(appData);
+    // 清理关联的笔记和图库
+    dbClearBank('notes', id).catch(function(){});
+    dbClearBank('photos', id).catch(function(){});
     showToast('已删除');
     renderBanks();
   });
@@ -9164,10 +9590,9 @@ function renderSettings() {
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
-      '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">点击展开编辑，内容显示在「使用说明 → 作者」中</div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onclick="event.stopPropagation()" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v83</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v84</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
