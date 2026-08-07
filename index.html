@@ -1258,9 +1258,7 @@ function saveAuthorNote(value) {
   }
 }
 
-function toggleAuthorNoteSection(e) {
-  // 如果点击的是编辑器内部元素（textarea等），不toggle
-  if (e && e.target && e.target.closest && e.target.closest('#authorNoteEditor')) return;
+function toggleAuthorNoteSection() {
   var editor = document.getElementById('authorNoteEditor');
   var arrow = document.getElementById('authorNoteArrow');
   if (!editor || !arrow) return;
