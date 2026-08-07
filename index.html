@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v80 · 小阮出品</title>
+<title>挖空背诵工具 v81 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1598,17 +1598,24 @@ function handleCmImage(input) {
 }
 
 // ====== 💬 同行圈 - 社区留言板 ======
-var _communityPage = 1;
-var _communityTotal = 0;
-var _cmFilter = 'all'; // 'all' | 'images'
+var _cmPage = 1;
+var _cmHasMore = true;
+var _cmLoadingMore = false;
+var _cmAllMessages = [];
+var _cmFilter = 'all'; // 'all' | 'images' | 'text'
 var _cmViewMode = 'list'; // 'list' | 'gallery'
 var _cmGalleryData = []; // 画廊临时数据（避免onclick嵌套转义bug）
+var _cmSearchQuery = ''; // 搜索关键词
 
 function showCommunityBoard() {
-  _communityPage = 1;
+  _cmPage = 1;
+  _cmHasMore = true;
+  _cmLoadingMore = false;
+  _cmAllMessages = [];
   _cmFilter = 'all';
   _cmViewMode = 'list';
   _cmGalleryData = [];
+  _cmSearchQuery = '';
   var overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.style.animation = 'none';
@@ -1639,10 +1646,13 @@ function showCommunityBoard() {
     '</div>' +
     // 筛选切换按钮
     '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">' +
-      '<button id="cmBtnAll" onclick="_cmFilter=\'all\';_cmViewMode=\'list\';updateCmBtns();loadCommunityMessages()" style="padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;min-height:36px">全部消息</button>' +
-      '<button id="cmBtnImages" onclick="_cmFilter=\'images\';_cmViewMode=\'list\';updateCmBtns();loadCommunityMessages()" style="padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">🖼️ 仅看图文</button>' +
-      '<button id="cmBtnGallery" onclick="_cmFilter=\'images\';_cmViewMode=\'gallery\';updateCmBtns();loadCommunityMessages()" style="padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">▦ 画廊</button>' +
+      '<button id="cmBtnAll" onclick="_cmFilter=\'all\';_cmViewMode=\'list\';updateCmBtns();resetAndReload()" style="padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;min-height:36px">全部消息</button>' +
+      '<button id="cmBtnImages" onclick="_cmFilter=\'images\';_cmViewMode=\'list\';updateCmBtns();resetAndReload()" style="padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">🖼️ 图文</button>' +
+      '<button id="cmBtnText" onclick="_cmFilter=\'text\';_cmViewMode=\'list\';updateCmBtns();resetAndReload()" style="padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">📝 纯文字</button>' +
+      '<button id="cmBtnGallery" onclick="_cmFilter=\'images\';_cmViewMode=\'gallery\';updateCmBtns();resetAndReload()" style="padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">▦ 画廊</button>' +
     '</div>' +
+    // 搜索
+    '<div style="margin-bottom:12px"><input id="cmSearch" placeholder="🔍 搜索留言..." oninput="_cmSearchQuery=this.value;filterAndRender()" style="width:100%;padding:7px 12px;border:2px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box;min-height:38px"></div>' +
     // 发留言区域
     '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">' +
       '<input id="cmNickname" placeholder="你的昵称（选填）" maxlength="20" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;margin-bottom:8px;box-sizing:border-box">' +
@@ -1673,12 +1683,13 @@ function showCommunityBoard() {
   overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
 
   // 加载留言列表
-  loadCommunityMessages();
+  resetAndReload();
 }
 
 function updateCmBtns() {
   var allBtn = document.getElementById('cmBtnAll');
   var imgBtn = document.getElementById('cmBtnImages');
+  var txtBtn = document.getElementById('cmBtnText');
   var galBtn = document.getElementById('cmBtnGallery');
   var primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#7C3AED';
   var bg = 'var(--bg)';
@@ -1693,6 +1704,7 @@ function updateCmBtns() {
   }
   setBtn(allBtn, _cmFilter === 'all' && _cmViewMode === 'list');
   setBtn(imgBtn, _cmFilter === 'images' && _cmViewMode === 'list');
+  setBtn(txtBtn, _cmFilter === 'text' && _cmViewMode === 'list');
   setBtn(galBtn, _cmFilter === 'images' && _cmViewMode === 'gallery');
 }
 
@@ -1751,7 +1763,7 @@ function renderGalleryContent(ov, idx) {
     // 图片区
     '<div style="position:relative;display:flex;align-items:center;justify-content:center">' +
       (hasPrev ? '<button onclick="navigateGallery(-1)" style="position:absolute;left:0;z-index:1;background:rgba(0,0,0,0.5);color:#fff;border:none;font-size:28px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">‹</button>' : '') +
-      '<img src="' + d.image + '" style="width:100%;max-height:55vh;object-fit:contain;border-radius:10px">' +
+      '<img src="' + d.image + '" style="width:100%;max-height:55vh;object-fit:contain;border-radius:10px;touch-action:pinch-zoom">' +
       (hasNext ? '<button onclick="navigateGallery(1)" style="position:absolute;right:0;z-index:1;background:rgba(0,0,0,0.5);color:#fff;border:none;font-size:28px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">›</button>' : '') +
     '</div>' +
     // 信息区
@@ -1776,89 +1788,220 @@ function closeCmGallery() {
   _cmGalleryIdx = 0;
 }
 
-function loadCommunityMessages() {
+function resetAndReload() {
+  _cmPage = 1;
+  _cmHasMore = true;
+  _cmAllMessages = [];
+  _cmGalleryData = [];
+  loadCommunityMessages(true);
+}
+
+function loadCommunityMessages(reset) {
+  if (_cmLoadingMore) return;
   var listEl = document.getElementById('cmList');
   var pagerEl = document.getElementById('cmPager');
   if (!listEl) return;
 
-  listEl.innerHTML = '<div style="padding:20px;color:var(--text-tertiary)">加载中...</div>';
+  if (reset) {
+    _cmAllMessages = [];
+    _cmGalleryData = [];
+    listEl.innerHTML = '<div style="padding:20px;color:var(--text-tertiary)">加载中...</div>';
+    pagerEl.innerHTML = '';
+  }
+  _cmLoadingMore = true;
 
-  apiGet('/messages?page=' + _communityPage + '&limit=15')
+  apiGet('/messages?page=' + _cmPage + '&limit=15')
     .then(function(r) {
-      _communityTotal = r.total || 0;
+      _cmLoadingMore = false;
       var msgs = r.messages || [];
+      if (msgs.length < 15) _cmHasMore = false;
 
-      // 筛选：仅看图文
-      if (_cmFilter === 'images') {
-        msgs = msgs.filter(function(m) { return m.image && m.image.length > 0; });
+      // 累积消息
+      for (var i = 0; i < msgs.length; i++) {
+        _cmAllMessages.push(msgs[i]);
       }
 
-      if (msgs.length === 0) {
-        var emptyMsg = _cmFilter === 'images' ? '📷 还没有带图片的留言' : '✨ 还没有留言，来做第一个分享的人吧！';
-        listEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-tertiary)">' + emptyMsg + '</div>';
-        pagerEl.style.display = 'none';
-        return;
-      }
+      // 首次加载后设置无限滚动
+      if (_cmPage === 1 && _cmHasMore) setupCmSentinel();
 
-      var html = '';
-
-      // === 画廊视图 ===
-      if (_cmViewMode === 'gallery') {
-        _cmGalleryData = [];
-        html += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">共 ' + msgs.length + ' 张图片</div>';
-        html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">';
-        for (var g = 0; g < msgs.length; g++) {
-          var gm = msgs[g];
-          var gIdx = _cmGalleryData.length;
-          _cmGalleryData.push({
-            nickname: gm.nickname || '匿名',
-            text: gm.text,
-            image: gm.image,
-            date: (gm.createdAt || '').substring(0, 10)
-          });
-          html += '<div style="position:relative;aspect-ratio:1;overflow:hidden;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:var(--bg-card)" onclick="showCmGalleryDetail(' + gIdx + ')">' +
-            '<img src="' + (gm.thumbnail || gm.image) + '" loading="lazy" style="width:100%;height:100%;object-fit:cover">' +
-          '</div>';
-        }
-        html += '</div>';
-      } else {
-        // === 列表视图 ===
-        for (var i = 0; i < msgs.length; i++) {
-          var m = msgs[i];
-          var tierBadge = m.tier === 'pro' ? '<span style="font-size:10px;background:#7C3AED;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">Pro</span>' : '';
-          var timeStr = m.createdAt ? m.createdAt.substring(0, 10) : '';
-          html += '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-              '<span style="font-weight:600;font-size:14px;color:var(--text)">' + escapeHtml(m.nickname || '匿名') + tierBadge + '</span>' +
-              '<span style="font-size:11px;color:var(--text-tertiary)">' + timeStr + '</span>' +
-            '</div>' +
-            '<div style="font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word">' + escapeHtml(m.text) + '</div>' +
-            (m.image ? '<div style="margin-top:8px"><img src="' + (m.thumbnail || m.image) + '" loading="lazy" data-full="' + m.image + '" onclick="showFullImage(this.getAttribute(\'data-full\'))" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);cursor:pointer;object-fit:cover"></div>' : '') +
-            '<div style="text-align:right;margin-top:6px">' +
-              '<button onclick="reportMessage(' + m.id + ',this)" style="background:none;border:none;font-size:11px;color:var(--text-tertiary);cursor:pointer;padding:2px 4px">🚩 举报</button>' +
-            '</div>' +
-          '</div>';
-        }
-      }
-      listEl.innerHTML = html;
-
-      // 分页
-      var totalPages = Math.ceil(_communityTotal / 15);
-      if (totalPages > 1) {
-        pagerEl.style.display = 'flex';
-        var pHtml = '';
-        pHtml += '<button onclick="_communityPage=Math.max(1,_communityPage-1);loadCommunityMessages()" style="padding:6px 14px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:8px;cursor:pointer;font-size:13px"' + (_communityPage <= 1 ? ' disabled' : '') + '>‹ 上一页</button>';
-        pHtml += '<span style="padding:6px 12px;font-size:13px;color:var(--text-secondary)">' + _communityPage + '/' + totalPages + '</span>';
-        pHtml += '<button onclick="_communityPage=Math.min(' + totalPages + ',_communityPage+1);loadCommunityMessages()" style="padding:6px 14px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:8px;cursor:pointer;font-size:13px"' + (_communityPage >= totalPages ? ' disabled' : '') + '>下一页 ›</button>';
-        pagerEl.innerHTML = pHtml;
-      } else {
-        pagerEl.style.display = 'none';
-      }
+      _cmPage++;
+      filterAndRender();
     })
     .catch(function(e) {
-      listEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-tertiary)">⚠️ 加载失败，请检查网络后重试<br><button onclick="loadCommunityMessages()" style="margin-top:8px;padding:6px 16px;border:1px solid var(--primary);color:var(--primary);background:none;border-radius:20px;cursor:pointer;font-size:13px">重新加载</button></div>';
-      pagerEl.style.display = 'none';
+      _cmLoadingMore = false;
+      if (_cmAllMessages.length === 0) {
+        listEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-tertiary)">⚠️ 加载失败，请检查网络后重试<br><button onclick="resetAndReload()" style="margin-top:8px;padding:6px 16px;border:1px solid var(--primary);color:var(--primary);background:none;border-radius:20px;cursor:pointer;font-size:13px">重新加载</button></div>';
+      }
     });
+}
+
+function setupCmSentinel() {
+  var pagerEl = document.getElementById('cmPager');
+  if (!pagerEl) return;
+  pagerEl.innerHTML = '<div id="cmSentinel" style="height:20px"></div>';
+  pagerEl.style.display = 'block';
+  var sentinel = document.getElementById('cmSentinel');
+  if (!sentinel) return;
+  var observer = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting && _cmHasMore && !_cmLoadingMore) {
+      loadCommunityMessages(false);
+    }
+  }, { root: null, threshold: 0.1 });
+  observer.observe(sentinel);
+}
+
+function filterAndRender() {
+  var listEl = document.getElementById('cmList');
+  var pagerEl = document.getElementById('cmPager');
+  if (!listEl) return;
+
+  var msgs = _cmAllMessages.slice();
+
+  // 搜索过滤
+  if (_cmSearchQuery.trim()) {
+    var q = _cmSearchQuery.trim().toLowerCase();
+    msgs = msgs.filter(function(m) {
+      return (m.nickname && m.nickname.toLowerCase().indexOf(q) !== -1) ||
+             (m.text && m.text.toLowerCase().indexOf(q) !== -1);
+    });
+  }
+
+  // 类型过滤
+  if (_cmFilter === 'images') {
+    msgs = msgs.filter(function(m) { return m.image && m.image.length > 0; });
+  } else if (_cmFilter === 'text') {
+    msgs = msgs.filter(function(m) { return !m.image || m.image.length === 0; });
+  }
+
+  if (msgs.length === 0) {
+    var emptyMsg;
+    if (_cmSearchQuery.trim()) emptyMsg = '🔍 没有找到匹配的留言';
+    else if (_cmFilter === 'images') emptyMsg = '📷 还没有带图片的留言';
+    else if (_cmFilter === 'text') emptyMsg = '📝 还没有纯文字留言';
+    else emptyMsg = '✨ 还没有留言，来做第一个分享的人吧！';
+    listEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-tertiary)">' + emptyMsg + '</div>';
+    if (pagerEl) pagerEl.innerHTML = '';
+    return;
+  }
+
+  var codeHash = (appData.activation && appData.activation.codeHash) || '';
+  var myPrefix = codeHash ? codeHash.substring(0, 8) : '';
+
+  var html = '';
+
+  // === 画廊视图 ===
+  if (_cmViewMode === 'gallery') {
+    _cmGalleryData = [];
+    html += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">共 ' + msgs.length + ' 张</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">';
+    for (var g = 0; g < msgs.length; g++) {
+      var gm = msgs[g];
+      var gIdx = _cmGalleryData.length;
+      _cmGalleryData.push({
+        nickname: gm.nickname || '匿名',
+        text: gm.text,
+        image: gm.image,
+        date: (gm.createdAt || '').substring(0, 10)
+      });
+      html += '<div style="position:relative;aspect-ratio:1;overflow:hidden;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:var(--bg-card)" onclick="showCmGalleryDetail(' + gIdx + ')">' +
+        '<img src="' + (gm.thumbnail || gm.image) + '" loading="lazy" style="width:100%;height:100%;object-fit:cover">' +
+      '</div>';
+    }
+    html += '</div>';
+  } else {
+    // === 列表视图 ===
+    for (var i = 0; i < msgs.length; i++) {
+      var m = msgs[i];
+      var tierBadge = m.tier === 'pro' ? '<span style="font-size:10px;background:#7C3AED;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">Pro</span>' : '';
+      var timeStr = m.createdAt ? m.createdAt.substring(0, 10) : '';
+      var isMine = myPrefix && m.code_hash_prefix === myPrefix;
+      var liked = isCmMsgLiked(m.id);
+
+      html += '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+          '<span style="font-weight:600;font-size:14px;color:var(--text)">' + escapeHtml(m.nickname || '匿名') + tierBadge + '</span>' +
+          '<span style="font-size:11px;color:var(--text-tertiary)">' + timeStr + '</span>' +
+        '</div>' +
+        '<div style="font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word">' + escapeHtml(m.text) + '</div>' +
+        (m.image ? '<div style="margin-top:8px"><img src="' + (m.thumbnail || m.image) + '" loading="lazy" data-full="' + m.image + '" onclick="showFullImage(this.getAttribute(\'data-full\'))" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);cursor:pointer;object-fit:cover"></div>' : '') +
+        // 操作栏
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
+          '<div style="display:flex;gap:4px;align-items:center">' +
+            '<button onclick="handleCmLike(' + m.id + ',this)" style="background:none;border:none;font-size:12px;color:' + (liked ? '#EF4444' : 'var(--text-tertiary)') + ';cursor:pointer;padding:2px 6px;min-height:30px">' + (liked ? '❤️' : '🤍') + ' <span>' + (m.likes || 0) + '</span></button>' +
+          '</div>' +
+          '<div style="display:flex;gap:2px">' +
+            (isMine ? '<button onclick="handleCmDelete(' + m.id + ',this)" style="background:none;border:none;font-size:11px;color:var(--text-tertiary);cursor:pointer;padding:2px 6px;min-height:30px">🗑 删除</button>' : '') +
+            '<button onclick="reportMessage(' + m.id + ',this)" style="background:none;border:none;font-size:11px;color:var(--text-tertiary);cursor:pointer;padding:2px 6px;min-height:30px">🚩</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+  }
+  listEl.innerHTML = html;
+
+  // 加载更多指示器
+  if (_cmHasMore && _cmViewMode !== 'gallery') {
+    if (pagerEl) { pagerEl.innerHTML = '<div id="cmSentinel" style="height:20px;text-align:center;padding:10px;color:var(--text-tertiary);font-size:12px">加载更多...</div>'; pagerEl.style.display = 'block'; }
+    var sentinel = document.getElementById('cmSentinel');
+    if (sentinel) {
+      var observer = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting && _cmHasMore && !_cmLoadingMore) {
+          loadCommunityMessages(false);
+        }
+      }, { root: null, threshold: 0.1 });
+      observer.observe(sentinel);
+    }
+  } else if (!_cmHasMore && _cmAllMessages.length > 0) {
+    if (pagerEl) { pagerEl.innerHTML = '<div style="text-align:center;padding:8px;color:var(--text-tertiary);font-size:12px">— 已加载全部 —</div>'; pagerEl.style.display = 'block'; }
+  }
+}
+
+// 点赞（localStorage防重复）
+function isCmMsgLiked(msgId) {
+  try {
+    var liked = JSON.parse(localStorage.getItem('cm_liked_ids') || '[]');
+    return liked.indexOf(msgId) !== -1;
+  } catch(e) { return false; }
+}
+function handleCmLike(msgId, btn) {
+  if (btn.disabled) return;
+  if (isCmMsgLiked(msgId)) { showToast('已经点过赞了 ❤️'); return; }
+  btn.disabled = true;
+  apiPost('/messages/' + msgId + '/like', { codeHash: (appData.activation && appData.activation.codeHash) || '' })
+    .then(function(r) {
+      if (r.success) {
+        try {
+          var liked = JSON.parse(localStorage.getItem('cm_liked_ids') || '[]');
+          liked.push(msgId);
+          localStorage.setItem('cm_liked_ids', JSON.stringify(liked));
+        } catch(e) {}
+        // 更新显示
+        var span = btn.querySelector('span');
+        if (span) span.textContent = r.likes || 0;
+        btn.style.color = '#EF4444';
+        btn.innerHTML = '❤️ <span>' + (r.likes || 0) + '</span>';
+      } else {
+        showToast('点赞失败，请稍后重试');
+      }
+    }).catch(function() { showToast('网络错误'); })
+    .finally(function() { btn.disabled = false; });
+}
+function handleCmDelete(msgId, btn) {
+  if (!confirm('确定删除这条留言吗？')) return;
+  if (btn.disabled) return;
+  btn.disabled = true;
+  apiPost('/messages/' + msgId + '/delete', { codeHash: (appData.activation && appData.activation.codeHash) || '' })
+    .then(function(r) {
+      if (r.success) {
+        showToast('已删除');
+        // 从列表中移除
+        _cmAllMessages = _cmAllMessages.filter(function(m) { return m.id !== msgId; });
+        filterAndRender();
+      } else {
+        showToast(r.error || '删除失败');
+        btn.disabled = false;
+      }
+    }).catch(function() { showToast('网络错误'); btn.disabled = false; });
 }
 
 function sendCommunityMessage() {
@@ -1894,8 +2037,7 @@ function sendCommunityMessage() {
       var nameEl = document.getElementById('cmImageName'); if (nameEl) nameEl.textContent = '';
       var preview = document.getElementById('cmImagePreview'); if (preview) preview.style.display = 'none';
       var clearBtn = document.getElementById('cmImageClear'); if (clearBtn) clearBtn.style.display = 'none';
-      _communityPage = 1;
-      loadCommunityMessages();
+      resetAndReload();
     } else {
       showToast('❌ ' + (r.error || '发布失败'));
     }
@@ -8846,7 +8988,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">点击展开编辑，内容显示在「使用说明 → 作者」中</div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onclick="event.stopPropagation()" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v80</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v81</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
