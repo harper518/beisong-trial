@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v94 · 小阮出品</title>
+<title>挖空背诵工具 v95 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -899,8 +899,8 @@ var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 120;
-var APP_VERSION = 76;
-// ==== API 后端（作者留言云同步 + 社区留言板）====
+var APP_VERSION = 95;
+// ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
 function apiGet(path) {
   return fetch(API_BASE + path, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
@@ -1282,7 +1282,7 @@ function syncAuthorNoteToCloud() {
     })
     .catch(function(e) {
       showToast('⚠️ 网络错误，同步失败');
-      console.warn('[API] 作者留言同步失败:', e.message);
+      console.warn('[API] 开发者留言同步失败:', e.message);
     })
     .finally(function() {
       if (btn) { btn.disabled = false; btn.textContent = '📤 同步到云端'; }
@@ -2293,6 +2293,181 @@ function isCmMsgReported(msgId) {
   return reported.indexOf(msgId) !== -1;
 }
 
+// ====== 💌 开发者反馈区 ======
+var _fbPage = 1;
+var _fbHasMore = true;
+var _fbLoadingMore = false;
+var _fbAllItems = [];
+
+function showFeedbackBoard() {
+  _fbPage = 1; _fbHasMore = true; _fbAllItems = [];
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay'; overlay.style.animation = 'none'; overlay.id = 'feedbackOverlay';
+  overlay.innerHTML = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:520px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:85dvh;overflow-y:auto;padding:20px;width:94vw">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+      '<div><h3 style="margin:0;font-size:20px">💌 开发者反馈</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-secondary)">建议、Bug、功能请求…直接告诉开发者 · 所有人可发可回</p></div>' +
+      '<button onclick="document.getElementById(\'feedbackOverlay\').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);padding:4px 8px;line-height:1">✕</button>' +
+    '</div>' +
+    // 发反馈表单
+    '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">' +
+      '<input id="fbNickname" placeholder="你的昵称（选填）" maxlength="20" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;margin-bottom:8px;box-sizing:border-box">' +
+      '<select id="fbType" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;margin-bottom:8px;box-sizing:border-box;min-height:44px">' +
+        '<option value="建议">💡 建议</option><option value="Bug反馈">🐛 Bug反馈</option><option value="功能请求">✨ 功能请求</option><option value="夸奖">👍 夸奖</option><option value="兑换">🎁 兑换</option><option value="其他">📌 其他</option>' +
+      '</select>' +
+      '<textarea id="fbText" placeholder="写下你想对开发者说的话...（最多1000字）" maxlength="1000" style="width:100%;min-height:100px;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box"></textarea>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
+        '<span style="font-size:11px;color:var(--text-tertiary)">今日还可发 <b>3</b> 条</span>' +
+        '<button id="fbSendBtn" onclick="sendFeedback()" style="background:var(--primary);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;min-height:40px">发布</button>' +
+      '</div>' +
+    '</div>' +
+    // 反馈列表
+    '<div id="fbList" style="min-height:100px;text-align:center;color:var(--text-tertiary);padding:20px">加载中...</div>' +
+    '<div id="fbPager" style="display:none;text-align:center;margin-top:12px"></div>' +
+  '</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  loadFeedback(true);
+}
+
+function loadFeedback(reset) {
+  if (_fbLoadingMore) return;
+  var listEl = document.getElementById('fbList');
+  var pagerEl = document.getElementById('fbPager');
+  if (!listEl) return;
+  if (reset) { _fbAllItems = []; listEl.innerHTML = '<div style="padding:20px;color:var(--text-tertiary)">加载中...</div>'; if(pagerEl)pagerEl.innerHTML=''; }
+  _fbLoadingMore = true;
+  apiGet('/feedback?page=' + _fbPage + '&limit=15')
+    .then(function(r) {
+      _fbLoadingMore = false;
+      var items = r.feedbacks || [];
+      if (items.length < 15) _fbHasMore = false;
+      for (var i = 0; i < items.length; i++) { _fbAllItems.push(items[i]); }
+      if (_fbPage === 1 && _fbHasMore) setupFbSentinel();
+      _fbPage++;
+      renderFbList();
+    })
+    .catch(function() {
+      _fbLoadingMore = false;
+      if (_fbAllItems.length === 0) {
+        listEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-tertiary)">⚠️ 加载失败，请检查网络后重试<br><button onclick="loadFeedback(true)" style="margin-top:8px;padding:6px 16px;border:1px solid var(--primary);color:var(--primary);background:none;border-radius:20px;cursor:pointer;font-size:13px">重新加载</button></div>';
+      }
+    });
+}
+
+function setupFbSentinel() {
+  var pagerEl = document.getElementById('fbPager');
+  if (!pagerEl) return;
+  pagerEl.innerHTML = '<div id="fbSentinel" style="height:20px"></div>';
+  pagerEl.style.display = 'block';
+  var sentinel = document.getElementById('fbSentinel');
+  if (!sentinel) return;
+  var observer = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting && _fbHasMore && !_fbLoadingMore) { loadFeedback(false); }
+  }, { root: null, threshold: 0.1 });
+  observer.observe(sentinel);
+}
+
+function renderFbList() {
+  var listEl = document.getElementById('fbList');
+  if (!listEl) return;
+  if (_fbAllItems.length === 0) {
+    listEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-tertiary)">💌 还没有反馈<br>成为第一个留言的人吧！</div>';
+    return;
+  }
+  var typeColors = { '建议': '#4A90D9', 'Bug反馈': '#E74C3C', '功能请求': '#8E44AD', '夸奖': '#F39C12', '兑换': '#1ABC9C', '其他': '#95A5A6' };
+  var html = '';
+  for (var i = 0; i < _fbAllItems.length; i++) {
+    var f = _fbAllItems[i];
+    var tc = typeColors[f.type] || '#95A5A6';
+    var timeStr = f.createdAt ? f.createdAt.substring(0, 10) : '';
+    html += '<div id="fbItem_' + f.id + '" style="border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;background:var(--bg-card);cursor:pointer" onclick="toggleFbReplies(' + f.id + ')">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px">' +
+        '<span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+          '<span style="font-weight:600;font-size:14px">' + escapeHtml(f.nickname) + '</span>' +
+          '<span style="background:' + tc + ';color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap">' + escapeHtml(f.type) + '</span>' +
+        '</span>' +
+        '<span style="font-size:11px;color:var(--text-tertiary)">' + timeStr + '</span>' +
+      '</div>' +
+      '<div style="font-size:14px;line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word">' + escapeHtml(f.text) + '</div>' +
+      '<div id="fbReplies_' + f.id + '" style="display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">' +
+        '<div id="fbRepliesList_' + f.id + '" style="margin-bottom:8px"></div>' +
+        '<div style="display:flex;gap:6px">' +
+          '<input id="fbReplyNick_' + f.id + '" placeholder="昵称" maxlength="20" style="flex:0 0 70px;padding:6px 8px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:12px;box-sizing:border-box;min-width:0">' +
+          '<input id="fbReplyText_' + f.id + '" placeholder="回复..." maxlength="500" style="flex:1;padding:6px 10px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:12px;box-sizing:border-box;min-width:0">' +
+          '<button onclick="event.stopPropagation();sendFbReply(' + f.id + ')" style="flex-shrink:0;padding:6px 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;min-height:36px">发送</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  listEl.innerHTML = html;
+}
+
+function toggleFbReplies(fbId) {
+  var repliesDiv = document.getElementById('fbReplies_' + fbId);
+  if (!repliesDiv) return;
+  if (repliesDiv.style.display === 'none') { repliesDiv.style.display = 'block'; loadFbReplies(fbId); }
+  else { repliesDiv.style.display = 'none'; }
+}
+
+function loadFbReplies(fbId) {
+  var listEl = document.getElementById('fbRepliesList_' + fbId);
+  if (!listEl) return;
+  listEl.innerHTML = '<span style="color:var(--text-tertiary);font-size:12px">加载回复...</span>';
+  apiGet('/feedback/' + fbId + '/replies')
+    .then(function(r) {
+      var replies = r.replies || [];
+      if (replies.length === 0) { listEl.innerHTML = '<span style="color:var(--text-tertiary);font-size:12px">暂无回复</span>'; return; }
+      var html = '';
+      for (var i = 0; i < replies.length; i++) {
+        var rp = replies[i];
+        var badge = rp.isAdmin ? ' <span style="background:#E74C3C;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px">开发者</span>' : '';
+        var rpTime = rp.createdAt ? rp.createdAt.substring(0, 10) : '';
+        html += '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">' +
+          '<span style="font-weight:600">' + escapeHtml(rp.nickname) + '</span>' + badge +
+          ' <span style="color:var(--text-tertiary);font-size:11px">' + rpTime + '</span>' +
+          '<div style="margin-top:2px;color:var(--text);line-height:1.5;white-space:pre-wrap">' + escapeHtml(rp.text) + '</div>' +
+        '</div>';
+      }
+      listEl.innerHTML = html;
+    })
+    .catch(function() { listEl.innerHTML = '<span style="color:var(--text-tertiary);font-size:12px">加载回复失败</span>'; });
+}
+
+function sendFeedback() {
+  var nickname = (document.getElementById('fbNickname')||{}).value||'';
+  var type = (document.getElementById('fbType')||{}).value||'建议';
+  var text = (document.getElementById('fbText')||{}).value||'';
+  var btn = document.getElementById('fbSendBtn');
+  if (!text.trim()) { showToast('请输入反馈内容'); return; }
+  if (btn) btn.disabled = true;
+  var codeHash = (appData.activation && appData.activation.codeHash) || '';
+  apiPost('/feedback', { codeHash: codeHash, nickname: nickname, text: text, type: type })
+    .then(function(r) {
+      if (r.error) { showToast(r.error); if(btn)btn.disabled=false; return; }
+      showToast('✅ 反馈已发送，谢谢！');
+      var ta = document.getElementById('fbText'); if(ta)ta.value='';
+      if(btn)btn.disabled=false;
+      _fbPage=1; _fbHasMore=true; _fbAllItems=[];
+      loadFeedback(true);
+    })
+    .catch(function() { showToast('发送失败，请重试'); if(btn)btn.disabled=false; });
+}
+
+function sendFbReply(fbId) {
+  var nickname = (document.getElementById('fbReplyNick_' + fbId)||{}).value||'';
+  var text = (document.getElementById('fbReplyText_' + fbId)||{}).value||'';
+  if (!text.trim()) { showToast('请输入回复内容'); return; }
+  var codeHash = (appData.activation && appData.activation.codeHash) || '';
+  apiPost('/feedback/' + fbId + '/reply', { codeHash: codeHash, nickname: nickname, text: text })
+    .then(function(r) {
+      if (r.error) { showToast(r.error); return; }
+      showToast('✅ 已回复');
+      var ri = document.getElementById('fbReplyText_' + fbId); if(ri)ri.value='';
+      loadFbReplies(fbId);
+    })
+    .catch(function() { showToast('回复失败，请重试'); });
+}
+
 // ==================== 资料页（笔记 + 图库 + 思维导图） ====================
 // Pro 功能门槛
 function canUseZiliao() {
@@ -2379,7 +2554,6 @@ var _zlNoteTitle = '';
 var _zlViewMode = 'edit'; // 'edit' | 'mindmap'
 var _zlMarkmapLoaded = false;
 var _zlSearchQuery = '';
-var _zlMmInstance = null;
 
 // ====== 主渲染 ======
 function renderZiliao() {
@@ -2610,20 +2784,17 @@ function loadMarkmap() {
   if (!container) return;
   container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:400px;color:var(--text-tertiary);font-size:14px">⏳ 加载思维导图组件...</div>';
 
-  // 只加载 d3 + markmap-view（markmap-lib 无浏览器版，Transfomer 改用自建解析器）
-  var scripts = [
-    'https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js',
-    'https://cdn.jsdelivr.net/npm/markmap-view@0.17.0/dist/browser/index.js'
-  ];
-  function loadNext(idx) {
-    if (idx >= scripts.length) { _zlMarkmapLoaded = true; renderMarkmapFromContent(); return; }
-    var s = document.createElement('script');
-    s.src = scripts[idx];
-    s.onload = function() { loadNext(idx + 1); };
-    s.onerror = function() { _zlMarkmapLoaded = false; container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">⚠️ 思维导图组件加载失败，请检查网络连接</p><button onclick="_zlMarkmapLoaded=false;loadMarkmap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button></div>'; };
-    document.head.appendChild(s);
+  // 只加载 d3.js（纯自绘水平树，无需 200KB markmap-view）
+  if (window.d3) {
+    _zlMarkmapLoaded = true;
+    renderMarkmapFromContent();
+    return;
   }
-  loadNext(0);
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js';
+  s.onload = function() { _zlMarkmapLoaded = true; renderMarkmapFromContent(); };
+  s.onerror = function() { _zlMarkmapLoaded = false; container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">⚠️ 思维导图组件加载失败，请检查网络连接</p><button onclick="_zlMarkmapLoaded=false;loadMarkmap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button></div>'; };
+  document.head.appendChild(s);
 }
 
 // 自建 Markdown → 思维导图树 解析器（无需 markmap-lib）
@@ -2684,28 +2855,145 @@ function renderMarkmapFromContent() {
   }
 
   try {
-    // markmap 需要在全局有 markmap
-    var mm = window.markmap;
-    if (!mm || !mm.Markmap) { container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">导图组件未加载</p><button onclick="_zlMarkmapLoaded=false;loadMarkmap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button></div>'; return; }
+    var d3 = window.d3;
+    if (!d3) { container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">d3.js 未加载</p><button onclick="_zlMarkmapLoaded=false;loadMarkmap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button></div>'; return; }
 
-    // 使用自建解析器 mdToTree 替代 markmap-lib 的 Transformer
+    // 自建解析器 mdToTree 生成树结构
     var data = mdToTree(content);
+
+    // 移除旧 SVG
     var currentSVG = container.querySelector('svg');
     if (currentSVG) currentSVG.remove();
 
-    var mmInstance = mm.Markmap.create(container, {}, data);
-    _zlMmInstance = mmInstance;
-    // 适配移动端触控
-    var svgEl = container.querySelector('svg');
-    if (svgEl) {
-      svgEl.style.width = '100%';
-      svgEl.style.height = '100%';
-      svgEl.style.minHeight = '400px';
-      svgEl.style.touchAction = 'pan-y';
+    var rect = container.getBoundingClientRect();
+    var W = Math.max(rect.width || 800, 600);
+    var H = Math.max(rect.height || 500, 400);
+
+    // 创建 SVG
+    var svg = d3.select(container).append('svg')
+      .attr('width', W).attr('height', H)
+      .style('width', '100%').style('height', '100%')
+      .style('min-height', '400px')
+      .style('touch-action', 'pan-y')
+      .style('display', 'block');
+
+    var gRoot = svg.append('g');
+
+    // 缩放
+    var zoom = d3.zoom()
+      .scaleExtent([0.12, 4])
+      .on('zoom', function(event) { gRoot.attr('transform', event.transform); });
+    svg.call(zoom);
+
+    // d3 树布局 — 水平方向（x=纵向间距，y=横向层级）
+    var treeLayout = d3.tree().nodeSize([26, 150]);
+
+    // 颜色按深度循环
+    var depthColors = ['#4A90D9','#3CB371','#E67E22','#8E44AD','#E74C3C','#1ABC9C','#5DADE2','#F39C12'];
+
+    // ===== 更新函数 =====
+    function update(source) {
+      var duration = 350;
+      treeLayout(root);
+      var nodes = root.descendants();
+      var links = root.links();
+
+      // --- 链接 ---
+      var link = gRoot.selectAll('.mm-link').data(links, function(d) { return d.target._uid; });
+      link.exit().transition().duration(duration).attr('opacity', 0).remove();
+      var linkEnter = link.enter().append('path')
+        .attr('class', 'mm-link').attr('fill', 'none')
+        .attr('stroke', '#bbb').attr('stroke-width', 1.5)
+        .attr('opacity', 0);
+      linkEnter.merge(link).transition().duration(duration).attr('opacity', 1)
+        .attr('d', d3.linkHorizontal().x(function(d) { return d.y; }).y(function(d) { return d.x; }));
+
+      // --- 节点 ---
+      var node = gRoot.selectAll('.mm-node').data(nodes, function(d) { return d._uid; });
+      node.exit().transition().duration(duration).attr('opacity', 0).remove();
+
+      var nodeEnter = node.enter().append('g')
+        .attr('class', 'mm-node')
+        .attr('transform', function(d) { return 'translate(' + (source.y0 || source.y || 0) + ',' + (source.x0 || source.x || 0) + ')'; })
+        .attr('opacity', 0)
+        .attr('cursor', 'pointer');
+
+      // 背景矩形
+      nodeEnter.append('rect').attr('rx', 6).attr('ry', 6)
+        .attr('fill', function(d) { return depthColors[Math.min(d.depth, depthColors.length - 1)]; })
+        .attr('opacity', 0.9);
+
+      // 折叠圆点（有子或隐藏子时显示）
+      nodeEnter.append('circle').attr('fill', '#fff').attr('opacity', 0.8);
+
+      // 文字
+      nodeEnter.append('text')
+        .attr('dy', '0.35em').attr('text-anchor', 'start')
+        .attr('fill', '#fff')
+        .attr('font-size', '13px')
+        .attr('font-family', '-apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif')
+        .attr('font-weight', function(d) { return d.depth === 0 ? 'bold' : 'normal'; });
+
+      var nodeMerge = nodeEnter.merge(node);
+
+      // 过渡到目标位置
+      nodeMerge.transition().duration(duration)
+        .attr('transform', function(d) { return 'translate(' + d.y + ',' + d.x + ')'; })
+        .attr('opacity', 1);
+
+      // 更新矩形尺寸
+      nodeMerge.select('rect')
+        .attr('x', -6).attr('y', -11)
+        .attr('width', function(d) { return Math.max(d.data.content.length * 8 + 12, 36); })
+        .attr('height', 22);
+
+      // 更新折叠圆点
+      nodeMerge.select('circle')
+        .attr('r', function(d) { return (d.children || d._children) ? 4 : 0; })
+        .attr('cx', function(d) { return Math.max(d.data.content.length * 8 + 8, 32); })
+        .attr('cy', 0);
+
+      // 更新文字
+      nodeMerge.select('text').attr('x', 0).text(function(d) { return d.data.content; });
+
+      // 点击折叠/展开
+      nodeMerge.on('click', function(event, d) {
+        event.stopPropagation();
+        if (d.children) { d._children = d.children; d.children = null; }
+        else if (d._children) { d.children = d._children; d._children = null; }
+        update(d);
+      });
+
+      // 保存位置用于下次过渡
+      root.each(function(d) { d.x0 = d.x; d.y0 = d.y; });
     }
+
+    // 构建 d3 hierarchy
+    var root = d3.hierarchy(data);
+    // 为每个节点分配唯一 ID（用于数据绑定 key）
+    var _uid = 0;
+    root.each(function(d) { d._uid = _uid++; });
+
+    // 递归展开所有节点
+    (function expandAll(node) {
+      if (node._children) { node.children = node._children; node._children = null; }
+      if (node.children) node.children.forEach(expandAll);
+    })(root);
+
+    // 首次渲染
+    root.x0 = H / 2; root.y0 = 0;
+    update(root);
+
+    // 自适应缩放 — 让整棵树在可视区域内
+    var bounds = gRoot.node().getBBox();
+    var scale = Math.min(W / Math.max(bounds.width, 1), H / Math.max(bounds.height, 1), 1.2) * 0.88;
+    var tx = (W - bounds.width * scale) / 2 - bounds.x * scale;
+    var ty = (H - bounds.height * scale) / 2 - bounds.y * scale;
+    svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+
   } catch(e) {
-    console.error('Markmap render error:', e);
-    container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">⚠️ 导图渲染失败：' + (e.message || '未知错误') + '</p><button onclick="switchToMindMap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button><p style="font-size:11px;color:var(--text-tertiary);margin-top:8px">如持续失败，请检查笔记内容是否包含特殊字符</p></div>';
+    console.error('Mindmap render error:', e);
+    container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">⚠️ 导图渲染失败：' + escapeHtml(e.message || '未知错误') + '</p><button onclick="switchToMindMap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button><p style="font-size:11px;color:var(--text-tertiary);margin-top:8px">如持续失败，请检查笔记内容是否包含特殊字符</p></div>';
   }
 }
 
@@ -2978,7 +3266,7 @@ window._zlTemplates = [
   { name: '🧩 概念框架', content: '# 核心概念\n\n## 定义\n- 概念的定义\n\n## 分类\n- 类型1\n- 类型2\n\n## 特点\n- 特点1\n- 特点2\n\n## 应用\n- 应用场景1\n- 应用场景2' },
   { name: '📊 对比分析', content: '# 对比分析\n\n## 相同点\n- 点1\n- 点2\n\n## 不同点\n| 维度 | A | B |\n|------|---|---|\n| 维度1 |   |   |\n| 维度2 |   |   |\n\n## 总结\n- 结论' },
   { name: '🔬 理科公式', content: '# 公式整理\n\n## 公式1名称\n- 公式：\n- 含义：\n- 适用条件：\n- 例题：\n\n## 公式2名称\n- 公式：\n- 含义：\n- 适用条件：\n- 例题：' },
-  { name: '📖 课文分析', content: '# 课文标题\n\n## 作者/背景\n- \n\n## 结构梳理\n- 第一部分：\n- 第二部分：\n\n## 主旨思想\n- \n\n## 写作手法\n- \n\n## 重点字词\n- ' },
+  { name: '📖 课文分析', content: '# 课文标题\n\n## 开发者/背景\n- \n\n## 结构梳理\n- 第一部分：\n- 第二部分：\n\n## 主旨思想\n- \n\n## 写作手法\n- \n\n## 重点字词\n- ' },
   { name: '🈳 空白模板', content: '' }
 ];
 
@@ -4496,17 +4784,17 @@ function initApp() {
     }, 800);
   }
 
-  // 从云端拉取作者留言
+  // 从云端拉取开发者留言
   apiGet('/author-note').then(function(r) {
     if (r && r.text) {
       appData.settings._cloudAuthorNote = r.text;
       appData.settings._cloudAuthorNoteTime = r.updatedAt;
-      // 如果本地没有作者留言，用云端的更新本地显示
+      // 如果本地没有开发者留言，用云端的更新本地显示
       if (!appData.settings.authorNote) {
         appData.settings.authorNote = r.text;
       }
     }
-  }).catch(function(e) { console.warn('[API] 获取云端作者留言失败:', e.message); });
+  }).catch(function(e) { console.warn('[API] 获取云端开发者留言失败:', e.message); });
 
   checkEveningMode();
   switchTab('banks');
@@ -4576,7 +4864,11 @@ function switchTab(name) {
   }
   else if (name === 'browse') renderBrowseStart();
   else if (name === 'wrongbook') renderWrongBookStart();
-  else if (name === 'ziliao') { renderZiliao(); }
+  else if (name === 'ziliao') {
+    // 已渲染过且有内容区，保持状态不重建
+    if (document.getElementById('zlContentArea')) return;
+    renderZiliao();
+  }
   else if (name === 'settings') { renderSettings(); setTimeout(loadVoices, 300); }
 }
 
@@ -8348,7 +8640,7 @@ function switchManualTab(tab) {
     if (quickEl) quickEl.style.display = '';
     if (tabs[0]) { tabs[0].style.background = 'var(--primary)'; tabs[0].style.color = '#fff'; tabs[0].style.fontWeight = '600'; }
   } else if (tab === 'author') {
-    if (authorEl) { authorEl.style.display = ''; var atxt = (appData.settings._cloudAuthorNote || appData.settings.authorNote || '作者还没有留下任何话...'); authorEl.innerHTML = '<div style="line-height:1.9;padding:4px 0;white-space:pre-wrap">' + escapeHtml(atxt) + '</div>'; }
+    if (authorEl) { authorEl.style.display = ''; var atxt = (appData.settings._cloudAuthorNote || appData.settings.authorNote || '开发者还没有留下任何话...'); authorEl.innerHTML = '<div style="line-height:1.9;padding:4px 0;white-space:pre-wrap">' + escapeHtml(atxt) + '</div>'; }
     if (tabs[2]) { tabs[2].style.background = 'var(--primary)'; tabs[2].style.color = '#fff'; tabs[2].style.fontWeight = '600'; }
   } else {
     if (fullEl) fullEl.style.display = '';
@@ -8478,7 +8770,7 @@ function showManualMenu() {
   ov.innerHTML = '<div class="modal" style="animation:none;max-width:560px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:0;border-radius:var(--radius);max-height:88dvh;display:flex;flex-direction:column">' +
     '<div style="padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center">' +
       '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0"><h3 style="font-size:18px;margin:0;white-space:nowrap">📖 使用说明</h3>' +
-      '<div style="display:flex;background:var(--bg-input);border-radius:8px;padding:3px;flex-shrink:0"><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:var(--primary);color:#fff;font-weight:600;min-height:30px;transition:all .15s" onclick="switchManualTab(\'quick\')">⚡ 速览</button><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:transparent;color:var(--text-secondary);min-height:30px;transition:all .15s" onclick="switchManualTab(\'full\')">📋 详细</button><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:transparent;color:var(--text-secondary);min-height:30px;transition:all .15s" onclick="switchManualTab(\'author\')">💬 作者</button></div></div>' +
+      '<div style="display:flex;background:var(--bg-input);border-radius:8px;padding:3px;flex-shrink:0"><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:var(--primary);color:#fff;font-weight:600;min-height:30px;transition:all .15s" onclick="switchManualTab(\'quick\')">⚡ 速览</button><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:transparent;color:var(--text-secondary);min-height:30px;transition:all .15s" onclick="switchManualTab(\'full\')">📋 详细</button><button class="manual-tab" style="padding:5px 12px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:transparent;color:var(--text-secondary);min-height:30px;transition:all .15s" onclick="switchManualTab(\'author\')">💬 开发者</button></div></div>' +
       '<button class="btn btn-ghost btn-sm" onclick="this.closest(\'.modal-overlay\').remove()" style="font-size:20px;padding:4px 8px;min-width:44px;min-height:44px;flex-shrink:0">✕</button>' +
     '</div>' +
     // ⚡ 速览版
@@ -8790,9 +9082,9 @@ function showManualMenu() {
       '</div>' +
 
     '</div>' +
-    // 💬 作者 tab
+    // 💬 开发者 tab
     '<div id="manualTabAuthor" style="overflow-y:auto;flex:1;padding:16px 18px 24px;font-size:14px;line-height:1.7;color:var(--text);display:none">' +
-      (function(){ var at=''+(appData.settings._cloudAuthorNote||appData.settings.authorNote||'作者还没有留下任何话...'); return '<div style="line-height:1.9;padding:4px 0;white-space:pre-wrap">'+escapeHtml(at)+'</div>'; })() +
+      (function(){ var at=''+(appData.settings._cloudAuthorNote||appData.settings.authorNote||'开发者还没有留下任何话...'); return '<div style="line-height:1.9;padding:4px 0;white-space:pre-wrap">'+escapeHtml(at)+'</div>'; })() +
     '</div>' +
   '</div>';
   document.body.appendChild(ov);
@@ -10029,9 +10321,10 @@ function renderSettings() {
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
+      '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 作者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v94</div></div></div>' +
+      (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v95</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
