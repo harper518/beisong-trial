@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v97 · 小阮出品</title>
+<title>挖空背诵工具 v98 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -899,26 +899,41 @@ var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 97;
+var APP_VERSION = 98;
 // ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
 function apiGet(path) {
   return fetch(API_BASE + path, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
-    .then(function(r) { if (!r.ok) throw new Error('API error ' + r.status); return r.json(); });
+    .then(function(r) {
+      return r.json().then(function(body) {
+        if (!r.ok) throw { status: r.status, error: body.error || ('HTTP ' + r.status), body: body };
+        return body;
+      });
+    });
 }
 function apiPost(path, data) {
   return fetch(API_BASE + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data || {})
-  }).then(function(r) { if (!r.ok) throw new Error('API error ' + r.status); return r.json(); });
+  }).then(function(r) {
+    return r.json().then(function(body) {
+      if (!r.ok) throw { status: r.status, error: body.error || ('HTTP ' + r.status), body: body };
+      return body;
+    });
+  });
 }
 function apiPut(path, data) {
   return fetch(API_BASE + path, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data || {})
-  }).then(function(r) { if (!r.ok) throw new Error('API error ' + r.status); return r.json(); });
+  }).then(function(r) {
+    return r.json().then(function(body) {
+      if (!r.ok) throw { status: r.status, error: body.error || ('HTTP ' + r.status), body: body };
+      return body;
+    });
+  });
 }
 var FREE_COLORS = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream'];
 var BASIC_COLORS = FREE_COLORS.concat(['sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral']);
@@ -1029,6 +1044,27 @@ function showTierCompare() {
     '<tr><td style="text-align:left;padding:6px">头像上传</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">备份/恢复</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">PWA离线安装</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
+    '<tr style="border-top:2px solid var(--border)"><td colspan="4" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">🧠 资料笔记区</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">思维导图</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr style="border-top:2px solid var(--border)"><td colspan="4" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">💬 社区互动</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">社区留言板</td><td>❌</td><td>✅ 可阅读</td><td>✅ 读写</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">反馈区</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr style="border-top:2px solid var(--border)"><td colspan="4" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">🍅 番茄乐园（v98）</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">番茄钟</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">番茄商店</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">主题色解锁(番茄兑换)</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">道具卡(双倍🍅/跳过)</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">游戏时间购买</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">心愿单</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">兑换码</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">消费记录</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">置顶消息(社区)</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr style="border-top:2px solid var(--border)"><td colspan="4" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">🎮 小游戏中心（v98）</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">舒尔特方格</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">翻牌记忆</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">2048</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">弹球打砖块</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">扫雷·跳跃鸟·打地鼠</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
     '</tbody></table></div></div>';
   document.body.appendChild(ov);
 }
@@ -1235,7 +1271,7 @@ function updateThemeColorMeta(color) {
 })();
 
 function getSetting(key, defVal) {
-  if (appData.settings[key] === undefined) { appData.settings[key] = defVal; saveData(appData); }
+  if (appData.settings[key] == null) { appData.settings[key] = defVal; saveData(appData); }
   return appData.settings[key];
 }
 
@@ -2881,7 +2917,7 @@ function mdToTree(mdText) {
     if (!line.trim()) continue;
 
     var hMatch = line.match(/^(#{1,6})\s+(.+)/);
-    var liMatch = line.match(/^[\s]*[-*+]\s+(.+)/);
+    var liMatch = line.match(/^[\s]*[-*+•]\s+(.+)/);
     var numMatch = line.match(/^[\s]*(\d+)[\.\)、]\s+(.+)/);
 
     if (hMatch) {
@@ -2901,12 +2937,17 @@ function mdToTree(mdText) {
       var text = cleanInline(liMatch[1]);
       var parent = stack[stack.length - 1].node;
       parent.children.push({ content: text, children: [] });
+    } else {
+      var text = line.trim();
+      var parent = stack[stack.length - 1].node;
+      parent.children.push({ content: text, children: [] });
     }
   }
 
   if (root.children.length === 1) return root.children[0];
   if (root.children.length === 0) {
-    return { content: mdText.trim().split('\n')[0] || '笔记', children: [] };
+    var summary = mdText.trim().split('\n').slice(0, 3).map(function(l) { return l.trim(); }).filter(Boolean).join(' / ');
+    return { content: summary || '空白笔记', children: [] };
   }
   return root;
 }
@@ -3275,7 +3316,7 @@ function parseOutlineToMarkdown(text) {
     else { var sm = line.match(/^(  |    )+/); if (sm) { indent = sm[0].length / 2; trimmed = line.substring(sm[0].length); } }
     var cnMatch = trimmed.match(/^[（(]?[一二三四五六七八九十]+[）)]?\s*[、.]?\s*/);
     var numMatch = trimmed.match(/^(\d+)[.)、]\s*/);
-    var listMatch = trimmed.match(/^[-*]\s+/);
+    var listMatch = trimmed.match(/^[-*•]\s+/);
     if (indent === 0 && (cnMatch || numMatch)) {
       result.push('# ' + trimmed.replace(/^[（(]?[一二三四五六七八九十]+[）)]?\s*[、.]?\s*/, '').replace(/^\d+[.)、]\s*/, ''));
     } else if (indent <= 1 && (cnMatch || numMatch)) {
@@ -4183,7 +4224,7 @@ function parseHashPctText(rawText) {
 
 // ==================== 工具函数 ====================
 function $(id) { return document.getElementById(id); }
-function escapeHtml(s) { if (!s) return ''; return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function escapeHtml(s) { if (!s) return ''; return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 function pad2(n) { return (n < 10 ? '0' : '') + n; }
 function showFatalError(msg) {
   // 显示致命错误恢复界面，确保用户不会卡在死页
@@ -5265,7 +5306,7 @@ function showImportModal() {
     '<input type="text" id="bankNameInput" placeholder="例如：生物第三章" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size)"></div>' +
     '<div class="form-group mb-10"><label class="form-label">题目内容</label>' +
     '<p class="form-hint mb-8">支持多种格式智能识别：<code>题目|答案|口诀</code> / 简答题编号+子项 / 问答 / 【】挖空标记。粘贴后自动检测。</p>' +
-    '<textarea id="importTextarea" placeholder="每行一题，用 | 分隔\n\n示例：\n光合作用场所是|【叶绿体】|光→叶\n植物细胞结构包括|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同" style="width:100%;min-height:180px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
+    '<textarea id="importTextarea" placeholder="每行一题，用 | 分隔 格式：题目|答案(【】挖空)|口诀\n\n示例（教育学）：\n1.简述20世纪以后教育的特点|（1）教育的【终身化】。（2）教育的【全民化】。（3）教育的【民主化】。（4）教育的【多元化】。（5）教育的【现代化】|全民主多现身\n2.简述生产力对教育的制约作用|①生产力水平决定教育的【规模和速度】。②生产力制约【人才培养的规格和教育结构】。③生产力制约【教学内容、方法、组织形式与手段】|龟速够防守\n3.简述政治经济制度对教育的制约|(1)政治经济制度决定教育的【性质】(2)决定教育的【宗旨与目的】(3)决定教育的【领导权】(4)决定【受教育权】(5)决定【教育内容和教育管理体制】|慕容姓两权" style="width:100%;min-height:180px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--font-size);resize:vertical;font-family:inherit;line-height:1.6"></textarea>' +
     '<div id="importStats" class="form-hint" style="display:none;margin-top:6px;padding:8px 12px;background:var(--bg-input);border-radius:8px;line-height:1.6"></div>' +
     '<div class="flex gap-8 mt-6">' +
       '<button class="btn btn-sm" style="background:var(--bg-input);border:none;font-size:12px;flex:1" onclick="pasteFromTextarea(\'importTextarea\')">📋 粘贴</button>' +
@@ -9974,7 +10015,7 @@ function renderSettings() {
     '<div class="section-body" id="body_dataMgmt"><div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px">' +
       // 📊 存储概览
       (function() {
-        var storageJson = localStorage.getItem('memorize_v2_trial_7666') || '';
+        var storageJson = localStorage.getItem(STORAGE_KEY) || '';
         var storageBytes = storageJson.length * 2;
         var storageKB = storageBytes / 1024;
         var storageMB = storageBytes / (1024 * 1024);
@@ -10396,7 +10437,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v97</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v98</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -10554,7 +10595,7 @@ function spendTomatoes(amount, reason) {
   return true;
 }
 function _tShopGet(name, def) {
-  if (appData.settings[name] === undefined) { appData.settings[name] = def; saveData(appData); }
+  if (appData.settings[name] == null) { appData.settings[name] = def; saveData(appData); }
   return appData.settings[name];
 }
 
@@ -10695,7 +10736,7 @@ function showTomatoGarden(initialTab) {
     // 游戏
     h += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">🎮 放松游戏</div>';
     h += '<div style="background:var(--bg-input);border-radius:10px;padding:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">';
-    h += '<div><div style="font-size:13px;font-weight:600;color:var(--text)">10分钟游戏时间</div><div style="font-size:11px;color:var(--text-tertiary)">舒尔特方格·翻牌记忆·2048·打砖块</div></div>';
+    h += '<div><div style="font-size:13px;font-weight:600;color:var(--text)">5分钟游戏时间</div><div style="font-size:11px;color:var(--text-tertiary)">舒尔特方格·翻牌记忆·2048·打砖块</div></div>';
     h += '<button onclick="event.stopPropagation();buyGameTime()" style="padding:6px 14px;border:none;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer;min-height:32px;background:var(--primary);color:#fff;white-space:nowrap">1🍅 购买</button>';
     h += '</div>';
     if (gameMin > 0) {
@@ -10730,8 +10771,8 @@ function showTomatoGarden(initialTab) {
     // 兑换码
     h += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">🎫 兑换码</div>';
     h += '<div style="background:var(--bg-input);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;gap:8px;align-items:center">';
-    h += '<input id="redeemCodeInput" type="text" placeholder="输入兑换码" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg-card);color:var(--text)" onkeydown="if(event.key===\'Enter\')redeemCode()">';
-    h += '<button onclick="event.stopPropagation();redeemCode()" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;min-height:36px;background:var(--warning);color:#fff;white-space:nowrap">兑换</button>';
+    h += '<input id="redeemCodeInput" type="text" placeholder="输入兑换码" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg-card);color:var(--text)" onkeydown="if(event.key===\'Enter\')redeemCode(event)">';
+    h += '<button onclick="event.stopPropagation();redeemCode(event)" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;min-height:36px;background:var(--warning);color:#fff;white-space:nowrap">兑换</button>';
     h += '</div>';
     return h;
   }
@@ -10878,11 +10919,27 @@ function buySkipCard() {
   _refreshTomatoModal('shop');
 }
 
-function buyGameTime() {
-  if (!spendTomatoes(1, '游戏时间10分钟')) { showToast('🍅 番茄不足！'); return; }
-  appData.settings.gameTimeMinutes = (appData.settings.gameTimeMinutes || 0) + 10;
+function unlockGame(gameId, cost) {
+  var tomatoNow = appData.settings.tomatoGarden || 0;
+  if (tomatoNow < cost) { showToast('🍅 番茄不足！需要' + cost + '🍅'); return; }
+  var unlocked = _tShopGet('unlockedGames', ['schulte','memory','2048','breakout']);
+  if (unlocked.indexOf(gameId) >= 0) { showToast('已解锁过了'); return; }
+  if (!spendTomatoes(cost, '解锁游戏·' + gameId)) { showToast('🍅 番茄不足！'); return; }
+  unlocked.push(gameId);
+  appData.settings.unlockedGames = unlocked;
   saveData(appData);
-  showToast('✅ +10分钟游戏时间！剩余 ' + appData.settings.gameTimeMinutes + ' 分钟');
+  showToast('✅ 游戏已解锁！');
+  _refreshTomatoModal('garden');
+  // 刷新游戏中心
+  var hub = document.getElementById('gameHubModal');
+  if (hub) { hub.remove(); showGameHub(); }
+}
+
+function buyGameTime() {
+  if (!spendTomatoes(1, '游戏时间5分钟')) { showToast('🍅 番茄不足！'); return; }
+  appData.settings.gameTimeMinutes = (appData.settings.gameTimeMinutes || 0) + 5;
+  saveData(appData);
+  showToast('✅ +5分钟游戏时间！剩余 ' + appData.settings.gameTimeMinutes + ' 分钟');
   _refreshTomatoModal('shop');
 }
 
@@ -10899,7 +10956,7 @@ function buyTheme(themeId) {
 }
 
 // ====== 兑换码 ======
-function redeemCode() {
+function redeemCode(e) {
   var input = document.getElementById('redeemCodeInput');
   if (!input) return;
   var code = (input.value || '').trim().toUpperCase();
@@ -10908,8 +10965,8 @@ function redeemCode() {
   // 本地防重复
   var redeemed = _tShopGet('redeemedCodes', []);
   if (redeemed.indexOf(code) >= 0) { showToast('此兑换码已使用过'); return; }
-  var btn = event.target;
-  if (btn.tagName !== 'BUTTON') btn = btn.closest('button');
+  var btn = document.querySelector('#redeemCodeInput + button');
+  if (!btn && e && e.target) { btn = e.target.tagName === 'BUTTON' ? e.target : e.target.closest('button'); }
   if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
   apiPost('/redeem', { codeHash: appData.activation.codeHash, redeemCode: code })
     .then(function(r) {
@@ -10926,8 +10983,9 @@ function redeemCode() {
       }
       if (btn) { btn.disabled = false; btn.textContent = '兑换'; }
     })
-    .catch(function(e) {
-      showToast('网络错误，请稍后重试');
+    .catch(function(err) {
+      var msg = (err && err.error) ? err.error : '网络错误，请稍后重试';
+      showToast('❌ ' + msg);
       if (btn) { btn.disabled = false; btn.textContent = '兑换'; }
     });
 }
@@ -10977,11 +11035,17 @@ function showGameHub() {
   ov.id = 'gameHubModal';
   ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;padding:16px';
   ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+  var unlocked = _tShopGet('unlockedGames', ['schulte','memory','2048','breakout']);
+  var uSet = {};
+  for (var ui = 0; ui < unlocked.length; ui++) uSet[unlocked[ui]] = true;
   var games = [
-    { id: 'schulte', name: '舒尔特方格', icon: '🧩', desc: '专注力训练·按序找数字' },
-    { id: 'memory', name: '翻牌记忆', icon: '🧠', desc: '轻松治愈·配对翻牌' },
-    { id: '2048', name: '2048', icon: '🧊', desc: '经典益智·数字合并' },
-    { id: 'breakout', name: '弹球打砖块', icon: '🎱', desc: '纯放松·Breakout' }
+    { id: 'schulte', name: '舒尔特方格', icon: '🧩', desc: '专注力训练·按序找数字', cost: 0, locked: false },
+    { id: 'memory', name: '翻牌记忆', icon: '🧠', desc: '轻松治愈·配对翻牌', cost: 0, locked: false },
+    { id: '2048', name: '2048', icon: '🧊', desc: '经典益智·数字合并', cost: 0, locked: false },
+    { id: 'breakout', name: '弹球打砖块', icon: '🎱', desc: '纯放松·Breakout', cost: 0, locked: false },
+    { id: 'minesweeper', name: '扫雷', icon: '💣', desc: '经典扫雷·9×9 10雷', cost: 2, locked: !uSet['minesweeper'] },
+    { id: 'flappy', name: '跳跃鸟', icon: '🐦', desc: '休闲跳跃·躲避管道', cost: 2, locked: !uSet['flappy'] },
+    { id: 'whack', name: '打地鼠', icon: '🎯', desc: '快速反应·30秒挑战', cost: 2, locked: !uSet['whack'] }
   ];
   var h = '<div style="background:var(--bg-card);border-radius:16px;padding:20px;max-width:400px;width:100%;max-height:80dvh;overflow-y:auto">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
@@ -10992,11 +11056,19 @@ function showGameHub() {
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
   for (var i = 0; i < games.length; i++) {
     var g = games[i];
-    h += '<button onclick="event.stopPropagation();launchGame(\'' + g.id + '\')" ' + (gameMin <= 0 ? 'disabled' : '') + ' style="padding:14px 10px;border:1px solid var(--border);border-radius:12px;cursor:' + (gameMin <= 0 ? 'not-allowed' : 'pointer') + ';background:var(--bg-input);text-align:center;min-height:80px;' + (gameMin <= 0 ? 'opacity:0.5' : '') + '">';
-    h += '<div style="font-size:32px;margin-bottom:4px">' + g.icon + '</div>';
-    h += '<div style="font-size:13px;font-weight:600;color:var(--text)">' + g.name + '</div>';
-    h += '<div style="font-size:10px;color:var(--text-tertiary)">' + g.desc + '</div>';
-    h += '</button>';
+    if (g.locked) {
+      h += '<button onclick="event.stopPropagation();unlockGame(\'' + g.id + '\',' + g.cost + ')" style="padding:14px 10px;border:1px dashed var(--border);border-radius:12px;cursor:pointer;background:var(--bg-input);text-align:center;min-height:80px;opacity:0.7">';
+      h += '<div style="font-size:32px;margin-bottom:4px">🔒</div>';
+      h += '<div style="font-size:13px;font-weight:600;color:var(--text)">' + g.name + '</div>';
+      h += '<div style="font-size:10px;color:var(--warning)">' + g.cost + '🍅 解锁</div>';
+      h += '</button>';
+    } else {
+      h += '<button onclick="event.stopPropagation();launchGame(\'' + g.id + '\')" ' + (gameMin <= 0 ? 'disabled' : '') + ' style="padding:14px 10px;border:1px solid var(--border);border-radius:12px;cursor:' + (gameMin <= 0 ? 'not-allowed' : 'pointer') + ';background:var(--bg-input);text-align:center;min-height:80px;' + (gameMin <= 0 ? 'opacity:0.5' : '') + '">';
+      h += '<div style="font-size:32px;margin-bottom:4px">' + g.icon + '</div>';
+      h += '<div style="font-size:13px;font-weight:600;color:var(--text)">' + g.name + '</div>';
+      h += '<div style="font-size:10px;color:var(--text-tertiary)">' + g.desc + '</div>';
+      h += '</button>';
+    }
   }
   h += '</div>';
   if (gameMin <= 0) {
@@ -11029,7 +11101,7 @@ function showGameInline(gameType, startTime) {
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">' +
       '<span style="font-size:14px;font-weight:600">🎮 游戏中</span>' +
       '<span id="_gameTimer" style="font-size:12px;color:var(--text-secondary)"></span>' +
-      '<button onclick="var gtm=document.getElementById(\'gameInlineModal\');if(gtm){var st=gtm._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);gtm.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:18px;cursor:pointer;min-width:44px;min-height:44px;color:var(--text-secondary)">✕</button>' +
+      '<button onclick="var gc=document.getElementById(\'_gameContainer\');if(gc){if(gc._cleanup)gc._cleanup();var cvs=gc.querySelector(\'canvas\');if(cvs&&cvs._stop)cvs._stop();if(cvs&&cvs._stopFlappy)cvs._stopFlappy();if(gc._stopTimer)gc._stopTimer();}var gtm=document.getElementById(\'gameInlineModal\');if(gtm){var st=gtm._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);gtm.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:18px;cursor:pointer;min-width:44px;min-height:44px;color:var(--text-secondary)">✕</button>' +
     '</div>' +
     '<div id="_gameContainer" style="flex:1;overflow:hidden;position:relative"></div>' +
   '</div>';
@@ -11065,6 +11137,9 @@ function renderGame(gameType, container) {
     case 'memory': renderMemoryMatch(container); break;
     case '2048': renderGame2048(container); break;
     case 'breakout': renderBreakout(container); break;
+    case 'minesweeper': renderMinesweeper(container); break;
+    case 'flappy': renderFlappyBird(container); break;
+    case 'whack': renderWhackAMole(container); break;
     default: container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-tertiary)">未知游戏</div>';
   }
 }
@@ -11093,6 +11168,9 @@ function renderSchulteGrid(container) {
   function renderGrid() {
     var h = '<div style="text-align:center;padding:8px">';
     h += '<div style="font-size:14px;font-weight:600;margin-bottom:4px">🧩 舒尔特方格</div>';
+    h += '<div style="display:flex;justify-content:flex-end;margin-bottom:2px">';
+    h += '<button onclick="var c=document.getElementById(\'_schulteContainer\');if(c&&c._stopTimer)c._stopTimer();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px">✕</button>';
+    h += '</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">按顺序点击 1→' + (N*N) + '，越快越好！</div>';
     h += '<div id="_schulteTimer" style="font-size:20px;font-weight:700;color:var(--primary);margin-bottom:8px">0.0s</div>';
     h += '<div style="display:grid;grid-template-columns:repeat(' + N + ',1fr);gap:4px;max-width:300px;margin:0 auto">';
@@ -11107,13 +11185,13 @@ function renderSchulteGrid(container) {
       h += '<div style="font-size:28px;margin-bottom:4px">🎉</div>';
       h += '<div style="font-size:16px;font-weight:700;color:var(--success)">完成时间：' + elapsedSec.toFixed(1) + ' 秒</div>';
       h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">' + (elapsedSec < 20 ? '🌟 超级专注！太厉害了！' : elapsedSec < 35 ? '👍 不错！继续训练会更快' : '💪 加油！多练几次提升专注力') + '</div>';
-      h += '<button onclick="renderSchulteGrid(this.parentElement.parentElement.parentElement)" style="margin-top:8px;padding:8px 20px;border:none;border-radius:16px;font-size:13px;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;min-height:40px">🔄 再来一局</button>';
+      h += '<button onclick="if(this.closest(\'#_gameContainer\')&&this.closest(\'#_gameContainer\')._stopTimer)this.closest(\'#_gameContainer\')._stopTimer();renderSchulteGrid(this.parentElement.parentElement.parentElement)" style="margin-top:8px;padding:8px 20px;border:none;border-radius:16px;font-size:13px;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;min-height:40px">🔄 再来一局</button>';
       h += '</div>';
     }
     h += '</div>';
     container.innerHTML = h;
 
-    if (!finished && !timerInterval) {
+    if (!finished) {
       // 绑定按钮点击
       for (var j = 0; j < numbers.length; j++) {
         var btn = document.getElementById('_schulte_' + j);
@@ -11127,6 +11205,9 @@ function renderSchulteGrid(container) {
                   var tel = document.getElementById('_schulteTimer');
                   if (tel) tel.textContent = updateTimer();
                 }, 100);
+                if (container._stopTimer === undefined) {
+                  container._stopTimer = function() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } };
+                }
               }
               if (num === nextTarget) {
                 nextTarget++;
@@ -11231,6 +11312,9 @@ function renderMemoryMatch(container) {
 
 // ====== 🧊 2048 ======
 function renderGame2048(container) {
+  // 清理旧的2048事件
+  if (container._cleanup) { container._cleanup(); }
+
   var grid = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
   var score = 0;
   var gameOver = false;
@@ -11256,12 +11340,14 @@ function renderGame2048(container) {
     return arr;
   }
 
+  var moved = false;
   function move(dir) {
     var old = JSON.stringify(grid);
     if (dir === 'left' || dir === 'right') {
       for (var r = 0; r < 4; r++) {
         var row = grid[r];
-        if (dir === 'right') row = row.reverse();
+        if (dir === 'right') row = row.concat().reverse();
+        else row = row.concat();
         row = slide(row);
         if (dir === 'right') row = row.reverse();
         grid[r] = row;
@@ -11276,12 +11362,11 @@ function renderGame2048(container) {
       }
     }
     if (JSON.stringify(grid) !== old) {
+      moved = true;
       addRandom();
-      // 检查2048
       for (var rr = 0; rr < 4; rr++)
         for (var cc = 0; cc < 4; cc++)
           if (grid[rr][cc] >= 2048) won = true;
-      // 检查游戏结束
       gameOver = checkGameOver();
     }
     render();
@@ -11311,19 +11396,58 @@ function renderGame2048(container) {
     2048: { bg: '#edc22e', color: '#f9f6f2' }
   };
 
+  var keyHandler = function(e) {
+    if (gameOver || won) return;
+    switch (e.key) {
+      case 'ArrowLeft': e.preventDefault(); move('left'); break;
+      case 'ArrowRight': e.preventDefault(); move('right'); break;
+      case 'ArrowUp': e.preventDefault(); move('up'); break;
+      case 'ArrowDown': e.preventDefault(); move('down'); break;
+    }
+  };
+  document.addEventListener('keydown', keyHandler);
+
+  var touchStartX = 0, touchStartY = 0;
+  var touchHandler = function(e) {
+    if (gameOver || won) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  };
+  var touchEndHandler = function(e) {
+    if (gameOver || won) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) < 15 && Math.abs(dy) < 15) return;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      move(dx > 0 ? 'right' : 'left');
+    } else {
+      move(dy > 0 ? 'down' : 'up');
+    }
+  };
+  container.addEventListener('touchstart', touchHandler, {passive: true});
+  container.addEventListener('touchend', touchEndHandler, {passive: true});
+
+  // 清理函数：退出时移除所有事件
+  container._cleanup = function() {
+    document.removeEventListener('keydown', keyHandler);
+    container.removeEventListener('touchstart', touchHandler);
+    container.removeEventListener('touchend', touchEndHandler);
+  };
+
   function render() {
-    var h = '<div style="text-align:center;padding:8px;max-width:340px;margin:0 auto">';
-    h += '<div style="font-size:14px;font-weight:600;margin-bottom:2px">🧊 2048</div>';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    var h = '<div style="text-align:center;padding:4px;max-width:340px;margin:0 auto" tabindex="0">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    h += '<span style="font-size:14px;font-weight:600;color:var(--text)">🧊 2048</span>';
     h += '<span style="font-size:13px;font-weight:700;color:var(--text)">得分：' + score + '</span>';
-    h += '<button onclick="renderGame2048(this.parentElement.parentElement.parentElement)" style="padding:4px 12px;border:none;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;background:var(--primary-soft);color:var(--primary);min-height:32px">🔄 重新开始</button>';
-    h += '</div>';
+    h += '<div style="display:flex;gap:4px">';
+    h += '<button onclick="var c=document.getElementById(\'_gameContainer\');if(c&&c._cleanup)c._cleanup();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px" title="退出游戏">✕</button>';
+    h += '</div></div>';
     h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--border);padding:6px;border-radius:10px;max-width:320px;margin:0 auto">';
     for (var r = 0; r < 4; r++) {
       for (var c = 0; c < 4; c++) {
         var v = grid[r][c];
         var tc = tileColors[v] || { bg: '#3c3a32', color: '#f9f6f2' };
-        h += '<div style="aspect-ratio:1;border-radius:6px;font-size:' + (v >= 100 ? '20' : v > 0 ? '26' : '20') + 'px;font-weight:700;display:flex;align-items:center;justify-content:center;background:' + tc.bg + ';color:' + tc.color + '">' + (v > 0 ? v : '') + '</div>';
+        h += '<div style="aspect-ratio:1;border-radius:6px;font-size:' + (v >= 100 ? '22' : v > 0 ? '28' : '20') + 'px;font-weight:700;display:flex;align-items:center;justify-content:center;background:' + tc.bg + ';color:' + tc.color + ';transition:all 0.1s">' + (v > 0 ? v : '') + '</div>';
       }
     }
     h += '</div>';
@@ -11333,46 +11457,9 @@ function renderGame2048(container) {
       h += '<button onclick="renderGame2048(this.parentElement.parentElement.parentElement)" style="margin-top:6px;padding:8px 20px;border:none;border-radius:16px;font-size:13px;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;min-height:40px">🔄 再来一局</button>';
       h += '</div>';
     }
-    h += '<div style="margin-top:6px;font-size:10px;color:var(--text-tertiary)">滑动屏幕或按方向键操作</div>';
+    h += '<div style="margin-top:6px;font-size:10px;color:var(--text-tertiary)">方向键 或 滑动屏幕操作</div>';
     h += '</div>';
     container.innerHTML = h;
-
-    // 键盘操作
-    var keyHandler = function(e) {
-      if (gameOver || won) return;
-      switch (e.key) {
-        case 'ArrowLeft': e.preventDefault(); move('left'); break;
-        case 'ArrowRight': e.preventDefault(); move('right'); break;
-        case 'ArrowUp': e.preventDefault(); move('up'); break;
-        case 'ArrowDown': e.preventDefault(); move('down'); break;
-      }
-    };
-    document.addEventListener('keydown', keyHandler);
-    // 清理旧的事件监听器（存储引用以便清理）
-    container._keyHandler = keyHandler;
-
-    // 触摸滑动
-    var touchStartX = 0, touchStartY = 0;
-    var touchHandler = function(e) {
-      if (gameOver || won) return;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    };
-    var touchEndHandler = function(e) {
-      if (gameOver || won) return;
-      var dx = e.changedTouches[0].clientX - touchStartX;
-      var dy = e.changedTouches[0].clientY - touchStartY;
-      if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
-      if (Math.abs(dx) > Math.abs(dy)) {
-        move(dx > 0 ? 'right' : 'left');
-      } else {
-        move(dy > 0 ? 'down' : 'up');
-      }
-    };
-    container.addEventListener('touchstart', touchHandler);
-    container.addEventListener('touchend', touchEndHandler);
-    container._touchStart = touchHandler;
-    container._touchEnd = touchEndHandler;
   }
 
   addRandom();
@@ -11449,8 +11536,10 @@ function renderBreakout(container) {
 
   function update() {
     if (!running) return;
-    ballX += ballDX;
-    ballY += ballDY;
+    var cvs = document.getElementById(canvasId);
+    var spd = (cvs && cvs._speedMul) || 1;
+    ballX += ballDX * spd;
+    ballY += ballDY * spd;
     // 墙壁碰撞
     if (ballX - ballR <= 0 || ballX + ballR >= W) ballDX = -ballDX;
     if (ballY - ballR <= 0) ballDY = -ballDY;
@@ -11520,8 +11609,17 @@ function renderBreakout(container) {
     });
   }
 
-  var h = '<div style="text-align:center;padding:8px">';
-  h += '<div style="font-size:14px;font-weight:600;margin-bottom:4px">🎱 弹球打砖块</div>';
+  var speedMul = 1;
+  var h = '<div style="text-align:center;padding:4px">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+  h += '<span style="font-size:14px;font-weight:600;color:var(--text)">🎱 弹球打砖块</span>';
+  h += '<div style="display:flex;align-items:center;gap:6px">';
+  h += '<span style="font-size:10px;color:var(--text-tertiary)">速度</span>';
+  h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c){c._speedMul=0.5;}" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:' + (speedMul===0.5?'var(--primary);color:#fff':'var(--bg-card);color:var(--text)') + ';min-height:28px">0.5x</button>';
+  h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c){c._speedMul=1;}" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:' + (speedMul===1?'var(--primary);color:#fff':'var(--bg-card);color:var(--text)') + ';min-height:28px">1x</button>';
+  h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c){c._speedMul=2;}" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:' + (speedMul===2?'var(--primary);color:#fff':'var(--bg-card);color:var(--text)') + ';min-height:28px">2x</button>';
+  h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c&&c._stop)c._stop();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px" title="退出游戏">✕</button>';
+  h += '</div></div>';
   h += '<canvas id="' + canvasId + '" width="' + W + '" height="' + H + '" style="max-width:100%;border-radius:10px;background:#1a1a2e;touch-action:none;display:block;margin:0 auto"></canvas>';
   h += '<div style="margin-top:4px;font-size:10px;color:var(--text-tertiary)">鼠标/手指移动挡板 · 点击开始</div>';
   h += '</div>';
@@ -11530,6 +11628,11 @@ function renderBreakout(container) {
   setTimeout(function() {
     var canvas = document.getElementById(canvasId);
     if (!canvas) return;
+    canvas._speedMul = 1;
+    canvas._stop = function() {
+      running = false;
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+    };
     draw();
 
     // 鼠标/触摸移动挡板
@@ -11559,6 +11662,313 @@ function renderBreakout(container) {
       }
     });
   }, 100);
+}
+
+// ====== 💣 扫雷 ======
+function renderMinesweeper(container) {
+  var ROWS = 9, COLS = 9, MINES = 10;
+  var board = [], revealed = [], flagged = [];
+  var gameOver = false, won = false, started = false;
+
+  function initBoard() {
+    board = []; revealed = []; flagged = [];
+    for (var r = 0; r < ROWS; r++) {
+      board[r] = []; revealed[r] = []; flagged[r] = [];
+      for (var c = 0; c < COLS; c++) {
+        board[r][c] = 0; revealed[r][c] = false; flagged[r][c] = false;
+      }
+    }
+    // 放置雷
+    var placed = 0;
+    while (placed < MINES) {
+      var rr = Math.floor(Math.random() * ROWS);
+      var cc = Math.floor(Math.random() * COLS);
+      if (board[rr][cc] !== -1) { board[rr][cc] = -1; placed++; }
+    }
+    // 计算数字
+    for (var r = 0; r < ROWS; r++)
+      for (var c = 0; c < COLS; c++) {
+        if (board[r][c] === -1) continue;
+        var count = 0;
+        for (var dr = -1; dr <= 1; dr++)
+          for (var dc = -1; dc <= 1; dc++) {
+            var nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc] === -1) count++;
+          }
+        board[r][c] = count;
+      }
+  }
+
+  function reveal(r, c) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS || revealed[r][c] || flagged[r][c] || gameOver) return;
+    revealed[r][c] = true;
+    if (board[r][c] === -1) { gameOver = true; render(); return; }
+    if (board[r][c] === 0) {
+      for (var dr = -1; dr <= 1; dr++)
+        for (var dc = -1; dc <= 1; dc++)
+          reveal(r + dr, c + dc);
+    }
+    // 检查胜利
+    var allRevealed = true;
+    for (var rr = 0; rr < ROWS && allRevealed; rr++)
+      for (var cc = 0; cc < COLS && allRevealed; cc++)
+        if (board[rr][cc] !== -1 && !revealed[rr][cc]) allRevealed = false;
+    if (allRevealed) { won = true; gameOver = true; }
+    render();
+  }
+
+  var numColors = ['','#2563eb','#16a34a','#dc2626','#7c3aed','#b91c1c','#0d9488','#1e293b','#64748b'];
+
+  function render() {
+    var h = '<div style="text-align:center;padding:4px;max-width:360px;margin:0 auto">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    h += '<span style="font-size:14px;font-weight:600;color:var(--text)">💣 扫雷</span>';
+    h += '<span style="font-size:12px;color:var(--text-secondary)">🚩 ' + flagged.flat().filter(Boolean).length + '/' + MINES + '</span>';
+    h += '<div style="display:flex;gap:4px">';
+    h += '<button onclick="renderMinesweeper(this.parentElement.parentElement.parentElement)" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:var(--bg-card);color:var(--text);min-height:28px">🔄</button>';
+    h += '<button onclick="var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px">✕</button>';
+    h += '</div></div>';
+    h += '<div style="display:grid;grid-template-columns:repeat(' + COLS + ',1fr);gap:2px;max-width:360px;margin:0 auto;background:var(--border);padding:2px;border-radius:8px;user-select:none">';
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var isRev = revealed[r][c];
+        var isFlag = flagged[r][c];
+        var cell = '';
+        var bg = isRev ? (board[r][c] === -1 ? 'var(--danger)' : 'var(--bg-card)') : 'var(--bg-input)';
+        var fg = 'var(--text)';
+        if (isRev && board[r][c] > 0) fg = numColors[board[r][c]] || 'var(--text)';
+        if (isFlag) cell = '🚩';
+        else if (isRev && board[r][c] === -1) cell = '💣';
+        else if (isRev && board[r][c] > 0) cell = board[r][c];
+        h += '<button id="_ms_' + r + '_' + c + '" style="aspect-ratio:1;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:' + (gameOver?'default':'pointer') + ';background:' + bg + ';color:' + fg + ';min-height:36px;padding:0"' + (gameOver?' disabled':'') + '>' + cell + '</button>';
+      }
+    }
+    h += '</div>';
+    if (gameOver) {
+      h += '<div style="margin-top:8px;padding:10px;background:' + (won ? 'var(--success-light)' : 'var(--danger-light)') + ';border-radius:8px;text-align:center">';
+      h += '<div style="font-size:16px;font-weight:700;color:' + (won ? 'var(--success)' : 'var(--danger)') + '">' + (won ? '🎉 排雷成功！' : '💥 踩雷了！') + '</div>';
+      h += '<button onclick="renderMinesweeper(this.parentElement.parentElement.parentElement)" style="margin-top:4px;padding:6px 16px;border:none;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;min-height:36px">🔄 再来一局</button>';
+      h += '</div>';
+    }
+    h += '</div>';
+    container.innerHTML = h;
+
+    if (!gameOver) {
+      for (var r = 0; r < ROWS; r++) {
+        for (var c = 0; c < COLS; c++) {
+          var btn = document.getElementById('_ms_' + r + '_' + c);
+          if (btn && !btn.disabled) {
+            (function(rr, cc) {
+              btn.addEventListener('click', function() { reveal(rr, cc); });
+              btn.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                if (revealed[rr][cc]) return;
+                flagged[rr][cc] = !flagged[rr][cc];
+                render();
+              });
+            })(r, c);
+          }
+        }
+      }
+    }
+  }
+
+  initBoard();
+  render();
+}
+
+// ====== 🐦 跳跃鸟 (Flappy Bird简化版) ======
+function renderFlappyBird(container) {
+  var W = 320, H = 400;
+  var birdY = H / 2, birdV = 0, birdR = 14;
+  var pipes = [];
+  var pipeW = 50, pipeGap = 130, pipeSpeed = 2;
+  var score = 0;
+  var gameOver = false;
+  var running = false;
+  var frameId = null;
+  var canvasId = '_flappyCanvas_' + Date.now();
+
+  function reset() {
+    birdY = H / 2; birdV = 0; pipes = []; score = 0; gameOver = false; running = false;
+    // 初始管道
+    pipes.push({ x: W + 100, topH: 80 + Math.random() * 150 });
+  }
+
+  function draw() {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+    // 天空
+    var grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, '#87CEEB'); grad.addColorStop(1, '#E0F7FA');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    // 鸟
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(W / 4, birdY, birdR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath(); ctx.arc(W / 4 + 6, birdY - 4, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(W / 4 + 6, birdY - 5, 2, 0, Math.PI * 2); ctx.fill();
+    // 管道
+    for (var i = 0; i < pipes.length; i++) {
+      var p = pipes[i];
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(p.x, 0, pipeW, p.topH);
+      ctx.fillRect(p.x - 3, p.topH - 2, pipeW + 6, 6);
+      ctx.fillRect(p.x, p.topH + pipeGap, pipeW, H - p.topH - pipeGap);
+      ctx.fillRect(p.x - 3, p.topH + pipeGap - 4, pipeW + 6, 6);
+    }
+    // 分数
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 24px sans-serif';
+    ctx.textAlign = 'center'; ctx.fillText(score, W / 2, 40); ctx.textAlign = 'start';
+    if (gameOver) {
+      ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center'; ctx.fillText('游戏结束 得分:' + score, W/2, H/2);
+      ctx.font = '14px sans-serif'; ctx.fillText('点击重新开始', W/2, H/2+30);
+      ctx.textAlign = 'start';
+    }
+  }
+
+  function update() {
+    if (!running || gameOver) return;
+    birdV += 0.5; birdY += birdV;
+    if (birdY < birdR || birdY > H - birdR) { gameOver = true; running = false; draw(); return; }
+    // 移动管道
+    for (var i = pipes.length - 1; i >= 0; i--) {
+      pipes[i].x -= pipeSpeed;
+      if (pipes[i].x < -pipeW) { pipes.splice(i, 1); score++; }
+    }
+    // 生成新管道
+    if (pipes.length === 0 || pipes[pipes.length - 1].x < W - 200) {
+      pipes.push({ x: W, topH: 60 + Math.random() * (H - pipeGap - 80) });
+    }
+    // 碰撞检测
+    for (var i = 0; i < pipes.length; i++) {
+      var p = pipes[i];
+      if (W / 4 + birdR > p.x && W / 4 - birdR < p.x + pipeW) {
+        if (birdY - birdR < p.topH || birdY + birdR > p.topH + pipeGap) {
+          gameOver = true; running = false; draw(); return;
+        }
+      }
+    }
+    draw();
+    if (running) frameId = requestAnimationFrame(update);
+  }
+
+  function jump() {
+    if (gameOver) { reset(); draw(); return; }
+    if (!running) { running = true; frameId = requestAnimationFrame(update); }
+    birdV = -7;
+  }
+
+  var h = '<div style="text-align:center;padding:4px">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;max-width:320px;margin:0 auto">';
+  h += '<span style="font-size:14px;font-weight:600;color:var(--text)">🐦 跳跃鸟</span>';
+  h += '<div style="display:flex;gap:4px">';
+  h += '<button onclick="renderFlappyBird(this.parentElement.parentElement.parentElement.parentElement)" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:var(--bg-card);color:var(--text);min-height:28px">🔄</button>';
+  h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c&&c._stopFlappy)c._stopFlappy();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px">✕</button>';
+  h += '</div></div>';
+  h += '<canvas id="' + canvasId + '" width="' + W + '" height="' + H + '" style="max-width:100%;border-radius:10px;background:#333;touch-action:none;display:block;margin:0 auto;cursor:pointer"></canvas>';
+  h += '<div style="margin-top:4px;font-size:10px;color:var(--text-tertiary)">点击 / 空格键 → 跳跃</div>';
+  h += '</div>';
+  container.innerHTML = h;
+
+  setTimeout(function() {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    reset(); draw();
+    canvas._stopFlappy = function() {
+      gameOver = true; running = false;
+      if (frameId) { cancelAnimationFrame(frameId); frameId = null; }
+      if (kh) { document.removeEventListener('keydown', kh); }
+    };
+    canvas.addEventListener('click', jump);
+    canvas.addEventListener('touchstart', function(e) { e.preventDefault(); jump(); });
+    var kh = function(e) { if (e.key === ' ' || e.key === 'ArrowUp') { e.preventDefault(); jump(); } };
+    document.addEventListener('keydown', kh);
+    canvas._cleanup = function() { document.removeEventListener('keydown', kh); };
+  }, 100);
+}
+
+// ====== 🎯 打地鼠 ======
+function renderWhackAMole(container) {
+  var score = 0;
+  var timeLeft = 30;
+  var activeHole = -1;
+  var gameOver = false;
+  var timerId = null;
+  var moleTimer = null;
+
+  function start() {
+    score = 0; timeLeft = 30; gameOver = false; activeHole = -1;
+    timerId = setInterval(function() {
+      timeLeft--;
+      if (timeLeft <= 0) { gameOver = true; clearInterval(timerId); clearInterval(moleTimer); render(); }
+      else {
+        var tel = document.getElementById('_wamTimer');
+        if (tel) tel.textContent = timeLeft + 's';
+      }
+    }, 1000);
+    moleTimer = setInterval(function() {
+      if (gameOver) return;
+      activeHole = Math.floor(Math.random() * 9);
+      render();
+      setTimeout(function() { if (!gameOver) { activeHole = -1; render(); } }, 700);
+    }, 900);
+  }
+
+  function whack(idx) {
+    if (gameOver || activeHole !== idx) return;
+    score++;
+    activeHole = -1;
+    render();
+  }
+
+  function cleanup() {
+    clearInterval(timerId); clearInterval(moleTimer);
+  }
+  container._cleanup = cleanup;
+
+  function render() {
+    var h = '<div style="text-align:center;padding:4px;max-width:360px;margin:0 auto;user-select:none">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    h += '<span style="font-size:14px;font-weight:600;color:var(--text)">🎯 打地鼠</span>';
+    h += '<span style="font-size:13px;font-weight:700;color:var(--danger)">得分：' + score + '</span>';
+    h += '<span id="_wamTimer" style="font-size:13px;font-weight:700;color:var(--primary)">' + timeLeft + 's</span>';
+    h += '<div style="display:flex;gap:4px">';
+    h += '<button onclick="if(this.closest(\'#_gameContainer\')._cleanup)this.closest(\'#_gameContainer\')._cleanup();renderWhackAMole(this.parentElement.parentElement.parentElement)" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:var(--bg-card);color:var(--text);min-height:28px">🔄</button>';
+    h += '<button onclick="var c=document.getElementById(\'_gameContainer\');if(c&&c._cleanup)c._cleanup();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px">✕</button>';
+    h += '</div></div>';
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:0 auto;padding:20px;background:var(--bg-input);border-radius:12px">';
+    var moles = ['🦫','🐹','🐭','🐿️','🦔','🐻','🐼','🐨','🦊'];
+    for (var i = 0; i < 9; i++) {
+      var isActive = activeHole === i;
+      h += '<button id="_wamBtn' + i + '" style="aspect-ratio:1;border:2px solid ' + (isActive ? 'var(--warning)' : 'var(--border)') + ';border-radius:50%;font-size:32px;cursor:' + (gameOver ? 'default' : 'pointer') + ';background:' + (isActive ? 'var(--warning-light)' : 'var(--bg-card)') + ';min-height:64px;padding:0;transition:all 0.1s"' + (gameOver ? ' disabled' : '') + '>' + (isActive ? moles[i] : '🕳️') + '</button>';
+    }
+    h += '</div>';
+    if (gameOver) {
+      h += '<div style="margin-top:8px;padding:10px;background:var(--success-light);border-radius:8px;text-align:center">';
+      h += '<div style="font-size:16px;font-weight:700;color:var(--success)">⏰ 时间到！</div>';
+      h += '<div style="font-size:13px;color:var(--text-secondary);margin-top:2px">打中了 ' + score + ' 只地鼠</div>';
+      h += '<button onclick="if(this.closest(\'#_gameContainer\')._cleanup)this.closest(\'#_gameContainer\')._cleanup();renderWhackAMole(this.parentElement.parentElement.parentElement)" style="margin-top:4px;padding:6px 16px;border:none;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;min-height:36px">🔄 再来一局</button>';
+      h += '</div>';
+    }
+    h += '</div>';
+    container.innerHTML = h;
+    // Bind mole buttons via addEventListener (closure scope, not global onclick)
+    for (var j = 0; j < 9; j++) {
+      var btn = document.getElementById('_wamBtn' + j);
+      if (btn && !btn.disabled) {
+        (function(idx) { btn.addEventListener('click', function() { whack(idx); }); })(j);
+      }
+    }
+    if (!timerId && !gameOver) start();
+  }
+
+  render();
 }
 
 // 检查更新红点：fetch version.json 对比本地版本
@@ -11945,6 +12355,7 @@ function performCleanup(btn) {
         appData.settings.doubleTomatoCard = 0;
         appData.settings.skipCard = 0;
         appData.settings.gameTimeMinutes = 0;
+        appData.settings.unlockedGames = ['schulte','memory','2048','breakout'];
         appData.settings.activeTomatoTheme = '';
         clearTomatoTheme();
       }
