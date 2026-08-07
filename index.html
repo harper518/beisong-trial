@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v91 · 小阮出品</title>
+<title>挖空背诵工具 v92 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -2532,7 +2532,7 @@ function renderNoteEditor() {
 
   if (_zlViewMode === 'mindmap') {
     html += '<div id="zlMindMapContainer" style="width:100%;min-height:400px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);overflow:hidden;position:relative">' +
-      '<div id="zlMindMapTarget" style="width:100%;height:100%;min-height:400px"></div>' +
+      '<div id="zlMindMapTarget" style="width:100%;height:100%;min-height:400px;touch-action:pan-y"></div>' +
       '<p style="position:absolute;bottom:8px;right:12px;font-size:10px;color:var(--text-tertiary)">🖐 可拖拽 · 🔍 双指缩放 · 👆 点击折叠</p>' +
     '</div>';
     // 延迟加载 markmap
@@ -2632,36 +2632,41 @@ function mdToTree(mdText) {
   var root = { content: 'Root', children: [] };
   var stack = [{ node: root, level: 0 }];
 
+  function cleanInline(s) {
+    return s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/__(.+?)__/g, '$1')
+            .replace(/\*(.+?)\*/g, '$1').replace(/_(.+?)_/g, '$1')
+            .replace(/`(.+?)`/g, '$1').trim();
+  }
+
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i];
     if (!line.trim()) continue;
 
     var hMatch = line.match(/^(#{1,6})\s+(.+)/);
-    var liMatch = line.match(/^[-*+]\s+(.+)/);
+    var liMatch = line.match(/^[\s]*[-*+]\s+(.+)/);
+    var numMatch = line.match(/^[\s]*(\d+)[\.\)、]\s+(.+)/);
 
     if (hMatch) {
       var level = hMatch[1].length;
-      var title = hMatch[2].replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').trim();
+      var title = cleanInline(hMatch[2]);
       var newNode = { content: title, children: [] };
-
-      // 回溯到合适的父级
       while (stack.length > 1 && stack[stack.length - 1].level >= level) {
         stack.pop();
       }
       stack[stack.length - 1].node.children.push(newNode);
       stack.push({ node: newNode, level: level });
+    } else if (numMatch) {
+      var text = cleanInline(numMatch[2]);
+      var parent = stack[stack.length - 1].node;
+      parent.children.push({ content: text, children: [] });
     } else if (liMatch) {
-      var text = liMatch[1].replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').trim();
+      var text = cleanInline(liMatch[1]);
       var parent = stack[stack.length - 1].node;
       parent.children.push({ content: text, children: [] });
     }
   }
 
-  // 如果只有一级标题，用它作为根
-  if (root.children.length === 1) {
-    return root.children[0];
-  }
-  // 如果没有解析出任何内容，创建一个默认节点
+  if (root.children.length === 1) return root.children[0];
   if (root.children.length === 0) {
     return { content: mdText.trim().split('\n')[0] || '笔记', children: [] };
   }
@@ -2696,6 +2701,7 @@ function renderMarkmapFromContent() {
       svgEl.style.width = '100%';
       svgEl.style.height = '100%';
       svgEl.style.minHeight = '400px';
+      svgEl.style.touchAction = 'pan-y';
     }
   } catch(e) {
     console.error('Markmap render error:', e);
@@ -2900,6 +2906,18 @@ function exportNote(id) {
 
 // ====== 导入大纲 ======
 function showImportOutline() {
+  // 导图模式下先切回编辑模式，避免导图拦截滚动
+  if (_zlViewMode === 'mindmap') {
+    _zlViewMode = 'edit';
+    renderNoteEditor();
+    setTimeout(function() {
+      var panel = document.getElementById('zlImportPanel');
+      if (panel) { panel.style.display = 'block'; }
+      var input = document.getElementById('zlImportInput');
+      if (input) { input.value = ''; input.focus(); }
+    }, 150);
+    return;
+  }
   var panel = document.getElementById('zlImportPanel');
   if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
   panel.style.display = 'block';
@@ -3512,8 +3530,43 @@ function autoGenerateBlanks(cards, density, seed) {
         a = a.substring(aNl + 1).trim();
       }
     }
-    const ft = q + '\n' + a;
-    const answerStart = q.length + 1;
+    var ft = q + '\n' + a;
+    var answerStart = q.length + 1;
+
+    // ==== 检测答案中的【】标记，优先作为挖空 ====
+    var reBracket = /【([^】]+)】/g;
+    var bracketBlanks = [];
+    var m;
+    while ((m = reBracket.exec(a)) !== null) {
+      bracketBlanks.push({
+        start: answerStart + m.index,
+        end: answerStart + m.index + m[0].length,
+        text: m[1],
+        isAnswer: true
+      });
+    }
+    // 也检测题目中的【】
+    reBracket.lastIndex = 0;
+    while ((m = reBracket.exec(q)) !== null) {
+      bracketBlanks.push({
+        start: m.index,
+        end: m.index + m[0].length,
+        text: m[1],
+        isAnswer: false
+      });
+    }
+    if (bracketBlanks.length > 0) {
+      bracketBlanks.sort(function(a, b) { return a.start - b.start; });
+      // 去重
+      var deduped = [];
+      var seen = {};
+      for (var bi = 0; bi < bracketBlanks.length; bi++) {
+        var bk = bracketBlanks[bi].start + ':' + bracketBlanks[bi].end;
+        if (!seen[bk]) { seen[bk] = true; deduped.push(bracketBlanks[bi]); }
+      }
+      return { ...card, fullText: ft, blanks: deduped };
+    }
+
     if (!a) return { ...card, fullText: ft, blanks: [] };
 
     const pointTexts = splitIntoPoints(a);
@@ -8284,7 +8337,7 @@ function switchManualTab(tab) {
     if (quickEl) quickEl.style.display = '';
     if (tabs[0]) { tabs[0].style.background = 'var(--primary)'; tabs[0].style.color = '#fff'; tabs[0].style.fontWeight = '600'; }
   } else if (tab === 'author') {
-    if (authorEl) { authorEl.style.display = ''; authorEl.innerHTML = '<div style="line-height:1.9;padding:4px 0">' + (appData.settings._cloudAuthorNote || appData.settings.authorNote || '作者还没有留下任何话...') + '</div>'; }
+    if (authorEl) { authorEl.style.display = ''; var atxt = (appData.settings._cloudAuthorNote || appData.settings.authorNote || '作者还没有留下任何话...'); authorEl.innerHTML = '<div style="line-height:1.9;padding:4px 0;white-space:pre-wrap">' + escapeHtml(atxt) + '</div>'; }
     if (tabs[2]) { tabs[2].style.background = 'var(--primary)'; tabs[2].style.color = '#fff'; tabs[2].style.fontWeight = '600'; }
   } else {
     if (fullEl) fullEl.style.display = '';
@@ -8631,14 +8684,29 @@ function showManualMenu() {
         '</div>' +
       '</div>' +
 
+      // 📑 资料页
+      '<div style="margin-bottom:20px">' +
+        '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">📑 资料页（Pro专属）</h4>' +
+        '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
+          '<p style="margin:0 0 4px">· <b>笔记</b> — 支持 Markdown 语法编辑，关联题库分类存储。可新建、搜索、导出单篇笔记。</p>' +
+          '<p style="margin:0 0 4px">· <b>思维导图</b> — 从 Markdown 笔记一键生成横向导图，可拖拽/缩放/点击折叠节点，支持导出PNG图片。</p>' +
+          '<p style="margin:0 0 4px">· <b>图库</b> — 拍照上传关联题库，自动压缩存储。双指缩放查看大图，本地 IndexedDB 存储。</p>' +
+          '<p style="margin:0 0 4px">· <b>模板</b> — 6种笔记模板：时间线/概念框架/对比分析/理科公式/课文分析/空白模板。</p>' +
+          '<p style="margin:0 0 4px">· <b>导入大纲</b> — 从 AI 粘贴大纲文本，自动识别中文序号/数字编号/缩进层级，转为 Markdown。</p>' +
+          '<p style="margin:0 0 4px">· <b>AI话术</b> — 笔记编辑页点"🤖 AI话术"复制模板，发给豆包等AI生成 Markdown 笔记，导入即可生成导图。</p>' +
+          '<p style="margin:0">· 顶部 📦 按钮可查看和管理存储空间，支持按题库清理或全部清除。</p>' +
+        '</div>' +
+      '</div>' +
+
       // 🤖 配合AI使用
       '<div style="margin-bottom:20px">' +
         '<h4 style="font-size:16px;margin:0 0 10px;color:var(--primary)">🤖 配合 AI 使用</h4>' +
         '<div style="background:var(--bg-input);border-radius:10px;padding:14px 16px">' +
-          '<p style="margin:0 0 4px">· 点击导入页面的<b>"AI格式话术"</b>按钮，获得格式模板。</p>' +
+          '<p style="margin:0 0 4px">· 点击导入页面的<b>"AI格式话术"</b>按钮，获得挖空背诵格式模板。</p>' +
           '<p style="margin:0 0 4px">· 把模板发给 AI（豆包/千问/Kimi 等），告诉它按格式输出题目。</p>' +
           '<p style="margin:0 0 4px">· AI 返回题目后，<b>删掉 AI 的寒暄废话</b>（"好的，以下是为您生成的题目…"），只留题目本身。</p>' +
-          '<p style="margin:0">· 如果 AI 输出中含加粗文字，导入 Word 后会自动转为【挖空】。也可以直接让 AI 用 【】 标记要挖空的关键词。</p>' +
+          '<p style="margin:0 0 4px">· 如果 AI 输出中含加粗文字，导入 Word 后会自动转为【挖空】。也可以直接让 AI 用 【】 标记要挖空的关键词。</p>' +
+          '<p style="margin:0">· <b>资料页也有AI话术</b> — 笔记编辑页的"🤖 AI话术"按钮，复制后发给AI生成 Markdown 笔记，导入直接变导图。</p>' +
         '</div>' +
       '</div>' +
 
@@ -8661,8 +8729,8 @@ function showManualMenu() {
       '<div style="margin-bottom:20px">' +
         '<h4 style="font-size:16px;margin:0 0 10px;color:#e74c3c">⚠️ 重点说明</h4>' +
         '<div style="background:#fff3f3;border:1px solid #fcc;border-radius:10px;padding:14px 16px">' +
-          '<p style="margin:0 0 6px"><b>💾 数据存储位置</b> — 所有题目、错题、设置都保存在浏览器本地存储（localStorage），不会上传到任何服务器，完全离线可用。但清除浏览器数据会导致数据丢失！</p>' +
-          '<p style="margin:0 0 6px"><b>💾 缓存 ≠ 数据</b> — "浏览器缓存"和"你的题库数据（localStorage）"是两回事。清缓存一般不丢题库。但"清除浏览数据"时勾选了"Cookie 和网站数据"就会丢。</p>' +
+          '<p style="margin:0 0 6px"><b>💾 数据存储位置</b> — 题库、错题、设置保存在 localStorage。笔记、图库照片保存在 IndexedDB（浏览器数据库）。均不上传任何服务器，完全离线可用。但清除浏览器数据会导致数据丢失！</p>' +
+          '<p style="margin:0 0 6px"><b>💾 缓存 ≠ 数据</b> — "浏览器缓存"和"你的题库数据"是两回事。清缓存一般不丢题库。但"清除浏览数据"时勾选了"Cookie 和网站数据"就会丢。注意：iOS Safari 清除网站数据时 localStorage 和 IndexedDB 都会被清空。</p>' +
           '<p style="margin:0 0 6px"><b>📦 定期备份</b> — 强烈建议每周导出备份文件保存到电脑或网盘。这是<b>唯一能完整恢复</b>的方式。</p>' +
           '<p style="margin:0 0 6px"><b>📱 多设备同步</b> — 工具不支持自动同步。手动操作：设置页点"导出备份文件" → 微信/QQ/网盘发给另一台设备 → 在那边导入。</p>' +
           '<p style="margin:0 0 6px"><b>🗑️ 数据丢失场景</b> — 以下操作会清空数据：① 浏览器清除数据时勾选了 Cookie 和网站数据；② <b>iOS Safari 的"清除历史记录与网站数据"</b>（iPhone 最坑）；③ 手机管家清理；④ 无痕/隐私模式关闭窗口；⑤ 存储空间不足系统自动清理。</p>' +
@@ -8713,7 +8781,7 @@ function showManualMenu() {
     '</div>' +
     // 💬 作者 tab
     '<div id="manualTabAuthor" style="overflow-y:auto;flex:1;padding:16px 18px 24px;font-size:14px;line-height:1.7;color:var(--text);display:none">' +
-      '<div style="line-height:1.9;padding:4px 0">' + (appData.settings._cloudAuthorNote || appData.settings.authorNote || '作者还没有留下任何话...') + '</div>' +
+      (function(){ var at=''+(appData.settings._cloudAuthorNote||appData.settings.authorNote||'作者还没有留下任何话...'); return '<div style="line-height:1.9;padding:4px 0;white-space:pre-wrap">'+escapeHtml(at)+'</div>'; })() +
     '</div>' +
   '</div>';
   document.body.appendChild(ov);
@@ -9666,18 +9734,13 @@ function renderSettings() {
       if (isTrial) {
         html += '<div id="trialCountdown" style="margin-bottom:12px;padding:8px 12px;background:' + (dm8 ? '#3d2e0a' : '#fef3c7') + ';border:1px solid ' + (dm8 ? '#92400e' : '#f59e0b') + ';border-radius:8px;text-align:center;font-size:13px;font-weight:600;color:' + (dm8 ? '#fcd34d' : '#b45309') + '">⏱ 试用剩余 ' + trialMin + ' 分 ' + trialSec + ' 秒 · ' + (TIER_NAMES[tier] || '') + '</div>';
       }
-      // 激活码输入（只要不是pro就显示，方便升级）
-      if (tier !== 'pro') {
-        var upgradeHint = tier === 'free' ? '激活码请联系开发者获取' : '已是' + TIER_NAMES[tier] + '，输入新码可升级';
-        html += '<div style="display:flex;gap:8px;margin-bottom:6px">' +
-          '<input type="text" id="activateInput" placeholder=" " autocomplete="off" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px;min-height:40px">' +
-          '<button class="btn btn-primary btn-sm" onclick="var v=document.getElementById(&#39;activateInput&#39;).value;if(v)activateCode(v)" style="min-height:40px;padding:0 16px;font-size:14px;white-space:nowrap">激活</button>' +
-        '</div>' +
-        '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">' + upgradeHint + ' · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
-      }
-      if (tier === 'pro') {
-        html += '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">👑 已是最高版本 · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
-      }
+      // 激活码输入（始终显示，方便测试和升级）
+      var upgradeHint = tier === 'free' ? '激活码请联系开发者获取' : tier === 'pro' ? '👑 已是最高版本 · 输入新码可重新激活或测试' : '已是' + TIER_NAMES[tier] + '，输入新码可升级';
+      html += '<div style="display:flex;gap:8px;margin-bottom:6px">' +
+        '<input type="text" id="activateInput" placeholder=" " autocomplete="off" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:13px;min-height:40px">' +
+        '<button class="btn btn-primary btn-sm" onclick="var v=document.getElementById(&#39;activateInput&#39;).value;if(v)activateCode(v)" style="min-height:40px;padding:0 16px;font-size:14px;white-space:nowrap">激活</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px">' + upgradeHint + ' · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>';
       return html;
     })() +
 
@@ -9957,7 +10020,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 作者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v91</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v92</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
