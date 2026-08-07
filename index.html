@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v70 · 小阮出品</title>
+<title>挖空背诵工具 v76 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -445,7 +445,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .practice-card{background:var(--bg-card);border-radius:var(--radius);padding:14px 14px;box-shadow:var(--shadow-md);border:1px solid var(--border);min-height:100px;margin-bottom:10px;position:relative}
 .practice-card .card-text{font-size:var(--font-size-lg);line-height:2.0;word-break:break-word;overflow-wrap:break-word;overflow-x:hidden}
 .practice-card .blank-input{
-  display:inline-block;min-width:28px;max-width:240px;
+  display:inline-block;min-width:28px;max-width:400px;
   padding:2px 4px;border:none;border-bottom:2px dashed var(--blank-border);
   background:var(--blank-bg);border-radius:4px 4px 0 0;
   font-size:var(--font-size-lg);font-weight:500;line-height:1.5;
@@ -453,9 +453,8 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   transition:all var(--transition);margin:0 2px;vertical-align:baseline;
 }
 .practice-card .blank-input:focus{
-  outline:none;border-bottom-color:var(--primary);border-bottom-style:solid;
-  background:var(--primary-light);box-shadow:0 2px 8px rgba(8,145,178,.12);
-  transform:translateY(-1px);
+  outline:none;border-bottom-color:var(--primary);
+  background:var(--primary-light);box-shadow:0 1px 4px rgba(8,145,178,.08);
 }
 .practice-card .blank-input.revealed{
   border-bottom-color:var(--success);border-bottom-style:solid;
@@ -463,7 +462,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   max-width:none !important;text-align:left;
 }
 .practice-card .blank-input.peeked{
-  max-width:none !important;min-width:auto;text-align:left;
+  text-align:left;
   background:var(--blank-revealed-bg);color:var(--blank-revealed-text);
   border-bottom-color:var(--success);border-bottom-style:solid;
 }
@@ -593,7 +592,7 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   :root{--font-size-lg:19px;--font-size-xl:22px}
   .page{padding:16px 20px 24px}
   .practice-card{padding:22px 24px}
-  .practice-card .blank-input{min-width:48px;max-width:160px}
+  .practice-card .blank-input{min-width:48px;max-width:200px}
   .bank-item{padding:18px 22px}
   .tab-bar{max-width:768px}
   .preview-answer{font-size:19px;line-height:2.8;letter-spacing:.1em}
@@ -796,9 +795,9 @@ body.focus-mode .page.active { padding-top:env(safe-area-inset-top,12px); }
 body.focus-mode #practiceActive .btn-ghost,
 body.focus-mode #practiceActive .btn-icon { display:none !important; }
 body.focus-mode #practiceActive .flex.justify-between { display:none !important; }
-#focusExitBtn { display:none; position:fixed; top:12px; right:12px; z-index:100; width:44px; height:44px; border-radius:50%; background:rgba(0,0,0,.25); color:#fff; border:none; font-size:20px; cursor:pointer; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+#focusExitBtn { display:none; position:fixed; top:12px; right:12px; z-index:100; width:44px; height:44px; border-radius:50%; background:none; color:#fff; border:none; font-size:20px; cursor:pointer; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
 body.focus-mode #focusExitBtn { display:flex; }
-#focusStarBtn { display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:100; width:44px; height:44px; border-radius:50%; background:rgba(0,0,0,.25); color:#fff; border:none; font-size:22px; cursor:pointer; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+#focusStarBtn { display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:100; width:44px; height:44px; border-radius:50%; background:none; color:#fff; border:none; font-size:22px; cursor:pointer; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
 body.focus-mode #focusStarBtn { display:flex; }
 body.focus-mode #cardText { line-height:2; }
 /* 专注模式下挖空框保持和正常模式一致 */
@@ -890,13 +889,33 @@ var TIER_FEATURES = {
           'chapterHeatmap', 'categoryFilter', 'sprintMode', 'starCard',
           'autoReadAloud']
 };
-var TIER_NAMES = { free: '免费版', basic: '科学备考版', pro: '智能全能版' };
-var TIER_EMOJI = { free: '🆓', basic: '💰', pro: '👑' };
-var TIER_PRICES = { basic: '¥3/年', pro: '¥9.9/年' };
+var TIER_NAMES = { free: '免费版', basic: '进阶提分版', pro: '全能领航版' };
+var TIER_EMOJI = { free: '🆓', basic: '🚀', pro: '👑' };
+var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 120;
-var APP_VERSION = 70;
+var APP_VERSION = 76;
+// ==== API 后端（作者留言云同步 + 社区留言板）====
+var API_BASE = 'https://beisong-api.rruuaann.top';
+function apiGet(path) {
+  return fetch(API_BASE + path, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+    .then(function(r) { if (!r.ok) throw new Error('API error ' + r.status); return r.json(); });
+}
+function apiPost(path, data) {
+  return fetch(API_BASE + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data || {})
+  }).then(function(r) { if (!r.ok) throw new Error('API error ' + r.status); return r.json(); });
+}
+function apiPut(path, data) {
+  return fetch(API_BASE + path, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data || {})
+  }).then(function(r) { if (!r.ok) throw new Error('API error ' + r.status); return r.json(); });
+}
 var FREE_COLORS = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream'];
 var BASIC_COLORS = FREE_COLORS.concat(['sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral']);
 
@@ -915,6 +934,10 @@ function hasFeature(name) {
   if (tier === 'pro') return true;
   if (tier === 'basic') return TIER_FEATURES.basic.indexOf(name) >= 0;
   return false;
+}
+function isAdmin() {
+  // 只有管理码（5826）激活的用户是管理员
+  return appData.activation && appData.activation.codeHash === '05c97e9b99cbcdecb0bb896a5d1837110c9f10ca3ae20f6fed77dbadad62a625';
 }
 function isTierLocked(name) {
   return !hasFeature(name);
@@ -967,7 +990,7 @@ function showTierCompare() {
   ov.innerHTML = '<div style="background:var(--bg-card);border-radius:16px;padding:20px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;font-size:13px;line-height:1.6">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="margin:0;font-size:17px">📊 版本功能对比</h3><button style="background:var(--border);border:none;border-radius:8px;padding:6px 12px;font-size:14px;cursor:pointer;min-height:36px" onclick="this.closest(&#39;div&#39;).parentElement.parentElement.remove()">✕</button></div>' +
     '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">' +
-    '<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px">功能</th><th style="padding:8px;background:' + (tier==='free'?'var(--primary-soft)':'') + '">🆓 免费</th><th style="padding:8px;background:' + (tier==='basic'?'var(--primary-soft)':'') + '">💰 ¥3/年</th><th style="padding:8px;background:' + (tier==='pro'?'var(--primary-soft)':'') + '">👑 ¥9.9/年</th></tr></thead>' +
+    '<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px">功能</th><th style="padding:8px;background:' + (tier==='free'?'var(--primary-soft)':'') + '">🆓 免费版</th><th style="padding:8px;background:' + (tier==='basic'?'var(--primary-soft)':'') + '">🚀 进阶提分版</th><th style="padding:8px;background:' + (tier==='pro'?'var(--primary-soft)':'') + '">👑 全能领航版</th></tr></thead>' +
     '<tbody>' +
     '<tr><td style="text-align:left;padding:6px">题库数 / 题数</td><td>2库×120题</td><td>无限制</td><td>无限制</td></tr>' +
     '<tr><td style="text-align:left;padding:6px">手动挖空</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
@@ -1227,6 +1250,31 @@ function saveExamDate(value) {
 function saveAuthorNote(value) {
   appData.settings.authorNote = value || '';
   debouncedSaveData(appData);
+  // 上传到云端
+  if (isAdmin() && value && value.trim()) {
+    apiPut('/author-note', { codeHash: appData.activation.codeHash, text: value.trim() })
+      .then(function(r) { if (r.success) console.log('[API] 作者留言已同步到云端'); })
+      .catch(function(e) { console.warn('[API] 作者留言同步失败:', e.message); });
+  }
+}
+
+function toggleAuthorNoteSection(e) {
+  // 如果点击的是编辑器内部元素（textarea等），不toggle
+  if (e && e.target && e.target.closest && e.target.closest('#authorNoteEditor')) return;
+  var editor = document.getElementById('authorNoteEditor');
+  var arrow = document.getElementById('authorNoteArrow');
+  if (!editor || !arrow) return;
+  if (editor.style.display === 'none') {
+    editor.style.display = '';
+    arrow.style.transform = 'rotate(180deg)';
+    setTimeout(function() {
+      var ta = document.getElementById('authorNoteInput');
+      if (ta) ta.focus();
+    }, 100);
+  } else {
+    editor.style.display = 'none';
+    arrow.style.transform = 'rotate(0deg)';
+  }
 }
 
 function saveDailyTarget(value) {
@@ -1324,12 +1372,17 @@ function getISOWeek(dateStr) {
   return d.getFullYear() + '-W' + (weekNum < 10 ? '0' : '') + weekNum;
 }
 
-function addToWeekStats(dateStr, duration, switches) {
+function addToWeekStats(dateStr, duration, switches, totalCards, correctCards) {
   if (!appData.settings.weeklyStats) appData.settings.weeklyStats = {};
   var wk = getISOWeek(dateStr);
-  if (!appData.settings.weeklyStats[wk]) appData.settings.weeklyStats[wk] = { duration: 0, switches: 0 };
-  appData.settings.weeklyStats[wk].duration += duration;
-  appData.settings.weeklyStats[wk].switches += switches;
+  if (!appData.settings.weeklyStats[wk]) appData.settings.weeklyStats[wk] = { duration: 0, switches: 0, cardsTotal: 0, cardsCorrect: 0, cardsWrong: 0, sessions: 0 };
+  var ws = appData.settings.weeklyStats[wk];
+  ws.duration += duration;
+  ws.switches += switches;
+  if (totalCards) ws.cardsTotal += totalCards;
+  if (correctCards) ws.cardsCorrect += correctCards;
+  ws.cardsWrong = ws.cardsTotal - ws.cardsCorrect;
+  ws.sessions = (ws.sessions || 0) + 1;
 }
 
 function getTodayDuration() {
@@ -1346,7 +1399,103 @@ function getCurrentWeekStats() {
   if (!appData.settings.weeklyStats) appData.settings.weeklyStats = {};
   var today = new Date().toISOString().substring(0, 10);
   var wk = getISOWeek(today);
-  return appData.settings.weeklyStats[wk] || { duration: 0, switches: 0 };
+  return appData.settings.weeklyStats[wk] || { duration: 0, switches: 0, cardsTotal: 0, cardsCorrect: 0, cardsWrong: 0, sessions: 0 };
+}
+
+function showWeeklyReport() {
+  var today = new Date();
+  var wk = getISOWeek(today.toISOString().substring(0, 10));
+  var ws = getCurrentWeekStats();
+  var allWeeks = appData.settings.weeklyStats || {};
+  var weekKeys = Object.keys(allWeeks).sort().reverse();
+  var totalWeeks = weekKeys.length;
+
+  // 本周累计
+  var correctRate = ws.cardsTotal > 0 ? Math.round(ws.cardsCorrect / ws.cardsTotal * 100) : 0;
+  var dailyDur = appData.settings.dailyPractice ? (appData.settings.dailyPractice.duration || 0) : 0;
+
+  // 所有卡片中本周练习过的
+  var weekStart = getWeekStart(today);
+  var weekCardsTotal = 0, weekCardsMastered = 0, weekCardsStarred = 0;
+  Object.values(appData.banks || {}).forEach(function(b) {
+    (b.cards || []).forEach(function(c) {
+      if (c.lastPracticed && new Date(c.lastPracticed) >= weekStart) weekCardsTotal++;
+      if (c.srStage >= 4 && c.lastPracticed && new Date(c.lastPracticed) >= weekStart) weekCardsMastered++;
+      if (c.starred) weekCardsStarred++;
+    });
+  });
+
+  // 番茄总数
+  var tomatoes = appData.settings.tomatoGarden || 0;
+
+  // 历史周对比
+  var lastWeekKey = weekKeys.length > 1 ? weekKeys[1] : null;
+  var lastWs = lastWeekKey ? (allWeeks[lastWeekKey] || {}) : null;
+
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:480px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:85dvh;overflow-y:auto;padding:20px">' +
+    '<h3 style="margin:0 0 4px;font-size:20px">📊 学习周报</h3>' +
+    '<p style="color:var(--text-secondary);font-size:13px;margin:0 0 16px">' + wk + ' · 本周统计</p>' +
+
+    // 核心指标
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">' +
+      '<div style="background:var(--primary-light);border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:24px;font-weight:700;color:var(--primary)">' + fmtDuration(ws.duration) + '</div>' +
+        '<div style="font-size:11px;color:var(--text-secondary)">⏱ 本周学习时长</div>' +
+      '</div>' +
+      '<div style="background:var(--success-light);border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:24px;font-weight:700;color:var(--success)">' + ws.cardsTotal + '</div>' +
+        '<div style="font-size:11px;color:var(--text-secondary)">📝 本周做题数</div>' +
+      '</div>' +
+      '<div style="background:var(--warning-light);border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:24px;font-weight:700;color:#92400e">' + correctRate + '%</div>' +
+        '<div style="font-size:11px;color:var(--text-secondary)">🎯 正确率</div>' +
+      '</div>' +
+      '<div style="background:var(--bg-input);border-radius:10px;padding:12px;text-align:center">' +
+        '<div style="font-size:24px;font-weight:700;color:var(--text)">' + ws.sessions + '</div>' +
+        '<div style="font-size:11px;color:var(--text-secondary)">🔄 练习次数</div>' +
+      '</div>' +
+    '</div>' +
+
+    // 额外数据
+    '<div style="margin-bottom:16px;padding:12px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)">' +
+      '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text-secondary)">🍅 本周番茄数</span><span style="font-weight:600">' + tomatoes + ' 个</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text-secondary)">📱 本周切屏</span><span style="font-weight:600">' + ws.switches + ' 次</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text-secondary)">✅ 本周掌握</span><span style="font-weight:600;color:var(--success)">' + weekCardsMastered + ' 题</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text-secondary)">⭐ 累计收藏</span><span style="font-weight:600">' + weekCardsStarred + ' 题</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text-secondary)">📚 本周练过</span><span style="font-weight:600">' + weekCardsTotal + ' 题</span></div>' +
+    '</div>' +
+
+    // 上周对比
+    (lastWs ? '<div style="margin-bottom:16px;padding:12px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)">' +
+      '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">📈 上周对比 (' + lastWeekKey + ')</div>' +
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px"><span>⏱ 时长</span><span>' + fmtDuration(lastWs.duration || 0) + (ws.duration > (lastWs.duration || 0) ? ' ↑' : ' ↓') + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px"><span>📝 题数</span><span>' + (lastWs.cardsTotal || 0) + ' 题' + (ws.cardsTotal > (lastWs.cardsTotal || 0) ? ' ↑' : ' ↓') + '</span></div>' +
+    '</div>' : '') +
+
+    // 鼓励语
+    '<div style="text-align:center;padding:12px;margin-bottom:12px;background:var(--bg-input);border-radius:10px;font-size:13px;color:var(--text-secondary)">' +
+      (correctRate >= 80 ? '🌟 本周表现优秀！保持节奏，继续加油！' :
+       correctRate >= 60 ? '💪 稳步提升中，薄弱环节正在变少！' :
+       ws.cardsTotal === 0 ? '📖 本周还没有做题记录，快来开始吧！' :
+       '📚 发现了提升空间，针对性补强后会越来越好！') +
+    '</div>' +
+
+    '<button class="btn btn-primary btn-block" onclick="this.closest(\'.modal-overlay\').remove()" style="font-size:14px">关闭</button>' +
+    '</div>';
+
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
+
+function getWeekStart(date) {
+  var d = new Date(date);
+  var day = d.getDay();
+  var diff = d.getDate() - day + (day === 0 ? -6 : 1); // 周一为一周开始
+  var monday = new Date(d.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
 }
 
 function fmtDuration(seconds) {
@@ -1357,6 +1506,171 @@ function fmtDuration(seconds) {
   var hrs = Math.floor(mins / 60);
   var remainMin = mins % 60;
   return remainMin > 0 ? hrs + '小时' + remainMin + '分钟' : hrs + '小时';
+}
+
+// ====== 💬 同行圈 - 社区留言板 ======
+var _communityPage = 1;
+var _communityTotal = 0;
+
+function showCommunityBoard() {
+  _communityPage = 1;
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.animation = 'none';
+  overlay.id = 'communityOverlay';
+
+  var tier = getTier();
+  var isPro = tier === 'pro';
+  var codeHash = (appData.activation && appData.activation.codeHash) || '';
+
+  // 非Pro用户：显示锁住页面
+  if (!isPro) {
+    overlay.innerHTML = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:400px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:30px 24px;text-align:center;width:90vw">' +
+      '<div style="font-size:48px;margin-bottom:16px">🔒</div>' +
+      '<h3 style="margin:0 0 8px;font-size:20px">同行圈 · 升级解锁</h3>' +
+      '<p style="color:var(--text-secondary);font-size:14px;line-height:1.7;margin-bottom:20px">同行圈是<b>全能领航版</b>专属功能<br>在这里与同行者分享感悟、鼓励和学习心得</p>' +
+      '<button class="btn btn-primary btn-block" onclick="this.closest(\'.modal-overlay\').remove();switchTab(\'settings\')" style="font-size:14px">👑 升级解锁</button>' +
+      '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()" style="margin-top:8px;background:var(--bg);border:1px solid var(--border);width:100%;font-size:14px">以后再说</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    return;
+  }
+
+  overlay.innerHTML = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:480px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:85dvh;overflow-y:auto;padding:20px;width:92vw">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+      '<div><h3 style="margin:0;font-size:20px">💬 同行圈</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-secondary)">同行者的感悟、分享与鼓励</p></div>' +
+      '<button onclick="document.getElementById(\'communityOverlay\').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);padding:4px 8px;line-height:1">✕</button>' +
+    '</div>' +
+    // 发留言区域
+    '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">' +
+      '<input id="cmNickname" placeholder="你的昵称（选填）" maxlength="20" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;margin-bottom:8px;box-sizing:border-box">' +
+      '<textarea id="cmText" placeholder="分享你的感悟、鼓励或学习心得...（最多500字）" maxlength="500" style="width:100%;min-height:80px;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box"></textarea>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
+        '<span style="font-size:11px;color:var(--text-tertiary)">今日还可发 <b id="cmRemain">5</b> 条</span>' +
+        '<button id="cmSendBtn" onclick="sendCommunityMessage()" style="background:var(--primary);color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer">发布</button>' +
+      '</div>' +
+    '</div>' +
+    // 留言列表
+    '<div id="cmList" style="min-height:100px;text-align:center;color:var(--text-tertiary);padding:20px">加载中...</div>' +
+    // 分页
+    '<div id="cmPager" style="display:none;text-align:center;margin-top:12px;gap:8px;justify-content:center"></div>' +
+    '</div>';
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+
+  // 加载留言列表
+  loadCommunityMessages();
+}
+
+function loadCommunityMessages() {
+  var listEl = document.getElementById('cmList');
+  var pagerEl = document.getElementById('cmPager');
+  if (!listEl) return;
+
+  listEl.innerHTML = '<div style="padding:20px;color:var(--text-tertiary)">加载中...</div>';
+
+  apiGet('/messages?page=' + _communityPage + '&limit=15')
+    .then(function(r) {
+      _communityTotal = r.total || 0;
+      var msgs = r.messages || [];
+
+      if (msgs.length === 0) {
+        listEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-tertiary)">✨ 还没有留言，来做第一个分享的人吧！</div>';
+        pagerEl.style.display = 'none';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < msgs.length; i++) {
+        var m = msgs[i];
+        var tierBadge = m.tier === 'pro' ? '<span style="font-size:10px;background:#7C3AED;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">Pro</span>' : '';
+        var timeStr = m.createdAt ? m.createdAt.substring(0, 10) : '';
+        html += '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+            '<span style="font-weight:600;font-size:14px;color:var(--text)">' + escapeHtml(m.nickname || '匿名') + tierBadge + '</span>' +
+            '<span style="font-size:11px;color:var(--text-tertiary)">' + timeStr + '</span>' +
+          '</div>' +
+          '<div style="font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word">' + escapeHtml(m.text) + '</div>' +
+          '<div style="text-align:right;margin-top:6px">' +
+            '<button onclick="reportMessage(' + m.id + ',this)" style="background:none;border:none;font-size:11px;color:var(--text-tertiary);cursor:pointer;padding:2px 4px">🚩 举报</button>' +
+          '</div>' +
+        '</div>';
+      }
+      listEl.innerHTML = html;
+
+      // 分页
+      var totalPages = Math.ceil(_communityTotal / 15);
+      if (totalPages > 1) {
+        pagerEl.style.display = 'flex';
+        var pHtml = '';
+        pHtml += '<button onclick="_communityPage=Math.max(1,_communityPage-1);loadCommunityMessages()" style="padding:6px 14px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:8px;cursor:pointer;font-size:13px"' + (_communityPage <= 1 ? ' disabled' : '') + '>‹ 上一页</button>';
+        pHtml += '<span style="padding:6px 12px;font-size:13px;color:var(--text-secondary)">' + _communityPage + '/' + totalPages + '</span>';
+        pHtml += '<button onclick="_communityPage=Math.min(' + totalPages + ',_communityPage+1);loadCommunityMessages()" style="padding:6px 14px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:8px;cursor:pointer;font-size:13px"' + (_communityPage >= totalPages ? ' disabled' : '') + '>下一页 ›</button>';
+        pagerEl.innerHTML = pHtml;
+      } else {
+        pagerEl.style.display = 'none';
+      }
+    })
+    .catch(function(e) {
+      listEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-tertiary)">⚠️ 加载失败，请检查网络后重试<br><button onclick="loadCommunityMessages()" style="margin-top:8px;padding:6px 16px;border:1px solid var(--primary);color:var(--primary);background:none;border-radius:20px;cursor:pointer;font-size:13px">重新加载</button></div>';
+      pagerEl.style.display = 'none';
+    });
+}
+
+function sendCommunityMessage() {
+  var nickname = document.getElementById('cmNickname').value.trim();
+  var text = document.getElementById('cmText').value.trim();
+  var btn = document.getElementById('cmSendBtn');
+
+  if (!text) { showToast('请输入留言内容'); return; }
+  if (text.length > 500) { showToast('留言不能超过500字'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '发布中...';
+
+  var codeHash = (appData.activation && appData.activation.codeHash) || '';
+
+  apiPost('/messages', {
+    codeHash: codeHash,
+    nickname: nickname || '同行者',
+    text: text
+  }).then(function(r) {
+    if (r.success) {
+      showToast('✅ 发布成功！');
+      document.getElementById('cmText').value = '';
+      _communityPage = 1;
+      loadCommunityMessages();
+    } else {
+      showToast('❌ ' + (r.error || '发布失败'));
+    }
+  }).catch(function(e) {
+    showToast('❌ 网络错误，请稍后重试');
+  }).finally(function() {
+    btn.disabled = false;
+    btn.textContent = '发布';
+  });
+}
+
+function reportMessage(msgId, btnEl) {
+  if (btnEl.disabled) return;
+  btnEl.disabled = true;
+  btnEl.textContent = '已举报';
+
+  var codeHash = (appData.activation && appData.activation.codeHash) || '';
+
+  apiPost('/messages/' + msgId + '/report', {
+    codeHash: codeHash,
+    reason: '用户举报'
+  }).then(function(r) {
+    if (r.success) {
+      showToast('已举报，感谢反馈');
+    }
+  }).catch(function() {
+    btnEl.disabled = false;
+    btnEl.textContent = '🚩 举报';
+  });
 }
 
 // ==================== 章节掌握度计算 ====================
@@ -1391,8 +1705,9 @@ function showChapterManager(bankId) {
   for (var i = 0; i < stats.length; i++) {
     var s = stats[i];
     var cid = 'ch_' + i;
-    html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">' +
-      '<span style="flex:1;font-size:14px;font-weight:500">' + escapeHtml(s.name) + ' <span style="color:var(--text-tertiary);font-size:12px">(' + s.total + '题)</span></span>' +
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">' +
+      '<span style="flex:1;font-size:14px;font-weight:500;min-width:120px">' + escapeHtml(s.name) + ' <span style="color:var(--text-tertiary);font-size:12px">(' + s.total + '题)</span></span>' +
+      '<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showCardPickerForChapter(\'' + bankId + '\',\'' + escapeHtml(s.name).replace(/'/g,"\\'") + '\')">📋 选题</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:4px 8px" onclick="renameChapter(\'' + bankId + '\',\'' + escapeHtml(s.name).replace(/'/g,"\\'") + '\',this)">✏️ 重命名</button>' +
       (i > 0 ? '<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:4px 8px;color:var(--danger)" onclick="mergeChapterInto(\'' + bankId + '\',\'' + escapeHtml(s.name).replace(/'/g,"\\'") + '\',\'' + escapeHtml(stats[0].name).replace(/'/g,"\\'") + '\',this)">📦 合并</button>' : '') +
       '</div>';
@@ -1438,6 +1753,77 @@ function showNewChapterInput(bankId, btn) {
   showToast('✅ 章节「' + name.trim() + '」已创建（导入题目时可指定此章节）');
   // 章节是通过导入时设置的，这里只是提示用户
   btn.closest('.modal-overlay').remove();
+}
+
+function showCardPickerForChapter(bankId, chapterName) {
+  var bank = appData.banks[bankId];
+  if (!bank) return;
+  var cards = bank.cards || [];
+  if (!cards.length) { showToast('题库为空'); return; }
+  // 按章节分组
+  var groups = {};
+  for (var i = 0; i < cards.length; i++) {
+    var ch = cards[i].chapter || '未分类';
+    if (!groups[ch]) groups[ch] = [];
+    groups[ch].push({ idx: i, card: cards[i] });
+  }
+  var groupNames = Object.keys(groups);
+  // 构建HTML
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:520px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:85dvh;display:flex;flex-direction:column;padding:0">' +
+    '<div style="padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0">' +
+      '<h3 style="margin:0 0 4px;font-size:17px">📋 选择题目归入「' + escapeHtml(chapterName) + '」</h3>' +
+      '<p style="color:var(--text-secondary);font-size:12px;margin:0">勾选卡片后点击下方按钮确认</p>' +
+    '</div>' +
+    '<div style="overflow-y:auto;flex:1;padding:12px 18px" id="cardPickerList">';
+  for (var g = 0; g < groupNames.length; g++) {
+    var gn = groupNames[g];
+    var items = groups[gn];
+    html += '<div style="margin-bottom:4px;font-size:13px;font-weight:600;color:var(--text-secondary);padding:6px 0">' + escapeHtml(gn) + ' (' + items.length + '题)</div>';
+    for (var j = 0; j < items.length; j++) {
+      var c = items[j].card;
+      var inChapter = (c.chapter || '未分类') === chapterName;
+      html += '<label style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;margin-bottom:2px;border-radius:8px;cursor:pointer;' + (inChapter ? 'background:var(--success-light)' : '') + '">' +
+        '<input type="checkbox" value="' + items[j].idx + '" ' + (inChapter ? 'checked' : '') + ' style="margin-top:3px;flex-shrink:0">' +
+        '<span style="font-size:13px;line-height:1.5;color:var(--text)">' +
+          '<span style="font-weight:500">' + escapeHtml((c.question || '').substring(0, 40)) + (c.question && c.question.length > 40 ? '...' : '') + '</span>' +
+          (c.answer ? '<br><span style="color:var(--text-tertiary);font-size:11px">' + escapeHtml(c.answer.substring(0, 50)) + (c.answer.length > 50 ? '...' : '') + '</span>' : '') +
+        '</span>' +
+      '</label>';
+    }
+  }
+  html += '</div>' +
+    '<div style="padding:14px 18px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px">' +
+      '<button class="btn btn-ghost" style="flex:1;font-size:14px" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>' +
+      '<button class="btn btn-primary" style="flex:1;font-size:14px" onclick="assignCardsToChapter(\'' + bankId + '\',\'' + escapeHtml(chapterName).replace(/'/g,"\\\\'") + '\',this)">✅ 确认归入</button>' +
+    '</div>' +
+  '</div>';
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
+
+function assignCardsToChapter(bankId, chapterName, btn) {
+  var ov = btn.closest('.modal-overlay');
+  var checks = ov.querySelectorAll('input[type="checkbox"]:checked');
+  var cardIds = [];
+  for (var i = 0; i < checks.length; i++) {
+    cardIds.push(parseInt(checks[i].value));
+  }
+  if (!cardIds.length) { showToast('请至少选择一道题'); return; }
+  var bank = appData.banks[bankId];
+  var cards = bank.cards || [];
+  var count = 0;
+  for (var i = 0; i < cardIds.length; i++) {
+    var idx = cardIds[i];
+    if (idx >= 0 && idx < cards.length) {
+      cards[idx].chapter = chapterName;
+      count++;
+    }
+  }
+  saveData(appData);
+  showToast('✅ 已分配 ' + count + ' 题 → 「' + chapterName + '」');
+  ov.remove();
 }
 
 function getChapterRateColor(rate) {
@@ -2547,9 +2933,35 @@ function initApp() {
     if (e.target && e.target.classList.contains('blank-input')) _lastBlankInput = e.target;
   });
 
-  // 切屏监听：任何切后台都计数，练习中额外计数
+  // 输入框自动扩宽：根据输入内容动态调整 size
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.classList.contains('blank-input')) {
+      var len = e.target.value.length;
+      e.target.setAttribute('size', Math.max(len + 1, (e.target.dataset.ans || '').length || 2));
+    }
+  });
+
+  // 双击挖空显示答案（桌面端用 dblclick 事件）
+  document.addEventListener('dblclick', function(e) {
+    var inp = e.target.closest('.blank-input');
+    if (!inp || inp.classList.contains('revealed')) return;
+    if (inp.classList.contains('peeked')) {
+      inp.value = '';
+      inp.classList.remove('peeked');
+      inp.setAttribute('size', Math.max((inp.dataset.ans || '').length, 2));
+    } else {
+      inp.value = inp.dataset.ans || '';
+      inp.classList.add('peeked');
+    }
+  });
+
+  // 切屏监听：任何切后台都计数，练习中额外计数（500ms防抖避免重复计数）
+  var _lastSwitchTime = 0;
   document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
+      var now = Date.now();
+      if (now - _lastSwitchTime < 500) return; // 500ms防抖
+      _lastSwitchTime = now;
       ensureDailyPractice();
       appData.settings.dailyPractice.totalSwitches = (appData.settings.dailyPractice.totalSwitches || 0) + 1;
       debouncedSaveData(appData);
@@ -2669,6 +3081,18 @@ function initApp() {
     }, 800);
   }
 
+  // 从云端拉取作者留言
+  apiGet('/author-note').then(function(r) {
+    if (r && r.text) {
+      appData.settings._cloudAuthorNote = r.text;
+      appData.settings._cloudAuthorNoteTime = r.updatedAt;
+      // 如果本地没有作者留言，用云端的更新本地显示
+      if (!appData.settings.authorNote) {
+        appData.settings.authorNote = r.text;
+      }
+    }
+  }).catch(function(e) { console.warn('[API] 获取云端作者留言失败:', e.message); });
+
   checkEveningMode();
   switchTab('banks');
   // showIntroModal() 已移除 — 不再弹出欢迎提示
@@ -2707,7 +3131,7 @@ function applySettings() {
 function saveThemeColor(color) {
   var tier = getTier();
   if (tier === 'free' && FREE_COLORS.indexOf(color) === -1) { showToast('🔒 免费版仅支持8种颜色，请升级解锁更多'); return; }
-  if (tier === 'basic' && BASIC_COLORS.indexOf(color) === -1 && FREE_COLORS.indexOf(color) === -1) { showToast('🔒 3元版仅支持16种颜色，请升级解锁全部40种'); return; }
+  if (tier === 'basic' && BASIC_COLORS.indexOf(color) === -1 && FREE_COLORS.indexOf(color) === -1) { showToast('🔒 进阶提分版仅支持16种颜色，请升级全能领航版解锁全部40种'); return; }
   saveSetting('color', color);
   applySettings();
   updateThemeColorMeta(color);
@@ -2783,11 +3207,12 @@ function _doGlobalSearchReal() {
   for (var i = 0; i < Math.min(results.length, 50); i++) {
     var r = results[i];
     var qHighlight = highlightMatch(r.card.question || '', q);
-    var aPreview = (r.card.answer || '').substring(0, 60);
-    if (r.card.answer && r.card.answer.length > 60) aPreview += '...';
+    var aFull = r.card.answer || '';
+    var aPreview = aFull.length > 60 ? aFull.substring(0, 60) + '...' : aFull;
+    var aHighlight = (aFull.toLowerCase().indexOf(q.toLowerCase()) !== -1) ? highlightMatch(aPreview, q) : escapeHtml(aPreview);
     html += '<div style="cursor:pointer;padding:12px 14px;margin-bottom:8px;background:var(--bg-card);border-radius:var(--radius-sm);border:1px solid var(--border)" onclick="navigateToSearchResult(\'' + r.bankId + '\', ' + r.cardIndex + ')">' +
       '<div style="font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text)">' + qHighlight + '</div>' +
-      '<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px">' + escapeHtml(aPreview) + '</div>' +
+      '<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px">' + aHighlight + '</div>' +
       '<div style="font-size:11px;color:var(--primary)">📚 ' + escapeHtml(r.bankName) + '</div>' +
     '</div>';
   }
@@ -2797,12 +3222,22 @@ function _doGlobalSearchReal() {
   resultsDiv.innerHTML = html;
 }
 function highlightMatch(text, query) {
-  var idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return escapeHtml(text);
-  var before = escapeHtml(text.substring(0, idx));
-  var match = escapeHtml(text.substring(idx, idx + query.length));
-  var after = escapeHtml(text.substring(idx + query.length));
-  return before + '<mark style="background:#fef08a;color:#854d0e;padding:0 2px;border-radius:2px">' + match + '</mark>' + after;
+  // 高亮所有匹配项（不区分大小写）
+  var result = '';
+  var lowerText = text.toLowerCase();
+  var lowerQuery = query.toLowerCase();
+  var pos = 0;
+  while (pos < text.length) {
+    var idx = lowerText.indexOf(lowerQuery, pos);
+    if (idx === -1) {
+      result += escapeHtml(text.substring(pos));
+      break;
+    }
+    result += escapeHtml(text.substring(pos, idx));
+    result += '<mark style="background:#fef08a;color:#854d0e;padding:0 2px;border-radius:2px">' + escapeHtml(text.substring(idx, idx + query.length)) + '</mark>';
+    pos = idx + query.length;
+  }
+  return result;
 }
 function navigateToSearchResult(bankId, cardIndex) {
   var bank = appData.banks[bankId];
@@ -2867,26 +3302,10 @@ function renderBanks() {
     if (todaySw > 0) parts.push('📱 切屏 ' + todaySw + ' 次');
     dailyStatsHtml = '<div style="padding:8px 14px;margin-bottom:8px;border-radius:12px;background:var(--bg-card);font-size:13px;color:var(--text-secondary);text-align:center">' + parts.join(' · ') + '</div>';
   }
-  // 冲刺入口（始终显示，或考试30天内强调显示）
-  var sprintHtml = '';
-  var sprintPoolSize = getSprintPoolSize();
-  if (sprintPoolSize > 0) {
-    var sprintClass = (daysLeft !== null && daysLeft <= 30 && daysLeft > 0) ? 'sprint-card' : 'sprint-card sprint-alltime';
-    var sprintLabel = (daysLeft !== null && daysLeft <= 30 && daysLeft > 0) ? '🚀 考前冲刺' : '🎯 重点冲刺';
-    sprintHtml = '<div class="' + sprintClass + '" onclick="startSprintMode()">' +
-      '<div class="sprint-icon">' + ((daysLeft !== null && daysLeft <= 30 && daysLeft > 0) ? '🚀' : '🎯') + '</div>' +
-      '<div class="sprint-main">' +
-        '<div class="sprint-title">' + sprintLabel + '</div>' +
-        '<div class="sprint-sub">' + sprintPoolSize + ' 道错题/弱题待攻克</div>' +
-      '</div>' +
-      '<div style="font-size:20px;opacity:.6">→</div>' +
-    '</div>';
-  }
-
   // 全局搜索栏
   var totalCards = 0;
   banks.forEach(function(b) { totalCards += b.cards.length; });
-  var searchHtml = examBannerHtml + sprintHtml + dailyStatsHtml + '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
+  var searchHtml = examBannerHtml + dailyStatsHtml + '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div><div id="banksListContainer">';
   c.innerHTML = searchHtml;
     c.innerHTML += banks.map((b, idx) => {
     const isFirst = idx === 0;
@@ -2905,7 +3324,6 @@ function renderBanks() {
       <div class="actions">
         <button class="btn-icon" onclick="event.stopPropagation();editBank('${b.id}')" title="编辑挖空">✏️</button>
         <button class="btn-icon" onclick="event.stopPropagation();exportBank('${b.id}')" title="导出文本">📤</button>
-        <button class="btn-icon" onclick="event.stopPropagation();exportBankFull('${b.id}')" title="导出含挖空">💾</button>
         <button class="btn-icon" onclick="event.stopPropagation();exportBankBlanksHidden('${b.id}')" title="导出隐藏挖空">📝</button>
         <button class="btn-icon" onclick="event.stopPropagation();deleteBankConfirm('${b.id}')" title="删除">🗑️</button>
       </div>
@@ -3099,7 +3517,6 @@ function showImportModal() {
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanMergeLines()">↔️ 合并断行</button>' +
       '<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="cleanEmptyLines()">🧹 去空行</button>' +
       '<button class="btn btn-sm desktop-only" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="pasteRichText()">📋 富文本</button>' +
-      '<button class="btn btn-sm" style="font-size:11px;color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="document.getElementById(\'unifiedFileInput\').click()">📂 上传文件</button>' +
       '<span style="flex:1"></span>' +
     '</div>' +
     '<div class="flex gap-6 mt-6" style="align-items:center">' +
@@ -4880,7 +5297,7 @@ function showMergeBankPicker(which) {
 
 // ==================== 合并题库 ====================
 function showMergeModal() {
-  if (!hasFeature('bankMerge')) { showToast('🔒 题库合并需要升级到3元版，请升级解锁'); return; }
+  if (!hasFeature('bankMerge')) { showToast('🔒 题库合并需要升级到进阶提分版，请升级解锁'); return; }
   setTimeout(function() {
   var banks = Object.values(appData.banks).sort(function(a, b) { return b.createdAt - a.createdAt; });
   if (banks.length < 2) { showToast('至少需要两个题库才能合并'); return; }
@@ -5521,6 +5938,7 @@ function startPractice() {
     $('practiceSetup').style.display = 'none';
     $('practiceResult').style.display = 'none';
     $('practiceActive').style.display = 'block';
+    initPracticeTimerBar();
     renderPracticeCard();
     return;
   }
@@ -5609,6 +6027,7 @@ function startPractice() {
   $('practiceSetup').style.display = 'none';
   $('practiceResult').style.display = 'none';
   $('practiceActive').style.display = 'block';
+  initPracticeTimerBar();
   renderPracticeCard();
 
   // 计时器初始化
@@ -5630,9 +6049,25 @@ function startPractice() {
 }
 
 // ==================== 做题 - 卡片渲染 ====================
+function initPracticeTimerBar() {
+  var pa = document.getElementById('practiceActive');
+  if (!pa) return;
+  // 创建固定的计时器栏（不在 renderPracticeCard 中重绘）
+  pa.innerHTML = '<div id="timerBar" style="display:flex;justify-content:center;align-items:center;gap:10px;padding:8px 0 4px">'
+    + '<span id="stopwatchDisplay" style="display:' + (timerMode==='off'?'none':'') + ';font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center;background:var(--bg-input);color:var(--text-secondary)">⏱ 0:00</span>'
+    + '<span id="pomodoroDisplay" style="display:' + (getSetting('pomodoro', false) ? '' : 'none') + ';font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>'
+    + '<span id="timerDisplay" style="display:' + (timerMode === 'off' ? 'none' : '') + ';font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>'
+    + '</div>'
+    + '<div id="practiceContent"></div>';
+  // 初始化计时器显示
+  if (timerMode === 'perQuestion') { updateTimerDisplay(); startTimer(); }
+  else if (timerMode === 'total') { updateTimerDisplay(); startTimer(); }
+}
+
 function renderPracticeCard() {
   const st = practiceState;
-  const c = $('practiceActive');
+  const c = document.getElementById('practiceContent');
+  if (!c) return;
 
   if (st.index >= st.total) { showPracticeResult(); return; }
 
@@ -5652,9 +6087,6 @@ function renderPracticeCard() {
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()" style="padding:4px 8px;font-size:18px" title="返回">🏠</button>
       <span style="font-size:14px;font-weight:700;color:var(--text)">${cur} / ${total}</span>
       ${(st._isSprint || st._multiBanks) ? '<span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (st._cardBankMap && st._cardBankMap[st.index] ? st._cardBankMap[st.index].bankName : (st._isSprint ? '冲刺' : '混合')) + '</span>' : ''}
-      <span id="stopwatchDisplay" style="display:${timerMode==='off'?'none':''};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center;background:var(--bg-input);color:var(--text-secondary)">⏱ 0:00</span>
-      <span id="pomodoroDisplay" style="display:${getSetting('pomodoro', false) ? '' : 'none'};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
-      <span id="timerDisplay" style="display:${timerMode === 'off' ? 'none' : ''};font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:60px;text-align:center"></span>
       <button style="background:none;border:none;font-size:24px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px" onclick="toggleStarCurrent()">${starIcon}</button>
       <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--danger)" onclick="deleteCurrentCard()" title="删除此题">🗑️</button>
     </div>
@@ -5714,45 +6146,19 @@ function renderPracticeCard() {
     });
   }
 
+  // 同步计时器栏的 display 状态
+  var sw = document.getElementById('stopwatchDisplay');
+  var td = document.getElementById('timerDisplay');
+  var pd = document.getElementById('pomodoroDisplay');
+  if (sw) sw.style.display = timerMode === 'off' ? 'none' : '';
+  if (td) td.style.display = timerMode === 'off' ? 'none' : '';
+  if (pd) pd.style.display = getSetting('pomodoro', false) ? '' : 'none';
+
   setTimeout(() => {
     const fi = document.querySelector('#cardText .blank-input');
     if (fi && !revealed) fi.focus();
   }, 200);
 
-  // 双击空白显示答案（第一下聚焦不算）
-  const cardText = c.querySelector('#cardText');
-  if (cardText && !revealed) {
-    const taps = new Map(); // inp → { count, lastTime }
-    cardText.querySelectorAll('.blank-input').forEach(inp => {
-      inp.addEventListener('pointerdown', e => {
-        const now = Date.now();
-        const t = taps.get(inp) || { count: 0, lastTime: 0 };
-        if (now - t.lastTime > 800) t.count = 0;
-        // 第一下只聚焦不算，从第二下开始计数
-        if (document.activeElement !== inp && !inp.classList.contains('peeked')) {
-          t.lastTime = now;
-          taps.set(inp, t);
-          return;
-        }
-        t.count++;
-        t.lastTime = now;
-        if (inp.classList.contains('peeked')) {
-          inp.value = '';
-          inp.classList.remove('peeked');
-          inp.removeAttribute('size');
-          inp.style.width = '';
-          t.count = 0;
-        } else if (t.count >= 2) {
-          inp.value = inp.dataset.ans || '';
-          inp.classList.add('peeked');
-          inp.setAttribute('size', Math.min((inp.dataset.ans || '').length, 60));
-          inp.style.width = 'auto';
-          t.count = 0;
-        }
-        taps.set(inp, t);
-      });
-    });
-  }
   // 更新专注模式收藏按钮图标
   var fsb = document.getElementById('focusStarBtn');
   if (fsb) fsb.textContent = card.starred ? '⭐' : '☆';
@@ -6360,7 +6766,7 @@ function showPracticeResult() {
   ensureDailyPractice();
   appData.settings.dailyPractice.duration = (appData.settings.dailyPractice.duration || 0) + elapsed;
   appData.settings.dailyPractice.switches = (appData.settings.dailyPractice.switches || 0) + practiceSwitches;
-  addToWeekStats(appData.settings.dailyPractice.date, elapsed, practiceSwitches);
+  addToWeekStats(appData.settings.dailyPractice.date, elapsed, practiceSwitches, st.total, st._roundCorrect || 0);
 
   // 记录每日完成数和学习日历
   if (st._roundCorrect) {
@@ -6513,7 +6919,7 @@ function switchManualTab(tab) {
     if (quickEl) quickEl.style.display = '';
     if (tabs[0]) { tabs[0].style.background = 'var(--primary)'; tabs[0].style.color = '#fff'; tabs[0].style.fontWeight = '600'; }
   } else if (tab === 'author') {
-    if (authorEl) { authorEl.style.display = ''; authorEl.innerHTML = '<div style="line-height:1.9;padding:4px 0">' + (appData.settings.authorNote || '作者还没有留下任何话...') + '</div>'; }
+    if (authorEl) { authorEl.style.display = ''; authorEl.innerHTML = '<div style="line-height:1.9;padding:4px 0">' + (appData.settings._cloudAuthorNote || appData.settings.authorNote || '作者还没有留下任何话...') + '</div>'; }
     if (tabs[2]) { tabs[2].style.background = 'var(--primary)'; tabs[2].style.color = '#fff'; tabs[2].style.fontWeight = '600'; }
   } else {
     if (fullEl) fullEl.style.display = '';
@@ -6940,9 +7346,9 @@ function showManualMenu() {
       '</div>' +
 
     '</div>' +
-    // 💬 作者有话说 tab
+    // 💬 作者 tab
     '<div id="manualTabAuthor" style="overflow-y:auto;flex:1;padding:16px 18px 24px;font-size:14px;line-height:1.7;color:var(--text);display:none">' +
-      '<div style="line-height:1.9;padding:4px 0">' + (appData.settings.authorNote || '作者还没有留下任何话...') + '</div>' +
+      '<div style="line-height:1.9;padding:4px 0">' + (appData.settings._cloudAuthorNote || appData.settings.authorNote || '作者还没有留下任何话...') + '</div>' +
     '</div>' +
   '</div>';
   document.body.appendChild(ov);
@@ -6971,8 +7377,15 @@ function retrySameSettings() {
   const qh = new Set();
   if (hideQuestionStart) { for (const c of selected) qh.add(c.id); }
   practiceState = { ...practiceState, cards: selected, index: 0, answers: {}, revealed: new Set(), questionHidden: qh, koujueExpanded: {}, total: selected.length, answersHidden: false, _streak: 0, _roundCorrect: 0, _roundWrong: 0, _newlyMastered: [] };
+  // 每轮独立计时
+  practiceStartTime = Date.now();
+  practiceElapsed = 0;
+  practiceSwitches = 0;
+  var sw = document.getElementById('stopwatchDisplay');
+  if (sw) sw.textContent = '⏱ 0:00';
   $('practiceResult').style.display = 'none';
   $('practiceActive').style.display = 'block';
+  initPracticeTimerBar();
   renderPracticeCard();
 }
 
@@ -7848,11 +8261,10 @@ function renderSettings() {
           '<label class="btn btn-outline btn-block" style="margin-top:6px;cursor:pointer;display:block;text-align:center;min-height:38px;line-height:38px;padding:0">📂 上传 JSON 备份文件<input type="file" accept=".json" onchange="restoreFromJsonFile(this)" style="display:none"></label>' +
         '</div>' +
       '</div>' +
-      // 🗑 清理
-      '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:2px;margin-top:8px">🗑 清理</div>' +
-      '<button class="btn btn-ghost btn-block" onclick="clearWrongBook()" style="font-size:14px">🗑 清空复习清单</button>' +
-      '<button class="btn btn-ghost btn-block" onclick="clearAllData()" style="font-size:14px;color:var(--danger)">🗑️ 删除所有数据</button>' +
-      '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:2px">清空全部题库和设置，不可恢复</div>' +
+      // 🧹 清理空间
+      '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:2px;margin-top:8px">🧹 清理空间</div>' +
+      '<button class="btn btn-ghost btn-block" onclick="showCleanupModal()" style="font-size:14px">🧹 清理空间</button>' +
+      '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-top:2px">自定义选择要清理的数据</div>' +
     '</div></div></div>' +
 
     // 激活与版本 section
@@ -7880,8 +8292,8 @@ function renderSettings() {
       // 试用按钮
       if (tier === 'free' && !isTrial) {
         html += '<div style="display:flex;gap:8px;margin-bottom:12px">';
-        if (!trialUsedBasic) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial(&#39;basic&#39;)">🎁 试用3元版</button>';
-        if (!trialUsedPro) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#7C3AED;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial(&#39;pro&#39;)">👑 试用9.9版</button>';
+        if (!trialUsedBasic) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial(&#39;basic&#39;)">🎁 试用进阶提分版</button>';
+        if (!trialUsedPro) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#7C3AED;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial(&#39;pro&#39;)">👑 试用全能领航版</button>';
         html += '</div>';
         if (!bothTrialsUsed) html += '<div style="font-size:11px;color:var(--text-tertiary);text-align:center;margin-bottom:8px">20分钟试用 · 每版本可各试用一次 · 无需激活码</div>';
       }
@@ -7911,7 +8323,7 @@ function renderSettings() {
           '<button class="seg' + (density === 'high' ? ' active' : '') + '" data-v="high" onclick="updateDensitySetting(\'high\', this)">高</button>' +
         '</div></div>' +
       (function() {
-        if (!hasFeature('adaptiveDifficulty')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 自适应难度</div><div class="setting-desc">需升级9.9元版解锁</div></div><span style="font-size:18px">🔒</span></div>';
+        if (!hasFeature('adaptiveDifficulty')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 自适应难度</div><div class="setting-desc">需升级全能领航版解锁</div></div><span style="font-size:18px">🔒</span></div>';
         return '<div class="setting-item" style="margin-top:4px"><div><div class="setting-label">🧠 自适应难度</div><div class="setting-desc">连续答对3次自动提高挖空密度，连续答错2次自动降低</div></div>' +
           '<label class="toggle"><input type="checkbox" id="adaptiveToggle"' + (s.adaptiveDensity ? ' checked' : '') + ' onchange="saveSetting(\'adaptiveDensity\', this.checked)"><span class="slider"></span></label></div>';
       })() +
@@ -7922,7 +8334,7 @@ function renderSettings() {
       '<div class="setting-item"><div><div class="setting-label">语音朗读</div><div class="setting-desc">使用手机 TTS 朗读，再次点击暂停</div></div>' +
         '<label class="toggle"><input type="checkbox" id="voiceToggle"' + (s.voiceEnabled ? ' checked' : '') + ' onchange="saveSetting(\'voiceEnabled\', this.checked)"><span class="slider"></span></label></div>' +
       (function() {
-        if (!hasFeature('autoReadAloud')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 做完题自动朗读答案</div><div class="setting-desc">需升级9.9元版解锁</div></div><span style="font-size:18px">🔒</span></div>';
+        if (!hasFeature('autoReadAloud')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 做完题自动朗读答案</div><div class="setting-desc">需升级全能领航版解锁</div></div><span style="font-size:18px">🔒</span></div>';
         return '<div class="setting-item"><div><div class="setting-label">做完题自动朗读答案</div><div class="setting-desc">全部填空后自动读出答案内容</div></div>' +
           '<label class="toggle"><input type="checkbox" id="autoReadToggle"' + (s.autoReadAloud ? ' checked' : '') + ' onchange="saveSetting(\'autoReadAloud\', this.checked)"><span class="slider"></span></label></div>';
       })() +
@@ -7931,7 +8343,7 @@ function renderSettings() {
       '<div class="setting-item"><div><div class="setting-label">朗读模式</div><div class="setting-desc" id="readModeVal">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + '</div></div>' +
         '<input type="hidden" id="readModeSelect" value="' + (s.readMode||'once') + '"><button class="btn btn-ghost btn-sm" id="readModePickBtn" onclick="showReadModePicker()" style="font-size:13px;padding:6px 10px;min-width:120px;white-space:nowrap">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + ' ▾</button></div>' +
       (function() {
-        if (!hasFeature('voiceRatePitch')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读语速</div><div class="setting-desc">需升级3元版解锁</div></div><span style="font-size:18px">🔒</span></div><div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读音调</div><div class="setting-desc">需升级3元版解锁</div></div><span style="font-size:18px">🔒</span></div>';
+        if (!hasFeature('voiceRatePitch')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读语速</div><div class="setting-desc">需升级进阶提分版解锁</div></div><span style="font-size:18px">🔒</span></div><div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 朗读音调</div><div class="setting-desc">需升级进阶提分版解锁</div></div><span style="font-size:18px">🔒</span></div>';
         return '<div class="setting-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc" id="rateVal">' + (s.voiceRate || 0.9) + 'x</div></div>' +
           '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voiceRate || 0.9) + '" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>' +
           '<div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">' + (s.voicePitch || 1.0) + 'x</div></div>' +
@@ -7958,18 +8370,18 @@ function renderSettings() {
       '<div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">' + s.fontSize + 'px</div></div>' +
         '<div style="display:flex;align-items:center;gap:6px;min-width:120px;flex:1;max-width:180px"><span style="font-size:12px;flex-shrink:0">A</span><input type="range" min="14" max="24" value="' + s.fontSize + '" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))" style="flex:1;min-width:0"><span style="font-size:16px;font-weight:700;flex-shrink:0">A</span></div></div>' +
       (function() {
-        if (!hasFeature('avatar')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 显示头像</div><div class="setting-desc">需升级9.9元版解锁</div></div><span style="font-size:18px">🔒</span></div>';
+        if (!hasFeature('avatar')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 显示头像</div><div class="setting-desc">需升级全能领航版解锁</div></div><span style="font-size:18px">🔒</span></div>';
         return '<div class="setting-item"><div><div class="setting-label">显示头像</div><div class="setting-desc">开启后在设置页右上角上传头像</div></div>' +
           '<label class="toggle"><input type="checkbox" id="avatarToggle"' + (s.showAvatar ? ' checked' : '') + ' onchange="toggleAvatar(this.checked)"><span class="slider"></span></label></div>';
       })() +
       (function() {
-        if (!hasFeature('focusMode')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 专注模式</div><div class="setting-desc">需升级9.9元版解锁</div></div><span style="font-size:18px">🔒</span></div>';
+        if (!hasFeature('focusMode')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 专注模式</div><div class="setting-desc">需升级全能领航版解锁</div></div><span style="font-size:18px">🔒</span></div>';
         return '<div class="setting-item"><div><div class="setting-label">🧘 专注模式</div><div class="setting-desc">练习时自动隐藏多余按钮，沉浸背书</div></div>' +
           '<label class="toggle"><input type="checkbox" id="focusModeToggle"' + (s.focusMode ? ' checked' : '') + ' onchange="saveSetting(\'focusMode\', this.checked)"><span class="slider"></span></label></div>';
       })() +
 
       (function() {
-        if (!hasFeature('pomodoro')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 番茄钟模式</div><div class="setting-desc">需升级9.9元版解锁</div></div><span style="font-size:18px">🔒</span></div>';
+        if (!hasFeature('pomodoro')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">🔒 番茄钟模式</div><div class="setting-desc">需升级全能领航版解锁</div></div><span style="font-size:18px">🔒</span></div>';
         var pd = getSetting('pomodoroDuration', 25);
         var bd = getSetting('pomodoroBreak', 5);
         var pomoOn = s.pomodoro ? true : false;
@@ -7992,7 +8404,7 @@ function renderSettings() {
 
     // 学习计划 section
     (function() {
-      if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>🔒 学习计划 · 需升级3元版解锁</span></div></div>';
+      if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>🔒 学习计划 · 需升级进阶提分版解锁</span></div></div>';
       var examDateVal = ((appData.settings || {}).examDate || '');
       var dailyTarget = (appData.settings || {}).dailyTarget || '';
       var suggestedDaily = '';
@@ -8017,7 +8429,7 @@ function renderSettings() {
       '</div>';
       // 学习日历热力图
       planHtml += (function() {
-        if (!hasFeature('heatmap')) return '<div style="margin-top:12px;padding:14px;background:var(--bg-input);border-radius:10px;text-align:center;color:var(--text-tertiary);font-size:13px">🔒 学习热力图 · 需升级3元版解锁</div>';
+        if (!hasFeature('heatmap')) return '<div style="margin-top:12px;padding:14px;background:var(--bg-input);border-radius:10px;text-align:center;color:var(--text-tertiary);font-size:13px">🔒 学习热力图 · 需升级进阶提分版解锁</div>';
         var dates = (appData.settings || {}).studyDates || {};
         var today = new Date();
         // 连续学习天数
@@ -8104,7 +8516,7 @@ function renderSettings() {
 
     // 每日洞见
     (function() {
-      if (!hasFeature('dailyInsight')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>🔒 每日洞见 · 需9.9元版</span></div></div>';
+      if (!hasFeature('dailyInsight')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>🔒 每日洞见 · 全能领航版专属</span></div></div>';
       var insight = getDailyInsight();
       var si = appData.settings.dailyInsight || {};
       var canRefresh = !si.refreshed;
@@ -8129,7 +8541,7 @@ function renderSettings() {
 
     // 今日学习摘要
     (function() {
-      if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>🔒 今日学习摘要 · 需升级3元版解锁</span></div></div>';
+      if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>🔒 今日学习摘要 · 需升级进阶提分版解锁</span></div></div>';
       ensureDailyPractice();
       var dp = appData.settings.dailyPractice;
       var today = new Date().toISOString().substring(0, 10);
@@ -8167,6 +8579,9 @@ function renderSettings() {
             '<span>📦 总题库 ' + totalCards + ' 题</span>' +
             '<span>✅ 已掌握 ' + mastered + ' 题</span>' +
           '</div>' +
+          '<div style="text-align:center;margin-top:12px">' +
+            '<button onclick="event.stopPropagation();showWeeklyReport()" style="background:var(--bg-card);border:1px solid var(--primary);color:var(--primary);padding:8px 20px;border-radius:20px;font-size:13px;cursor:pointer">📊 学习周报</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
       return html;
@@ -8174,9 +8589,10 @@ function renderSettings() {
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
+      '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      (hasFeature('dailyInsight') ? '<div class="setting-item" style="flex-direction:column;align-items:stretch"><div class="setting-label">💬 作者留言</div><div class="setting-desc" style="margin-bottom:6px">此处填写的内容将显示在「使用说明 → 作者有话说」中</div><textarea id="authorNoteInput" placeholder="写给使用者的话..." style="width:100%;min-height:80px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v70</div></div></div>' +
+      (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">点击展开编辑，内容显示在「使用说明 → 作者」中</div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div></div>' : '') +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v76</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -8571,6 +8987,174 @@ async function doRestore() {
     showToast('恢复成功！');
     setTimeout(() => location.reload(), 800);
   } catch(e) { showToast('备份码无效'); }
+}
+
+function showCleanupModal() {
+  var bankNames = [];
+  Object.keys(appData.banks || {}).forEach(function(id) {
+    var b = appData.banks[id];
+    bankNames.push({ id: id, name: b.name || id, cardCount: (b.cards || []).length });
+  });
+  var hasAvatar = !!(appData.settings && appData.settings.avatarHistory && appData.settings.avatarHistory.length);
+  var hasDaily = !!(appData.settings && appData.settings.dailyPractice);
+
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:480px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:85dvh;display:flex;flex-direction:column;padding:0">' +
+    '<div style="padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0">' +
+      '<h3 style="margin:0;font-size:17px">🧹 清理空间</h3>' +
+      '<p style="color:var(--text-secondary);font-size:12px;margin:4px 0 0">勾选要清理的数据，操作不可恢复</p>' +
+    '</div>' +
+    '<div style="overflow-y:auto;flex:1;padding:12px 18px" id="cleanupList">' +
+
+    // 头像历史
+    (hasAvatar ? '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:4px 0;border-radius:8px;cursor:pointer;background:var(--bg-input)">' +
+      '<input type="checkbox" data-clean="avatar" style="flex-shrink:0">' +
+      '<span><span style="font-weight:600;font-size:14px">🖼 头像历史</span><br><span style="font-size:11px;color:var(--text-tertiary)">清除已保存的历史头像</span></span>' +
+    '</label>' : '') +
+
+    // 复习清单（按题库）
+    (bankNames.length ? '<div style="margin-top:8px;font-size:13px;font-weight:600;color:var(--text-secondary);padding:6px 0">📝 复习清单</div>' : '') +
+    bankNames.map(function(b) {
+      var wb = appData.wrongBooks && appData.wrongBooks[b.id];
+      var wbCount = wb ? (Array.isArray(wb) ? wb.length : Object.keys(wb).length) : 0;
+      if (!wbCount) return '';
+      return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:8px;cursor:pointer">' +
+        '<input type="checkbox" data-clean="wrongbook" data-bank="' + b.id + '" style="flex-shrink:0">' +
+        '<span style="font-size:13px">' + escapeHtml(b.name) + ' <span style="color:var(--text-tertiary);font-size:11px">(' + wbCount + ' 条记录)</span></span>' +
+      '</label>';
+    }).join('') +
+
+    // 做题进度
+    (bankNames.length ? '<div style="margin-top:8px;font-size:13px;font-weight:600;color:var(--text-secondary);padding:6px 0">📊 做题进度</div>' : '') +
+    bankNames.map(function(b) {
+      var seq = appData.seqProgress && appData.seqProgress[b.id];
+      if (!seq) return '';
+      return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:8px;cursor:pointer">' +
+        '<input type="checkbox" data-clean="seqProgress" data-bank="' + b.id + '" style="flex-shrink:0">' +
+        '<span style="font-size:13px">' + escapeHtml(b.name) + ' <span style="color:var(--text-tertiary);font-size:11px">(位置: 第' + (seq + 1) + '题)</span></span>' +
+      '</label>';
+    }).join('') +
+
+    // 收藏题目
+    (bankNames.length ? '<div style="margin-top:8px;font-size:13px;font-weight:600;color:var(--text-secondary);padding:6px 0">⭐ 收藏题目</div>' : '') +
+    bankNames.map(function(b) {
+      var favCount = 0;
+      (b.cards || []).forEach(function(c) { if (c.starred) favCount++; });
+      // Also check favorites object
+      if (appData.favorites && appData.favorites[b.id]) {
+        favCount += (Array.isArray(appData.favorites[b.id]) ? appData.favorites[b.id].length : Object.keys(appData.favorites[b.id]).length);
+      }
+      if (!favCount) return '';
+      return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:8px;cursor:pointer">' +
+        '<input type="checkbox" data-clean="favorites" data-bank="' + b.id + '" style="flex-shrink:0">' +
+        '<span style="font-size:13px">' + escapeHtml(b.name) + ' <span style="color:var(--text-tertiary);font-size:11px">(' + favCount + ' 题)</span></span>' +
+      '</label>';
+    }).join('') +
+
+    // 统计数据
+    '<div style="margin-top:8px;font-size:13px;font-weight:600;color:var(--text-secondary);padding:6px 0">📈 统计数据</div>' +
+    '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:4px 0;border-radius:8px;cursor:pointer;background:var(--bg-input)">' +
+      '<input type="checkbox" data-clean="stats" style="flex-shrink:0">' +
+      '<span><span style="font-weight:600;font-size:14px">📈 每日统计 + 周统计 + 番茄记录</span><br><span style="font-size:11px;color:var(--text-tertiary)">清除每日/每周做题统计和番茄钟记录</span></span>' +
+    '</label>' +
+
+    // 全部数据（红色警告）
+    '<div style="margin-top:12px;padding-top:12px;border-top:2px solid var(--danger)">' +
+    '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:4px 0;border-radius:8px;cursor:pointer;background:var(--danger-light)">' +
+      '<input type="checkbox" data-clean="all" style="flex-shrink:0">' +
+      '<span style="color:var(--danger)"><span style="font-weight:700;font-size:14px">🗑️ 删除所有数据</span><br><span style="font-size:11px">清空全部题库、设置和进度，不可恢复！</span></span>' +
+    '</label></div>' +
+
+    '</div>' +
+    '<div style="padding:14px 18px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px">' +
+      '<button class="btn btn-ghost" style="flex:1;font-size:14px" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>' +
+      '<button class="btn" style="flex:1;font-size:14px;background:var(--danger);color:#fff;border:none" onclick="performCleanup(this)">🗑 确认清理</button>' +
+    '</div>' +
+  '</div>';
+
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
+
+function performCleanup(btn) {
+  var ov = btn.closest('.modal-overlay');
+  var allChecked = ov.querySelector('input[data-clean="all"]');
+  if (allChecked && allChecked.checked) {
+    // 全部删除
+    showConfirm('删除所有数据', '此操作不可撤销！将删除所有题库、设置和进度。', function() {
+      appData = { banks: {}, settings: {}, seqProgress: {}, favorites: {}, wrongBooks: {} };
+      saveData(appData);
+      ov.remove();
+      showToast('已全部删除');
+      switchTab('banks');
+    });
+    return;
+  }
+
+  var cleaned = [];
+  var checks = ov.querySelectorAll('input[type="checkbox"]:checked');
+
+  // 收集清理任务
+  var tasks = { avatar: false, wrongbook: [], seqProgress: [], favorites: [], stats: false };
+
+  for (var i = 0; i < checks.length; i++) {
+    var clean = checks[i].dataset.clean;
+    var bank = checks[i].dataset.bank;
+    if (clean === 'avatar') tasks.avatar = true;
+    else if (clean === 'wrongbook' && bank) tasks.wrongbook.push(bank);
+    else if (clean === 'seqProgress' && bank) tasks.seqProgress.push(bank);
+    else if (clean === 'favorites' && bank) tasks.favorites.push(bank);
+    else if (clean === 'stats') tasks.stats = true;
+  }
+
+  if (!tasks.avatar && !tasks.wrongbook.length && !tasks.seqProgress.length && !tasks.favorites.length && !tasks.stats) {
+    showToast('请至少选择一项'); return;
+  }
+
+  showConfirm('确认清理', '将清理选中的数据，不可恢复。确定继续？', function() {
+    if (tasks.avatar) {
+      if (appData.settings) {
+        appData.settings.avatarHistory = [];
+        cleaned.push('头像历史');
+      }
+    }
+    if (tasks.wrongbook.length) {
+      tasks.wrongbook.forEach(function(id) {
+        if (appData.wrongBooks) delete appData.wrongBooks[id];
+      });
+      cleaned.push('复习清单(' + tasks.wrongbook.length + '个)');
+    }
+    if (tasks.seqProgress.length) {
+      tasks.seqProgress.forEach(function(id) {
+        if (appData.seqProgress) delete appData.seqProgress[id];
+      });
+      cleaned.push('做题进度(' + tasks.seqProgress.length + '个)');
+    }
+    if (tasks.favorites.length) {
+      tasks.favorites.forEach(function(id) {
+        // 清除卡片上的 starred 标记
+        var bank = appData.banks[id];
+        if (bank && bank.cards) {
+          bank.cards.forEach(function(c) { c.starred = false; });
+        }
+        if (appData.favorites) delete appData.favorites[id];
+      });
+      cleaned.push('收藏题目(' + tasks.favorites.length + '个)');
+    }
+    if (tasks.stats) {
+      if (appData.settings) {
+        appData.settings.dailyPractice = null;
+        appData.settings.weekStats = null;
+        appData.settings.tomatoGarden = 0;
+      }
+      cleaned.push('统计数据');
+    }
+    saveData(appData);
+    ov.remove();
+    showToast('✅ 已清理：' + cleaned.join('、'));
+    renderSettings();
+  });
 }
 
 function clearWrongBook() {
