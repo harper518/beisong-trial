@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v87 · 小阮出品</title>
+<title>挖空背诵工具 v88 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -876,7 +876,7 @@ body.focus-mode #cardText { line-height:2; }
   <button class="tab-item active" data-tab="banks" onclick="switchTab('banks')"><span class="tab-icon">📚</span>题库</button>
   <button class="tab-item" data-tab="practice" onclick="switchTab('practice')"><span class="tab-icon">📝</span>做题</button>
   <button class="tab-item" data-tab="browse" onclick="switchTab('browse')"><span class="tab-icon">📖</span>浏览</button>
-  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">🏷️</span>复习</button>
+  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">☑️</span>复习</button>
   <button class="tab-item" data-tab="ziliao" onclick="switchTab('ziliao')"><span class="tab-icon">📑</span>资料</button>
   <button class="tab-item" data-tab="settings" onclick="switchTab(&#39;settings&#39;)"><span class="tab-icon">⚙️</span>设置</button>
 </nav>
@@ -1256,11 +1256,50 @@ function saveExamDate(value) {
 function saveAuthorNote(value) {
   appData.settings.authorNote = value || '';
   debouncedSaveData(appData);
-  // 上传到云端
-  if (isAdmin() && value && value.trim()) {
-    apiPut('/author-note', { codeHash: appData.activation.codeHash, text: value.trim() })
-      .then(function(r) { if (r.success) console.log('[API] 作者留言已同步到云端'); })
-      .catch(function(e) { console.warn('[API] 作者留言同步失败:', e.message); });
+}
+
+function syncAuthorNoteToCloud() {
+  if (!isAdmin()) { showToast('仅管理员可同步'); return; }
+  var value = appData.settings.authorNote || '';
+  var ta = document.getElementById('authorNoteInput');
+  if (ta) value = ta.value || '';
+  if (!value.trim()) { showToast('请先输入留言内容'); return; }
+  var btn = document.getElementById('authorSyncBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 同步中...'; }
+  apiPut('/author-note', { codeHash: appData.activation.codeHash, text: value.trim() })
+    .then(function(r) {
+      if (r.success) {
+        appData.settings.authorNote = value.trim();
+        debouncedSaveData(appData);
+        var now = new Date().toISOString();
+        appData.settings._lastAuthorSync = now;
+        debouncedSaveData(appData);
+        showToast('✅ 已同步到云端，所有用户可见');
+        updateAuthorSyncStatus();
+      } else {
+        showToast('同步失败，请重试');
+      }
+    })
+    .catch(function(e) {
+      showToast('⚠️ 网络错误，同步失败');
+      console.warn('[API] 作者留言同步失败:', e.message);
+    })
+    .finally(function() {
+      if (btn) { btn.disabled = false; btn.textContent = '📤 同步到云端'; }
+    });
+}
+
+function updateAuthorSyncStatus() {
+  var st = document.getElementById('authorSyncStatus');
+  if (!st) return;
+  var last = appData.settings._lastAuthorSync;
+  if (last) {
+    var d = new Date(last);
+    st.textContent = '✅ 上次同步：' + d.toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    st.style.color = 'var(--success, #10b981)';
+  } else {
+    st.textContent = '⚠️ 尚未同步到云端';
+    st.style.color = 'var(--text-tertiary)';
   }
 }
 
@@ -2417,6 +2456,7 @@ function renderNoteList() {
       '<button onclick="startNewNote()" style="flex:1;padding:12px;border:2px dashed var(--border);border-radius:10px;background:var(--bg);color:var(--text-secondary);font-size:14px;cursor:pointer;min-height:44px">＋ 新建笔记</button>' +
       '<button onclick="showNoteTemplates()" style="padding:12px 14px;border:2px dashed var(--border);border-radius:10px;background:var(--bg);color:var(--text-secondary);font-size:14px;cursor:pointer;min-height:44px">📋 模板</button>' +
     '</div>' +
+    '<div id="zlTemplatePanel" style="display:none;margin-bottom:12px;padding:10px;border:2px solid var(--primary);border-radius:10px;background:var(--bg-card)"></div>' +
     '<input id="zlNoteSearch" placeholder="🔍 搜索笔记..." value="' + escapeHtml(_zlSearchQuery||'') + '" oninput="_zlSearchQuery=this.value;renderNoteList()" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:13px;margin-bottom:10px;box-sizing:border-box;min-height:40px">';
 
     if (notes.length === 0) {
@@ -2475,9 +2515,19 @@ function renderNoteEditor() {
     '<input id="zlNoteTitleInput" placeholder="笔记标题" value="' + escapeHtml(_zlNoteTitle) + '" oninput="_zlNoteTitle=this.value" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:16px;font-weight:600;margin-bottom:10px;box-sizing:border-box;min-height:44px">' +
     '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">' + viewToggle +
       '<button onclick="showImportOutline()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">📥 导入大纲</button>' +
+      '<button onclick="copyZiliaoAIPrompt()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">🤖 AI话术</button>' +
       (_zlViewMode === 'mindmap' ? '<button onclick="exportMindMapPNG()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">📸 导出图片</button>' : '') +
       '<span style="flex:1"></span>' +
       '<button onclick="deleteCurrentNote()" style="background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer;min-height:36px">🗑 删除</button>' +
+    '</div>' +
+    '<div id="zlImportPanel" style="display:none;margin-bottom:10px;padding:12px;border:2px solid var(--primary);border-radius:10px;background:var(--bg-card)">' +
+      '<p style="font-size:13px;color:var(--text-secondary);margin:0 0 8px">从豆包、天工等AI工具粘贴大纲，自动识别格式转为Markdown</p>' +
+      '<textarea id="zlImportInput" placeholder="粘贴大纲...&#10;支持：中文序号/数字编号/缩进层级" oninput="var p=document.getElementById(\'zlImportPreview\');if(p)p.textContent=parseOutlineToMarkdown(this.value)" style="width:100%;min-height:160px;padding:12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;line-height:1.7;resize:vertical;box-sizing:border-box;font-family:inherit"></textarea>' +
+      '<p id="zlImportPreview" style="font-size:12px;color:var(--text-tertiary);margin:8px 0;max-height:120px;overflow-y:auto;background:var(--bg);padding:10px;border-radius:8px;white-space:pre-wrap;font-family:monospace"></p>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button onclick="doImportOutline()" style="flex:1;background:var(--primary);color:#fff;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;min-height:40px">📥 插入到笔记</button>' +
+        '<button onclick="document.getElementById(\'zlImportPanel\').style.display=\'none\'" style="padding:10px 16px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text-secondary);font-size:13px;cursor:pointer;min-height:40px">取消</button>' +
+      '</div>' +
     '</div>';
 
   if (_zlViewMode === 'mindmap') {
@@ -2571,7 +2621,7 @@ function loadMarkmap() {
     var s = document.createElement('script');
     s.src = scripts[idx];
     s.onload = function() { loaded++; loadScript(idx + 1); };
-    s.onerror = function() { container.innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px">思维导图组件加载失败，请检查网络连接</p>'; };
+    s.onerror = function() { _zlMarkmapLoaded = false; container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">⚠️ 思维导图组件加载失败，请检查网络连接</p><button onclick="_zlMarkmapLoaded=false;loadMarkmap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button></div>'; };
     document.head.appendChild(s);
   }
   loadScript(0);
@@ -2599,6 +2649,7 @@ function renderMarkmapFromContent() {
     if (currentSVG) currentSVG.remove();
 
     var mmInstance = mm.Markmap.create(container, {}, data);
+    _zlMmInstance = mmInstance;
     // 适配移动端触控
     var svgEl = container.querySelector('svg');
     if (svgEl) {
@@ -2608,7 +2659,7 @@ function renderMarkmapFromContent() {
     }
   } catch(e) {
     console.error('Markmap render error:', e);
-    container.innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px">导图渲染失败</p>';
+    container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">⚠️ 导图渲染失败：' + (e.message || '未知错误') + '</p><button onclick="switchToMindMap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button><p style="font-size:11px;color:var(--text-tertiary);margin-top:8px">如持续失败，请检查笔记内容是否包含特殊字符</p></div>';
   }
 }
 
@@ -2809,22 +2860,13 @@ function exportNote(id) {
 
 // ====== 导入大纲 ======
 function showImportOutline() {
-  saveEditorState();
-  var html = '<p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px">从豆包、天工等AI工具粘贴大纲，自动识别格式转为Markdown</p>' +
-    '<textarea id="zlImportInput" placeholder="粘贴大纲...&#10;&#10;支持格式：&#10;一、标题 → # 标题&#10;  1. 子项 → ## 子项&#10;    - 细节 → - 细节&#10;&#10;缩进层级 · 中文序号 · 数字编号" style="width:100%;min-height:200px;padding:14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;line-height:1.7;resize:vertical;box-sizing:border-box;font-family:inherit"></textarea>' +
-    '<p id="zlImportPreview" style="font-size:12px;color:var(--text-tertiary);margin:8px 0;max-height:150px;overflow-y:auto;background:var(--bg);padding:10px;border-radius:8px;white-space:pre-wrap;font-family:monospace"></p>' +
-    '<div style="display:flex;gap:10px;margin-top:10px">' +
-      '<button onclick="doImportOutline()" style="flex:1;background:var(--primary);color:#fff;border:none;padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;min-height:44px">📥 插入到笔记</button>' +
-      '<button onclick="document.querySelector(\'.modal-overlay\').remove()" style="padding:12px 20px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text-secondary);font-size:14px;cursor:pointer;min-height:44px">取消</button>' +
-    '</div>';
-  showModal('📥 导入大纲', html);
-  setTimeout(function() {
-    var input = document.getElementById('zlImportInput');
-    if (input) input.oninput = function() {
-      var preview = document.getElementById('zlImportPreview');
-      if (preview) preview.textContent = parseOutlineToMarkdown(input.value);
-    };
-  }, 100);
+  var panel = document.getElementById('zlImportPanel');
+  if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  var input = document.getElementById('zlImportInput');
+  if (input) { input.value = ''; input.focus(); }
+  var preview = document.getElementById('zlImportPreview');
+  if (preview) preview.textContent = '';
 }
 
 function parseOutlineToMarkdown(text) {
@@ -2866,29 +2908,32 @@ function doImportOutline() {
   if (!raw) { showToast('请粘贴大纲内容'); return; }
   var md = parseOutlineToMarkdown(raw);
   _zlNoteContent = _zlNoteContent.trim() ? _zlNoteContent.trim() + '\n\n' + md : md;
-  var ov = document.querySelector('.modal-overlay');
-  if (ov) ov.remove();
+  var panel = document.getElementById('zlImportPanel');
+  if (panel) panel.style.display = 'none';
   renderNoteEditor();
   showToast('✅ 大纲已转换插入');
 }
 
 // ====== 笔记模板 ======
+window._zlTemplates = [
+  { name: '📅 时间线', content: '# 时间线\n\n## 阶段一（年份）\n- 事件1\n- 事件2\n\n## 阶段二（年份）\n- 事件1\n- 事件2\n\n## 阶段三（年份）\n- 事件1\n- 事件2' },
+  { name: '🧩 概念框架', content: '# 核心概念\n\n## 定义\n- 概念的定义\n\n## 分类\n- 类型1\n- 类型2\n\n## 特点\n- 特点1\n- 特点2\n\n## 应用\n- 应用场景1\n- 应用场景2' },
+  { name: '📊 对比分析', content: '# 对比分析\n\n## 相同点\n- 点1\n- 点2\n\n## 不同点\n| 维度 | A | B |\n|------|---|---|\n| 维度1 |   |   |\n| 维度2 |   |   |\n\n## 总结\n- 结论' },
+  { name: '🔬 理科公式', content: '# 公式整理\n\n## 公式1名称\n- 公式：\n- 含义：\n- 适用条件：\n- 例题：\n\n## 公式2名称\n- 公式：\n- 含义：\n- 适用条件：\n- 例题：' },
+  { name: '📖 课文分析', content: '# 课文标题\n\n## 作者/背景\n- \n\n## 结构梳理\n- 第一部分：\n- 第二部分：\n\n## 主旨思想\n- \n\n## 写作手法\n- \n\n## 重点字词\n- ' },
+  { name: '🈳 空白模板', content: '' }
+];
+
 function showNoteTemplates() {
-  var templates = [
-    { name: '📅 时间线', content: '# 时间线\n\n## 阶段一（年份）\n- 事件1\n- 事件2\n\n## 阶段二（年份）\n- 事件1\n- 事件2\n\n## 阶段三（年份）\n- 事件1\n- 事件2' },
-    { name: '🧩 概念框架', content: '# 核心概念\n\n## 定义\n- 概念的定义\n\n## 分类\n- 类型1\n- 类型2\n\n## 特点\n- 特点1\n- 特点2\n\n## 应用\n- 应用场景1\n- 应用场景2' },
-    { name: '📊 对比分析', content: '# 对比分析\n\n## 相同点\n- 点1\n- 点2\n\n## 不同点\n| 维度 | A | B |\n|------|---|---|\n| 维度1 |   |   |\n| 维度2 |   |   |\n\n## 总结\n- 结论' },
-    { name: '🔬 理科公式', content: '# 公式整理\n\n## 公式1名称\n- 公式：\n- 含义：\n- 适用条件：\n- 例题：\n\n## 公式2名称\n- 公式：\n- 含义：\n- 适用条件：\n- 例题：' },
-    { name: '📖 课文分析', content: '# 课文标题\n\n## 作者/背景\n- \n\n## 结构梳理\n- 第一部分：\n- 第二部分：\n\n## 主旨思想\n- \n\n## 写作手法\n- \n\n## 重点字词\n- ' },
-    { name: '🈳 空白模板', content: '' }
-  ];
-  window._zlTemplates = templates;
-  var html = '<div style="display:flex;flex-direction:column;gap:8px">';
-  for (var i = 0; i < templates.length; i++) {
-    html += '<button onclick="applyTemplate(' + i + ')" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;cursor:pointer;text-align:left;min-height:44px">' + templates[i].name + '<span style="float:right;color:var(--text-tertiary)">使用 →</span></button>';
+  var panel = document.getElementById('zlTemplatePanel');
+  if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
+  var html = '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">选择模板（将替换当前编辑内容）</div><div style="display:flex;flex-direction:column;gap:6px">';
+  for (var i = 0; i < window._zlTemplates.length; i++) {
+    html += '<button onclick="applyTemplate(' + i + ')" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;cursor:pointer;text-align:left;min-height:40px">' + window._zlTemplates[i].name + '<span style="float:right;color:var(--text-tertiary)">使用 →</span></button>';
   }
   html += '</div>';
-  showModal('📋 笔记模板', html);
+  panel.innerHTML = html;
+  panel.style.display = 'block';
 }
 
 function applyTemplate(idx) {
@@ -2898,8 +2943,8 @@ function applyTemplate(idx) {
   _zlNoteTitle = t.name.replace(/^[^\s]+\s/, '');
   _zlNoteContent = t.content;
   _zlViewMode = 'edit';
-  var ov = document.querySelector('.modal-overlay');
-  if (ov) ov.remove();
+  var panel = document.getElementById('zlTemplatePanel');
+  if (panel) panel.style.display = 'none';
   renderNoteEditor();
   showToast('✅ 已应用模板');
 }
@@ -5149,6 +5194,16 @@ function copyFormatPrompt() {
   var prompt = '请将以下内容整理为挖空背诵格式，严格按以下规则输出：\n\n【格式规则】\n1. 每行一题，题目和答案用 | 分隔\n2. 格式：题目|答案 或 题目|答案|口诀\n3. 答案或题目中需要挖空的地方，用【关键词】标记（例：【叶绿体】）\n4. 题目和答案都可以用【】标记挖空\n5. 一个答案里可以有多个【标记】，如：【细胞壁】【细胞膜】【细胞核】\n6. 每一道题的所有内容必须在同一行，不能换行\n7. 如有口诀，加在答案后面：题目|答案|口诀\n\n【重要】\n- 答案中不要出现 | 竖线符号，会被当成口诀分隔符\n- 答案中不要出现【】（除了标记挖空的地方）\n- 题目和答案中都可以用【】标记要挖空的关键词\n\n【输出示例】\n光合作用的场所是哪里|【叶绿体】|光→叶\n植物细胞的结构包括什么|【细胞壁】【细胞膜】【细胞质】【细胞核】\n1.简述教党62号文|1.坚持【育人导向】，突出【价值引领】 2.坚持【遵循规律】，勇于【改革创新】|育人规律，问题协同\n\n【要求】\n- 只输出整理好的题目，不要任何开场白、结束语或额外说明\n- 保持题目原文内容不变，只调整格式\n- 如果原内容缺少答案，答案部分留空\n- 用【关键词】标记挖空';
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(prompt).then(function() { showToast('📋 格式话术已复制，可粘贴到豆包/AI使用'); });
+  } else {
+    showToast('⚠️ 复制失败，请手动复制');
+  }
+}
+
+// ====== 资料页 AI 话术 ======
+function copyZiliaoAIPrompt() {
+  var prompt = '请根据以下内容，帮我生成一份适合做思维导图的学习笔记，严格按以下Markdown格式规则输出：\n\n【格式规则】\n1. 使用 # 表示一级标题（核心主题）\n2. 使用 ## 表示二级标题（主要分支）\n3. 使用 ### 表示三级标题（子分支，可选）\n4. 使用 - 开头表示列表项（具体知识点）\n5. 每个知识点用简洁的关键词表达，不要写长句\n6. 层级不宜超过4层，否则导图会太密\n\n【输出示例】\n# 细胞的结构\n\n## 细胞膜\n- 控制物质进出\n- 保护细胞\n\n## 细胞质\n- 新陈代谢场所\n- 含多种细胞器\n\n### 线粒体\n- 有氧呼吸\n- 提供能量\n\n### 核糖体\n- 蛋白质合成\n- 无膜结构\n\n## 细胞核\n- 遗传信息库\n- 控制代谢和遗传\n\n【要求】\n- 只输出整理好的Markdown笔记，不要任何开场白、结束语或额外说明\n- 层级结构要逻辑清晰，适合生成横向思维导图\n- 每个节点尽量控制在10字以内\n- 不要使用表格、代码块等复杂语法';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(prompt).then(function() { showToast('📋 AI话术已复制，可粘贴到豆包/AI生成笔记'); });
   } else {
     showToast('⚠️ 复制失败，请手动复制');
   }
@@ -9861,8 +9916,8 @@ function renderSettings() {
       '<div class="section-body" id="body_about">' +
       '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
-      (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">点击展开编辑，内容显示在「使用说明 → 作者」中</div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onclick="event.stopPropagation()" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v87</div></div></div>' +
+      (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 作者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v88</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -9872,6 +9927,7 @@ function renderSettings() {
   });
   loadVoices();
   setTimeout(function() { checkForUpdateDot(); }, 1000);
+  setTimeout(function() { updateAuthorSyncStatus(); }, 200);
 }
 
 // 折叠/展开 section，状态持久化到 settings
