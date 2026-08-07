@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v77 · 小阮出品</title>
+<title>挖空背诵工具 v78 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1507,43 +1507,62 @@ function fmtDuration(seconds) {
 }
 
 // ====== 图片压缩 ======
-var _cmPendingImage = ''; // 待发送的图片 base64
+var _cmPendingImage = ''; // 待发送的图片 base64（原图）
+var _cmPendingThumb = ''; // 待发送的缩略图 base64
 
 function compressImage(file, callback) {
+  // callback(fullImageBase64, thumbnailBase64)
   var reader = new FileReader();
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
       var w = img.width, h = img.height;
-      // 限制最大分辨率 2400px（高清晰度）
+      // === 原图：限制最大分辨率 2400px，高质量 ===
       var maxDim = 2400;
-      if (w > maxDim || h > maxDim) {
-        var ratio = Math.min(maxDim / w, maxDim / h);
-        w = Math.round(w * ratio); h = Math.round(h * ratio);
+      var fw = w, fh = h;
+      if (fw > maxDim || fh > maxDim) {
+        var ratio = Math.min(maxDim / fw, maxDim / fh);
+        fw = Math.round(fw * ratio); fh = Math.round(fh * ratio);
       }
       var canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
+      canvas.width = fw; canvas.height = fh;
       var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-      // 高质量输出
+      ctx.drawImage(img, 0, 0, fw, fh);
       var quality = 0.85;
-      var result = canvas.toDataURL('image/jpeg', quality);
-      // 如果超过 5MB，逐步降质
-      while (result.length > 5000000 && quality > 0.3) {
+      var full = canvas.toDataURL('image/jpeg', quality);
+      while (full.length > 5000000 && quality > 0.3) {
         quality -= 0.1;
-        result = canvas.toDataURL('image/jpeg', quality);
+        full = canvas.toDataURL('image/jpeg', quality);
       }
-      if (result.length > 5000000) {
+      if (full.length > 5000000) {
         showToast('⚠️ 图片太大，请选择更小的图片');
-        callback('');
+        callback('', '');
         return;
       }
-      callback(result);
+
+      // === 缩略图：250px 宽，低质量，用于列表展示 ===
+      var tw = 250, th = Math.round(h * (250 / w));
+      if (tw > fw) { tw = fw; th = fh; } // 如果原图已经很小就不用缩略图
+      var tCanvas = document.createElement('canvas');
+      tCanvas.width = tw; tCanvas.height = th;
+      var tCtx = tCanvas.getContext('2d');
+      tCtx.drawImage(img, 0, 0, tw, th);
+      var thumb = tCanvas.toDataURL('image/jpeg', 0.5);
+
+      callback(full, thumb);
     };
-    img.onerror = function() { showToast('⚠️ 图片加载失败'); callback(''); };
+    img.onerror = function() { showToast('⚠️ 图片加载失败'); callback('', ''); };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+function showFullImage(src) {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer';
+  ov.innerHTML = '<img src="' + src + '" style="max-width:95vw;max-height:95vh;border-radius:12px">';
+  ov.onclick = function() { ov.remove(); };
+  document.body.appendChild(ov);
 }
 
 function handleCmImage(input) {
@@ -1557,20 +1576,21 @@ function handleCmImage(input) {
   }
   var nameEl = document.getElementById('cmImageName');
   if (nameEl) nameEl.textContent = '压缩中...';
-  compressImage(file, function(base64) {
-    if (!base64) {
+  compressImage(file, function(full, thumb) {
+    if (!full) {
       if (nameEl) nameEl.textContent = '';
       input.value = '';
       return;
     }
-    _cmPendingImage = base64;
-    if (nameEl) nameEl.textContent = file.name + ' (' + Math.round(base64.length / 1024) + 'KB)';
-    // 显示预览
+    _cmPendingImage = full;
+    _cmPendingThumb = thumb;
+    if (nameEl) nameEl.textContent = file.name + ' (' + Math.round(full.length / 1024) + 'KB)';
+    // 显示预览（用缩略图）
     var preview = document.getElementById('cmImagePreview');
     var previewImg = document.getElementById('cmImagePreviewImg');
     var clearBtn = document.getElementById('cmImageClear');
     if (preview && previewImg) {
-      previewImg.src = base64;
+      previewImg.src = thumb || full;
       preview.style.display = 'block';
     }
     if (clearBtn) clearBtn.style.display = 'inline-flex';
@@ -1619,11 +1639,11 @@ function showCommunityBoard() {
       '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">' +
         '<label style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:44px">📷 添加图片<input id="cmImageInput" type="file" accept="image/*" onchange="handleCmImage(this)" style="display:none"></label>' +
         '<span id="cmImageName" style="font-size:11px;color:var(--text-tertiary);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>' +
-        '<button id="cmImageClear" onclick="_cmPendingImage=\'\';var inp=document.getElementById(\'cmImageInput\');if(inp)inp.value=\'\';document.getElementById(\'cmImageName\').textContent=\'\';document.getElementById(\'cmImagePreview\').style.display=\'none\';this.style.display=\'none\'" style="display:none;background:none;border:none;color:var(--text-tertiary);font-size:12px;cursor:pointer;padding:4px 6px;min-height:44px;min-width:44px">✕ 移除</button>' +
+        '<button id="cmImageClear" onclick="_cmPendingImage=\'\';_cmPendingThumb=\'\';var inp=document.getElementById(\'cmImageInput\');if(inp)inp.value=\'\';document.getElementById(\'cmImageName\').textContent=\'\';document.getElementById(\'cmImagePreview\').style.display=\'none\';this.style.display=\'none\'" style="display:none;background:none;border:none;color:var(--text-tertiary);font-size:12px;cursor:pointer;padding:4px 6px;min-height:44px;min-width:44px">✕ 移除</button>' +
       '</div>' +
       // 图片预览
       '<div id="cmImagePreview" style="display:none;margin-top:8px;position:relative;max-width:200px">' +
-        '<img id="cmImagePreviewImg" src="" style="width:100%;border-radius:8px;border:1px solid var(--border)" onclick="var s=this.src;var ov=document.createElement(\'div\');ov.style.cssText=\'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer\';ov.innerHTML=\'<img src=\'+s+\' style=max-width:95vw;max-height:95vh;border-radius:12px>\';ov.onclick=function(){ov.remove()};document.body.appendChild(ov)">' +
+        '<img id="cmImagePreviewImg" src="" style="width:100%;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="showFullImage(this.src)">' +
       '</div>' +
       // 操作行
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
@@ -1673,7 +1693,7 @@ function loadCommunityMessages() {
             '<span style="font-size:11px;color:var(--text-tertiary)">' + timeStr + '</span>' +
           '</div>' +
           '<div style="font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word">' + escapeHtml(m.text) + '</div>' +
-          (m.image ? '<div style="margin-top:8px"><img src="' + m.image + '" style="max-width:100%;max-height:300px;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="var s=this.src;var ov=document.createElement(\'div\');ov.style.cssText=\'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer\';ov.innerHTML=\'<img src=\'+s+\' style=max-width:95vw;max-height:95vh;border-radius:12px>\';ov.onclick=function(){ov.remove()};document.body.appendChild(ov)"></div>' : '') +
+          (m.image ? '<div style="margin-top:8px"><img src="' + (m.thumbnail || m.image) + '" loading="lazy" data-full="' + m.image + '" onclick="showFullImage(this.getAttribute(\'data-full\'))" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);cursor:pointer;object-fit:cover"></div>' : '') +
           '<div style="text-align:right;margin-top:6px">' +
             '<button onclick="reportMessage(' + m.id + ',this)" style="background:none;border:none;font-size:11px;color:var(--text-tertiary);cursor:pointer;padding:2px 4px">🚩 举报</button>' +
           '</div>' +
@@ -1714,18 +1734,21 @@ function sendCommunityMessage() {
   var codeHash = (appData.activation && appData.activation.codeHash) || '';
 
   var image = _cmPendingImage || '';
+  var thumb = _cmPendingThumb || '';
 
   apiPost('/messages', {
     codeHash: codeHash,
     nickname: nickname || '同行者',
     text: text,
-    image: image
+    image: image,
+    thumbnail: thumb
   }).then(function(r) {
     if (r.success) {
       showToast('✅ 发布成功！');
       document.getElementById('cmText').value = '';
       // 清除图片
       _cmPendingImage = '';
+      _cmPendingThumb = '';
       var inp = document.getElementById('cmImageInput'); if (inp) inp.value = '';
       var nameEl = document.getElementById('cmImageName'); if (nameEl) nameEl.textContent = '';
       var preview = document.getElementById('cmImagePreview'); if (preview) preview.style.display = 'none';
@@ -8682,7 +8705,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">点击展开编辑，内容显示在「使用说明 → 作者」中</div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onclick="event.stopPropagation()" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v77</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v78</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
