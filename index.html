@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v95 · 小阮出品</title>
+<title>挖空背诵工具 v96 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -898,7 +898,7 @@ var TIER_EMOJI = { free: '🆓', basic: '🚀', pro: '👑' };
 var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
-var FREE_MAX_CARDS_PER_BANK = 120;
+var FREE_MAX_CARDS_PER_BANK = 60;
 var APP_VERSION = 95;
 // ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
@@ -2312,7 +2312,7 @@ function showFeedbackBoard() {
     '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">' +
       '<input id="fbNickname" placeholder="你的昵称（选填）" maxlength="20" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;margin-bottom:8px;box-sizing:border-box">' +
       '<select id="fbType" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;margin-bottom:8px;box-sizing:border-box;min-height:44px">' +
-        '<option value="建议">💡 建议</option><option value="Bug反馈">🐛 Bug反馈</option><option value="功能请求">✨ 功能请求</option><option value="夸奖">👍 夸奖</option><option value="兑换">🎁 兑换</option><option value="其他">📌 其他</option>' +
+        '<option value="建议">💡 建议</option><option value="Bug反馈">⚙️ Bug反馈</option><option value="功能请求">✨ 功能请求</option><option value="夸奖">👍 夸奖</option><option value="兑换">🎁 兑换</option><option value="其他">📌 其他</option>' +
       '</select>' +
       '<textarea id="fbText" placeholder="写下你想对开发者说的话...（最多1000字）" maxlength="1000" style="width:100%;min-height:100px;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box"></textarea>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
@@ -2389,7 +2389,12 @@ function renderFbList() {
         '<span style="font-size:11px;color:var(--text-tertiary)">' + timeStr + '</span>' +
       '</div>' +
       '<div style="font-size:14px;line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word">' + escapeHtml(f.text) + '</div>' +
-      '<div id="fbReplies_' + f.id + '" style="display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">' +
+      // 操作栏（举报/删除）
+      '<div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px" onclick="event.stopPropagation()">' +
+        (isFbMine(f) ? '<button onclick="deleteFbItem(' + f.id + ')" style="background:none;border:none;font-size:11px;color:var(--text-tertiary);cursor:pointer;padding:2px 6px;min-height:30px">🗑 删除</button>' : '') +
+        '<button onclick="reportFbItem(' + f.id + ')" style="background:none;border:none;font-size:11px;color:' + (isFbReported(f.id) ? '#EF4444' : 'var(--text-tertiary)') + ';cursor:pointer;padding:2px 6px;min-height:30px">' + (isFbReported(f.id) ? '🚩 已举报' : '🚩 举报') + '</button>' +
+      '</div>' +
+      '<div id="fbReplies_' + f.id + '" style="display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:8px" onclick="event.stopPropagation()">' +
         '<div id="fbRepliesList_' + f.id + '" style="margin-bottom:8px"></div>' +
         '<div style="display:flex;gap:6px">' +
           '<input id="fbReplyNick_' + f.id + '" placeholder="昵称" maxlength="20" style="flex:0 0 70px;padding:6px 8px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:12px;box-sizing:border-box;min-width:0">' +
@@ -2466,6 +2471,44 @@ function sendFbReply(fbId) {
       loadFbReplies(fbId);
     })
     .catch(function() { showToast('回复失败，请重试'); });
+}
+
+function isFbMine(f) {
+  var codeHash = (appData.activation && appData.activation.codeHash) || '';
+  return codeHash && f.codeHashPrefix === codeHash.substring(0, 8);
+}
+
+function isFbReported(fbId) {
+  var reported = JSON.parse(localStorage.getItem('fb_reported_ids') || '[]');
+  return reported.indexOf(fbId) !== -1;
+}
+
+function reportFbItem(fbId) {
+  var codeHash = (appData.activation && appData.activation.codeHash) || '';
+  apiPost('/feedback/' + fbId + '/report', { codeHash: codeHash })
+    .then(function(r) {
+      if (r.error) { showToast(r.error); return; }
+      var reported = JSON.parse(localStorage.getItem('fb_reported_ids') || '[]');
+      if (reported.indexOf(fbId) === -1) { reported.push(fbId); }
+      localStorage.setItem('fb_reported_ids', JSON.stringify(reported));
+      showToast('已举报');
+      renderFbList();
+    })
+    .catch(function() { showToast('举报失败，请重试'); });
+}
+
+function deleteFbItem(fbId) {
+  if (!confirm('确定删除这条反馈吗？')) return;
+  var codeHash = (appData.activation && appData.activation.codeHash) || '';
+  apiPost('/feedback/' + fbId + '/delete', { codeHash: codeHash })
+    .then(function(r) {
+      if (r.error) { showToast(r.error); return; }
+      showToast('已删除');
+      // 从列表中移除
+      _fbAllItems = _fbAllItems.filter(function(f) { return f.id !== fbId; });
+      renderFbList();
+    })
+    .catch(function() { showToast('删除失败，请重试'); });
 }
 
 // ==================== 资料页（笔记 + 图库 + 思维导图） ====================
@@ -2858,24 +2901,20 @@ function renderMarkmapFromContent() {
     var d3 = window.d3;
     if (!d3) { container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">d3.js 未加载</p><button onclick="_zlMarkmapLoaded=false;loadMarkmap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button></div>'; return; }
 
-    // 自建解析器 mdToTree 生成树结构
     var data = mdToTree(content);
 
-    // 移除旧 SVG
-    var currentSVG = container.querySelector('svg');
-    if (currentSVG) currentSVG.remove();
+    // 移除旧内容
+    container.innerHTML = '';
 
-    var rect = container.getBoundingClientRect();
-    var W = Math.max(rect.width || 800, 600);
-    var H = Math.max(rect.height || 500, 400);
+    var W = container.clientWidth || 700;
+    var H = Math.max(container.clientHeight, 400);
 
     // 创建 SVG
     var svg = d3.select(container).append('svg')
       .attr('width', W).attr('height', H)
-      .style('width', '100%').style('height', '100%')
-      .style('min-height', '400px')
+      .style('display', 'block')
       .style('touch-action', 'pan-y')
-      .style('display', 'block');
+      .style('min-height', '400px');
 
     var gRoot = svg.append('g');
 
@@ -2885,111 +2924,95 @@ function renderMarkmapFromContent() {
       .on('zoom', function(event) { gRoot.attr('transform', event.transform); });
     svg.call(zoom);
 
-    // d3 树布局 — 水平方向（x=纵向间距，y=横向层级）
     var treeLayout = d3.tree().nodeSize([26, 150]);
-
-    // 颜色按深度循环
     var depthColors = ['#4A90D9','#3CB371','#E67E22','#8E44AD','#E74C3C','#1ABC9C','#5DADE2','#F39C12'];
 
-    // ===== 更新函数 =====
-    function update(source) {
-      var duration = 350;
+    // ===== 更新函数（带首次参数）=====
+    function update(source, isFirst) {
       treeLayout(root);
       var nodes = root.descendants();
       var links = root.links();
+      var dur = isFirst ? 0 : 350;
 
       // --- 链接 ---
       var link = gRoot.selectAll('.mm-link').data(links, function(d) { return d.target._uid; });
-      link.exit().transition().duration(duration).attr('opacity', 0).remove();
-      var linkEnter = link.enter().append('path')
+      link.exit().remove();
+      link.enter().append('path')
         .attr('class', 'mm-link').attr('fill', 'none')
         .attr('stroke', '#bbb').attr('stroke-width', 1.5)
-        .attr('opacity', 0);
-      linkEnter.merge(link).transition().duration(duration).attr('opacity', 1)
+        .merge(link)
+        .transition().duration(dur)
         .attr('d', d3.linkHorizontal().x(function(d) { return d.y; }).y(function(d) { return d.x; }));
 
       // --- 节点 ---
       var node = gRoot.selectAll('.mm-node').data(nodes, function(d) { return d._uid; });
-      node.exit().transition().duration(duration).attr('opacity', 0).remove();
+      node.exit().remove();
 
       var nodeEnter = node.enter().append('g')
         .attr('class', 'mm-node')
-        .attr('transform', function(d) { return 'translate(' + (source.y0 || source.y || 0) + ',' + (source.x0 || source.x || 0) + ')'; })
-        .attr('opacity', 0)
         .attr('cursor', 'pointer');
 
-      // 背景矩形
-      nodeEnter.append('rect').attr('rx', 6).attr('ry', 6)
-        .attr('fill', function(d) { return depthColors[Math.min(d.depth, depthColors.length - 1)]; })
-        .attr('opacity', 0.9);
-
-      // 折叠圆点（有子或隐藏子时显示）
+      nodeEnter.append('rect').attr('rx', 6).attr('ry', 6);
       nodeEnter.append('circle').attr('fill', '#fff').attr('opacity', 0.8);
-
-      // 文字
       nodeEnter.append('text')
         .attr('dy', '0.35em').attr('text-anchor', 'start')
-        .attr('fill', '#fff')
-        .attr('font-size', '13px')
+        .attr('fill', '#fff').attr('font-size', '13px')
         .attr('font-family', '-apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif')
         .attr('font-weight', function(d) { return d.depth === 0 ? 'bold' : 'normal'; });
 
       var nodeMerge = nodeEnter.merge(node);
 
-      // 过渡到目标位置
-      nodeMerge.transition().duration(duration)
-        .attr('transform', function(d) { return 'translate(' + d.y + ',' + d.x + ')'; })
-        .attr('opacity', 1);
+      nodeMerge.transition().duration(dur)
+        .attr('transform', function(d) { return 'translate(' + d.y + ',' + d.x + ')'; });
 
-      // 更新矩形尺寸
       nodeMerge.select('rect')
         .attr('x', -6).attr('y', -11)
         .attr('width', function(d) { return Math.max(d.data.content.length * 8 + 12, 36); })
-        .attr('height', 22);
+        .attr('height', 22)
+        .attr('fill', function(d) { return depthColors[Math.min(d.depth, depthColors.length - 1)]; });
 
-      // 更新折叠圆点
       nodeMerge.select('circle')
-        .attr('r', function(d) { return (d.children || d._children) ? 4 : 0; })
+        .attr('r', function(d) { return (d.children || d._children) ? 3 : 0; })
         .attr('cx', function(d) { return Math.max(d.data.content.length * 8 + 8, 32); })
         .attr('cy', 0);
 
-      // 更新文字
-      nodeMerge.select('text').attr('x', 0).text(function(d) { return d.data.content; });
+      nodeMerge.select('text')
+        .attr('x', 0)
+        .text(function(d) { return d.data.content; });
 
-      // 点击折叠/展开
       nodeMerge.on('click', function(event, d) {
         event.stopPropagation();
         if (d.children) { d._children = d.children; d.children = null; }
         else if (d._children) { d.children = d._children; d._children = null; }
-        update(d);
+        update(d, false);
       });
 
-      // 保存位置用于下次过渡
       root.each(function(d) { d.x0 = d.x; d.y0 = d.y; });
     }
 
-    // 构建 d3 hierarchy
     var root = d3.hierarchy(data);
-    // 为每个节点分配唯一 ID（用于数据绑定 key）
     var _uid = 0;
     root.each(function(d) { d._uid = _uid++; });
 
-    // 递归展开所有节点
     (function expandAll(node) {
       if (node._children) { node.children = node._children; node._children = null; }
       if (node.children) node.children.forEach(expandAll);
     })(root);
 
-    // 首次渲染
-    root.x0 = H / 2; root.y0 = 0;
-    update(root);
+    // 首次无过渡渲染
+    update(root, true);
 
-    // 自适应缩放 — 让整棵树在可视区域内
-    var bounds = gRoot.node().getBBox();
-    var scale = Math.min(W / Math.max(bounds.width, 1), H / Math.max(bounds.height, 1), 1.2) * 0.88;
-    var tx = (W - bounds.width * scale) / 2 - bounds.x * scale;
-    var ty = (H - bounds.height * scale) / 2 - bounds.y * scale;
-    svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+    // 渲染完成后自适应缩放
+    requestAnimationFrame(function() {
+      try {
+        var bounds = gRoot.node().getBBox();
+        if (!bounds || bounds.width === 0 || bounds.height === 0) return;
+        var scale = Math.min(W / bounds.width, H / bounds.height, 1.2) * 0.88;
+        var tx = (W - bounds.width * scale) / 2 - bounds.x * scale;
+        var ty = (H - bounds.height * scale) / 2 - bounds.y * scale;
+        svg.transition().duration(200).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+      } catch(e) {}
+    });
 
   } catch(e) {
     console.error('Mindmap render error:', e);
@@ -6872,7 +6895,7 @@ function saveEditPreviewCard(idx) {
 }
 
 function confirmImport() {
-  // 免费版检查：题库数量上限 + 单库题目上限
+  // 免费版检查：题库数量上限 + 单库题目上限（超出截断，不拒绝）
   if (getTier() === 'free') {
     // 新建题库时检查题库数量
     if (!previewData.editBankId) {
@@ -6882,18 +6905,25 @@ function confirmImport() {
         closePreviewModal(); return;
       }
     }
-    // 检查单库题目上限
+    // 单库题目上限：超出自动截断，保留前N题
     if (previewData.editBankId) {
       var bank = appData.banks[previewData.editBankId];
       var existing = bank ? (bank.cards || []).length : 0;
-      if (previewData.cards && previewData.cards.length > FREE_MAX_CARDS_PER_BANK) {
-        showToast('🔒 免费版每题库最多' + FREE_MAX_CARDS_PER_BANK + '题，当前题库已有' + existing + '题。请升级解锁', 5000);
+      var room = FREE_MAX_CARDS_PER_BANK - existing;
+      if (room <= 0) {
+        showToast('🔒 免费版每题库最多' + FREE_MAX_CARDS_PER_BANK + '题，当前题库已满。请升级解锁', 5000);
         closePreviewModal(); return;
+      }
+      if (previewData.cards && previewData.cards.length > room) {
+        previewData.cards = previewData.cards.slice(0, room);
+        showToast('⚠️ 免费版限制：仅导入前' + room + '题（超出' + FREE_MAX_CARDS_PER_BANK + '题上限的部分已截断）', 3000);
       }
     } else {
       if (previewData.cards && previewData.cards.length > FREE_MAX_CARDS_PER_BANK) {
-        showToast('🔒 免费版每题库最多' + FREE_MAX_CARDS_PER_BANK + '题。请升级解锁', 5000);
-        closePreviewModal(); return;
+        var truncated = previewData.cards.slice(0, FREE_MAX_CARDS_PER_BANK);
+        var dropped = previewData.cards.length - FREE_MAX_CARDS_PER_BANK;
+        previewData.cards = truncated;
+        showToast('⚠️ 免费版限制：仅保留前' + FREE_MAX_CARDS_PER_BANK + '题（超出' + dropped + '题已截断）。请升级解锁完整导入', 4000);
       }
     }
   }
@@ -10324,7 +10354,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v95</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v96</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
