@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v81 · 小阮出品</title>
+<title>挖空背诵工具 v82 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1606,6 +1606,7 @@ var _cmFilter = 'all'; // 'all' | 'images' | 'text'
 var _cmViewMode = 'list'; // 'list' | 'gallery'
 var _cmGalleryData = []; // 画廊临时数据（避免onclick嵌套转义bug）
 var _cmSearchQuery = ''; // 搜索关键词
+var _cmSortBy = 'latest'; // 'latest' | 'hot'
 
 function showCommunityBoard() {
   _cmPage = 1;
@@ -1616,6 +1617,7 @@ function showCommunityBoard() {
   _cmViewMode = 'list';
   _cmGalleryData = [];
   _cmSearchQuery = '';
+  _cmSortBy = 'latest';
   var overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.style.animation = 'none';
@@ -1651,8 +1653,11 @@ function showCommunityBoard() {
       '<button id="cmBtnText" onclick="_cmFilter=\'text\';_cmViewMode=\'list\';updateCmBtns();resetAndReload()" style="padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">📝 纯文字</button>' +
       '<button id="cmBtnGallery" onclick="_cmFilter=\'images\';_cmViewMode=\'gallery\';updateCmBtns();resetAndReload()" style="padding:5px 14px;border:1px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">▦ 画廊</button>' +
     '</div>' +
-    // 搜索
-    '<div style="margin-bottom:12px"><input id="cmSearch" placeholder="🔍 搜索留言..." oninput="_cmSearchQuery=this.value;filterAndRender()" style="width:100%;padding:7px 12px;border:2px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box;min-height:38px"></div>' +
+    // 搜索 + 排序
+    '<div style="display:flex;gap:6px;margin-bottom:12px">' +
+      '<input id="cmSearch" placeholder="🔍 搜索留言..." oninput="_cmSearchQuery=this.value;filterAndRender()" style="flex:1;padding:7px 12px;border:2px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box;min-height:38px">' +
+      '<button id="cmBtnSort" onclick="_cmSortBy=_cmSortBy===\'latest\'?\'hot\':\'latest\';updateSortBtn();resetAndReload()" style="padding:5px 12px;border:1px solid var(--border);border-radius:20px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;white-space:nowrap;min-height:38px">🔥 最热</button>' +
+    '</div>' +
     // 发留言区域
     '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">' +
       '<input id="cmNickname" placeholder="你的昵称（选填）" maxlength="20" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;margin-bottom:8px;box-sizing:border-box">' +
@@ -1708,6 +1713,19 @@ function updateCmBtns() {
   setBtn(galBtn, _cmFilter === 'images' && _cmViewMode === 'gallery');
 }
 
+function updateSortBtn() {
+  var btn = document.getElementById('cmBtnSort');
+  if (!btn) return;
+  var primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#7C3AED';
+  if (_cmSortBy === 'hot') {
+    btn.style.background = primary; btn.style.color = '#fff'; btn.style.borderColor = primary; btn.style.fontWeight = '600';
+    btn.textContent = '🔥 最热';
+  } else {
+    btn.style.background = 'var(--bg)'; btn.style.color = 'var(--text-secondary)'; btn.style.borderColor = 'var(--border)'; btn.style.fontWeight = '400';
+    btn.textContent = '🕐 最新';
+  }
+}
+
 var _cmGalleryIdx = 0;
 var _cmGalleryOverlay = null;
 var _cmTouchStartX = 0;
@@ -1721,7 +1739,9 @@ function showCmGalleryDetail(idx) {
   if (_cmGalleryOverlay) { _cmGalleryOverlay.remove(); }
 
   var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;touch-action:pan-y';
+  var isDark = document.documentElement.classList.contains('dark');
+  var ovBg = isDark ? 'rgba(0,0,0,0.95)' : 'rgba(0,0,0,0.85)';
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:' + ovBg + ';z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;touch-action:pan-y';
   ov.id = 'cmGalleryOverlay';
   _cmGalleryOverlay = ov;
 
@@ -1810,7 +1830,7 @@ function loadCommunityMessages(reset) {
   }
   _cmLoadingMore = true;
 
-  apiGet('/messages?page=' + _cmPage + '&limit=15')
+  apiGet('/messages?page=' + _cmPage + '&limit=15&sort=' + _cmSortBy)
     .then(function(r) {
       _cmLoadingMore = false;
       var msgs = r.messages || [];
@@ -1928,11 +1948,22 @@ function filterAndRender() {
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
           '<div style="display:flex;gap:4px;align-items:center">' +
             '<button onclick="handleCmLike(' + m.id + ',this)" style="background:none;border:none;font-size:12px;color:' + (liked ? '#EF4444' : 'var(--text-tertiary)') + ';cursor:pointer;padding:2px 6px;min-height:30px">' + (liked ? '❤️' : '🤍') + ' <span>' + (m.likes || 0) + '</span></button>' +
+            '<button onclick="toggleCmReply(' + m.id + ')" style="background:none;border:none;font-size:12px;color:var(--text-tertiary);cursor:pointer;padding:2px 6px;min-height:30px">💬 回复</button>' +
           '</div>' +
           '<div style="display:flex;gap:2px">' +
-            (isMine ? '<button onclick="handleCmDelete(' + m.id + ',this)" style="background:none;border:none;font-size:11px;color:var(--text-tertiary);cursor:pointer;padding:2px 6px;min-height:30px">🗑 删除</button>' : '') +
+            (isMine ? '<button onclick="handleCmDelete(' + m.id + ',this)" style="background:none;border:none;font-size:11px;color:var(--text-tertiary);cursor:pointer;padding:2px 6px;min-height:30px">🗑</button>' : '') +
             '<button onclick="reportMessage(' + m.id + ',this)" style="background:none;border:none;font-size:11px;color:var(--text-tertiary);cursor:pointer;padding:2px 6px;min-height:30px">🚩</button>' +
           '</div>' +
+        '</div>' +
+        // 回复区域（默认隐藏）
+        '<div id="cmReplyArea_' + m.id + '" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">' +
+          '<div id="cmReplies_' + m.id + '" style="margin-bottom:6px"></div>' +
+          '<div style="display:flex;gap:6px">' +
+            '<input id="cmReplyNick_' + m.id + '" placeholder="昵称" maxlength="20" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:12px;min-height:30px;box-sizing:border-box">' +
+            '<input id="cmReplyText_' + m.id + '" placeholder="回复内容（最多200字）" maxlength="200" style="flex:3;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:12px;min-height:30px;box-sizing:border-box">' +
+            '<button onclick="sendCmReply(' + m.id + ')" style="background:var(--primary);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap;min-height:30px">发送</button>' +
+          '</div>' +
+          '<button onclick="loadCmReplies(' + m.id + ')" style="background:none;border:none;font-size:11px;color:var(--primary);cursor:pointer;padding:4px 0;margin-top:4px">查看回复</button>' +
         '</div>' +
       '</div>';
     }
@@ -1994,7 +2025,6 @@ function handleCmDelete(msgId, btn) {
     .then(function(r) {
       if (r.success) {
         showToast('已删除');
-        // 从列表中移除
         _cmAllMessages = _cmAllMessages.filter(function(m) { return m.id !== msgId; });
         filterAndRender();
       } else {
@@ -2002,6 +2032,67 @@ function handleCmDelete(msgId, btn) {
         btn.disabled = false;
       }
     }).catch(function() { showToast('网络错误'); btn.disabled = false; });
+}
+
+// ==== 回复功能 ====
+function toggleCmReply(msgId) {
+  var area = document.getElementById('cmReplyArea_' + msgId);
+  if (!area) return;
+  if (area.style.display === 'none' || !area.style.display) {
+    area.style.display = 'block';
+    loadCmReplies(msgId);
+  } else {
+    area.style.display = 'none';
+  }
+}
+function sendCmReply(parentId) {
+  var nickEl = document.getElementById('cmReplyNick_' + parentId);
+  var textEl = document.getElementById('cmReplyText_' + parentId);
+  var nickname = nickEl ? nickEl.value.trim() : '';
+  var text = textEl ? textEl.value.trim() : '';
+  if (!text) { showToast('请输入回复内容'); return; }
+  var codeHash = (appData.activation && appData.activation.codeHash) || '';
+  apiPost('/messages', {
+    codeHash: codeHash,
+    nickname: nickname || '同行者',
+    text: text,
+    parentId: parentId
+  }).then(function(r) {
+    if (r.success) {
+      showToast('回复成功');
+      if (textEl) textEl.value = '';
+      loadCmReplies(parentId);
+    } else {
+      showToast(r.error || '回复失败');
+    }
+  }).catch(function() { showToast('网络错误'); });
+}
+function loadCmReplies(msgId) {
+  var container = document.getElementById('cmReplies_' + msgId);
+  if (!container) return;
+  container.innerHTML = '<span style="font-size:11px;color:var(--text-tertiary)">加载中...</span>';
+  apiGet('/messages/' + msgId + '/replies')
+    .then(function(r) {
+      var replies = r.replies || [];
+      if (replies.length === 0) {
+        container.innerHTML = '<span style="font-size:11px;color:var(--text-tertiary)">暂无回复</span>';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < replies.length; i++) {
+        var rp = replies[i];
+        var rTime = rp.createdAt ? rp.createdAt.substring(0, 10) : '';
+        html += '<div style="background:var(--bg);border-radius:8px;padding:8px 10px;margin-bottom:4px;margin-left:8px;border-left:2px solid var(--primary)">' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:2px">' +
+            '<span style="font-weight:600;font-size:12px;color:var(--text)">' + escapeHtml(rp.nickname || '匿名') + '</span>' +
+            '<span style="font-size:10px;color:var(--text-tertiary)">' + rTime + '</span>' +
+          '</div>' +
+          '<div style="font-size:13px;line-height:1.5;color:var(--text);white-space:pre-wrap;word-break:break-word">' + escapeHtml(rp.text) + '</div>' +
+        '</div>';
+      }
+      container.innerHTML = html;
+    })
+    .catch(function() { container.innerHTML = '<span style="font-size:11px;color:var(--text-tertiary)">加载回复失败</span>'; });
 }
 
 function sendCommunityMessage() {
@@ -8988,7 +9079,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">点击展开编辑，内容显示在「使用说明 → 作者」中</div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onclick="event.stopPropagation()" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v81</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v82</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
