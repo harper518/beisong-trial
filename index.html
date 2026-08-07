@@ -10051,7 +10051,7 @@ function renderSettings() {
         var wrongSize = new Blob([JSON.stringify(appData.wrongBooks || {})]).size;
         var settingsSize = new Blob([JSON.stringify(appData.settings || {})]).size;
         var avatarSize = ((appData.settings || {}).avatarData || '').length * 2;
-        var other = { dailyStats: appData.dailyStats, roundCount: appData.roundCount, unicorns: appData.unicorns, weekStats: appData.weekStats };
+        var other = { dailyStats: appData.dailyStats, roundCount: appData.roundCount, weekStats: appData.weekStats };
         var otherSize = new Blob([JSON.stringify(other)]).size;
         function fmtSz(bytes) { return bytes >= 1024 ? (bytes/1024).toFixed(0)+'KB' : bytes+'B'; }
         return '<div style="padding:12px 14px;background:var(--bg-input);border-radius:10px;margin-bottom:12px">' +
