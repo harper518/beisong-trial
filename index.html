@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v86 · 小阮出品</title>
+<title>挖空背诵工具 v87 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -876,7 +876,7 @@ body.focus-mode #cardText { line-height:2; }
   <button class="tab-item active" data-tab="banks" onclick="switchTab('banks')"><span class="tab-icon">📚</span>题库</button>
   <button class="tab-item" data-tab="practice" onclick="switchTab('practice')"><span class="tab-icon">📝</span>做题</button>
   <button class="tab-item" data-tab="browse" onclick="switchTab('browse')"><span class="tab-icon">📖</span>浏览</button>
-  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">📌</span>复习</button>
+  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">🏷️</span>复习</button>
   <button class="tab-item" data-tab="ziliao" onclick="switchTab('ziliao')"><span class="tab-icon">📑</span>资料</button>
   <button class="tab-item" data-tab="settings" onclick="switchTab(&#39;settings&#39;)"><span class="tab-icon">⚙️</span>设置</button>
 </nav>
@@ -1137,15 +1137,17 @@ const STORAGE_KEY = 'memorize_v2_trial_7666';
 
 function getPresetData_7666() {
   const fanliCards = [
-    { id:'f92', question:'92.简述贯彻说服教育法的要求。', answer:'（1）要有明确的目的性和针对性。\\n（2）要富有知识性和趣味性。\\n（3）注意时机，善于捕捉教育契机。\\n（4）以诚待人。', koujue:'地（目的性）震（针对性）知（知识性）趣（趣味性），奇迹（教育契机）成人', chapter:'教育学' },
-    { id:'f93', question:'93.简述贯彻榜样示范法的要求。', answer:'（1）选好学习的榜样。选好榜样是学习榜样的前提。我们应根据时代要求和学生实际情况，指导他们选择好学习的榜样，获得前进的明确方向和巨大动力。\\n（2）激起学生对榜样的敬慕之情。要使榜样能对学生产生激励作用，推动他们前进，就需要引导学生了解榜样。\\n（3）引导学生用榜样来调节行为，提高修养。要及时地把学生的情感、冲动引导到行动上来，把敬慕之情转化为道德行为和习惯，逐步巩固、加深这种情感。', koujue:'好（选好榜样）情（敬慕之情）行（调节行为）', chapter:'教育学' },
-    { id:'f94', question:'94.简述中学德育的途径。', answer:'（1）思想政治课与其他学科教学。\\n（2）社会实践活动。\\n（3）课外活动。\\n（4）共青团组织的活动。\\n（5）班会、校会、周会、晨会。\\n（6）班主任工作。', koujue:'一教（学科教学）二班（班会和班主任工作）三活', chapter:'教育学' },
-    { id:'f95', question:'95.简述班集体的发展阶段。', answer:'（1）组建阶段：学生初进学校，同学们尽管形式上同属一个班级，实际上是一个个孤立的个体。\\n（2）核心形成阶段：同学之间开始相互了解，在班主任的引导培养下，涌现出了一批积极分子。\\n（3）发展阶段：班集体已成为教育主体。多数学生无须外在监督，已能自己管理和教育自己。\\n（4）成熟阶段：班集体趋向成熟，学生积极参与班级活动，形成强有力的舆论和班风。', koujue:'组（组建阶段）合（核心形成阶段）法（发展阶段）术（成熟阶段）', chapter:'教育学' },
-    { id:'f96', question:'96.简述班集体形成标志。', answer:'（1）坚定正确的政治方向与明确的奋斗目标。\\n（2）健全的组织机构与坚强的领导核心。\\n（3）严格的规章制度与严明的组织纪律。\\n（4）正确的集体舆论与良好的班风。', koujue:'健全班风是组织的目标', chapter:'教育学' },
-    { id:'f97', question:'97.简述良好班集体的培养措施。', answer:'（1）确定班集体的发展目标。\\n（2）建立班集体的核心队伍。\\n（3）建立班集体的正常秩序。\\n（4）组织形式多样的教育活动。\\n（5）培养正确的舆论和良好的班风。', koujue:'目标（发展目标）核心（核心队伍），治（正常秩序）活（教育活动）班风', chapter:'教育学' },
-    { id:'f98', question:'98.简述班主任的个别教育工作。', answer:'班主任对优等生的个别教育工作：\\n（1）严格要求，防止自满。\\n（2）不断激励，提高抗挫折能力。\\n（3）消除嫉妒，公平竞争。\\n（4）发挥优势，带动全班。\\n口诀：严要求，常激励，消嫉妒，用优势\\n\\n班主任对中等生的个别教育工作：\\n（1）重视对中等生的教育。\\n（2）根据中等生的不同特点有的放矢地进行个别教育。\\n（3）给中等生创造充分展示自己才能的机会，增强他们的自信心。\\n口诀：重视个别（个别教育）与食（展示）材（才能）\\n\\n班主任对后进生的个别教育工作：\\n（1）关心热爱与严格要求相结合。\\n（2）培养和激发学习动机。\\n（3）善于发掘后进生身上的"闪光点"，增强其自信心和集体荣誉感。\\n（4）针对后进生的个别差异，因材施教。\\n（5）对后进生的教育要持之以恒。', koujue:'恒（持之以恒）心（关心热爱）才（因材施教）发（培养与激发）光（闪光点）', chapter:'教育学' },
-    { id:'f99', question:'99.简述维持课堂纪律的策略。', answer:'（1）建立有效的课堂规则。\\n（2）合理组织课堂教学。\\n（3）做好课堂监控。\\n（4）培养学生的自律品质。', koujue:'自（自律）建（课堂监控）贵（规则）族（合理组织）', chapter:'教育学' },
-    { id:'f100', question:'100.简述教师教学能力的结构。', answer:'（1）教学认知能力。教学认知能力主要是指教师对教学目标、教学任务、学习者的特点、某一具体内容的教学方法与策略的选择以及教学情境的分析和判断能力。\\n（2）教学设计能力。教学设计能力是指教师事先对课堂教学的目标、内容、方法等重要的教学因素进行周密而详细的计划和安排。\\n（3）教学操作能力。教学操作能力主要是指教师在实现教学目标的过程中解决具体教学问题的能力。\\n（4）教学监控能力。教学监控能力是指教师为了保证教学成功，达到预期的教学目标，而在教学的全过程中，将教学活动本身作为意识的对象，不断对其进行积极、主动的计划、检查、评价、反馈、控制和调节的能力。', koujue:'自（教学认知能力）己（教学设计能力）操（教学操作能力）控（教学监控能力）', chapter:'教育学' }
+    { id:'f1', question:'简述20世纪以后教育的特点', answer:'（1）教育的【终身化】。它包括各个年龄阶段的各种方式的教育。（2）教育的【全民化】。教育必须面向所有的人，即人人都有接受教育的权利。（3）教育的【民主化】。一方面让所有的人接受同样的教育，另一方面追求教育的自由化。（4）教育的【多元化】。具体表现为培养目标的多元化、办学形式的多元化等。（5）教育的【现代化】。教育的现代化是指现代科学技术在教育上的运用，并由此引起教育思想、教育观念的变化', koujue:'全民主多现身', chapter:'教育学' },
+    { id:'f2', question:'简述生产力对教育的制约作用', answer:'生产力对教育的制约作用——生产力水平决定【教育发展水平】。①生产力水平决定教育的【规模和速度】。②生产力制约【人才培养的规格和教育结构】。③生产力制约【教学内容、方法、组织形式与手段】', koujue:'龟速够防守', chapter:'教育学' },
+    { id:'f3', question:'简述政治经济制度对教育的制约', answer:'(1)政治经济制度决定教育的【性质】(2)政治经济制度决定教育的【宗旨与目的】(3)政治经济制度决定教育的【领导权】(4)政治经济制度决定【受教育权】(5)政治经济制度决定【教育内容和教育管理体制】', koujue:'慕容姓两权', chapter:'教育学' },
+    { id:'f4', question:'简述教育的政治功能', answer:'（1）教育培养出政治经济制度所需要的【人才】（2）教育促进【政治民主化】（3）教育通过宣传统治阶级的思想意识，创造一定的【社会舆论】环境来为政治服务（4）教育通过传播一定的社会政治意识形态，完成年轻一代的【政治社会化】', koujue:'人鱼公主促政治', chapter:'教育学' },
+    { id:'f5', question:'简述教育的人口功能', answer:'（1）教育可减少【人口数量】，是控制人口增长的重要手段（2）教育是提高【人口素质】的重要手段（3）教育能够改善【人口结构】，调整人才构成和流动合理化', koujue:'质数够流动', chapter:'教育学' },
+    { id:'f6', question:'简述个体身心发展的一般规律', answer:'（1）个体身心发展具有【顺序性】。它是一个由低级到高级、由简单到复杂的连续不断的发展过程。（2）个体身心发展具有【阶段性】。不同的年龄阶段面临着不同的发展任务。（3）个体身心发展具有【不平衡性】。个体的发展并不总是按相同的速度直线前进的。（4）个体身心发展具有【互补性】。这种互补既体现在身体机能和身体机能之间，也体现在身体机能和心理机能之间。（5）个体身心发展具有【个别差异性】。这种差异体现在群体和群体之间以及个体和个体之间', koujue:'不断补差顺', chapter:'教育学' },
+    { id:'f7', question:'简述影响人身心发展的因素', answer:'（1）【遗传】。指人从上代继承下来的生理解剖上的特点，如机体的结构、形态、感官和神经系统等的特点。它是人发展的【生理前提】，为人的发展提供【可能性】。（2）【环境】。泛指个体生活中影响个体身心发展一切外部因素，包括自然环境和社会环境，它使遗传提供的发展可能性变成【现实】。（3）【学校教育】。它在人的发展中起【主导作用】。（4）【个体的主观能动性】。指人的主观意识对客观世界的反映和能动作用，是人的身心发展的【内在动力】', koujue:'遗传+环境+学校教育+主观能动性', chapter:'教育学' },
+    { id:'f8', question:'简述学校教育在人的身心发展中起主导作用的表现', answer:'（1）学校教育按社会对个体发展方向做出【社会性规范】。（2）学校教育具有【加速个体发展】的特殊功能。（3）学校教育，尤其是基础教育对个体发展的影响具有【即时和延时的价值】。（4）学校教育具有【开发个体特殊才能和发展个性】的功能', koujue:'严规范，塑个性', chapter:'教育学' },
+    { id:'f9', question:'简述教育制度确立的依据', answer:'（1）【社会依据】①生产力发展水平和科学技术发展状况；②社会政治经济制度；③文化传统；④人口。（2）【人的依据】学生身心发展规律和年龄特征。（3）【学制本身的依据】本国学制的历史发展和外国学制的影响', koujue:'学制是社会人', chapter:'教育学' },
+    { id:'f10', question:'简述现代教育制度的发展趋势', answer:'（1）【义务教育年限的延长】。（2）【普通教育与职业教育的综合化】。（3）【高等教育的大众化】。（4）【终身教育体系的建构】', koujue:'义延长，普职综，高大众，构终身', chapter:'教育学' },
+    { id:'f11', question:'简述教育目的的层次结构', answer:'（1）【国家的教育目的】。（2）【各级各类学校的培养目标】。（3）【课程目标】。（4）【教师的教学目标】', koujue:'国小可视', chapter:'教育学' }
   ];
   return {
     banks: {
@@ -9860,7 +9862,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">点击展开编辑，内容显示在「使用说明 → 作者」中</div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onclick="event.stopPropagation()" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v86</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v87</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
