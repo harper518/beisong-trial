@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v84 · 小阮出品</title>
+<title>挖空背诵工具 v85 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -790,7 +790,6 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 
 /* ====== 专注模式 ====== */
 body.focus-mode .tab-bar { display:none !important; }
-body.focus-mode #cmFloatBtn { display:none !important; }
 body.focus-mode #page-practice { padding:12px; max-width:100%; }
 body.focus-mode .page.active { padding-top:env(safe-area-inset-top,12px); }
 body.focus-mode #practiceActive .btn-ghost,
@@ -877,13 +876,10 @@ body.focus-mode #cardText { line-height:2; }
   <button class="tab-item active" data-tab="banks" onclick="switchTab('banks')"><span class="tab-icon">📚</span>题库</button>
   <button class="tab-item" data-tab="practice" onclick="switchTab('practice')"><span class="tab-icon">📝</span>做题</button>
   <button class="tab-item" data-tab="browse" onclick="switchTab('browse')"><span class="tab-icon">📖</span>浏览</button>
-  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">🔄</span>复习</button>
-  <button class="tab-item" data-tab="ziliao" onclick="switchTab('ziliao')"><span class="tab-icon">📒</span>资料</button>
+  <button class="tab-item" data-tab="wrongbook" onclick="switchTab('wrongbook')"><span class="tab-icon">📝</span>复习</button>
+  <button class="tab-item" data-tab="ziliao" onclick="switchTab('ziliao')"><span class="tab-icon">📓</span>资料</button>
   <button class="tab-item" data-tab="settings" onclick="switchTab(&#39;settings&#39;)"><span class="tab-icon">⚙️</span>设置</button>
 </nav>
-
-<!-- ====== 同行圈悬浮按钮 ====== -->
-<button id="cmFloatBtn" onclick="showCommunityBoard()" title="同行圈" style="position:fixed;bottom:calc(80px + var(--safe-bottom,0px));right:16px;width:52px;height:52px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:22px;cursor:pointer;z-index:99;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center">💬</button>
 
 <script>
 // ==================== 版本激活系统 ====================
@@ -2344,6 +2340,7 @@ var _zlMarkmapLoaded = false;
 
 // ====== 主渲染 ======
 function renderZiliao() {
+  try {
   var container = document.getElementById('ziliaoContainer');
   if (!container) return;
 
@@ -2388,6 +2385,7 @@ function renderZiliao() {
   container.innerHTML = html;
   _zlMarkmapLoaded = false;
   renderZiliaoContent();
+  } catch(e) { console.error('renderZiliao error:', e); }
 }
 
 function renderZiliaoContent() {
@@ -9590,9 +9588,10 @@ function renderSettings() {
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
       '<div class="section-body" id="body_about">' +
+      '<div class="setting-item" style="cursor:pointer" onclick="showCommunityBoard()"><div><div class="setting-label">💬 同行圈</div><div class="setting-desc">同行者的感悟、分享与鼓励</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 作者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">点击展开编辑，内容显示在「使用说明 → 作者」中</div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6" onclick="event.stopPropagation()" onchange="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v84</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v85</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
