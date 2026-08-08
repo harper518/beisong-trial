@@ -10934,7 +10934,7 @@ function buyDoubleCard() {
   appData.settings.doubleTomatoCard = (appData.settings.doubleTomatoCard || 0) + 1;
   appData.settings.doubleCardToday = (appData.settings.doubleCardToday || 0) + 1;
   saveData(appData);
-  showToast('✅ 已购买双倍番茄卡！（今日剩余' + (3 - appData.settings.doubleCardToday) + '次）');
+  showToast('✅ 已购买双倍番茄卡！');
   _refreshTomatoModal('shop');
 }
 
@@ -10946,7 +10946,7 @@ function buySkipCard() {
   appData.settings.skipCard = (appData.settings.skipCard || 0) + 1;
   appData.settings.skipCardToday = (appData.settings.skipCardToday || 0) + 1;
   saveData(appData);
-  showToast('✅ 已购买跳过卡！（今日剩余' + (3 - appData.settings.skipCardToday) + '次）');
+  showToast('✅ 已购买跳过卡！');
   _refreshTomatoModal('shop');
 }
 
@@ -11152,7 +11152,7 @@ function showGameInline(gameType, startTime) {
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">' +
       '<span style="font-size:14px;font-weight:600">🎮 游戏中</span>' +
       '<span id="_gameTimer" style="font-size:12px;color:var(--text-secondary)"></span>' +
-      '<button onclick="var gc=document.getElementById(\'_gameContainer\');if(gc){if(gc._cleanup)gc._cleanup();var cvs=gc.querySelector(\'canvas\');if(cvs&&cvs._stop)cvs._stop();if(cvs&&cvs._stopFlappy)cvs._stopFlappy();if(gc._stopTimer)gc._stopTimer();}var gtm=document.getElementById(\'gameInlineModal\');if(gtm){var st=gtm._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);gtm.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')};showGameHub()" style="background:none;border:none;font-size:18px;cursor:pointer;min-width:44px;min-height:44px;color:var(--text-secondary)">←</button>' +
+      '<button onclick="var gc=document.getElementById(\'_gameContainer\');if(gc){if(gc._cleanup)gc._cleanup();var cvs=gc.querySelector(\'canvas\');if(cvs&&cvs._stop)cvs._stop();if(cvs&&cvs._stopFlappy)cvs._stopFlappy();if(gc._stopTimer)gc._stopTimer();}var gtm=document.getElementById(\'gameInlineModal\');if(gtm){var st=gtm._startTime;var el=Math.floor((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);gtm.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')};showGameHub()" style="background:none;border:none;font-size:18px;cursor:pointer;min-width:44px;min-height:44px;color:var(--text-secondary)">←</button>' +
     '</div>' +
     '<div id="_gameContainer" style="flex:1;overflow:hidden;position:relative"></div>' +
   '</div>';
@@ -11166,7 +11166,7 @@ function showGameInline(gameType, startTime) {
   var timerEl = document.getElementById('_gameTimer');
   function updateTimer() {
     if (!document.getElementById('gameInlineModal')) return;
-    var elapsed = Math.ceil((Date.now() - startTime) / 60000);
+    var elapsed = Math.floor((Date.now() - startTime) / 60000);
     var remaining = Math.max(0, (appData.settings.gameTimeMinutes || 0) - elapsed);
     if (timerEl) timerEl.textContent = '剩余 ' + remaining + ' 分钟';
     if (remaining <= 0) {
@@ -11228,7 +11228,7 @@ function renderSchulteGrid(container) {
     var h = '<div style="text-align:center;padding:8px">';
     h += '<div style="font-size:14px;font-weight:600;margin-bottom:4px">🧩 舒尔特方格</div>';
     h += '<div style="display:flex;justify-content:flex-end;margin-bottom:2px">';
-    h += '<button onclick="var c=document.getElementById(\'_schulteContainer\');if(c&&c._stopTimer)c._stopTimer();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')};showGameHub()" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px">← 返回</button>';
+    h += '<button onclick="var c=document.getElementById(\'_schulteContainer\');if(c&&c._stopTimer)c._stopTimer();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.floor((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')};showGameHub()" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px">← 返回</button>';
     h += '</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">按顺序点击 1→' + (N*N) + '，越快越好！</div>';
     h += '<div id="_schulteTimer" style="font-size:20px;font-weight:700;color:var(--primary);margin-bottom:8px">0.0s</div>';
@@ -11501,7 +11501,7 @@ function renderGame2048(container) {
     h += '<span style="font-size:14px;font-weight:600;color:var(--text)">🧊 2048</span>';
     h += '<span style="font-size:13px;font-weight:700;color:var(--text)">得分：' + score + '</span>';
     h += '<div style="display:flex;gap:4px">';
-    h += '<button onclick="var c=document.getElementById(\'_gameContainer\');if(c&&c._cleanup)c._cleanup();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')};showGameHub()" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px" title="返回游戏列表">←</button>';
+    h += '<button onclick="var c=document.getElementById(\'_gameContainer\');if(c&&c._cleanup)c._cleanup();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.floor((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')};showGameHub()" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px" title="返回游戏列表">←</button>';
     h += '</div></div>';
     h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--border);padding:6px;border-radius:10px;max-width:320px;margin:0 auto">';
     for (var r = 0; r < 4; r++) {
@@ -11679,7 +11679,7 @@ function renderBreakout(container) {
   h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c){c._speedMul=0.5;}" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:' + (speedMul===0.5?'var(--primary);color:#fff':'var(--bg-card);color:var(--text)') + ';min-height:28px">0.5x</button>';
   h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c){c._speedMul=1;}" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:' + (speedMul===1?'var(--primary);color:#fff':'var(--bg-card);color:var(--text)') + ';min-height:28px">1x</button>';
   h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c){c._speedMul=2;}" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:' + (speedMul===2?'var(--primary);color:#fff':'var(--bg-card);color:var(--text)') + ';min-height:28px">2x</button>';
-  h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c&&c._stop)c._stop();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px" title="返回游戏列表">←</button>';
+  h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c&&c._stop)c._stop();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.floor((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px" title="返回游戏列表">←</button>';
   h += '</div></div>';
   h += '<canvas id="' + canvasId + '" width="' + W + '" height="' + H + '" style="max-width:100%;border-radius:10px;background:#1a1a2e;touch-action:none;display:block;margin:0 auto"></canvas>';
   h += '<div style="margin-top:4px;font-size:10px;color:var(--text-tertiary)">鼠标/手指移动挡板 · 点击开始</div>';
@@ -11787,7 +11787,7 @@ function renderMinesweeper(container) {
     h += '<span style="font-size:12px;color:var(--text-secondary)">🚩 ' + flagged.flat().filter(Boolean).length + '/' + MINES + '</span>';
     h += '<div style="display:flex;gap:4px">';
     h += '<button onclick="renderMinesweeper(this.parentElement.parentElement.parentElement)" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:var(--bg-card);color:var(--text);min-height:28px">🔄</button>';
-    h += '<button onclick="var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')};showGameHub()" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px" title="返回游戏列表">←</button>';
+    h += '<button onclick="var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.floor((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')};showGameHub()" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px" title="返回游戏列表">←</button>';
     h += '</div></div>';
     h += '<div style="display:grid;grid-template-columns:repeat(' + COLS + ',1fr);gap:2px;max-width:360px;margin:0 auto;background:var(--border);padding:2px;border-radius:8px;user-select:none">';
     for (var r = 0; r < ROWS; r++) {
@@ -11930,7 +11930,7 @@ function renderFlappyBird(container) {
   h += '<span style="font-size:14px;font-weight:600;color:var(--text)">🐦 跳跃鸟</span>';
   h += '<div style="display:flex;gap:4px">';
   h += '<button onclick="renderFlappyBird(this.parentElement.parentElement.parentElement.parentElement)" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:var(--bg-card);color:var(--text);min-height:28px">🔄</button>';
-  h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c&&c._stopFlappy)c._stopFlappy();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px">✕</button>';
+  h += '<button onclick="var c=document.getElementById(\'' + canvasId + '\');if(c&&c._stopFlappy)c._stopFlappy();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.floor((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')}" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px">←</button>';
   h += '</div></div>';
   h += '<canvas id="' + canvasId + '" width="' + W + '" height="' + H + '" style="max-width:100%;border-radius:10px;background:#333;touch-action:none;display:block;margin:0 auto;cursor:pointer"></canvas>';
   h += '<div style="margin-top:4px;font-size:10px;color:var(--text-tertiary)">点击 / 空格键 → 跳跃</div>';
@@ -12001,7 +12001,7 @@ function renderWhackAMole(container) {
     h += '<span id="_wamTimer" style="font-size:13px;font-weight:700;color:var(--primary)">' + timeLeft + 's</span>';
     h += '<div style="display:flex;gap:4px">';
     h += '<button onclick="if(this.closest(\'#_gameContainer\')._cleanup)this.closest(\'#_gameContainer\')._cleanup();renderWhackAMole(this.parentElement.parentElement.parentElement)" style="padding:3px 8px;border:1px solid var(--border);border-radius:8px;font-size:10px;cursor:pointer;background:var(--bg-card);color:var(--text);min-height:28px">🔄</button>';
-    h += '<button onclick="var c=document.getElementById(\'_gameContainer\');if(c&&c._cleanup)c._cleanup();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.ceil((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')};showGameHub()" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px" title="返回游戏列表">←</button>';
+    h += '<button onclick="var c=document.getElementById(\'_gameContainer\');if(c&&c._cleanup)c._cleanup();var m=document.getElementById(\'gameInlineModal\');if(m){var st=m._startTime;var el=Math.floor((Date.now()-st)/60000);var rm=Math.max(0,(appData.settings.gameTimeMinutes||0)-el);appData.settings.gameTimeMinutes=rm;saveData(appData);m.remove();if(rm>0)showToast(\'剩余\'+rm+\'分钟已保留\')};showGameHub()" style="background:none;border:none;font-size:16px;cursor:pointer;min-width:36px;min-height:36px;color:var(--text-tertiary);padding:2px 6px" title="返回游戏列表">←</button>';
     h += '</div></div>';
     h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:0 auto;padding:20px;background:var(--bg-input);border-radius:12px">';
     var moles = ['🦫','🐹','🐭','🐿️','🦔','🐻','🐼','🐨','🦊'];
