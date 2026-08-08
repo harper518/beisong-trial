@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v104 · 小阮出品</title>
+<title>挖空背诵工具 v105 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -916,7 +916,7 @@ var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 104;
+var APP_VERSION = 105;
 // ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
 function apiGet(path) {
@@ -1190,17 +1190,17 @@ const STORAGE_KEY = 'memorize_v2_trial_7666';
 
 function getPresetData_7666() {
   const fanliCards = [
-    { id:'f1', question:'简述20世纪以后教育的特点（三级）', answer:'（1）教育的【终身化】。它包括各个年龄阶段的各种方式的教育。（2）教育的【全民化】。教育必须面向所有的人，即人人都有接受教育的权利。（3）教育的【民主化】。一方面让所有的人接受同样的教育，另一方面追求教育的自由化。（4）教育的【多元化】。具体表现为培养目标的多元化、办学形式的多元化等。（5）教育的【现代化】。教育的现代化是指现代科学技术在教育上的运用，并由此引起教育思想、教育观念的变化。口诀：全（全民化）民（民主化）多（多元化）现（现代化）身（终身化）', koujue:'全（全民化）民（民主化）多（多元化）现（现代化）身（终身化）', chapter:'教育学' },
-    { id:'f2', question:'简述生产力对教育的制约作用（三级）', answer:'生产力对教育的制约作用——生产力水平决定【教育发展水平】。①生产力水平决定教育的【规模和速度】。②生产力制约【人才培养的规格和教育结构】。③生产力制约【教学内容、方法、组织形式与手段】。口诀：龟（规模）速（速度）够（结构）防（方法）守（手段）', koujue:'龟（规模）速（速度）够（结构）防（方法）守（手段）', chapter:'教育学' },
-    { id:'f3', question:'简述政治经济制度对教育的制约（一级）', answer:'(1)政治经济制度决定教育的【性质】(2)政治经济制度决定教育的【宗旨与目的】(3)政治经济制度决定教育的【领导权】(4)政治经济制度决定【受教育权】(5)政治经济制度决定【教育内容和教育管理体制】。口诀：慕（宗旨与目的）容（教育内容和教育管理体制）姓（性质）两权（领导权和受教育权）', koujue:'慕（宗旨与目的）容（教育内容和教育管理体制）姓（性质）两权（领导权和受教育权）', chapter:'教育学' },
-    { id:'f4', question:'简述教育的政治功能（一级）（2018 下考过）', answer:'（1）教育培养出政治经济制度所需要的【人才】（2）教育促进【政治民主化】（3）教育通过宣传统治阶级的思想意识，创造一定的【社会舆论】环境来为政治服务（4）教育通过传播一定的社会政治意识形态，完成年轻一代的【政治社会化】。口诀：人（人才）鱼（社会舆论）公主（民主）促政治（政治社会化）', koujue:'人（人才）鱼（社会舆论）公主（民主）促政治（政治社会化）', chapter:'教育学' },
-    { id:'f5', question:'简述教育的人口功能（二级）', answer:'（1）教育可减少【人口数量】，是控制人口增长的重要手段（2）教育是提高【人口素质】的重要手段（3）教育能够改善【人口结构】，调整人才构成和流动合理化。口诀：质（素质）数（数量）够（人口结构）流动（流动合理化）', koujue:'质（素质）数（数量）够（人口结构）流动（流动合理化）', chapter:'教育学' },
-    { id:'f6', question:'简述个体身心发展的一般规律（二级）', answer:'（1）个体身心发展具有【顺序性】。它是一个由低级到高级、由简单到复杂的连续不断的发展过程。（2）个体身心发展具有【阶段性】。不同的年龄阶段面临着不同的发展任务。（3）个体身心发展具有【不平衡性】。个体的发展并不总是按相同的速度直线前进的。（4）个体身心发展具有【互补性】。这种互补既体现在身体机能和身体机能之间，也体现在身体机能和心理机能之间。（5）个体身心发展具有【个别差异性】。这种差异体现在群体和群体之间以及个体和个体之间。口诀：不（不平衡性）断（阶段性）补（互补性）顺（顺序性）差（个别差异性）', koujue:'不（不平衡性）断（阶段性）补（互补性）顺（顺序性）差（个别差异性）', chapter:'教育学' },
-    { id:'f7', question:'简述影响人身心发展的因素（一级）', answer:'（1）【遗传】。指人从上代继承下来的生理解剖上的特点，如机体的结构、形态、感官和神经系统等的特点。它是人发展的【生理前提】，为人的发展提供【可能性】。（2）【环境】。泛指个体生活中影响个体身心发展一切外部因素，包括自然环境和社会环境，它使遗传提供的发展可能性变成【现实】。（3）【学校教育】。它在人的发展中起【主导作用】。（4）【个体的主观能动性】。指人的主观意识对客观世界的反映和能动作用，是人的身心发展的【内在动力】。口诀：遗传+环境+学校教育+主观能动性', koujue:'遗传+环境+学校教育+主观能动性', chapter:'教育学' },
-    { id:'f8', question:'简述学校教育在人的身心发展中起主导作用的表现（二级）', answer:'（1）学校教育按社会对个体发展方向做出【社会性规范】。（2）学校教育具有【加速个体发展】的特殊功能。（3）学校教育，尤其是基础教育对个体发展的影响具有【即时和延时的价值】。（4）学校教育具有【开发个体特殊才能和发展个性】的功能。口诀：严（延时价值）规范（社会性规范），塑（加速）个性（发展个性）', koujue:'严（延时价值）规范（社会性规范），塑（加速）个性（发展个性）', chapter:'教育学' },
-    { id:'f9', question:'简述教育制度确立的依据（一级）（2015 上考过）', answer:'（1）【社会依据】①生产力发展水平和科学技术发展状况；②社会政治经济制度；③文化传统；④人口。（2）【人的依据】学生身心发展规律和年龄特征。（3）【学制本身的依据】本国学制的历史发展和外国学制的影响。口诀：学制（学制本身的依据）是社会（社会依据）人（人的依据）', koujue:'学制（学制本身的依据）是社会（社会依据）人（人的依据）', chapter:'教育学' },
-    { id:'f10', question:'简述现代教育制度的发展趋势（三级）', answer:'（1）【义务教育年限的延长】。（2）【普通教育与职业教育的综合化】。（3）【高等教育的大众化】。（4）【终身教育体系的建构】。口诀：义延长，普职综，高大众，构终身', koujue:'义延长，普职综，高大众，构终身', chapter:'教育学' },
-    { id:'f11', question:'简述教育目的的层次结构（二级）', answer:'（1）【国家的教育目的】。（2）【各级各类学校的培养目标】。（3）【课程目标】。（4）【教师的教学目标】。口诀：国（国家的教育目的）小（学校的培养目标）可（课程目标）视（教师的教学目标）', koujue:'国（国家的教育目的）小（学校的培养目标）可（课程目标）视（教师的教学目标）', chapter:'教育学' }
+    { id:'f1', question:'简述20世纪以后教育的特点（三级）', answer:'（1）教育的【终身化】。它包括各个年龄阶段的各种方式的教育。（2）教育的【全民化】。教育必须面向所有的人，即人人都有接受教育的权利。（3）教育的【民主化】。一方面让所有的人接受同样的教育，另一方面追求教育的自由化。（4）教育的【多元化】。具体表现为培养目标的多元化、办学形式的多元化等。（5）教育的【现代化】。教育的现代化是指现代科学技术在教育上的运用，并由此引起教育思想、教育观念的变化。', koujue:'全（全民化）民（民主化）多（多元化）现（现代化）身（终身化）', chapter:'教育学' },
+    { id:'f2', question:'简述生产力对教育的制约作用（三级）', answer:'生产力对教育的制约作用——生产力水平决定【教育发展水平】。①生产力水平决定教育的【规模和速度】。②生产力制约【人才培养的规格和教育结构】。③生产力制约【教学内容、方法、组织形式与手段】。', koujue:'龟（规模）速（速度）够（结构）防（方法）守（手段）', chapter:'教育学' },
+    { id:'f3', question:'简述政治经济制度对教育的制约（一级）', answer:'(1)政治经济制度决定教育的【性质】(2)政治经济制度决定教育的【宗旨与目的】(3)政治经济制度决定教育的【领导权】(4)政治经济制度决定【受教育权】(5)政治经济制度决定【教育内容和教育管理体制】。', koujue:'慕（宗旨与目的）容（教育内容和教育管理体制）姓（性质）两权（领导权和受教育权）', chapter:'教育学' },
+    { id:'f4', question:'简述教育的政治功能（一级）（2018 下考过）', answer:'（1）教育培养出政治经济制度所需要的【人才】（2）教育促进【政治民主化】（3）教育通过宣传统治阶级的思想意识，创造一定的【社会舆论】环境来为政治服务（4）教育通过传播一定的社会政治意识形态，完成年轻一代的【政治社会化】。', koujue:'人（人才）鱼（社会舆论）公主（民主）促政治（政治社会化）', chapter:'教育学' },
+    { id:'f5', question:'简述教育的人口功能（二级）', answer:'（1）教育可减少【人口数量】，是控制人口增长的重要手段（2）教育是提高【人口素质】的重要手段（3）教育能够改善【人口结构】，调整人才构成和流动合理化。', koujue:'质（素质）数（数量）够（人口结构）流动（流动合理化）', chapter:'教育学' },
+    { id:'f6', question:'简述个体身心发展的一般规律（二级）', answer:'（1）个体身心发展具有【顺序性】。它是一个由低级到高级、由简单到复杂的连续不断的发展过程。（2）个体身心发展具有【阶段性】。不同的年龄阶段面临着不同的发展任务。（3）个体身心发展具有【不平衡性】。个体的发展并不总是按相同的速度直线前进的。（4）个体身心发展具有【互补性】。这种互补既体现在身体机能和身体机能之间，也体现在身体机能和心理机能之间。（5）个体身心发展具有【个别差异性】。这种差异体现在群体和群体之间以及个体和个体之间。', koujue:'不（不平衡性）断（阶段性）补（互补性）顺（顺序性）差（个别差异性）', chapter:'教育学' },
+    { id:'f7', question:'简述影响人身心发展的因素（一级）', answer:'（1）【遗传】。指人从上代继承下来的生理解剖上的特点，如机体的结构、形态、感官和神经系统等的特点。它是人发展的【生理前提】，为人的发展提供【可能性】。（2）【环境】。泛指个体生活中影响个体身心发展一切外部因素，包括自然环境和社会环境，它使遗传提供的发展可能性变成【现实】。（3）【学校教育】。它在人的发展中起【主导作用】。（4）【个体的主观能动性】。指人的主观意识对客观世界的反映和能动作用，是人的身心发展的【内在动力】。', koujue:'遗传+环境+学校教育+主观能动性', chapter:'教育学' },
+    { id:'f8', question:'简述学校教育在人的身心发展中起主导作用的表现（二级）', answer:'（1）学校教育按社会对个体发展方向做出【社会性规范】。（2）学校教育具有【加速个体发展】的特殊功能。（3）学校教育，尤其是基础教育对个体发展的影响具有【即时和延时的价值】。（4）学校教育具有【开发个体特殊才能和发展个性】的功能。', koujue:'严（延时价值）规范（社会性规范），塑（加速）个性（发展个性）', chapter:'教育学' },
+    { id:'f9', question:'简述教育制度确立的依据（一级）（2015 上考过）', answer:'（1）【社会依据】①生产力发展水平和科学技术发展状况；②社会政治经济制度；③文化传统；④人口。（2）【人的依据】学生身心发展规律和年龄特征。（3）【学制本身的依据】本国学制的历史发展和外国学制的影响。', koujue:'学制（学制本身的依据）是社会（社会依据）人（人的依据）', chapter:'教育学' },
+    { id:'f10', question:'简述现代教育制度的发展趋势（三级）', answer:'（1）【义务教育年限的延长】。（2）【普通教育与职业教育的综合化】。（3）【高等教育的大众化】。（4）【终身教育体系的建构】。', koujue:'义延长，普职综，高大众，构终身', chapter:'教育学' },
+    { id:'f11', question:'简述教育目的的层次结构（二级）', answer:'（1）【国家的教育目的】。（2）【各级各类学校的培养目标】。（3）【课程目标】。（4）【教师的教学目标】。', koujue:'国（国家的教育目的）小（学校的培养目标）可（课程目标）视（教师的教学目标）', chapter:'教育学' }
   ];
   return {
     banks: {
@@ -3800,8 +3800,13 @@ function seededRandom(seed) {
 // ---- 将答案按"得分点"拆分 ----
 function splitIntoPoints(text) {
   if (!text || !text.trim()) return [];
+  // 预标准化：在子要点序号前插入换行，使(1)(2)（1）（2）①②各自独立成行
+  var normalized = text
+    .replace(/([^\n])\s*（([\d一二三四五六七八九十百]+)）/g, '$1\n（$2）')
+    .replace(/([^\n])\s*\(([\d]+)\)/g, '$1\n($2)')
+    .replace(/([^\n])\s*([①②③④⑤⑥⑦⑧⑨⑩])/g, '$1\n$2');
   // 先按换行拆
-  const rawParts = text.split(/\n/).map(l => l.trim()).filter(Boolean);
+  const rawParts = normalized.split(/\n/).map(l => l.trim()).filter(Boolean);
   const points = [];
   for (const line of rawParts) {
     // 去掉序号前缀：1. 2、 （1） ① 等
@@ -4761,6 +4766,7 @@ function initApp() {
       inp.setAttribute('size', Math.max((inp.dataset.ans || '').length, 2));
     } else {
       inp.value = inp.dataset.ans || '';
+      inp.setAttribute('size', Math.max((inp.dataset.ans || '').length + 3, 6));
       inp.classList.add('peeked');
     }
   });
@@ -8010,14 +8016,20 @@ function renderPracticeCard() {
 
 // 在 ①②③ 序号前插入换行（保留序号不被挖空吃掉）
 function fmtAnswerSeg(seg, isFirst) {
-  var result = seg.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n$1');
+  var result = seg
+    .replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n$1')
+    .replace(/(（[\d一二三四五六七八九十百]+）)/g, '\n$1')
+    .replace(/(\([\d]+\))/g, '\n$1');
   if (isFirst) result = result.replace(/^\n/, '');
   // 合并连续换行：防止原文\n + 自动添加\n = 双重<br>造成空行
   result = result.replace(/\n+/g, '\n');
   return escNl(result);
 }
 function fmtAnswerSegLast(seg) {
-  var result = seg.replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n$1');
+  var result = seg
+    .replace(/([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n$1')
+    .replace(/(（[\d一二三四五六七八九十百]+）)/g, '\n$1')
+    .replace(/(\([\d]+\))/g, '\n$1');
   result = result.replace(/\n+/g, '\n');
   return escNl(result);
 }
@@ -8060,7 +8072,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
       if (revealed) {
         qh += '<span class="revealed-text">' + escNl(bq.text) + '</span>';
       } else {
-        qh += '<input type="text" class="blank-input" size="' + Math.max(bq.text.length, 2) + '" data-cid="' + card.id + '" data-bidx="q' + qi + '" data-ans="' + escapeHtml(bq.text).replace(/\n/g, ' ') + '" value="' + escapeHtml(sq) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
+        qh += '<input type="text" class="blank-input" size="' + Math.max(bq.text.length + 3, 5) + '" data-cid="' + card.id + '" data-bidx="q' + qi + '" data-ans="' + escapeHtml(bq.text).replace(/\n/g, ' ') + '" value="' + escapeHtml(sq) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
       }
       qle = bq.end;
     }
@@ -8096,7 +8108,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     if (revealed) {
       ah += '<span class="revealed-text">' + escNl(ba.text) + '</span>';
     } else {
-      ah += '<input type="text" class="blank-input" size="' + Math.max(ba.text.length, 2) + '" data-cid="' + card.id + '" data-bidx="' + ai + '" data-ans="' + escapeHtml(ba.text).replace(/\n/g, ' ') + '" value="' + escapeHtml(sa) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
+      ah += '<input type="text" class="blank-input" size="' + Math.max(ba.text.length + 3, 5) + '" data-cid="' + card.id + '" data-bidx="' + ai + '" data-ans="' + escapeHtml(ba.text).replace(/\n/g, ' ') + '" value="' + escapeHtml(sa) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
     }
     le = ba.end;
   }
@@ -10460,7 +10472,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v104</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v105</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
