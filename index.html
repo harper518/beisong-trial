@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v99 · 小阮出品</title>
+<title>挖空背诵工具 v100 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -801,6 +801,18 @@ body.focus-mode #focusExitBtn { display:flex; }
 body.focus-mode #focusStarBtn { display:flex; }
 body.focus-mode #cardText { line-height:2; }
 /* 专注模式下挖空框保持和正常模式一致 */
+
+	/* 番茄田地动画 */
+	@keyframes seedlingPulse { 0%,100% { transform:scale(1); opacity:0.8; } 50% { transform:scale(1.3); opacity:1; } }
+	@keyframes tomatoPop { 0% { transform:scale(0); opacity:0; } 60% { transform:scale(1.3); opacity:1; } 100% { transform:scale(1); opacity:1; } }
+	.tomato-field { background: linear-gradient(180deg, #a0722a 0%, #8B6914 15%, #6B4F12 50%, #5C3D0E 100%); border-radius: 16px; padding: 16px; margin: 8px 0; box-shadow: inset 0 2px 10px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
+	.tomato-field::before { content:""; position:absolute; top:0;left:0;right:0;bottom:0; background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.06) 0%, transparent 60%), radial-gradient(ellipse at 70% 60%, rgba(255,255,255,0.04) 0%, transparent 50%); pointer-events:none; }
+	.tomato-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; max-width: 320px; margin: 0 auto; position: relative; z-index: 1; }
+	.tomato-grid span { display: flex; align-items: center; justify-content: center; font-size: 24px; transition: transform 0.2s; cursor: default; min-width: 32px; min-height: 32px; }
+	.tomato-grid .big-tomato { font-size: 36px; cursor: pointer; animation: tomatoPop 0.4s ease-out; }
+	.tomato-grid .big-tomato:active { transform: scale(1.2); }
+	.tomato-grid .small-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(0,0,0,0.15); border-radius: 8px; padding: 4px; grid-column: span 2; }
+	.tomato-grid .small-group span { font-size: 16px; }
 </style>
 </head>
 <body>
@@ -899,7 +911,7 @@ var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 99;
+var APP_VERSION = 100;
 // ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
 function apiGet(path) {
@@ -10443,7 +10455,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v99</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v100</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -10681,32 +10693,58 @@ function showTomatoGarden(initialTab) {
     return h;
   }
 
-  function renderGardenContent() {
-    var h = '<div style="text-align:center;margin-bottom:8px;font-size:14px;color:var(--text-secondary)">累计收获：<b style="font-size:20px;color:var(--danger)">' + count + '</b> 个番茄</div>';
+  
+function _toggleBigTomato(el, idx) {
+  var wrap = document.getElementById('_btWrap_' + idx);
+  if (!wrap) return;
+  var existing = wrap.querySelector('.small-group');
+  if (existing) {
+    existing.remove();
+    el.style.display = '';
+    return;
+  }
+  var sg = document.createElement('div');
+  sg.className = 'small-group';
+  for (var i = 0; i < 10; i++) {
+    var sp = document.createElement('span');
+    sp.textContent = '🍅';
+    sg.appendChild(sp);
+  }
+  wrap.appendChild(sg);
+  el.style.display = 'none';
+}
+function renderGardenContent() {
+    var totalHarvested = (appData.settings.tomatoGarden || 0) + (appData.settings.tomatoSpent || 0);
+    var h = '<div style="text-align:center;margin-bottom:4px;font-size:14px;color:var(--text-secondary)">累计收获：<b style="font-size:20px;color:var(--danger)">' + totalHarvested + '</b> 个番茄</div>';
     if (spent > 0) {
-      h += '<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-tertiary)">累计消费：' + spent + ' 🍅</div>';
+      h += '<div style="text-align:center;margin-bottom:8px;font-size:12px;color:var(--text-tertiary)">余额：' + count + ' 🍅 ｜ 累计消费：' + spent + ' 🍅</div>';
     }
-    // 番茄钟进行中：显示幼苗
-    if (typeof pomodoroActive !== 'undefined' && pomodoroActive) {
-      var remMin = Math.ceil((typeof pomodoroRemaining !== 'undefined' ? pomodoroRemaining : 0) / 60);
-      h += '<div style="text-align:center;margin-bottom:10px;padding:8px;background:var(--success-light);border-radius:8px;font-size:12px;color:var(--success)">🌱 番茄钟进行中，还剩 ' + remMin + ' 分钟，完成后即可收获！</div>';
-    }
-    if (count === 0) {
+    // 番茄田地
+    if (totalHarvested === 0) {
       h += '<div style="text-align:center;padding:40px 20px;color:var(--text-tertiary)"><div style="font-size:48px;margin-bottom:12px">🍅</div><div style="font-size:15px">还没有收获番茄</div><div style="font-size:13px;margin-top:4px">开启番茄钟，完成专注计时即可收获番茄</div></div>';
     } else {
-      var rows = Math.ceil(Math.min(count, 64) / 8);
-      h += '<div style="text-align:center;padding:12px">';
-      for (var r = 0; r < rows; r++) {
-        h += '<div style="display:flex;justify-content:center;gap:6px;margin-bottom:6px">';
-        for (var c = 0; c < 8 && (r * 8 + c) < Math.min(count, 64); c++) {
-          h += '<span style="font-size:26px">🍅</span>';
-        }
-        h += '</div>';
+      var bigCount = Math.floor(totalHarvested / 10);
+      var smallCount = totalHarvested % 10;
+      h += '<div class="tomato-field">';
+      h += '<div class="tomato-grid" id="_tomatoFieldGrid">';
+      // 大番茄
+      for (var b = 0; b < bigCount; b++) {
+        h += '<span class="big-tomato" onclick="event.stopPropagation();_toggleBigTomato(this,' + b + ')" title="点击展开小番茄">🍅</span>';
+        h += '<span id="_btWrap_' + b + '" style="grid-column:span 2"></span>';
       }
-      if (count > 64) h += '<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">...还有 ' + (count - 64) + ' 个番茄</div>';
+      // 剩余小番茄
+      for (var s = 0; s < smallCount; s++) {
+        h += '<span>🍅</span>';
+      }
+      h += '</div>';
+      // 番茄钟进行中
+      if (typeof pomodoroActive !== 'undefined' && pomodoroActive) {
+        var remMin = Math.floor((typeof pomodoroRemaining !== 'undefined' ? pomodoroRemaining : 0) / 60);
+        h += '<div style="text-align:center;margin-top:10px;font-size:13px;color:#fff;animation:seedlingPulse 2s ease-in-out infinite;text-shadow:0 1px 3px rgba(0,0,0,0.5)">🌱 番茄钟进行中，还剩 ' + remMin + ' 分钟</div>';
+      }
       h += '</div>';
     }
-    h += '<div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text-tertiary)">开启番茄钟，每完成一次专注计时 +1 🍅</div>';
+    h += '<div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text-tertiary)">开启番茄钟，每完成一次专注计时 +1 🍅 · 每10个自动合成大番茄</div>';
     return h;
   }
 
@@ -10806,21 +10844,34 @@ function showTomatoGarden(initialTab) {
     var h = '<div style="text-align:center;margin-bottom:8px;font-size:14px;color:var(--text-secondary)">余额：<b style="font-size:20px;color:var(--danger)">' + count + '</b> 🍅</div>';
     h += '<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px;text-align:center">自定义奖励，花番茄给自己买东西，不可撤销</div>';
     // 添加表单
-    h += '<div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">';
+    h += '<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center">';
     h += '<input id="wishNameInput" type="text" placeholder="奖励名称" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg-card);color:var(--text)">';
     h += '<input id="wishCostInput" type="number" placeholder="🍅" min="1" value="1" style="width:52px;padding:8px 6px;border:1px solid var(--border);border-radius:8px;font-size:13px;text-align:center;background:var(--bg-card);color:var(--text)">';
     h += '<button onclick="event.stopPropagation();addWishItem()" style="padding:8px 12px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;min-height:36px;background:var(--primary);color:#fff;white-space:nowrap">添加</button>';
     h += '</div>';
+    h += '<div style="margin-bottom:14px;text-align:right"><label style="font-size:11px;color:var(--text-tertiary);cursor:pointer;display:inline-flex;align-items:center;gap:4px"><input id="wishDelCheck" type="checkbox" checked style="cursor:pointer"> 可删除</label></div>';
     if (wishlist.length === 0) {
       h += '<div style="text-align:center;padding:32px 16px;color:var(--text-tertiary)"><div style="font-size:32px;margin-bottom:8px">✏️</div><div style="font-size:13px">还没有心愿<br>添加一个奖励来激励自己吧~</div></div>';
     } else {
+      // 按hearted排序：❤️置顶
+      var sorted = wishlist.slice();
+      sorted.sort(function(a, b) { return (b.hearted ? 1 : 0) - (a.hearted ? 1 : 0); });
       h += '<div style="display:flex;flex-direction:column;gap:6px">';
-      for (var i = 0; i < wishlist.length; i++) {
-        var item = wishlist[i];
+      for (var i = 0; i < sorted.length; i++) {
+        var item = sorted[i];
+        var origIdx = wishlist.indexOf(item);
         var canAfford = count >= item.cost;
+        var isHearted = item.hearted === true;
+        var isDeletable = item.deletable !== false; // 默认可删除
         h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg-input);border-radius:8px">';
         h += '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text)">' + escapeHtml(item.name) + '</div><div style="font-size:11px;color:' + (canAfford ? 'var(--success)' : 'var(--danger)') + '">' + item.cost + ' 🍅</div></div>';
-        h += '<button onclick="event.stopPropagation();redeemWishItem(' + i + ')" ' + (canAfford ? '' : 'disabled') + ' style="padding:6px 12px;border:none;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;min-height:32px;' + (canAfford ? 'background:var(--warning);color:#fff' : 'background:var(--border);color:var(--text-tertiary);cursor:not-allowed') + '">兑换</button>';
+        // 爱心/删除 + 兑换按钮
+        if (isDeletable) {
+          h += '<button onclick="event.stopPropagation();removeWishItem(' + origIdx + ')" style="padding:6px 8px;border:none;border-radius:14px;font-size:14px;cursor:pointer;min-width:32px;min-height:32px;background:transparent;color:var(--text-tertiary)" title="删除">🗑️</button>';
+        } else {
+          h += '<button onclick="event.stopPropagation();toggleWishHeart(' + origIdx + ')" style="padding:6px 8px;border:none;border-radius:14px;font-size:14px;cursor:pointer;min-width:32px;min-height:32px;background:transparent;color:' + (isHearted ? '#e74c3c' : 'var(--text-tertiary)') + '" title="' + (isHearted ? '已标记为最想要' : '标记为最想要') + '">' + (isHearted ? '❤️' : '🤍') + '</button>';
+        }
+        h += '<button onclick="event.stopPropagation();redeemWishItem(' + origIdx + ')" ' + (canAfford ? '' : 'disabled') + ' style="padding:6px 12px;border:none;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;min-height:32px;' + (canAfford ? 'background:var(--warning);color:#fff' : 'background:var(--border);color:var(--text-tertiary);cursor:not-allowed') + '">兑换</button>';
         h += '</div>';
       }
       h += '</div>';
@@ -11058,12 +11109,34 @@ function addWishItem() {
   if (!name) { showToast('请输入奖励名称'); return; }
   if (cost < 1) { showToast('番茄数至少为1'); return; }
   if (name.length > 30) { showToast('名称最多30字'); return; }
+  var delCheck = document.getElementById('wishDelCheck');
+  var deletable = delCheck ? delCheck.checked : true;
   appData.settings.wishlist = appData.settings.wishlist || [];
-  appData.settings.wishlist.push({ name: name, cost: cost });
+  appData.settings.wishlist.push({ name: name, cost: cost, deletable: deletable, hearted: false });
   saveData(appData);
   nameInput.value = '';
   costInput.value = '1';
   showToast('✅ 心愿已添加');
+  _refreshTomatoModal('wishlist');
+}
+
+function removeWishItem(index) {
+  var wishlist = _tShopGet('wishlist', []);
+  if (index < 0 || index >= wishlist.length) return;
+  if (!confirm('确定删除"' + wishlist[index].name + '"吗？')) return;
+  wishlist.splice(index, 1);
+  saveData(appData);
+  showToast('🗑️ 已删除');
+  _refreshTomatoModal('wishlist');
+}
+
+function toggleWishHeart(index) {
+  var wishlist = _tShopGet('wishlist', []);
+  if (index < 0 || index >= wishlist.length) return;
+  var item = wishlist[index];
+  item.hearted = !item.hearted;
+  saveData(appData);
+  showToast(item.hearted ? '❤️ 已标记为最想要' : '已取消标记');
   _refreshTomatoModal('wishlist');
 }
 
