@@ -1,5 +1,5 @@
 /* ====== 挖空背诵工具 Service Worker ====== */
-var CACHE_NAME = 'beisong-trial-v105';
+var CACHE_NAME = 'beisong-trial-v106';
 
 // CDN 静态资源（缓存优先）
 var CDN_URLS = [
