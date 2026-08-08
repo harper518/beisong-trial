@@ -1,5 +1,5 @@
 /* ====== 挖空背诵工具 Service Worker ====== */
-var CACHE_NAME = 'beisong-trial-v109';
+var CACHE_NAME = 'beisong-trial-v110';
 
 // CDN 静态资源（缓存优先）
 var CDN_URLS = [
@@ -37,7 +37,7 @@ self.addEventListener('activate', function(e) {
 
 // 请求拦截
 self.addEventListener('fetch', function(e) {
-  if (e.request.method !== 'GET' || e.request.url.indexOf('chrome-extension:') === 0) return;
+  if (e.request.method !== 'GET' || e.request.url.indexOf('chrome-extension:') === 0 || e.request.url.indexOf('blob:') === 0) return;
 
   // CDN 资源：缓存优先
   if (/jsdelivr/.test(e.request.url)) {
