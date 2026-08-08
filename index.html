@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v116 · 小阮出品</title>
+<title>挖空背诵工具 v130 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -369,7 +369,7 @@ html{
   -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
   min-height:100dvh;margin:0;padding:0;
 }
-body{margin:0;padding:0;max-width:480px;margin-left:auto;margin-right:auto;min-height:100dvh;padding-bottom:calc(72px + var(--safe-bottom));overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y}
+body{margin:0;padding:0;max-width:480px;margin-left:auto;margin-right:auto;min-height:100dvh;padding-bottom:calc(72px + var(--safe-bottom));overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y}@media (min-width:768px){body{max-width:90vw}}@media (min-width:1024px){body{max-width:1100px}}
 input,textarea,select,button{font-family:inherit;font-size:inherit}
 input[type="text"],input[type="search"],textarea{user-select:text;-webkit-user-select:text}
 
@@ -916,7 +916,7 @@ var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 116;
+var APP_VERSION = 130;
 // ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
 function apiGet(path) {
@@ -2811,7 +2811,8 @@ function renderNoteEditor() {
     '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">' + viewToggle +
       '<button onclick="showImportOutline()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">📥 导入大纲</button>' +
       '<button onclick="copyZiliaoAIPrompt()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">🤖 AI话术</button>' +
-      (_zlViewMode === 'mindmap' ? '<button onclick="exportMindMapPNG()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">📸 导出图片</button>' : '') +
+      (_zlViewMode === 'mindmap' ? '<button onclick="exportMindMapPNG()" title="导出屏幕可见区域" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">📸 导出视图</button>' +
+        '<button onclick="exportMindMapFullPNG()" title="导出完整思维导图（所有节点）" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:12px;cursor:pointer;min-height:36px">📸 导出全部</button>' : '') +
       '<span style="flex:1"></span>' +
       '<button onclick="deleteCurrentNote()" style="background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer;min-height:36px">🗑 删除</button>' +
     '</div>' +
@@ -2827,8 +2828,11 @@ function renderNoteEditor() {
 
   if (_zlViewMode === 'mindmap') {
     html += '<div id="zlMindMapContainer" style="width:100%;min-height:400px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);overflow:hidden;position:relative">' +
+      '<button onclick="toggleMindmapFullscreen()" title="全屏查看" style="position:absolute;top:6px;right:6px;padding:4px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);font-size:11px;cursor:pointer;z-index:10;min-height:32px">⛶ 全屏</button>' +
       '<div id="zlMindMapTarget" style="width:100%;height:100%;min-height:400px;touch-action:pan-y"></div>' +
-      '<p style="position:absolute;bottom:8px;right:12px;font-size:10px;color:var(--text-tertiary)">🖐 可拖拽 · 🔍 双指缩放 · 👆 点击折叠</p>' +
+      '<div style="position:absolute;bottom:8px;right:12px;display:flex;gap:8px;align-items:center">' +
+        '<span style="font-size:10px;color:var(--text-tertiary)">🖐 可拖拽 · 🔍 双指缩放 · 👆 点击折叠</span>' +
+      '</div>' +
     '</div>';
     // 延迟加载 markmap
     setTimeout(function() { loadMarkmap(); }, 100);
@@ -2876,6 +2880,34 @@ function saveCurrentNote() {
   }).catch(function() {
     showToast('保存失败，请重试');
   });
+}
+
+// 静默保存（不弹 toast，不刷新列表）
+function saveCurrentNoteSilent() {
+  var title = (_zlNoteTitle || '').trim();
+  var content = (_zlNoteContent || '').trim();
+  var ta = document.getElementById('zlNoteEditor');
+  if (ta) { content = ta.value.trim(); _zlNoteContent = content; }
+  var ti = document.getElementById('zlNoteTitleInput');
+  if (ti) { title = ti.value.trim(); _zlNoteTitle = title; }
+  if (!title) return;
+  var now = new Date().toISOString();
+  var data = {
+    bankId: _zlBankId,
+    title: title,
+    content: content,
+    updatedAt: now
+  };
+  if (_zlEditingNote && _zlEditingNote.id) {
+    data.id = _zlEditingNote.id;
+    data.createdAt = _zlEditingNote.createdAt || now;
+  } else {
+    data.createdAt = now;
+  }
+  dbPut('notes', data).then(function() {
+    _zlEditingNote = null;
+    updateStorageBadge();
+  }).catch(function() {});
 }
 
 function deleteCurrentNote() {
@@ -3016,6 +3048,14 @@ function renderMarkmapFromContent() {
     if (!d3) { container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">d3.js 未加载</p><button onclick="_zlMarkmapLoaded=false;loadMarkmap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button></div>'; return; }
 
     var data = mdToTree(content);
+    // 根节点使用笔记标题
+    if (_zlNoteTitle) data.content = _zlNoteTitle;
+
+    // 保存当前缩放状态
+    var oldSvg = container.querySelector('svg');
+    if (oldSvg && window.d3) {
+      try { var oldT = d3.zoomTransform(oldSvg); _mmSavedTransform = {k: oldT.k, x: oldT.x, y: oldT.y}; } catch(e) { _mmSavedTransform = null; }
+    }
 
     // 移除旧内容
     container.innerHTML = '';
@@ -3117,6 +3157,34 @@ function renderMarkmapFromContent() {
         startEditMindmapNode(d, this);
       });
 
+      // 右键菜单
+      nodeMerge.on('contextmenu', function(event, d) {
+        event.preventDefault();
+        event.stopPropagation();
+        showMindmapContextMenu(d, event.clientX, event.clientY);
+      });
+
+      // 长按检测（≥600ms）
+      nodeMerge.on('touchstart', function(event, d) {
+        _mmTouchMoved = false;
+        _mmLongPressNode = d;
+        if (_mmLongPressTimer) clearTimeout(_mmLongPressTimer);
+        _mmLongPressTimer = setTimeout(function() {
+          _mmLongPressTimer = null;
+          if (!_mmTouchMoved && _mmLongPressNode) {
+            var touch = event.changedTouches ? event.changedTouches[0] : null;
+            var x = touch ? touch.clientX : event.clientX;
+            var y = touch ? touch.clientY : event.clientY;
+            showMindmapContextMenu(_mmLongPressNode, x, y + 10);
+            _mmLongPressNode = null;
+          }
+        }, 600);
+      });
+      nodeMerge.on('touchmove', function() { _mmTouchMoved = true; });
+      nodeMerge.on('touchend', function() {
+        if (_mmLongPressTimer) { clearTimeout(_mmLongPressTimer); _mmLongPressTimer = null; }
+      });
+
       root.each(function(d) { d.x0 = d.x; d.y0 = d.y; });
     }
 
@@ -3132,15 +3200,20 @@ function renderMarkmapFromContent() {
     // 首次无过渡渲染
     update(root, true);
 
-    // 渲染完成后自适应缩放
+    // 渲染完成后恢复缩放（有保存的状态则恢复，否则自适应）
     requestAnimationFrame(function() {
       try {
-        var bounds = gRoot.node().getBBox();
-        if (!bounds || bounds.width === 0 || bounds.height === 0) return;
-        var scale = Math.min(W / bounds.width, H / bounds.height, 1.2) * 0.88;
-        var tx = (W - bounds.width * scale) / 2 - bounds.x * scale;
-        var ty = (H - bounds.height * scale) / 2 - bounds.y * scale;
-        svg.transition().duration(200).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        if (_mmSavedTransform && _mmSavedTransform.k) {
+          svg.call(zoom.transform, d3.zoomIdentity.translate(_mmSavedTransform.x, _mmSavedTransform.y).scale(_mmSavedTransform.k));
+          _mmSavedTransform = null;
+        } else {
+          var bounds = gRoot.node().getBBox();
+          if (!bounds || bounds.width === 0 || bounds.height === 0) return;
+          var scale = Math.min(W / bounds.width, H / bounds.height, 1.2) * 0.88;
+          var tx = (W - bounds.width * scale) / 2 - bounds.x * scale;
+          var ty = (H - bounds.height * scale) / 2 - bounds.y * scale;
+          svg.transition().duration(200).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        }
       } catch(e) {}
     });
 
@@ -3162,57 +3235,422 @@ function startEditMindmapNode(d, nodeEl) {
   if (!textEl) return;
   var textRect = textEl.getBoundingClientRect();
 
+  // 编辑栏容器
+  var bar = document.createElement('div');
+  bar.style.cssText = 'position:absolute;' +
+    'left:' + (textRect.left - svgRect.left - 6) + 'px;' +
+    'top:' + (textRect.top - svgRect.top - 3) + 'px;' +
+    'display:flex;align-items:center;gap:4px;z-index:100;';
+
   var input = document.createElement('input');
   input.type = 'text';
   input.value = d.data.content;
-  input.style.cssText = 'position:absolute;' +
-    'left:' + (textRect.left - svgRect.left - 6) + 'px;' +
-    'top:' + (textRect.top - svgRect.top - 3) + 'px;' +
-    'min-width:' + Math.max(textRect.width + 24, 120) + 'px;' +
+  input.style.cssText = 'min-width:' + Math.max(textRect.width + 24, 100) + 'px;' +
     'height:' + Math.max(textRect.height + 6, 26) + 'px;' +
     'font-size:13px;border:2px solid #4A90D9;border-radius:4px;' +
-    'padding:2px 8px;z-index:100;background:#fff;' +
+    'padding:2px 8px;background:#fff;' +
     'font-family:inherit;outline:none;' +
     'box-shadow:0 0 8px rgba(74,144,217,0.35);' +
     'box-sizing:border-box;';
 
+  // ✅ 完成按钮（放在输入框左边）
+  var doneBtn = document.createElement('button');
+  doneBtn.textContent = '✅';
+  doneBtn.title = '完成编辑';
+  doneBtn.style.cssText = 'width:28px;height:28px;padding:0;border:1px solid #4A90D9;border-radius:4px;' +
+    'background:#fff;color:#4A90D9;font-size:14px;cursor:pointer;' +
+    'display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+  doneBtn.addEventListener('mousedown', function(e) { e.preventDefault(); e.stopPropagation(); });
+  doneBtn.addEventListener('click', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    finishEdit();
+  });
+  bar.appendChild(doneBtn);
+  bar.appendChild(input);
+
+  // 非 Root 节点添加删除按钮（放在右边）
+  if (d.depth > 0) {
+    var delBtn = document.createElement('button');
+    delBtn.textContent = '🗑';
+    delBtn.title = '删除此节点';
+    delBtn.style.cssText = 'width:28px;height:28px;padding:0;border:1px solid #e74c3c;border-radius:4px;' +
+      'background:#fff;color:#e74c3c;font-size:14px;cursor:pointer;' +
+      'display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+    delBtn.addEventListener('mousedown', function(e) { e.preventDefault(); e.stopPropagation(); });
+    delBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      bar.remove();
+      deleteMindmapNode(d);
+    });
+    bar.appendChild(delBtn);
+  }
+
   container.style.position = 'relative';
-  container.appendChild(input);
+  container.appendChild(bar);
   input.focus();
   input.select();
 
   var oldText = d.data.content;
   function finishEdit() {
     var newText = input.value.trim();
-    input.remove();
+    bar.remove();
     if (!newText || newText === oldText) return;
 
     // 更新树节点
     d.data.content = newText;
 
+    // 直接更新 SVG（不重渲染，保持缩放）
+    try {
+      d3.select(nodeEl).select('text').text(newText);
+      var rectSel = d3.select(nodeEl).select('rect');
+      if (!rectSel.empty()) {
+        rectSel.attr('width', Math.max(newText.length * 13 + 8, 32));
+      }
+    } catch(e) {}
+
     // 回写到笔记原文
-    if (typeof _zlNoteContent !== 'undefined' && _zlNoteContent) {
+    if (d.depth === 0) {
+      _zlNoteTitle = newText;
+      var ti = document.getElementById('zlNoteTitleInput');
+      if (ti) ti.value = newText;
+      if (typeof saveCurrentNoteSilent === 'function') saveCurrentNoteSilent();
+    } else if (typeof _zlNoteContent !== 'undefined' && _zlNoteContent) {
       var escaped = oldText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // 尝试匹配为标题行
       var re = new RegExp('^(#{0,6}\\s*)' + escaped + '\\s*$', 'm');
       if (re.test(_zlNoteContent)) {
         _zlNoteContent = _zlNoteContent.replace(re, '$1' + newText);
       } else {
-        // 普通文本替换（首次出现）
         _zlNoteContent = _zlNoteContent.replace(oldText, newText);
       }
       if (typeof saveEditorState === 'function') saveEditorState();
     }
-
-    // 重新渲染
-    renderMarkmapFromContent();
   }
 
   input.addEventListener('blur', finishEdit);
   input.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-    if (e.key === 'Escape') { input.value = oldText; input.blur(); }
+    if (e.key === 'Enter') { e.preventDefault(); finishEdit(); }
+    if (e.key === 'Escape') { input.value = oldText; bar.remove(); }
   });
+}
+
+// ====== 删除导图节点 ======
+function deleteMindmapNode(d) {
+  if (!d || d.depth === 0) return; // 不允许删除根节点
+  var nodeText = d.data.content;
+  if (!confirm('确定删除「' + nodeText + '」及其所有子节点吗？')) return;
+
+  // 从源文本中删除对应行
+  if (typeof _zlNoteContent !== 'undefined' && _zlNoteContent) {
+    var escaped = nodeText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // 匹配标题行：可选 # 前缀 + 文本
+    var re = new RegExp('^#{0,6}\\s*' + escaped + '\\s*$', 'm');
+    if (re.test(_zlNoteContent)) {
+      _zlNoteContent = _zlNoteContent.replace(re, '').replace(/\n{3,}/g, '\n\n');
+    } else {
+      // 匹配列表项行：可选缩进 + 列表标记 + 文本
+      var liRe = new RegExp('^(\\s*[-*+•◦▪]\\s*)' + escaped + '\\s*$', 'm');
+      if (liRe.test(_zlNoteContent)) {
+        _zlNoteContent = _zlNoteContent.replace(liRe, '').replace(/\n{3,}/g, '\n\n');
+      } else {
+        // 首次出现纯文本替换
+        _zlNoteContent = _zlNoteContent.replace(nodeText, '');
+      }
+    }
+    if (typeof saveEditorState === 'function') saveEditorState();
+    showToast('✅ 节点已删除');
+  }
+
+  // 重新渲染
+  renderMarkmapFromContent();
+
+  // 关闭右键菜单
+  var menu = document.getElementById('_mmCtxMenu');
+  if (menu) menu.remove();
+}
+
+// ====== 导图节点右键/长按菜单 ======
+var _mmLongPressTimer = null;
+var _mmLongPressNode = null;
+var _mmTouchMoved = false;
+
+function showMindmapContextMenu(d, x, y) {
+  if (!d || d.depth === 0) return;
+  var old = document.getElementById('_mmCtxMenu');
+  if (old) old.remove();
+
+  var menu = document.createElement('div');
+  menu.id = '_mmCtxMenu';
+  menu.style.cssText = 'position:fixed;left:' + x + 'px;top:' + y + 'px;' +
+    'background:#fff;border:1px solid var(--border);border-radius:8px;' +
+    'box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:99999;padding:4px;min-width:150px';
+  menu.innerHTML =
+    '<button id="_mmAddBtn" style="display:block;width:100%;padding:10px 14px;border:none;' +
+    'background:none;color:#4A90D9;font-size:14px;cursor:pointer;text-align:left;' +
+    'border-radius:6px;min-height:40px" ' +
+    'onmouseover="this.style.background=\'#eef5ff\'" onmouseout="this.style.background=\'none\'">➕ 添加子节点</button>' +
+    '<button id="_mmExpBranchBtn" style="display:block;width:100%;padding:10px 14px;border:none;' +
+    'background:none;color:#3CB371;font-size:14px;cursor:pointer;text-align:left;' +
+    'border-radius:6px;min-height:40px" ' +
+    'onmouseover="this.style.background=\'#f0faf4\'" onmouseout="this.style.background=\'none\'">📸 导出此分支</button>' +
+    '<button id="_mmDelBtn" style="display:block;width:100%;padding:10px 14px;border:none;' +
+    'background:none;color:#e74c3c;font-size:14px;cursor:pointer;text-align:left;' +
+    'border-radius:6px;min-height:40px" ' +
+    'onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=\'none\'">🗑 删除此节点</button>';
+
+  menu.querySelector('#_mmAddBtn').addEventListener('click', function() {
+    menu.remove();
+    addChildMindmapNode(d);
+  });
+  menu.querySelector('#_mmExpBranchBtn').addEventListener('click', function() {
+    menu.remove();
+    exportMindmapBranch(d);
+  });
+  menu.querySelector('#_mmDelBtn').addEventListener('click', function() {
+    menu.remove();
+    deleteMindmapNode(d);
+  });
+
+  document.body.appendChild(menu);
+
+  setTimeout(function() {
+    document.addEventListener('click', function closeMenu(e) {
+      if (!menu.parentNode) { document.removeEventListener('click', closeMenu); return; }
+      if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', closeMenu); }
+    });
+    document.addEventListener('touchend', function closeMenuT(e) {
+      if (!menu.parentNode) { document.removeEventListener('touchend', closeMenuT); return; }
+      if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('touchend', closeMenuT); }
+    });
+  }, 50);
+}
+
+// ====== 添加子节点 ======
+function addChildMindmapNode(d) {
+  if (!d) return;
+  var newChildName = prompt('输入新子节点名称：', '');
+  if (!newChildName || !newChildName.trim()) return;
+  newChildName = newChildName.trim();
+  var nodeText = d.data.content;
+  if (typeof _zlNoteContent !== 'undefined') {
+    var escaped = nodeText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    var indent = '  '.repeat(Math.max(0, d.depth));
+    // 尝试匹配为标题行
+    var reH = new RegExp('^(#{0,6}\\s*' + escaped + '\\s*)$', 'm');
+    if (reH.test(_zlNoteContent)) {
+      _zlNoteContent = _zlNoteContent.replace(reH, '$1\n' + indent + '- ' + newChildName);
+    } else {
+      // 尝试匹配为列表项行
+      var reLi = new RegExp('^(\\s*[-*+•◦▪]\\s*' + escaped + '\\s*)$', 'm');
+      if (reLi.test(_zlNoteContent)) {
+        _zlNoteContent = _zlNoteContent.replace(reLi, '$1\n' + indent + '  - ' + newChildName);
+      } else {
+        // 在对应文本后追加
+        if (_zlNoteContent.indexOf(nodeText) !== -1) {
+          _zlNoteContent = _zlNoteContent.replace(nodeText, nodeText + '\n' + indent + '- ' + newChildName);
+        } else {
+          _zlNoteContent = _zlNoteContent + '\n' + indent + '- ' + newChildName;
+        }
+      }
+    }
+    if (typeof saveEditorState === 'function') saveEditorState();
+  }
+  renderMarkmapFromContent();
+  showToast('✅ 子节点已添加');
+}
+
+// ====== Canvas 原生绘制辅助（不依赖 SVG→Image）======
+function collectMindmapData(gRoot, filterUids) {
+  var nodes = [];
+  var links = [];
+
+  // 收集链接
+  var allLinks = gRoot.querySelectorAll('path.mm-link');
+  for (var i = 0; i < allLinks.length; i++) {
+    var p = allLinks[i];
+    try {
+      var ld = d3.select(p).datum();
+      if (filterUids && (!ld || !filterUids[ld.source._uid] || !filterUids[ld.target._uid])) continue;
+      var d = p.getAttribute('d');
+      var m = d.match(/M\s*([\d.-]+)[,\s]+([\d.-]+)\s*C\s*([\d.-]+)[,\s]+([\d.-]+)\s*([\d.-]+)[,\s]+([\d.-]+)\s*([\d.-]+)[,\s]+([\d.-]+)/);
+      if (m) links.push({x1:+m[1],y1:+m[2],cx1:+m[3],cy1:+m[4],cx2:+m[5],cy2:+m[6],x2:+m[7],y2:+m[8]});
+    } catch(e) {}
+  }
+
+  // 收集节点
+  var allNodes = gRoot.querySelectorAll('g.mm-node');
+  for (var j = 0; j < allNodes.length; j++) {
+    var ng = allNodes[j];
+    try {
+      var nd = d3.select(ng).datum();
+      if (filterUids && (!nd || !filterUids[nd._uid])) continue;
+      var tr = ng.getAttribute('transform') || '';
+      var tm = tr.match(/translate\(([^,]+),([^)]+)\)/);
+      if (!tm) continue;
+      var r = ng.querySelector('rect');
+      var t = ng.querySelector('text');
+      if (!r || !t) continue;
+      nodes.push({
+        x: parseFloat(tm[1]), y: parseFloat(tm[2]),
+        fill: r.getAttribute('fill') || '#4A90D9',
+        w: parseFloat(r.getAttribute('width')) || 36,
+        h: parseFloat(r.getAttribute('height')) || 22,
+        rx: parseFloat(r.getAttribute('rx')) || 6,
+        label: t.textContent || '',
+        bold: t.getAttribute('font-weight') === 'bold',
+        _uid: nd ? nd._uid : -1
+      });
+    } catch(e) {}
+  }
+  return { nodes: nodes, links: links };
+}
+
+function drawMindmapData(ctx, data) {
+  if (!data) return;
+  // 绘制链接（先画，在节点下方）
+  if (data.links.length > 0) {
+    ctx.beginPath();
+    for (var i = 0; i < data.links.length; i++) {
+      var l = data.links[i];
+      ctx.moveTo(l.x1, l.y1);
+      ctx.bezierCurveTo(l.cx1, l.cy1, l.cx2, l.cy2, l.x2, l.y2);
+    }
+    ctx.strokeStyle = '#bbb';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  // 绘制节点
+  ctx.font = '13px -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.textBaseline = 'middle';
+  for (var j = 0; j < data.nodes.length; j++) {
+    var n = data.nodes[j];
+    var rx = n.x - 6, ry = n.y - 11;
+    // 圆角矩形
+    ctx.fillStyle = n.fill;
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(rx, ry, n.w, n.h, n.rx);
+    } else {
+      var rr = n.rx;
+      ctx.moveTo(rx + rr, ry);
+      ctx.lineTo(rx + n.w - rr, ry);
+      ctx.arcTo(rx + n.w, ry, rx + n.w, ry + rr, rr);
+      ctx.lineTo(rx + n.w, ry + n.h - rr);
+      ctx.arcTo(rx + n.w, ry + n.h, rx + n.w - rr, ry + n.h, rr);
+      ctx.lineTo(rx + rr, ry + n.h);
+      ctx.arcTo(rx, ry + n.h, rx, ry + n.h - rr, rr);
+      ctx.lineTo(rx, ry + rr);
+      ctx.arcTo(rx, ry, rx + rr, ry, rr);
+    }
+    ctx.fill();
+    // 文字
+    ctx.fillStyle = '#fff';
+    ctx.fillText(n.label, n.x, n.y);
+  }
+}
+
+// ====== Canvas 导出辅助：toBlob + toDataURL 兜底 ======
+function _canvasDownload(canvas, filename, successMsg) {
+  function doDownload(blob) {
+    if (!blob) {
+      // Safari/移动端有时 toBlob 返回 null，用 toDataURL 兜底
+      try {
+        var dataUrl = canvas.toDataURL('image/png');
+        if (!dataUrl || dataUrl.length < 100) { showToast('导出失败: 无法生成图片数据'); return; }
+        var parts = dataUrl.split(',');
+        var mime = (parts[0] && parts[0].match(/:(.*?);/)) ? parts[0].match(/:(.*?);/)[1] : 'image/png';
+        var binary = atob(parts[1]);
+        var bytes = new Uint8Array(binary.length);
+        for (var bi = 0; bi < binary.length; bi++) bytes[bi] = binary.charCodeAt(bi);
+        blob = new Blob([bytes], {type: mime});
+      } catch(de) {
+        console.error('导出toDataURL兜底失败:', de);
+        showToast('导出失败: ' + (de.message || '未知错误'));
+        return;
+      }
+      if (!blob) { showToast('导出失败: 无法生成图片文件'); return; }
+    }
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
+    showToast(successMsg);
+  }
+  try {
+    canvas.toBlob(doDownload, 'image/png');
+  } catch(be) {
+    console.error('导出toBlob异常:', be);
+    // 直接走 toDataURL 兜底
+    canvas.toBlob = null; // 防止递归
+    doDownload(null);
+  }
+}
+
+// ====== 导出分支 ======
+function exportMindmapBranch(d) {
+  if (!d) return;
+  var container = document.getElementById('zlMindMapTarget');
+  if (!container) return;
+  var svg = container.querySelector('svg');
+  if (!svg) { showToast('请先加载导图'); return; }
+  try {
+    var gRoot = svg.querySelector('g');
+    if (!gRoot) { showToast('导图数据异常'); return; }
+
+    // 收集分支内所有节点的 _uid
+    var branchUids = {};
+    function collectUids(node) {
+      branchUids[node._uid] = true;
+      var kids = node.children || node._children;
+      if (kids) kids.forEach(collectUids);
+    }
+    collectUids(d);
+
+    // 保存并重置 zoom
+    var currentZoom = d3.zoomTransform(svg);
+    var zoom = d3.zoom();
+    svg.call(zoom.transform, d3.zoomIdentity);
+    var gTransform = gRoot.getAttribute('transform') || '';
+    gRoot.setAttribute('transform', '');
+
+    // 收集分支数据并计算边界
+    var data = collectMindmapData(gRoot, branchUids);
+    if (data.nodes.length === 0) {
+      gRoot.setAttribute('transform', gTransform);
+      svg.call(zoom.transform, currentZoom);
+      showToast('分支内容为空'); return;
+    }
+
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (var i = 0; i < data.nodes.length; i++) {
+      var n = data.nodes[i];
+      var rx = n.x - 6, ry = n.y - 11;
+      minX = Math.min(minX, rx); maxX = Math.max(maxX, rx + n.w);
+      minY = Math.min(minY, ry); maxY = Math.max(maxY, ry + n.h);
+    }
+
+    // 恢复 zoom
+    gRoot.setAttribute('transform', gTransform);
+    svg.call(zoom.transform, currentZoom);
+
+    var padding = 30;
+    var fullW = Math.ceil(maxX - minX + padding * 2);
+    var fullH = Math.ceil(maxY - minY + padding * 2);
+    var MAX_DIM = 4096;
+    var scale = 6;
+    while ((fullW * scale > MAX_DIM || fullH * scale > MAX_DIM) && scale > 1) { scale--; }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = fullW * scale; canvas.height = fullH * scale;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(scale, 0, 0, scale, (padding - minX) * scale, (padding - minY) * scale);
+    drawMindmapData(ctx, data);
+
+    _canvasDownload(canvas, (_zlNoteTitle || '思维导图') + '_分支_' + (d.data.content||'').slice(0, 15) + '.png', '✅ 分支已导出');
+  } catch(e) { console.error('导出分支失败:', e); showToast('导出失败: ' + (e.message || '未知错误')); }
 }
 
 // ====== 图库 ======
@@ -3513,44 +3951,174 @@ function applyTemplate(idx) {
   showToast('✅ 已应用模板');
 }
 
-// ====== 导图导出PNG ======
+// ====== 导图导出PNG（当前视图）======
 function exportMindMapPNG() {
   var container = document.getElementById('zlMindMapTarget');
   if (!container) return;
   var svg = container.querySelector('svg');
   if (!svg) { showToast('请先加载导图'); return; }
   try {
-    var svgData = new XMLSerializer().serializeToString(svg);
-    var canvas = document.createElement('canvas');
     var rect = svg.getBoundingClientRect();
-    canvas.width = (rect.width || 800) * 2;
-    canvas.height = (rect.height || 600) * 2;
+    var w = rect.width || 800;
+    var h = rect.height || 600;
+
+    var MAX_DIM = 4096;
+    var scale = 6;
+    while ((w * scale > MAX_DIM || h * scale > MAX_DIM) && scale > 1) { scale--; }
+
+    var currentZoom = d3.zoomTransform(svg);
+    var gRoot = svg.querySelector('g');
+    if (!gRoot) { showToast('导图数据异常'); return; }
+
+    // 收集所有节点（保留当前 zoom，通过 canvas 变换实现视图裁剪）
+    var data = collectMindmapData(gRoot, null);
+    if (data.nodes.length === 0) { showToast('导图内容为空'); return; }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = w * scale;
+    canvas.height = h * scale;
     var ctx = canvas.getContext('2d');
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    var img = new Image();
-    img.onload = function() {
-      try {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(function(blob) {
-          if (!blob) { showToast('导出失败，请重试'); return; }
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          a.href = url; a.download = (_zlNoteTitle || '思维导图') + '.png';
-          document.body.appendChild(a); a.click();
-          document.body.removeChild(a);
-          setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
-          showToast('✅ 导图已导出');
-        }, 'image/png');
-      } catch(e) { showToast('导出失败'); }
-    };
-    img.onerror = function() { showToast('导图生成失败，请重试或减少内容'); };
-    // 使用安全的 base64 编码（避免 Safari WebKitBlobResource 错误）
-    var bytes = new TextEncoder().encode(svgData);
-    var binary = '';
-    for (var i = 0; i < bytes.length; i++) { binary += String.fromCharCode(bytes[i]); }
-    img.src = 'data:image/svg+xml;base64,' + btoa(binary);
-  } catch(e) { showToast('导出失败'); }
+    // 应用 zoom 变换：SVG坐标 → CSS像素 → Canvas像素
+    ctx.setTransform(scale * currentZoom.k, 0, 0, scale * currentZoom.k, scale * currentZoom.x, scale * currentZoom.y);
+    drawMindmapData(ctx, data);
+
+    _canvasDownload(canvas, (_zlNoteTitle || '思维导图') + '.png', '✅ 导图已导出');
+  } catch(e) { console.error('导出视图失败:', e); showToast('导出失败: ' + (e.message || '未知错误')); }
 }
+
+// ====== 导图全屏切换 ======
+var _mmFullscreen = false;
+var _mmOrigStyles = null;
+var _mmSavedTransform = null;
+function toggleMindmapFullscreen() {
+  var container = document.getElementById('zlMindMapContainer');
+  if (!container) return;
+  var btn = container.querySelector('button[onclick*="toggleMindmapFullscreen"]');
+  _mmFullscreen = !_mmFullscreen;
+  if (_mmFullscreen) {
+    _mmOrigStyles = {
+      position: container.style.position, top: container.style.top, left: container.style.left,
+      width: container.style.width, height: container.style.height, zIndex: container.style.zIndex,
+      maxWidth: container.style.maxWidth, borderRadius: container.style.borderRadius, margin: container.style.margin
+    };
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100vw';
+    container.style.height = '100dvh';
+    container.style.zIndex = '9999';
+    container.style.maxWidth = '100vw';
+    container.style.borderRadius = '0';
+    container.style.margin = '0';
+    if (btn) { btn.textContent = '⛶ 退出全屏'; btn.style.zIndex = '10000'; }
+    // 重新渲染导图以适配新尺寸
+    if (typeof _zlNoteContent !== 'undefined' && _zlNoteContent.trim()) {
+      renderMarkmapFromContent();
+    }
+  } else {
+    if (_mmOrigStyles) {
+      container.style.position = _mmOrigStyles.position;
+      container.style.top = _mmOrigStyles.top;
+      container.style.left = _mmOrigStyles.left;
+      container.style.width = _mmOrigStyles.width;
+      container.style.height = _mmOrigStyles.height;
+      container.style.zIndex = _mmOrigStyles.zIndex;
+      container.style.maxWidth = _mmOrigStyles.maxWidth;
+      container.style.borderRadius = _mmOrigStyles.borderRadius;
+      container.style.margin = _mmOrigStyles.margin;
+      _mmOrigStyles = null;
+    }
+    if (btn) { btn.textContent = '⛶ 全屏'; btn.style.zIndex = '10'; }
+    // 重新渲染导图以适配原始尺寸
+    if (typeof _zlNoteContent !== 'undefined' && _zlNoteContent.trim()) {
+      renderMarkmapFromContent();
+    }
+  }
+}
+
+// ====== 重置导图视图 ======
+function resetMindmapView() {
+  var container = document.getElementById('zlMindMapTarget');
+  if (!container) return;
+  var svg = container.querySelector('svg');
+  if (!svg) return;
+  var gRoot = svg.querySelector('g');
+  if (!gRoot) return;
+  try {
+    var W = svg.getAttribute('width') || container.clientWidth || 700;
+    var H = svg.getAttribute('height') || 400;
+    var bounds = gRoot.getBBox();
+    if (!bounds || bounds.width === 0 || bounds.height === 0) return;
+    var scale = Math.min(W / bounds.width, H / bounds.height, 1.2) * 0.88;
+    var tx = (W - bounds.width * scale) / 2 - bounds.x * scale;
+    var ty = (H - bounds.height * scale) / 2 - bounds.y * scale;
+    var zoom = d3.zoom();
+    d3.select(svg).transition().duration(350).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+  } catch(e) { /* 忽略 */ }
+}
+
+// ====== 导图导出PNG（全部节点）======
+function exportMindMapFullPNG() {
+  var container = document.getElementById('zlMindMapTarget');
+  if (!container) return;
+  var svg = container.querySelector('svg');
+  if (!svg) { showToast('请先加载导图'); return; }
+  try {
+    var gRoot = svg.querySelector('g');
+    if (!gRoot || !gRoot.querySelector('g.mm-node')) { showToast('导图内容为空'); return; }
+
+    // 保存并重置 zoom
+    var currentZoom = d3.zoomTransform(svg);
+    var zoom = d3.zoom();
+    svg.call(zoom.transform, d3.zoomIdentity);
+    var gTransform = gRoot.getAttribute('transform') || '';
+    gRoot.setAttribute('transform', '');
+
+    // 用 getBBox 获取精确边界
+    var bbox;
+    try { bbox = gRoot.getBBox(); } catch(e) { bbox = null; }
+
+    if (!bbox || bbox.width === 0 || bbox.height === 0) {
+      gRoot.setAttribute('transform', gTransform);
+      svg.call(zoom.transform, currentZoom);
+      showToast('导图内容为空'); return;
+    }
+
+    // 收集绘制数据（zoom 已重置）
+    var data = collectMindmapData(gRoot, null);
+
+    // 恢复 zoom
+    gRoot.setAttribute('transform', gTransform);
+    svg.call(zoom.transform, currentZoom);
+
+    var padding = 40;
+    var fullW = Math.ceil(bbox.width + padding * 2);
+    var fullH = Math.ceil(bbox.height + padding * 2);
+
+    var MAX_DIM = 4096;
+    var scale = 6;
+    while ((fullW * scale > MAX_DIM || fullH * scale > MAX_DIM) && scale > 1) { scale--; }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = fullW * scale;
+    canvas.height = fullH * scale;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(scale, 0, 0, scale, (padding - bbox.x) * scale, (padding - bbox.y) * scale);
+    drawMindmapData(ctx, data);
+
+    _canvasDownload(canvas, (_zlNoteTitle || '思维导图') + '_完整.png', '✅ 完整导图已导出');
+  } catch(e) { console.error('导出完整导图失败:', e); showToast('导出失败: ' + (e.message || '未知错误')); }
+}
+
+// Esc 退出全屏
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && _mmFullscreen) {
+    e.preventDefault();
+    toggleMindmapFullscreen();
+  }
+});
 
 // ==================== 章节掌握度计算 ====================
 function getChapterStats(bankId) {
@@ -4921,6 +5489,10 @@ function initApp() {
   function handleBlankEnter(e) {
     var activeEl = document.activeElement;
     // 如果当前焦点不在输入框上，用上次跟踪的
+    // 不拦截 textarea 和非挖空 input 的 Enter（如开发者留言等）
+    if (activeEl && (activeEl.tagName === 'TEXTAREA' || (activeEl.tagName === 'INPUT' && !activeEl.classList.contains('blank-input')))) {
+      return;
+    }
     if (!activeEl || !activeEl.classList.contains('blank-input')) {
       if (_lastBlankInput && document.body.contains(_lastBlankInput)) {
         activeEl = _lastBlankInput;
@@ -10388,7 +10960,7 @@ function renderSettings() {
         // 番茄钟设置（开启时显示）
         h += '<div id="pomodoroSettings" style="display:' + (pomoOn ? 'block' : 'none') + ';margin-top:2px;padding:12px 14px;background:var(--bg-input);border-radius:10px">';
         h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:13px;color:var(--text-secondary)">🍅 专注时长</span>' +
-          '<div style="display:flex;align-items:center;gap:4px"><input type="number" id="pomodoroDuration" value="' + pd + '" min="5" max="120" step="5" onchange="savePomodoroDuration(parseInt(this.value)||25)" style="width:56px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--bg-card);color:var(--text)"><span style="font-size:12px;color:var(--text-tertiary)">分钟</span></div></div>';
+          '<div style="display:flex;align-items:center;gap:4px"><input type="number" id="pomodoroDuration" value="' + pd + '" min="15" max="120" step="5" onchange="savePomodoroDuration(parseInt(this.value)||25)" style="width:56px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--bg-card);color:var(--text)"><span style="font-size:12px;color:var(--text-tertiary)">分钟</span></div></div>';
         h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:13px;color:var(--text-secondary)">☕ 休息时长</span>' +
           '<div style="display:flex;align-items:center;gap:4px"><input type="number" id="pomodoroBreak" value="' + bd + '" min="1" max="30" step="1" onchange="savePomodoroBreak(parseInt(this.value)||5)" style="width:56px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--bg-card);color:var(--text)"><span style="font-size:12px;color:var(--text-tertiary)">分钟</span></div></div>';
         // 番茄乐园入口
@@ -10591,7 +11163,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v116</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v130</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
@@ -10727,7 +11299,7 @@ function togglePomodoro(val) {
   if (ps) ps.style.display = val ? 'block' : 'none';
 }
 function savePomodoroDuration(val) {
-  if (val < 5) val = 5; if (val > 120) val = 120;
+  if (val < 15) val = 15; if (val > 120) val = 120;
   document.getElementById('pomodoroDuration').value = val;
   saveSetting('pomodoroDuration', val);
 }
