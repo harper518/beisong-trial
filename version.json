@@ -1,1 +1,1 @@
-{"version":130,"message":"v130: 番茄钟最小15分钟+导出toDataURL兜底+错误诊断"}
+{"version":131,"message":"v131: 修复检查更新旧SW残留+location.reload废弃问题"}
