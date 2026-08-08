@@ -809,10 +809,8 @@ body.focus-mode #cardText { line-height:2; }
 	.tomato-field::before { content:""; position:absolute; top:0;left:0;right:0;bottom:0; background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.06) 0%, transparent 60%), radial-gradient(ellipse at 70% 60%, rgba(255,255,255,0.04) 0%, transparent 50%); pointer-events:none; }
 	.tomato-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; max-width: 320px; margin: 0 auto; position: relative; z-index: 1; }
 	.tomato-grid span { display: flex; align-items: center; justify-content: center; font-size: 24px; transition: transform 0.2s; cursor: default; min-width: 32px; min-height: 32px; }
-	.tomato-grid .big-tomato { font-size: 36px; cursor: pointer; animation: tomatoPop 0.4s ease-out; }
-	.tomato-grid .big-tomato:active { transform: scale(1.2); }
-	.tomato-grid .small-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(0,0,0,0.15); border-radius: 8px; padding: 4px; grid-column: span 2; }
-	.tomato-grid .small-group span { font-size: 16px; }
+	.tomato-grid .big-tomato { font-size: 36px; cursor: pointer; animation: tomatoPop 0.4s ease-out; min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; user-select: none; }
+	.tomato-grid .big-tomato:active { transform: scale(0.9); }
 </style>
 </head>
 <body>
@@ -10694,24 +10692,21 @@ function showTomatoGarden(initialTab) {
   }
 
   
-function _toggleBigTomato(el, idx) {
-  var wrap = document.getElementById('_btWrap_' + idx);
-  if (!wrap) return;
-  var existing = wrap.querySelector('.small-group');
-  if (existing) {
-    existing.remove();
-    el.style.display = '';
-    return;
+function _toggleBigTomato(idx) {
+  var el = document.getElementById('_bigT_' + idx);
+  if (!el) return;
+  if (el._expanded) {
+    el.innerHTML = '🍅';
+    el._expanded = false;
+    el.title = '点击展开小番茄';
+  } else {
+    var h = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;font-size:16px">';
+    for (var i = 0; i < 10; i++) { h += '<span>🍅</span>'; }
+    h += '</div>';
+    el.innerHTML = h;
+    el._expanded = true;
+    el.title = '点击收起';
   }
-  var sg = document.createElement('div');
-  sg.className = 'small-group';
-  for (var i = 0; i < 10; i++) {
-    var sp = document.createElement('span');
-    sp.textContent = '🍅';
-    sg.appendChild(sp);
-  }
-  wrap.appendChild(sg);
-  el.style.display = 'none';
 }
 function renderGardenContent() {
     var totalHarvested = (appData.settings.tomatoGarden || 0) + (appData.settings.tomatoSpent || 0);
@@ -10727,10 +10722,9 @@ function renderGardenContent() {
       var smallCount = totalHarvested % 10;
       h += '<div class="tomato-field">';
       h += '<div class="tomato-grid" id="_tomatoFieldGrid">';
-      // 大番茄
+      // 大番茄（点击展开/收起）
       for (var b = 0; b < bigCount; b++) {
-        h += '<span class="big-tomato" onclick="event.stopPropagation();_toggleBigTomato(this,' + b + ')" title="点击展开小番茄">🍅</span>';
-        h += '<span id="_btWrap_' + b + '" style="grid-column:span 2"></span>';
+        h += '<span class="big-tomato" id="_bigT_' + b + '" onclick="event.stopPropagation();_toggleBigTomato(' + b + ')" title="点击展开小番茄">🍅</span>';
       }
       // 剩余小番茄
       for (var s = 0; s < smallCount; s++) {
