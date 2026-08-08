@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v111 · 小阮出品</title>
+<title>挖空背诵工具 v112 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -916,7 +916,7 @@ var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 111;
+var APP_VERSION = 112;
 // ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
 function apiGet(path) {
@@ -2936,7 +2936,7 @@ function mdToTree(mdText) {
     if (!line.trim()) continue;
 
     var hMatch = line.match(/^(#{1,6})\s+(.+)/);
-    var liMatch = line.match(/^(\s*)[-*+•]\s+(.+)/);
+    var liMatch = line.match(/^(\s*)[-*+•◦▪]\s+(.+)/);
     var numMatch = line.match(/^(\s*)(\d+)[\.\)、]\s+(.+)/);
 
     if (hMatch) {
@@ -2952,6 +2952,12 @@ function mdToTree(mdText) {
     } else if (liMatch) {
       // 列表项：缩进越深层级越高，2空格≈1级
       var indent = liMatch[1].length;
+      // 无缩进时，◦=二级符号 → 隐式2空格，▪=三级符号 → 隐式4空格
+      if (indent === 0) {
+        var rawBullet = line.trim().charAt(0);
+        if (rawBullet === '◦') indent = 2;
+        else if (rawBullet === '▪') indent = 4;
+      }
       var text = cleanInline(liMatch[2]);
       var itemLevel = baseLevel + 1 + Math.floor(indent / 2);
       while (stack.length > 1 && stack[stack.length - 1].level >= itemLevel) {
@@ -3032,7 +3038,7 @@ function renderMarkmapFromContent() {
       treeLayout(root);
       var nodes = root.descendants();
       var links = root.links();
-      var dur = isFirst ? 0 : 350;
+      var dur = 0; // 去掉过渡动画，直接展示避免卡顿
 
       // --- 链接 ---
       var link = gRoot.selectAll('.mm-link').data(links, function(d) { return d.target._uid; });
@@ -5733,7 +5739,7 @@ function copyFormatPrompt() {
 
 // ====== 资料页 AI 话术 ======
 function copyZiliaoAIPrompt() {
-  var prompt = '请根据以下内容，帮我生成一份适合做思维导图的学习笔记，严格按以下Markdown格式规则输出：\n\n【格式规则】\n1. 使用 # 表示核心主题（一级标题）\n2. 使用 - 开头表示分支节点（每缩进2个空格，层级深1级）\n3. 需要多层嵌套时，用空格缩进来表示父子关系，例如：\n   - 一级分支\n     - 二级分支（行首2空格）\n       - 三级分支（行首4空格）\n         - 四级分支（行首6空格）\n4. 也可用 ## ### #### 表示大分支的标题层级\n5. 每个节点用简洁的关键词表达，控制在12字以内\n6. 建议控制在5层以内，层级太多会影响阅读\n\n【输出示例】\n# 细胞的结构\n\n- 细胞膜\n  - 控制物质进出\n  - 保护细胞\n  - 选择透过性\n    - 被动运输\n    - 主动运输\n\n- 细胞质\n  - 新陈代谢场所\n  - 含有多种细胞器\n    - 线粒体\n      - 有氧呼吸\n      - 提供能量\n    - 核糖体\n      - 蛋白质合成\n      - 无膜结构\n    - 内质网\n      - 物质运输通道\n\n- 细胞核\n  - 遗传信息库\n  - 控制代谢和遗传\n  - 含有染色体\n    - DNA\n    - 蛋白质\n\n【要求】\n- 只输出整理好的Markdown笔记，不要任何开场白、结束语或额外说明\n- 多用缩进表示逻辑层级，层级结构要清晰\n- 不要使用表格、代码块等复杂语法';
+  var prompt = '请根据以下内容，帮我生成一份适合做思维导图的学习笔记，严格按以下Markdown格式规则输出：\n\n【格式规则】\n1. 使用 # 表示核心主题（一级标题）\n2. 使用 - 开头表示分支节点（每缩进2个空格，层级深1级）\n3. 需要多层嵌套时，用空格缩进来表示父子关系，例如：\n   - 一级分支\n     - 二级分支（行首2空格）\n       - 三级分支（行首4空格）\n         - 四级分支（行首6空格）\n4. 也可用 ## ### #### 表示大分支的标题层级\n5. 每个节点用简洁的关键词表达，控制在12字以内\n6. 建议控制在5层以内，层级太多会影响阅读\n\n【输出示例】\n# 细胞的结构\n\n- 细胞膜\n  - 控制物质进出\n  - 保护细胞\n  - 选择透过性\n    - 被动运输\n    - 主动运输\n\n- 细胞质\n  - 新陈代谢场所\n  - 含有多种细胞器\n    - 线粒体\n      - 有氧呼吸\n      - 提供能量\n    - 核糖体\n      - 蛋白质合成\n      - 无膜结构\n    - 内质网\n      - 物质运输通道\n\n- 细胞核\n  - 遗传信息库\n  - 控制代谢和遗传\n  - 含有染色体\n    - DNA\n    - 蛋白质\n\n【要求】\n- 只输出整理好的Markdown笔记，不要任何开场白、结束语或额外说明\n- 多用缩进表示逻辑层级，层级结构要清晰\n- 必须用 - 加空格缩进表示层级，禁止使用 • ◦ ▪ 等特殊符号代替缩进\n- 不要使用表格、代码块等复杂语法';
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(prompt).then(function() { showToast('📋 AI话术已复制，可粘贴到豆包/AI生成笔记'); });
   } else {
@@ -10495,7 +10501,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v111</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v112</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
