@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v114 · 小阮出品</title>
+<title>挖空背诵工具 v115 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -916,7 +916,7 @@ var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 114;
+var APP_VERSION = 115;
 // ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
 function apiGet(path) {
@@ -3094,11 +3094,27 @@ function renderMarkmapFromContent() {
         .attr('x', 0)
         .text(function(d) { return d.data.content; });
 
+      var _mmClickTimer = null;
       nodeMerge.on('click', function(event, d) {
         event.stopPropagation();
-        if (d.children) { d._children = d.children; d.children = null; }
-        else if (d._children) { d.children = d._children; d._children = null; }
-        update(d, false);
+        if (d.depth === 0) {
+          // 根节点：单击直接编辑
+          startEditMindmapNode(d, this);
+          return;
+        }
+        if (_mmClickTimer) { clearTimeout(_mmClickTimer); _mmClickTimer = null; return; }
+        _mmClickTimer = setTimeout(function() {
+          _mmClickTimer = null;
+          if (d.children) { d._children = d.children; d.children = null; }
+          else if (d._children) { d.children = d._children; d._children = null; }
+          update(d, false);
+        }, 280);
+      });
+
+      nodeMerge.on('dblclick', function(event, d) {
+        event.stopPropagation();
+        if (_mmClickTimer) { clearTimeout(_mmClickTimer); _mmClickTimer = null; }
+        startEditMindmapNode(d, this);
       });
 
       root.each(function(d) { d.x0 = d.x; d.y0 = d.y; });
@@ -3132,6 +3148,71 @@ function renderMarkmapFromContent() {
     console.error('Mindmap render error:', e);
     container.innerHTML = '<div style="text-align:center;padding:30px"><p style="color:var(--danger);margin-bottom:12px">⚠️ 导图渲染失败：' + escapeHtml(e.message || '未知错误') + '</p><button onclick="switchToMindMap()" style="padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px">🔄 重试</button><p style="font-size:11px;color:var(--text-tertiary);margin-top:8px">如持续失败，请检查笔记内容是否包含特殊字符</p></div>';
   }
+}
+
+// ====== 双击编辑导图节点 ======
+function startEditMindmapNode(d, nodeEl) {
+  var container = document.getElementById('zlMindMapTarget');
+  if (!container) return;
+  var svg = container.querySelector('svg');
+  if (!svg) return;
+
+  var svgRect = svg.getBoundingClientRect();
+  var textEl = d3.select(nodeEl).select('text').node();
+  if (!textEl) return;
+  var textRect = textEl.getBoundingClientRect();
+
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.value = d.data.content;
+  input.style.cssText = 'position:absolute;' +
+    'left:' + (textRect.left - svgRect.left - 6) + 'px;' +
+    'top:' + (textRect.top - svgRect.top - 3) + 'px;' +
+    'min-width:' + Math.max(textRect.width + 24, 120) + 'px;' +
+    'height:' + Math.max(textRect.height + 6, 26) + 'px;' +
+    'font-size:13px;border:2px solid #4A90D9;border-radius:4px;' +
+    'padding:2px 8px;z-index:100;background:#fff;' +
+    'font-family:inherit;outline:none;' +
+    'box-shadow:0 0 8px rgba(74,144,217,0.35);' +
+    'box-sizing:border-box;';
+
+  container.style.position = 'relative';
+  container.appendChild(input);
+  input.focus();
+  input.select();
+
+  var oldText = d.data.content;
+  function finishEdit() {
+    var newText = input.value.trim();
+    input.remove();
+    if (!newText || newText === oldText) return;
+
+    // 更新树节点
+    d.data.content = newText;
+
+    // 回写到笔记原文
+    if (typeof _zlNoteContent !== 'undefined' && _zlNoteContent) {
+      var escaped = oldText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // 尝试匹配为标题行
+      var re = new RegExp('^(#{0,6}\\s*)' + escaped + '\\s*$', 'm');
+      if (re.test(_zlNoteContent)) {
+        _zlNoteContent = _zlNoteContent.replace(re, '$1' + newText);
+      } else {
+        // 普通文本替换（首次出现）
+        _zlNoteContent = _zlNoteContent.replace(oldText, newText);
+      }
+      if (typeof saveEditorState === 'function') saveEditorState();
+    }
+
+    // 重新渲染
+    renderMarkmapFromContent();
+  }
+
+  input.addEventListener('blur', finishEdit);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { input.value = oldText; input.blur(); }
+  });
 }
 
 // ====== 图库 ======
@@ -10510,7 +10591,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v114</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v115</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
