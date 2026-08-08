@@ -1,1 +1,1 @@
-{"version":131,"message":"v131: 修复检查更新旧SW残留+location.reload废弃问题"}
+{"version":132,"message":"v132: 改用dataURL直接下载+alert弹窗诊断导出错误"}

@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v131 · 小阮出品</title>
+<title>挖空背诵工具 v132 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -916,7 +916,7 @@ var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 131;
+var APP_VERSION = 132;
 // ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
 function apiGet(path) {
@@ -3549,43 +3549,48 @@ function drawMindmapData(ctx, data) {
   }
 }
 
-// ====== Canvas 导出辅助：toBlob + toDataURL 兜底 ======
+// ====== Canvas 导出辅助：dataURL 直接下载（不经过 Blob） ======
 function _canvasDownload(canvas, filename, successMsg) {
-  function doDownload(blob) {
-    if (!blob) {
-      // Safari/移动端有时 toBlob 返回 null，用 toDataURL 兜底
-      try {
-        var dataUrl = canvas.toDataURL('image/png');
-        if (!dataUrl || dataUrl.length < 100) { showToast('导出失败: 无法生成图片数据'); return; }
-        var parts = dataUrl.split(',');
-        var mime = (parts[0] && parts[0].match(/:(.*?);/)) ? parts[0].match(/:(.*?);/)[1] : 'image/png';
-        var binary = atob(parts[1]);
-        var bytes = new Uint8Array(binary.length);
-        for (var bi = 0; bi < binary.length; bi++) bytes[bi] = binary.charCodeAt(bi);
-        blob = new Blob([bytes], {type: mime});
-      } catch(de) {
-        console.error('导出toDataURL兜底失败:', de);
-        showToast('导出失败: ' + (de.message || '未知错误'));
-        return;
-      }
-      if (!blob) { showToast('导出失败: 无法生成图片文件'); return; }
-    }
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
-    showToast(successMsg);
-  }
+  // 优先尝试 toBlob（异步，内存友好）
   try {
-    canvas.toBlob(doDownload, 'image/png');
+    canvas.toBlob(function(blob) {
+      if (blob && blob.size > 0) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
+        showToast(successMsg);
+      } else {
+        // toBlob 失败 → 走 toDataURL
+        _canvasDataURLDownload(canvas, filename, successMsg);
+      }
+    }, 'image/png');
   } catch(be) {
-    console.error('导出toBlob异常:', be);
-    // 直接走 toDataURL 兜底
-    canvas.toBlob = null; // 防止递归
-    doDownload(null);
+    // toBlob 抛异常 → 走 toDataURL
+    _canvasDataURLDownload(canvas, filename, successMsg);
   }
+}
+
+function _canvasDataURLDownload(canvas, filename, successMsg) {
+  var dataUrl = null;
+  // 先试 png
+  try { dataUrl = canvas.toDataURL('image/png'); } catch(e1) {}
+  // png 失败换 jpeg
+  if (!dataUrl || dataUrl.length < 200) {
+    try { dataUrl = canvas.toDataURL('image/jpeg', 0.92); } catch(e2) {}
+  }
+  if (!dataUrl || dataUrl.length < 200) {
+    alert('导出诊断：toDataURL 返回空，Canvas尺寸=' + canvas.width + 'x' + canvas.height);
+    showToast('导出失败：无法生成图片');
+    return;
+  }
+  var a = document.createElement('a');
+  a.href = dataUrl; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  showToast(successMsg);
 }
 
 // ====== 导出分支 ======
@@ -3650,7 +3655,7 @@ function exportMindmapBranch(d) {
     drawMindmapData(ctx, data);
 
     _canvasDownload(canvas, (_zlNoteTitle || '思维导图') + '_分支_' + (d.data.content||'').slice(0, 15) + '.png', '✅ 分支已导出');
-  } catch(e) { console.error('导出分支失败:', e); showToast('导出失败: ' + (e.message || '未知错误')); }
+  } catch(e) { console.error('导出分支失败:', e); alert('分支导出错误:\n' + (e.message || String(e))); showToast('导出失败'); }
 }
 
 // ====== 图库 ======
@@ -3984,7 +3989,7 @@ function exportMindMapPNG() {
     drawMindmapData(ctx, data);
 
     _canvasDownload(canvas, (_zlNoteTitle || '思维导图') + '.png', '✅ 导图已导出');
-  } catch(e) { console.error('导出视图失败:', e); showToast('导出失败: ' + (e.message || '未知错误')); }
+  } catch(e) { console.error('导出视图失败:', e); alert('视图导出错误:\n' + (e.message || String(e))); showToast('导出失败'); }
 }
 
 // ====== 导图全屏切换 ======
@@ -4109,7 +4114,7 @@ function exportMindMapFullPNG() {
     drawMindmapData(ctx, data);
 
     _canvasDownload(canvas, (_zlNoteTitle || '思维导图') + '_完整.png', '✅ 完整导图已导出');
-  } catch(e) { console.error('导出完整导图失败:', e); showToast('导出失败: ' + (e.message || '未知错误')); }
+  } catch(e) { console.error('导出完整导图失败:', e); alert('导出全部错误:\n' + (e.message || String(e))); showToast('导出失败'); }
 }
 
 // Esc 退出全屏
@@ -11163,7 +11168,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v131</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v132</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
