@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v132 · 小阮出品</title>
+<title>挖空背诵工具 v144 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -916,7 +916,7 @@ var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 132;
+var APP_VERSION = 144;
 // ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
 function apiGet(path) {
@@ -1109,20 +1109,27 @@ function activateCode(input) {
         var entry = codes[hash];
         if (!entry) { return showToast('❌ 无效的激活码'); }
         if (entry.status === 'revoked') { return showToast('❌ 此激活码已被撤销'); }
-        var now = Date.now();
-        var expires = now + 370 * 86400000; // ~1年
-        appData.activation = { tier: entry.tier, codeHash: hash, activatedAt: now, expires: expires, _trialUsedBasic: (appData.activation||{})._trialUsedBasic||false, _trialUsedPro: (appData.activation||{})._trialUsedPro||false, _isTrial: false, _trialExpires: null, _trialStarted: null };
-        saveData(appData);
-        if (window._trialExpiryTimer) { clearInterval(window._trialExpiryTimer); window._trialExpiryTimer = null; }
-        if (window._trialCountdownTimer) { clearInterval(window._trialCountdownTimer); window._trialCountdownTimer = null; }
-        showActivationSuccess(TIER_NAMES[entry.tier], expires);
+        // 调用后端检查激活次数（10次上限）
+        apiPost('/activate', { codeHash: hash })
+          .then(function(ar) {
+            if (!ar.success) { showToast('❌ ' + (ar.error || '激活失败')); return; }
+            var now = Date.now();
+            var expires = now + 370 * 86400000; // ~1年
+            appData.activation = { tier: entry.tier, codeHash: hash, activatedAt: now, expires: expires, _trialUsedBasic: (appData.activation||{})._trialUsedBasic||false, _trialUsedPro: (appData.activation||{})._trialUsedPro||false, _isTrial: false, _trialExpires: null, _trialStarted: null };
+            saveData(appData);
+            if (window._trialExpiryTimer) { clearInterval(window._trialExpiryTimer); window._trialExpiryTimer = null; }
+            if (window._trialCountdownTimer) { clearInterval(window._trialCountdownTimer); window._trialCountdownTimer = null; }
+            showActivationSuccess(TIER_NAMES[entry.tier], expires, ar.remaining, ar.maxUses);
+          })
+          .catch(function() { showToast('❌ 验证服务暂时不可用，请确保网络连接正常'); });
       })
       .catch(function() { showToast('❌ 验证服务暂时不可用，请确保网络连接正常'); });
   });
 }
 
-function showActivationSuccess(tierName, expires) {
+function showActivationSuccess(tierName, expires, remaining, maxUses) {
   var expiresStr = expires ? '到期：' + new Date(expires).toLocaleDateString('zh-CN') : '永久有效';
+  var usesStr = (maxUses && maxUses < 999) ? '<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:4px">此激活码还可使用 <b>' + remaining + '</b> / ' + maxUses + ' 次</div>' : '';
   var ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;padding:16px';
   ov.addEventListener('click', function(e) { if (e.target === ov) { ov.remove(); switchTab('settings'); } });
@@ -1130,8 +1137,9 @@ function showActivationSuccess(tierName, expires) {
     '<div style="font-size:60px;margin-bottom:16px">🎉</div>' +
     '<div style="font-size:20px;font-weight:800;margin-bottom:8px;color:var(--text)">升级成功！</div>' +
     '<div style="font-size:15px;color:var(--text-secondary);margin-bottom:4px">当前版本：<b>' + tierName + '</b></div>' +
-    '<div style="font-size:13px;color:var(--text-tertiary);margin-bottom:20px">' + expiresStr + '</div>' +
-    '<button style="width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;min-height:44px" onclick="var ov=this.closest(&#39;div&#39;).parentElement;ov.remove();switchTab(&#39;settings&#39;)">开始使用</button>' +
+    '<div style="font-size:13px;color:var(--text-tertiary);margin-bottom:4px">' + expiresStr + '</div>' +
+    usesStr +
+    '<button style="width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;min-height:44px;margin-top:16px" onclick="var ov=this.closest(&#39;div&#39;).parentElement;ov.remove();switchTab(&#39;settings&#39;)">开始使用</button>' +
     '</div>';
   document.body.appendChild(ov);
 }
@@ -3462,20 +3470,7 @@ function addChildMindmapNode(d) {
 // ====== Canvas 原生绘制辅助（不依赖 SVG→Image）======
 function collectMindmapData(gRoot, filterUids) {
   var nodes = [];
-  var links = [];
-
-  // 收集链接
-  var allLinks = gRoot.querySelectorAll('path.mm-link');
-  for (var i = 0; i < allLinks.length; i++) {
-    var p = allLinks[i];
-    try {
-      var ld = d3.select(p).datum();
-      if (filterUids && (!ld || !filterUids[ld.source._uid] || !filterUids[ld.target._uid])) continue;
-      var d = p.getAttribute('d');
-      var m = d.match(/M\s*([\d.-]+)[,\s]+([\d.-]+)\s*C\s*([\d.-]+)[,\s]+([\d.-]+)\s*([\d.-]+)[,\s]+([\d.-]+)\s*([\d.-]+)[,\s]+([\d.-]+)/);
-      if (m) links.push({x1:+m[1],y1:+m[2],cx1:+m[3],cy1:+m[4],cx2:+m[5],cy2:+m[6],x2:+m[7],y2:+m[8]});
-    } catch(e) {}
-  }
+  var d3Refs = [];
 
   // 收集节点
   var allNodes = gRoot.querySelectorAll('g.mm-node');
@@ -3485,13 +3480,15 @@ function collectMindmapData(gRoot, filterUids) {
       var nd = d3.select(ng).datum();
       if (filterUids && (!nd || !filterUids[nd._uid])) continue;
       var tr = ng.getAttribute('transform') || '';
-      var tm = tr.match(/translate\(([^,]+),([^)]+)\)/);
-      if (!tm) continue;
+      var tm = tr.match(/translate\(\s*([\d.-]+)\s*[, ]\s*([\d.-]+)\s*\)/);
+      var cx = 0, cy = 0;
+      if (tm) { cx = parseFloat(tm[1]); cy = parseFloat(tm[2]); }
+      else if (tr !== '') continue; // Safari把translate(0,0)优化成空串，空串默认0,0
       var r = ng.querySelector('rect');
       var t = ng.querySelector('text');
       if (!r || !t) continue;
       nodes.push({
-        x: parseFloat(tm[1]), y: parseFloat(tm[2]),
+        x: cx, y: cy,
         fill: r.getAttribute('fill') || '#4A90D9',
         w: parseFloat(r.getAttribute('width')) || 36,
         h: parseFloat(r.getAttribute('height')) || 22,
@@ -3500,8 +3497,27 @@ function collectMindmapData(gRoot, filterUids) {
         bold: t.getAttribute('font-weight') === 'bold',
         _uid: nd ? nd._uid : -1
       });
+      d3Refs.push(nd);
     } catch(e) {}
   }
+
+  // 从节点父子关系生成连线（d3.linkHorizontal 公式）
+  var uidToIdx = {};
+  for (var k = 0; k < nodes.length; k++) { uidToIdx[nodes[k]._uid] = k; }
+
+  var links = [];
+  for (var k = 0; k < nodes.length; k++) {
+    var nd = d3Refs[k];
+    if (!nd || !nd.parent) continue;
+    var puid = nd.parent._uid;
+    if (uidToIdx[puid] === undefined) continue;
+    if (filterUids && !filterUids[puid]) continue;
+    var sx = nd.parent.y, sy = nd.parent.x;
+    var tx = nd.y, ty = nd.x;
+    var midX = (sx + tx) / 2;
+    links.push({ x1:sx, y1:sy, cx1:midX, cy1:sy, cx2:midX, cy2:ty, x2:tx, y2:ty });
+  }
+
   return { nodes: nodes, links: links };
 }
 
@@ -3520,7 +3536,7 @@ function drawMindmapData(ctx, data) {
     ctx.stroke();
   }
   // 绘制节点
-  ctx.font = '13px -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
+  var baseFont = '13px -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
   ctx.textBaseline = 'middle';
   for (var j = 0; j < data.nodes.length; j++) {
     var n = data.nodes[j];
@@ -3543,8 +3559,9 @@ function drawMindmapData(ctx, data) {
       ctx.arcTo(rx, ry, rx + rr, ry, rr);
     }
     ctx.fill();
-    // 文字
+    // 文字（根节点加粗）
     ctx.fillStyle = '#fff';
+    ctx.font = (n.bold ? 'bold ' : '') + baseFont;
     ctx.fillText(n.label, n.x, n.y);
   }
 }
@@ -3582,7 +3599,6 @@ function _canvasDataURLDownload(canvas, filename, successMsg) {
     try { dataUrl = canvas.toDataURL('image/jpeg', 0.92); } catch(e2) {}
   }
   if (!dataUrl || dataUrl.length < 200) {
-    alert('导出诊断：toDataURL 返回空，Canvas尺寸=' + canvas.width + 'x' + canvas.height);
     showToast('导出失败：无法生成图片');
     return;
   }
@@ -3616,7 +3632,7 @@ function exportMindmapBranch(d) {
     // 保存并重置 zoom
     var currentZoom = d3.zoomTransform(svg);
     var zoom = d3.zoom();
-    svg.call(zoom.transform, d3.zoomIdentity);
+    d3.select(svg).call(zoom.transform, d3.zoomIdentity);
     var gTransform = gRoot.getAttribute('transform') || '';
     gRoot.setAttribute('transform', '');
 
@@ -3624,7 +3640,7 @@ function exportMindmapBranch(d) {
     var data = collectMindmapData(gRoot, branchUids);
     if (data.nodes.length === 0) {
       gRoot.setAttribute('transform', gTransform);
-      svg.call(zoom.transform, currentZoom);
+      d3.select(svg).call(zoom.transform, currentZoom);
       showToast('分支内容为空'); return;
     }
 
@@ -3638,13 +3654,13 @@ function exportMindmapBranch(d) {
 
     // 恢复 zoom
     gRoot.setAttribute('transform', gTransform);
-    svg.call(zoom.transform, currentZoom);
+    d3.select(svg).call(zoom.transform, currentZoom);
 
     var padding = 30;
     var fullW = Math.ceil(maxX - minX + padding * 2);
     var fullH = Math.ceil(maxY - minY + padding * 2);
-    var MAX_DIM = 4096;
-    var scale = 6;
+    var MAX_DIM = 6144;
+    var scale = 8;
     while ((fullW * scale > MAX_DIM || fullH * scale > MAX_DIM) && scale > 1) { scale--; }
 
     var canvas = document.createElement('canvas');
@@ -3655,7 +3671,7 @@ function exportMindmapBranch(d) {
     drawMindmapData(ctx, data);
 
     _canvasDownload(canvas, (_zlNoteTitle || '思维导图') + '_分支_' + (d.data.content||'').slice(0, 15) + '.png', '✅ 分支已导出');
-  } catch(e) { console.error('导出分支失败:', e); alert('分支导出错误:\n' + (e.message || String(e))); showToast('导出失败'); }
+  } catch(e) { console.error(e); showToast('导出失败'); }
 }
 
 // ====== 图库 ======
@@ -3967,8 +3983,8 @@ function exportMindMapPNG() {
     var w = rect.width || 800;
     var h = rect.height || 600;
 
-    var MAX_DIM = 4096;
-    var scale = 6;
+    var MAX_DIM = 6144;
+    var scale = 8;
     while ((w * scale > MAX_DIM || h * scale > MAX_DIM) && scale > 1) { scale--; }
 
     var currentZoom = d3.zoomTransform(svg);
@@ -3989,7 +4005,7 @@ function exportMindMapPNG() {
     drawMindmapData(ctx, data);
 
     _canvasDownload(canvas, (_zlNoteTitle || '思维导图') + '.png', '✅ 导图已导出');
-  } catch(e) { console.error('导出视图失败:', e); alert('视图导出错误:\n' + (e.message || String(e))); showToast('导出失败'); }
+  } catch(e) { console.error(e); showToast('导出失败'); }
 }
 
 // ====== 导图全屏切换 ======
@@ -4076,7 +4092,7 @@ function exportMindMapFullPNG() {
     // 保存并重置 zoom
     var currentZoom = d3.zoomTransform(svg);
     var zoom = d3.zoom();
-    svg.call(zoom.transform, d3.zoomIdentity);
+    d3.select(svg).call(zoom.transform, d3.zoomIdentity);
     var gTransform = gRoot.getAttribute('transform') || '';
     gRoot.setAttribute('transform', '');
 
@@ -4086,7 +4102,7 @@ function exportMindMapFullPNG() {
 
     if (!bbox || bbox.width === 0 || bbox.height === 0) {
       gRoot.setAttribute('transform', gTransform);
-      svg.call(zoom.transform, currentZoom);
+      d3.select(svg).call(zoom.transform, currentZoom);
       showToast('导图内容为空'); return;
     }
 
@@ -4095,14 +4111,14 @@ function exportMindMapFullPNG() {
 
     // 恢复 zoom
     gRoot.setAttribute('transform', gTransform);
-    svg.call(zoom.transform, currentZoom);
+    d3.select(svg).call(zoom.transform, currentZoom);
 
     var padding = 40;
     var fullW = Math.ceil(bbox.width + padding * 2);
     var fullH = Math.ceil(bbox.height + padding * 2);
 
-    var MAX_DIM = 4096;
-    var scale = 6;
+    var MAX_DIM = 6144;
+    var scale = 8;
     while ((fullW * scale > MAX_DIM || fullH * scale > MAX_DIM) && scale > 1) { scale--; }
 
     var canvas = document.createElement('canvas');
@@ -4114,7 +4130,7 @@ function exportMindMapFullPNG() {
     drawMindmapData(ctx, data);
 
     _canvasDownload(canvas, (_zlNoteTitle || '思维导图') + '_完整.png', '✅ 完整导图已导出');
-  } catch(e) { console.error('导出完整导图失败:', e); alert('导出全部错误:\n' + (e.message || String(e))); showToast('导出失败'); }
+  } catch(e) { console.error(e); showToast('导出失败'); }
 }
 
 // Esc 退出全屏
@@ -9520,9 +9536,10 @@ const MANUALS = {
 <div>2. 务必定期 <b>复制备份码</b> 保存到安全地方（微信收藏/备忘录）</div>
 <div>3. 换手机/换浏览器：粘贴备份码一键恢复</div>
 <div>4. 试用密码 <code>5826</code> 可体验但不能导入；永久密码找 <b>小红书2750492576（说明购买永久）低价</b></div>
-<div>5. 导入前先备份！导入直接写入题库不可撤销</div>
-<div>6. 同一存储键 <b>不同版本共享数据</b>，更新 HTML 版本内容不丢</div>
-<div>7. 导入文本如果含 <b>tab/特殊空白符</b> 可能导致拆分异常，建议用空格分隔</div>
+<div>5. 每个激活码仅可激活 <b>10 次</b>，超过自动永久失效（管理码不限）</div>
+<div>6. 导入前先备份！导入直接写入题库不可撤销</div>
+<div>7. 同一存储键 <b>不同版本共享数据</b>，更新 HTML 版本内容不丢</div>
+<div>8. 导入文本如果含 <b>tab/特殊空白符</b> 可能导致拆分异常，建议用空格分隔</div>
 
 <div style="font-weight:700;margin-top:12px;color:var(--success)">▎💡 小技巧</div>
 <div>• 睡前暗色模式 + 低亮度刷题，护眼且记忆效果好</div>
@@ -9539,18 +9556,17 @@ const MANUALS = {
 <div><b>刷题</b>：填完自动诊断，回车手动诊断，⭐收藏 💡口诀</div>
 <div><b>错题</b>：答错自动进错题本，底部标签可复习</div>
 <div><b>备份</b>：设置 → 复制备份码 → 粘贴到别处保存</div>
-<div><b>密码</b>：试用 <code>5826</code>，永久找 <b>小红书2750492576（说明购买永久）低价</b></div>
-</div>`},
-
+<div><b>密码</b>：试用 <code>5826</code>，永久找 <b>小红书2750492576（说明购买永久）低价</b> · 激活码限激活10次</div>`},
   warn: { title: '⚠️ 注意点说明书', content: `<div style="line-height:2">
 <div>1. 数据在浏览器 localStorage，清缓存/卸载浏览器/<b>隐私模式会丢</b></div>
 <div>2. <b>定期复制备份码</b>保存，换设备粘贴恢复</div>
 <div>3. 试用密码 <b>5826</b>，可体验不能导入；永久密码找 <b>小红书2750492576（说明购买永久）低价</b></div>
-<div>4. 导入前先备份，导入不可撤销</div>
-<div>5. 更新 HTML 版本数据不丢（同存储键），放心替换文件</div>
-<div>6. 导入文本含 tab 或特殊空白可能导致拆分异常</div>
-<div>7. 用 <code>【关键词】</code> 标注可跳过自动挖空，手动控制挖空位置</div>
-<div style="color:#e91e63">8. 🆕 导入支持 <code>#题目</code> <code>%答案</code> 格式，多行答案每行一个%</div>
+<div>4. 每个激活码限激活 <b>10 次</b>（管理码不限），超次自动永久失效</div>
+<div>5. 导入前先备份，导入不可撤销</div>
+<div>6. 更新 HTML 版本数据不丢（同存储键），放心替换文件</div>
+<div>7. 导入文本含 tab 或特殊空白可能导致拆分异常</div>
+<div>8. 用 <code>【关键词】</code> 标注可跳过自动挖空，手动控制挖空位置</div>
+<div style="color:#e91e63">9. 🆕 导入支持 <code>#题目</code> <code>%答案</code> 格式，多行答案每行一个%</div>
 </div>`},
 
   key: { title: '⭐ 重点说明书', content: `<div style="line-height:2">
@@ -9565,7 +9581,7 @@ const MANUALS = {
 <div style="margin-top:8px">✏️ <b>手动挖空</b></div>
 <div>• 答案中写 <code>【要挖的词】</code>，导入时自动识别</div>
 <div style="margin-top:8px">🔐 <b>密码</b></div>
-<div>• 试用 <code>5826</code> / 永久找 <b>小红书2750492576（说明购买永久）低价</b></div>
+<div>• 试用 <code>5826</code> / 永久找 <b>小红书2750492576（说明购买永久）低价</b> · 每个激活码限激活10次</div>
 </div>`},
 
   tips: { title: '💡 实操建议', content: `<div style="max-height:65vh;overflow-y:auto;line-height:1.9">
@@ -9820,7 +9836,7 @@ function showManualMenu() {
           '<p style="margin:0 0 6px"><b>🎨 主题颜色</b> — 10 种配色可选（青绿/浅紫/浅蓝/玫红/粉色/浅绿/浅黄/黑白/米黄/豆沙绿）。</p>' +
           '<p style="margin:0 0 6px"><b>🔤 字体大小</b> — 拖动滑块调整全局字号（14–24px）。</p>' +
           '<p style="margin:0 0 6px"><b>🔊 语音朗读</b> — 可选声音、语速（0.5-2x）、模式（仅读一遍/循环朗读/自动下一题/每题三遍）。</p>' +
-          '<p style="margin:0 0 6px"><b>🔄 检查更新</b> — 清除缓存并刷新页面，获取最新版本。不丢数据。</p>' +
+          '<p style="margin:0 0 6px"><b>🔄 检查更新</b> — 查看更新内容并手动更新。更新前请先备份。</p>' +
           '<p style="margin:0"><b>🗑️ 删除所有数据</b> — 清空全部题库和设置，不可恢复。操作前务必先导出备份。</p>' +
         '</div>' +
       '</div>' +
@@ -11168,8 +11184,8 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v132</div></div></div>' +
-      '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">点击清除缓存并刷新，获取最新版本</div></div><div style="display:flex;align-items:center">→</div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v144</div></div></div>' +
+      '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态
   var collapsed = s.collapsedSections || {};
@@ -12821,12 +12837,14 @@ function renderWhackAMole(container) {
 }
 
 // 检查更新红点：fetch version.json 对比本地版本
+var _pendingUpdate = null;
 function checkForUpdateDot() {
   try {
     fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
       .then(function(r) { if (r.ok) return r.json(); throw new Error('no-version-file'); })
       .then(function(data) {
         if (data && data.version && data.version > APP_VERSION) {
+          _pendingUpdate = data;
           var dot = document.getElementById('updateDot');
           if (dot) { dot.style.display = 'inline-block'; dot.title = '有新版本 v' + data.version; }
         }
@@ -12835,29 +12853,43 @@ function checkForUpdateDot() {
   } catch(e) {}
 }
 
-	function checkUpdate() {
-  showToast('正在清除缓存...');
-  // 1. 注销所有旧 Service Worker（防止旧 SW 继续拦截请求）
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(regs) {
-      regs.forEach(function(reg) { reg.unregister(); });
-    });
+function checkUpdate() {
+  if (!_pendingUpdate || !_pendingUpdate.version || _pendingUpdate.version <= APP_VERSION) {
+    showToast('✅ 已是最新版本 v' + APP_VERSION);
+    return;
   }
-  // 2. 清除所有 Cache Storage
-  if ('caches' in window) {
-    caches.keys().then(function(names) {
-      return Promise.all(names.map(function(name) { return caches.delete(name); }));
-    }).then(function() {
-      // 缓存清完后再刷新，加随机参数强制跳过 HTTP 缓存
-      setTimeout(function() {
-        location.replace(location.origin + location.pathname + '?_t=' + Date.now());
-      }, 300);
-    });
-  } else {
-    setTimeout(function() {
-      location.replace(location.origin + location.pathname + '?_t=' + Date.now());
-    }, 300);
+  var data = _pendingUpdate;
+  var changesHtml = '';
+  if (data.changes && data.changes.length) {
+    changesHtml = '<div style="font-size:13px;color:var(--text);text-align:left;margin-bottom:16px;line-height:1.7"><b>📋 本次更新：</b><br>' +
+      data.changes.map(function(c) { return '· ' + escapeHtml(c); }).join('<br>') + '</div>';
   }
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.innerHTML = '<div style="background:var(--bg-card);border-radius:16px;padding:28px 22px;text-align:center;max-width:380px;width:100%">' +
+    '<div style="font-size:48px;margin-bottom:12px">🔴</div>' +
+    '<div style="font-size:18px;font-weight:800;margin-bottom:6px;color:var(--text)">发现新版本 v' + data.version + '</div>' +
+    '<div style="font-size:13px;color:var(--text-tertiary);margin-bottom:12px">当前版本：v' + APP_VERSION + '</div>' +
+    changesHtml +
+    (data.risk ? '<div style="font-size:12px;color:#c0392b;background:#fdecea;padding:10px 12px;border-radius:8px;margin-bottom:8px;text-align:left;line-height:1.6"><b>🔴 ' + escapeHtml(data.risk) + '</b></div>' :
+      '<div style="font-size:12px;color:#27ae60;padding:4px 0;margin-bottom:8px">🟢 ✅ 本次为常规更新（无责）</div>') +
+    '<div style="font-size:12px;color:#e67e22;background:var(--warning-light);padding:10px 12px;border-radius:8px;margin-bottom:18px;text-align:left;line-height:1.6">' +
+      '<b>⚠️ 更新前请务必：</b><br>设置 → 复制备份码 → 保存到微信收藏或备忘录<br>以防更新后打不开、题库丢失</div>' +
+    '<div style="display:flex;gap:10px">' +
+      '<button id="btnUpdateLater" style="flex:1;padding:11px;background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer;min-height:44px">稍后再说</button>' +
+      '<button id="btnUpdateNow" style="flex:1;padding:11px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;min-height:44px">立即更新</button>' +
+    '</div></div>';
+  document.body.appendChild(ov);
+  document.getElementById('btnUpdateLater').onclick = function() { ov.remove(); };
+  document.getElementById('btnUpdateNow').onclick = function() {
+    ov.remove();
+    showToast('正在更新...');
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        return Promise.all(names.map(function(name) { return caches.delete(name); }));
+      }).then(function() { window.location.reload(); });
+    } else { window.location.reload(); }
+  };
 }
 
 function updateDensitySetting(val, el) {

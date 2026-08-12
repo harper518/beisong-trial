@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数学科三选择题 · 备考学习系统 v1.6</title>
+<meta name="description" content="教资初中数学科三选择题：隐藏考点揭示+知识精讲+例题巩固+10套真题+预测+蒙题">
+<style>
+:root { --bg:#f8fafc; --card:#ffffff; --border:#e2e8f0; --text:#1e293b; --text2:#64748b; --accent:#0284c7; --green:#16a34a; --yellow:#b45309; --red:#dc2626; --purple:#7c3aed; --pink:#db2777; --radius:12px; }
+body.dark { --bg:#0f172a; --card:#1e293b; --border:#334155; --text:#e2e8f0; --text2:#94a3b8; --accent:#38bdf8; --green:#4ade80; --yellow:#fbbf24; --red:#ef4444; --purple:#a78bfa; --pink:#f472b6; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.7; }
+body.dark .card, body.dark .stat-box, body.dark .flash-card, body.dark .toggle-btn, body.dark .tab, body.dark select { background:var(--card); }
+body.dark .q-block, body.dark .study-def { background:rgba(255,255,255,0.03); }
+body.dark .study-formula { background:rgba(74,222,128,0.08); }
+body.dark .study-mistake, body.dark .foundation-tip { background:rgba(251,191,36,0.06); }
+body.dark .study-example { background:rgba(56,189,248,0.06); }
+body.dark .q-solution { background:rgba(56,189,248,0.05); }
+body.dark .hidden-k-wrap summary { background:rgba(56,189,248,0.04); }
+body.dark .hidden-k-wrap summary:hover { background:rgba(56,189,248,0.08); }
+body.dark .prereq-section { background:rgba(239,68,68,0.05); border-color:rgba(239,68,68,0.2); }
+body.dark .heat-track { background:rgba(255,255,255,0.05); }
+body.dark .tabs { background:var(--bg); }
+body.dark .tab { background:var(--card); }
+.container { max-width:960px; margin:0 auto; padding:16px; }
+h1 { font-size:1.5rem; text-align:center; color:var(--accent); margin:12px 0 4px; }
+.subtitle { text-align:center; color:var(--text2); font-size:0.85rem; margin-bottom:12px; }
+
+.top-bar { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px; flex-wrap:wrap; }
+.toggle-btn { display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:6px 16px; cursor:pointer; font-size:0.85rem; color:var(--text2); min-height:44px; transition:all .2s; }
+.toggle-btn.active { border-color:var(--accent); color:var(--accent); }
+.toggle-btn .dot { width:12px; height:12px; border-radius:50%; background:var(--text2); transition:all .2s; }
+.toggle-btn.active .dot { background:var(--accent); }
+
+.tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:16px; padding:8px 0; }
+.tabs.sticky-sub { position:sticky; top:0; z-index:100; background:var(--bg); }
+.tab { padding:10px 14px; border:1px solid var(--border); border-radius:20px; cursor:pointer; font-size:0.85rem; background:var(--card); color:var(--text2); white-space:nowrap; transition:all .2s; min-height:44px; display:flex; align-items:center; }
+.tab:hover { border-color:var(--accent); color:var(--accent); }
+.tab.active { background:var(--accent); color:#0f172a; border-color:var(--accent); font-weight:600; }
+.panel { display:none; }
+.panel.active { display:block; }
+
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+.card h2 { font-size:1.1rem; color:var(--accent); margin-bottom:12px; }
+.card h3 { font-size:0.95rem; color:var(--text); margin:12px 0 8px; }
+
+.study-section { margin-bottom:20px; }
+.study-def { font-size:0.9rem; color:var(--text); margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border-left:3px solid var(--accent); border-radius:0 8px 8px 0; }
+.study-formula { font-size:0.92rem; color:var(--green); padding:8px 14px; background:rgba(74,222,128,0.08); border-radius:8px; margin:8px 0; font-family:monospace; }
+.study-mistake { font-size:0.83rem; color:var(--yellow); padding:6px 12px; background:rgba(251,191,36,0.06); border-radius:6px; margin:4px 0; }
+.study-mistake::before { content:'⚠️ 易错：'; font-weight:600; }
+.study-example { margin:10px 0; padding:10px 14px; background:rgba(56,189,248,0.06); border-radius:8px; }
+.study-example .ex-q { font-size:0.85rem; color:var(--text); margin-bottom:6px; }
+.study-example .ex-s { font-size:0.82rem; color:var(--green); }
+.study-example .ex-a { font-weight:600; color:var(--accent); }
+body.compact .detail-only { display:none; }
+body.compact .study-def { font-size:0.82rem; padding:6px 10px; }
+body.compact .study-example { padding:6px 10px; }
+
+.topic-nav { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+.topic-nav span { padding:6px 14px; border-radius:16px; cursor:pointer; font-size:0.82rem; border:1px solid var(--border); color:var(--text2); transition:all .2s; min-height:36px; display:flex; align-items:center; }
+.topic-nav span:hover { border-color:var(--accent); color:var(--accent); }
+.topic-nav span.sel { background:var(--accent); color:#0f172a; border-color:var(--accent); font-weight:600; }
+
+/* Prerequisites section */
+.prereq-section { padding:10px 14px; background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2); border-radius:8px; margin-bottom:12px; }
+.prereq-section h4 { font-size:0.85rem; color:var(--red); margin-bottom:6px; }
+.prereq-tier { margin:4px 0; }
+.prereq-tier .tier-label { font-size:0.72rem; padding:1px 6px; border-radius:6px; margin-right:4px; }
+.tier-must { background:rgba(239,68,68,0.2); color:var(--red); }
+.tier-rec { background:rgba(251,191,36,0.2); color:var(--yellow); }
+.tier-basic { background:rgba(56,189,248,0.2); color:var(--accent); }
+.prereq-item { font-size:0.8rem; color:var(--text2); margin:0 4px; }
+.prereq-why { font-size:0.73rem; color:var(--text2); margin-left:12px; opacity:0.7; }
+.foundation-tip { font-size:0.8rem; color:var(--yellow); margin-top:6px; padding:6px 10px; background:rgba(251,191,36,0.06); border-radius:6px; }
+.foundation-tip::before { content:'⚠️ 基础提醒：'; font-weight:600; }
+
+/* Hidden knowledge points */
+.hidden-k-wrap { margin-top:8px; border:1px dashed var(--border); border-radius:8px; overflow:hidden; }
+.hidden-k-wrap summary { padding:8px 12px; cursor:pointer; font-size:0.82rem; color:var(--accent); min-height:44px; display:flex; align-items:center; background:rgba(56,189,248,0.04); user-select:none; }
+.hidden-k-wrap summary:hover { background:rgba(56,189,248,0.08); }
+.hidden-k-wrap summary .hk-count { font-size:0.7rem; color:var(--text2); margin-left:6px; }
+.hk-item { padding:6px 12px; font-size:0.82rem; border-bottom:1px solid rgba(51,65,85,0.3); }
+.hk-item:last-child { border-bottom:none; }
+.hk-prereq { border-left:3px solid var(--red); }
+.hk-technique { border-left:3px solid var(--accent); }
+.hk-trap { border-left:3px solid var(--yellow); }
+.hk-icon { margin-right:4px; }
+.hk-name { font-weight:600; }
+.hk-detail { color:var(--text2); font-size:0.78rem; margin-left:8px; }
+.hk-reminder { font-size:0.75rem; color:var(--yellow); margin-top:2px; margin-left:8px; }
+.hk-reminder::before { content:'⚠️ '; }
+
+.q-block { padding:12px; margin:8px 0; border-left:3px solid var(--border); border-radius:0 8px 8px 0; background:rgba(255,255,255,0.03); }
+.q-block .q-title { font-weight:600; color:var(--accent); margin-bottom:4px; }
+.q-block .q-text { font-size:0.92rem; margin-bottom:8px; }
+.q-block .q-opts { display:grid; grid-template-columns:1fr 1fr; gap:4px; font-size:0.88rem; margin-bottom:8px; }
+.q-block .q-answer { color:var(--green); font-weight:600; font-size:0.9rem; }
+.q-block .q-solution { color:var(--text2); font-size:0.85rem; margin-top:6px; padding:8px; background:rgba(56,189,248,0.05); border-radius:6px; }
+@media (max-width:500px) { .q-opts { grid-template-columns:1fr; } }
+
+.heat-bar { display:flex; align-items:center; gap:8px; margin:6px 0; }
+.heat-bar .heat-label { width:130px; font-size:0.82rem; text-align:right; flex-shrink:0; }
+.heat-bar .heat-track { flex:1; height:24px; background:rgba(255,255,255,0.05); border-radius:12px; overflow:hidden; }
+.heat-bar .heat-fill { height:100%; border-radius:12px; transition:width .5s; }
+
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-bottom:16px; }
+.stat-box { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center; }
+.stat-box .stat-num { font-size:2rem; font-weight:700; color:var(--accent); }
+.stat-box .stat-label { font-size:0.78rem; color:var(--text2); margin-top:4px; }
+
+.flash-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; }
+.flash-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; cursor:pointer; min-height:100px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; transition:all .3s; }
+.flash-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.flash-card .flash-front { font-weight:600; font-size:0.9rem; }
+.flash-card .flash-back { color:var(--accent); font-size:0.82rem; margin-top:6px; display:none; }
+.flash-card.flipped .flash-back { display:block; }
+.flash-card.flipped .flash-front { color:var(--text2); font-size:0.78rem; }
+
+.predict-card { border:2px solid var(--accent); padding:16px; border-radius:var(--radius); margin:8px 0; }
+.predict-card .confidence { font-size:0.8rem; padding:2px 8px; border-radius:8px; }
+.conf-high { background:var(--red); color:#fff; }
+.conf-mid { background:var(--yellow); color:#000; }
+
+.btn { padding:10px 20px; border-radius:20px; border:none; cursor:pointer; font-size:0.9rem; font-weight:600; min-height:44px; transition:all .2s; }
+.btn-accent { background:var(--accent); color:#0f172a; }
+select { padding:10px 16px; border-radius:20px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:0.9rem; min-height:44px; cursor:pointer; }
+
+.guess-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+.guess-table th, .guess-table td { padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); }
+.guess-table th { color:var(--accent); font-size:0.78rem; }
+.guess-table tr:hover { background:rgba(255,255,255,0.03); }
+
+.footer { text-align:center; color:var(--text2); font-size:0.75rem; margin-top:24px; padding:16px; border-top:1px solid var(--border); }
+
+/* 四维精讲 */
+.deep-block { margin-bottom:14px; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.deep-block summary { padding:10px 16px; cursor:pointer; font-size:0.9rem; font-weight:600; min-height:44px; display:flex; align-items:center; gap:6px; background:rgba(56,189,248,0.04); }
+.deep-block summary:hover { background:rgba(56,189,248,0.08); }
+.deep-body { padding:12px 16px; }
+/* Example-driven */
+.ex-step { margin:8px 0; padding:8px 12px; border-radius:8px; font-size:0.85rem; }
+.ex-step.step-review { background:rgba(56,189,248,0.06); border-left:3px solid var(--accent); }
+.ex-step.step-prereq { background:rgba(239,68,68,0.04); border-left:3px solid var(--red); }
+.ex-step.step-calc { background:rgba(74,222,128,0.04); border-left:3px solid var(--green); }
+.ex-step.step-summary { background:rgba(251,191,36,0.06); border-left:3px solid var(--yellow); }
+.ex-step .step-tag { font-size:0.7rem; padding:1px 6px; border-radius:6px; margin-right:6px; }
+.tag-review { background:rgba(56,189,248,0.2); color:var(--accent); }
+.tag-prereq { background:rgba(239,68,68,0.2); color:var(--red); }
+.tag-calc { background:rgba(74,222,128,0.2); color:var(--green); }
+.tag-summary { background:rgba(251,191,36,0.2); color:var(--yellow); }
+.ex-step .foundation-warn { display:block; font-size:0.75rem; color:var(--yellow); margin-top:4px; }
+.ex-step .foundation-warn::before { content:'⚠️ 基础提醒：'; font-weight:600; }
+/* Ladder */
+.ladder-tier { margin:6px 0; padding:8px 12px; border-radius:8px; font-size:0.83rem; }
+.ladder-tier.tier-junior { background:rgba(239,68,68,0.04); }
+.ladder-tier.tier-senior { background:rgba(251,191,36,0.04); }
+.ladder-tier.tier-college { background:rgba(56,189,248,0.04); }
+.ladder-tier.tier-exam { background:rgba(74,222,128,0.04); }
+.ladder-tier .tier-badge { font-size:0.7rem; padding:1px 8px; border-radius:8px; margin-right:6px; font-weight:600; }
+.badge-junior { background:var(--red); color:#fff; }
+.badge-senior { background:var(--yellow); color:#000; }
+.badge-college { background:var(--accent); color:#fff; }
+.badge-exam { background:var(--green); color:#000; }
+/* Compare table */
+.compare-table { width:100%; border-collapse:collapse; font-size:0.82rem; margin:8px 0; }
+.compare-table th, .compare-table td { padding:8px 10px; text-align:left; border:1px solid var(--border); }
+.compare-table th { background:rgba(56,189,248,0.1); color:var(--accent); font-weight:600; font-size:0.78rem; }
+.compare-table td:first-child { font-weight:600; color:var(--text); white-space:nowrap; }
+.compare-table tr:hover td { background:rgba(255,255,255,0.02); }
+.compare-koujue { font-size:0.8rem; color:var(--green); margin-top:6px; padding:6px 10px; background:rgba(74,222,128,0.06); border-radius:6px; }
+.compare-koujue::before { content:'🧠 口诀：'; font-weight:600; }
+/* Flowchart */
+.flow-tree { font-family:monospace; font-size:0.82rem; line-height:1.8; padding:8px 14px; background:rgba(255,255,255,0.02); border-radius:8px; white-space:pre; overflow-x:auto; }
+/* Flow cards (v1.4) */
+.flow-step { display:flex; align-items:flex-start; gap:10px; margin:8px 0; padding:10px 14px; border-radius:10px; background:var(--card); border:1px solid var(--border); }
+.flow-step-num { min-width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0; }
+.flow-step-body { flex:1; font-size:0.85rem; }
+.flow-step-body .fs-action { font-weight:600; color:var(--accent); }
+.flow-step-body .fs-result { color:var(--green); margin-top:2px; }
+.flow-branch { margin:4px 0 4px 16px; padding:6px 10px; border-left:3px solid var(--accent); font-size:0.82rem; background:rgba(56,189,248,0.04); border-radius:0 6px 6px 0; }
+.flow-branch .fb-cond { color:var(--yellow); font-weight:600; }
+.flow-branch .fb-method { color:var(--accent); }
+.flow-branch .fb-ex { color:var(--text2); font-size:0.78rem; }
+.flow-arrow { text-align:center; color:var(--accent); font-size:1.2rem; margin:2px 0; }
+
+/* Tier labels */
+.tier-tag { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.72rem; font-weight:600; margin-right:6px; }
+.tier-tag.tier-junior { background:#fef3c7; color:#92400e; }
+.tier-tag.tier-senior { background:#dbeafe; color:#1e40af; }
+.tier-tag.tier-college { background:#f3e8ff; color:#6b21a8; }
+.tier-tag.tier-exam { background:#fee2e2; color:#991b1b; }
+body.dark .tier-tag.tier-junior { background:rgba(251,191,36,0.2); color:#fbbf24; }
+body.dark .tier-tag.tier-senior { background:rgba(56,189,248,0.2); color:#38bdf8; }
+body.dark .tier-tag.tier-college { background:rgba(167,139,250,0.2); color:#a78bfa; }
+body.dark .tier-tag.tier-exam { background:rgba(248,113,113,0.2); color:#f87171; }
+
+/* Symbol dictionary */
+.symbol-dict { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.symbol-dict .sym-item { padding:8px 14px; background:rgba(56,189,248,0.05); border:1px solid var(--border); border-radius:8px; font-size:0.82rem; min-width:120px; flex:1; }
+.sym-item .sym-sym { font-weight:700; color:var(--accent); font-size:1rem; }
+.sym-item .sym-read { color:var(--text2); font-size:0.78rem; margin-top:2px; }
+
+/* Ladder item with formula */
+.ladder-item { margin:6px 0; padding:8px 10px; border-radius:8px; font-size:0.83rem; background:rgba(255,255,255,0.02); }
+.ladder-item .li-formula { margin:4px 0; padding:4px 10px; font-size:0.9rem; }
+.ladder-item .li-reading { color:var(--text2); font-size:0.78rem; }
+.ladder-item .li-reading::before { content:'🗣️ 读作：'; color:var(--accent); }
+.ladder-item .li-note { margin-top:3px; }
+.ladder-item .li-note::before { content:'💡 '; }
+
+/* Ladder tier example */
+.ladder-ex { margin-top:8px; padding:8px 12px; background:rgba(74,222,128,0.04); border:1px dashed var(--green); border-radius:8px; font-size:0.82rem; }
+
+@media (max-width:600px) {
+  h1 { font-size:1.2rem; }
+  .tabs { gap:3px; }
+  .tab { padding:8px 10px; font-size:0.75rem; }
+  .stat-grid { grid-template-columns:repeat(2,1fr); }
+  .flash-grid { grid-template-columns:1fr 1fr; }
+  .heat-bar .heat-label { width:80px; font-size:0.72rem; }
+  .topic-nav span { padding:5px 10px; font-size:0.75rem; }
+  .compare-table { font-size:0.72rem; }
+  .compare-table th, .compare-table td { padding:4px 6px; }
+}
+</style>
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]},options:{ignoreHtmlClass:'no-mathjax',processHtmlClass:'mathjax'},startup:{typeset:false}};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';document.head.appendChild(s);"></script>
+</head>
+<body>
+<div class="container">
+
+<h1>📐 数学科三选择题 · 备考学习系统</h1>
+<p class="subtitle">初中数学教资科三 · 10套真题(19下~24下) · 四维精讲+隐藏考点+知识精讲+例题+预测+蒙题<br>版本 v1.4 · 2026-08-12</p>
+
+<div class="top-bar">
+  <div class="toggle-btn" id="themeToggle" onclick="toggleTheme()">
+    <span id="themeLabel">☀️ 白天模式</span>
+    <div class="dot"></div>
+  </div>
+  <div class="toggle-btn active" id="depthToggle" onclick="toggleDepth()">
+    <span id="depthLabel">📖 详细模式</span>
+    <div class="dot"></div>
+  </div>
+  <div class="toggle-btn" id="hiddenToggle" onclick="toggleHidden()">
+    <span id="hiddenLabel">🔍 隐藏考点：折叠</span>
+    <div class="dot"></div>
+  </div>
+</div>
+
+<div class="tabs" id="tabBar">
+  <div class="tab main-tab active" onclick="switchTab('study')">📖 知识精讲</div>
+  <div class="tab main-tab" onclick="switchTab('deep')">🧠 四维精讲</div>
+  <div class="tab main-tab" onclick="switchTab('practice')">✏️ 例题巩固</div>
+  <div class="tab main-tab" onclick="switchTab('papers')">📋 真题解析</div>
+  <div class="tab main-tab" onclick="switchTab('predict')">🔮 命题预测</div>
+  <div class="tab main-tab" onclick="switchTab('guess')">🎲 蒙题策略</div>
+  <div class="tab main-tab" onclick="switchTab('cards')">📝 速记卡片</div>
+</div>
+
+<div class="panel active" id="panel-study">
+  <div class="topic-nav" id="topicNav"></div>
+  <div id="studyContent"></div>
+</div>
+
+<div class="panel" id="panel-deep">
+  <div class="topic-nav" id="deepTopicNav"></div>
+  <div class="tabs sticky-sub" style="margin-bottom:12px;" id="deepSubTabs">
+    <div class="tab active" onclick="switchDeepTab('example')">📝 例题驱动</div>
+    <div class="tab" onclick="switchDeepTab('ladder')">🪜 阶梯基础</div>
+    <div class="tab" onclick="switchDeepTab('compare')">⚖️ 对比辨析</div>
+    <div class="tab" onclick="switchDeepTab('flow')">🔀 解题流程</div>
+  </div>
+  <div id="deepContent"></div>
+</div>
+
+<div class="panel" id="panel-practice">
+  <p style="color:var(--text2);font-size:0.85rem;margin-bottom:12px;">每道例题来自真题或真题变式，点击展开查看解析。做完再看答案效果最好。</p>
+  <div id="practiceContent"></div>
+</div>
+
+<div class="panel" id="panel-papers">
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+    <label style="color:var(--text2);font-size:0.9rem;">选择年份：</label>
+    <select id="paperSelect" onchange="showPaper(this.value)" style="min-width:200px;"></select>
+    <span id="paperAnswerKey" style="color:var(--green);font-size:0.85rem;"></span>
+  </div>
+  <div id="paperContent"></div>
+</div>
+
+<div class="panel" id="panel-predict">
+  <div class="card"><h2>🔮 2026下 数学科三选择题 · 命题预测</h2>
+  <p style="color:var(--text2);font-size:0.82rem;margin-bottom:16px;">基于10套真题频次+趋势外推+教育热点滞后规律</p><div id="predictionContent"></div></div>
+  <div class="card"><h2>🔄 变式规律</h2><div id="variationContent"></div></div>
+</div>
+
+<div class="panel" id="panel-guess"><div id="guessContent"></div></div>
+
+<div class="panel" id="panel-cards">
+  <p style="color:var(--text2);font-size:0.85rem;margin-bottom:12px;">点击卡片翻转查看答案 | 共<span id="cardCount"></span>张</p>
+  <div class="flash-grid" id="flashGrid"></div>
+</div>
+
+<div class="footer">📐 数学科三选择题备考学习系统 v1.6 · 10套真题(19下~24下) · 四维精讲+隐藏考点揭示 · 初中数学教资科三 · <a href="链接汇总.html" style="color:var(--accent);">返回链接汇总</a></div>
+</div>
+
+<script>
+// ============ GLOBAL STATE ============
+var depthMode = 'detail';
+var showHidden = false;
+var darkMode = false;
+
+function toggleTheme() {
+  darkMode = !darkMode;
+  document.body.classList.toggle('dark', darkMode);
+  document.getElementById('themeToggle').classList.toggle('active', darkMode);
+  document.getElementById('themeLabel').textContent = darkMode ? '🌙 夜间模式' : '☀️ 白天模式';
+}
+
+function toggleDepth() {
+  depthMode = depthMode === 'detail' ? 'compact' : 'detail';
+  document.getElementById('depthToggle').classList.toggle('active', depthMode==='detail');
+  document.getElementById('depthLabel').textContent = depthMode==='detail' ? '📖 详细模式' : '📋 精简模式';
+  document.body.classList.toggle('compact', depthMode==='compact');
+  if(document.getElementById('panel-study').classList.contains('active')) renderStudy(currentTopic);
+}
+
+function toggleHidden() {
+  showHidden = !showHidden;
+  document.getElementById('hiddenToggle').classList.toggle('active', showHidden);
+  document.getElementById('hiddenLabel').textContent = showHidden ? '🔍 隐藏考点：展开' : '🔍 隐藏考点：折叠';
+  // Refresh current panel
+  if(document.getElementById('panel-papers').classList.contains('active')) showPaper(document.getElementById('paperSelect').value);
+  if(document.getElementById('panel-study').classList.contains('active')) renderStudy(currentTopic);
+  if(document.getElementById('panel-practice').classList.contains('active')) renderPractice();
+}
+
+// ============ STUDY DATA ============
+const STUDY = {
+'极限':{freq:8,icon:'🥇',summary:'极限是研究函数在自变量趋近某值时的变化趋势，是微积分的基石。',def:'设函数f(x)在点x₀附近有定义，如果存在常数A，使得当x无限趋近于x₀时，f(x)无限趋近于A，则称A为f(x)当x→x₀时的极限，记作lim(x→x₀)f(x)=A。',formula:'两个重要极限：\n① lim(x→0) sinx/x = 1\n② lim(x→∞) (1+1/x)^x = e',understanding:'极限描述的是"趋近"而非"等于"。函数在x₀处有没有定义与极限是否存在无关。极限存在的充要条件是左右极限存在且相等。',mistakes:['混淆"趋近于"和"等于"——极限值A不需要在函数值中真正出现','忘记检查左右极限——分段函数在分界点必须左右极限相等','等价无穷小替换条件不满足时使用——只能在乘除中使用'],
+prereq:[{n:'因式分解',w:'0/0型极限必须对分子分母提取公因式约分',l:'must'},{n:'分式通分与约分',w:'化简后代入求值的前提',l:'must'},{n:'根式有理化',w:'含根式的极限需乘以共轭式消除根号',l:'must'},{n:'三角函数基本公式',w:'sinx/x→1的极限需要熟悉三角函数',l:'rec'},{n:'无穷小概念',w:'理解"趋近于0"是理解极限的前提',l:'basic'}],
+foundation_tip:'极限题80%的失分不在极限概念本身，而在初中代数运算不熟练（因式分解、约分、有理化）。建议先确保因式分解过关再看极限。'},
+
+'无穷小比较':{freq:1,icon:'',summary:'比较两个无穷小趋近于0的速度快慢，指数>幂函数>对数。',def:'设α,β为同一过程中的无穷小量。若lim(α/β)=0，称α是比β高阶的无穷小；若lim(α/β)=c≠0，称α与β同阶；若lim(α/β)=1，称α与β等价。',formula:'速度排名（从快到慢）：\n指数(1/2ⁿ) > 幂高次(1/n²) > 幂低次(1/n) >> 对数(1/ln n)',understanding:'比较速度等价于比较比值的极限。指数衰减最快，因为底数每次翻倍；幂函数其次是多项式降速；对数最慢。',mistakes:['把1/2ⁿ和1/n²的速度搞反——指数>幂函数','混淆无穷小量和无穷大量——1/n是无穷小，n是无穷大'],
+prereq:[{n:'极限四则运算',w:'比较无穷小本质是求比值极限',l:'must'},{n:'指数/幂/对数函数图像',w:'从增长速度角度理解为什么指数>幂>对数',l:'rec'}],
+foundation_tip:'无穷小比较的核心只是"比值的极限"——如果你会求极限，这只是一个新名词。关键是把各种函数的速度排名背下来。'},
+
+'连续与可微':{freq:4,icon:'',summary:'连续不一定可导，可导一定连续。一致连续是比连续更强的条件。',def:'f(x)在x₀连续：lim(x→x₀)f(x)=f(x₀)。f(x)在区间I一致连续：对任意ε>0，存在统一δ>0，使得区间内任意两点距离小于δ时函数值差小于ε。',formula:'导数定义：f\'(x₀)=lim(h→0)[f(x₀+h)-f(x₀)]/h\n可微条件：Δy=f\'(x₀)Δx+o(Δx)，即dy=f\'(x₀)dx',understanding:'连续是"不断开"，可导是"光滑无尖角"。反例：|x|在x=0连续但不可导。一致连续的"一致"指δ不依赖于点的位置——闭区间上连续⇒一致连续，开区间上不一定。',mistakes:['认为连续一定可导——|x|在x=0就是反例','把Δy=dy当作精确等式——Δy≈dy，只有在高阶无穷小可忽略时才近似成立','开区间(0,1]上1/x连续但不一致连续——因为x→0⁺时函数趋于无穷'],
+prereq:[{n:'极限定义',w:'连续的定义就是lim f(x)=f(x₀)',l:'must'},{n:'左右极限',w:'分段函数连续性需检查左右极限',l:'must'},{n:'可导的几何意义',w:'导数=切线斜率，不可导点=尖点/角点',l:'rec'},{n:'闭区间性质',w:'闭区间上连续⇒有界+可取最大最小值+一致连续',l:'basic'}],
+foundation_tip:'连续/可微/一致连续的区别是高混淆考点。记住口诀："闭区间连续⇒一致连续，开区间不一定"。1/x在(0,1]连续但不一致连续——考试最爱的反例。'},
+
+'导数计算':{freq:1,icon:'',summary:'导数描述函数在某点的瞬时变化率，几何意义是切线斜率。',def:'f(x)在x₀的导数：f\'(x₀)=lim(h→0)[f(x₀+h)-f(x₀)]/h。若极限存在，称f在x₀可导。',formula:'基本求导公式：\n(xⁿ)\'=nxⁿ⁻¹, (eˣ)\'=eˣ, (lnx)\'=1/x\n(sinx)\'=cosx, (cosx)\'=-sinx',understanding:'导数为正⇒函数递增；导数为负⇒函数递减。f\'(x₀)=0可能是极值点。导数的本质是变化率。',mistakes:['用导数定义时忘记f(0)的值——需要代入计算','用等价无穷小替换时注意只能在乘除中使用'],
+prereq:[{n:'极限定义',w:'导数本身就是特殊形式的极限',l:'must'},{n:'基本求导公式记忆',w:'幂/指数/对数/三角函数的导数必须背',l:'must'},{n:'切线斜率概念',w:'导数的几何意义',l:'basic'}],
+foundation_tip:'教资考试的导数题不考复杂的求导技巧（链式法则、高阶导数很少出现），重点是导数定义的理解。f\'(0)=lim [f(x)-f(0)]/x，记住这个形式就行。'},
+
+'积分':{freq:4,icon:'',summary:'定积分求面积，不定积分是求导的逆运算。牛顿-莱布尼茨公式连接两者。',def:'定积分∫ₐᵇf(x)dx表示曲线f(x)在[a,b]上与x轴围成的有向面积。不定积分∫f(x)dx是f(x)的原函数族。',formula:'牛顿-莱布尼茨公式：∫ₐᵇf(x)dx=F(b)-F(a)\n奇偶性：奇函数在[-a,a]上积分为0\n分部积分：∫udv=uv-∫vdu',understanding:'定积分计算先找原函数，再代入上下限。注意：定积分是对称区间时，奇函数直接得0，偶函数可以写成2倍。',mistakes:['积分限互换要变号：∫ₐᵇ=-∫ᵇₐ','原函数计算时要细心——e²ˣ的原函数是e²ˣ/2，不要忘了除以系数','积分和极限结合时注意积分号内函数收敛性'],
+prereq:[{n:'求导公式（逆运算）',w:'找原函数就是求导的逆过程',l:'must'},{n:'定积分的几何意义',w:'面积=∫f(x)dx',l:'basic'},{n:'奇偶函数性质',w:'奇函数在对称区间积分为0',l:'rec'}],
+foundation_tip:'积分是求导的逆运算——如果你求导很熟，积分只需要"反过来想"。关键技巧：①e²ˣ的原函数=e²ˣ/2（别忘除以系数）②对称区间的奇函数积分直接得0。'},
+
+'行列式':{freq:5,icon:'🥉',summary:'行列式是一个将方阵映射为数的函数，判断矩阵是否可逆（det≠0即可逆）。',def:'n阶行列式是n×n方阵对应的一个数值，按行（或列）展开计算。三阶行列式可用对角线法则。',formula:'三阶展开：|a b c;d e f;g h i|=aei+bfg+cdh-ceg-bdi-afh\n性质：两行成比例⇒行列式=0；|AB|=|A||B|；|Aᵀ|=|A|',understanding:'行列式=0⇔矩阵不可逆⇔行/列线性相关。计算高阶行列式应先用行变换化简（某行/列为0多时展开最快）。',mistakes:['对角线法则只适用于三阶——四阶不能用','展开时符号记错——(-1)^(i+j)×元素×余子式','忘记行列式值可能为负——行列式可正可负可零'],
+prereq:[{n:'二阶行列式计算',w:'|a b;c d|=ad-bc，三阶是对角线法则',l:'must'},{n:'线性方程组',w:'行列式=0时方程组无唯一解',l:'rec'},{n:'可逆矩阵的概念',w:'行列式≠0⇔矩阵可逆',l:'basic'}],
+foundation_tip:'行列式计算的核心技巧：先看有没有"捷径"——两行成比例→直接得0；某行/列有多个0→按该行展开最快。硬算三阶用对角线法则，四阶及以上不要硬算。'},
+
+'矩阵':{freq:6,icon:'🥉',summary:'矩阵是数表，不是数。矩阵运算有特殊规则（乘法不交换、存在零因子等）。',def:'m×n矩阵是由m行n列排成的数表。常见操作：加法（对应位置相加）、数乘（每个元素乘常数）、乘法（行×列）、转置（行列互换）。',formula:'矩阵乘法：(m×n)×(n×s)→(m×s)，第i行×第j列\n秩：行阶梯形非零行数，rank(A)\n特征值：|A-λI|=0的解λ',understanding:'矩阵乘法不交换(AB≠BA一般成立)。零因子存在(AB=0但A≠0且B≠0可能出现)。秩的等式：rank(A)+dim(N(A))=n。',mistakes:['矩阵乘法顺序不能交换——检查维度是否匹配','特征向量不能是零向量','解齐次方程组Ax=0时，基础解系中向量个数=n-rank(A)，不是rank(A)'],
+prereq:[{n:'线性方程组',w:'矩阵最初就是为了解方程组',l:'must'},{n:'行与列的区别',w:'m×n：m行n列，乘法要求前矩阵列数=后矩阵行数',l:'must'},{n:'行阶梯形化简',w:'高斯消元法——秩=非零行数',l:'must'},{n:'矩阵乘法规则',w:'第i行×第j列=结果(i,j)位置',l:'rec'}],
+foundation_tip:'矩阵最常见错误：①以为AB=BA（绝大多数情况不交换！）②秩算错——秩=n-自由变量个数，不是自由变量个数。③零矩阵是O不是0。'},
+
+'向量':{freq:6,icon:'',summary:'向量既有大小又有方向。向量运算包括加减、数乘、内积（点乘）、外积（叉乘）等。',def:'n维向量是有序数组。内积a·b=|a||b|cosθ，外积（仅三维）a×b的结果是垂直于a,b的向量。',formula:'内积：a·b=Σaᵢbᵢ，a⊥b⇔a·b=0\n共线：a∥b⇔a=λb\n共面：a,b,c共面⇔(a×b)·c=0⇔a,b,c线性相关',understanding:'内积为0⇔垂直。分量成比例⇔共线。三向量混合积为0⇔共面。共面的三个非零向量线性相关，但和不一定是零向量。',mistakes:['向量不能做除法——这是高频考点','共面不一定和为0——这需要特定的系数关系','向量和坐标点容易混淆——向量表示方向和大小'],
+prereq:[{n:'坐标系和坐标运算',w:'向量坐标=(终点-起点)，模长=√(x²+y²+z²)',l:'must'},{n:'勾股定理',w:'|a|=√(a₁²+a₂²+a₃²)',l:'must'},{n:'点积公式',w:'a·b=a₁b₁+a₂b₂+a₃b₃',l:'must'},{n:'比例关系',w:'共线⇔分量成比例⇔a=λb',l:'rec'},{n:'空间向量和叉积',w:'叉积结果垂直于两个向量',l:'rec'}],
+foundation_tip:'向量最爱考的陷阱：①"向量能不能做除法？"——不能！②"共面一定和为零？"——不一定！③内积=0⇔垂直，分量成比例⇔共线——这两条是判断位置关系的基础。'},
+
+'解析几何':{freq:8,icon:'🥈',summary:'用代数方法研究几何。空间直角坐标系中，法向量决定平面方向，方向向量决定直线方向。',def:'平面Ax+By+Cz+D=0，法向量n=(A,B,C)。直线方向d=(a,b,c)。两平面关系看n₁,n₂；直线与平面关系看d·n。',formula:'平面平行⇔n₁∥n₂(即n₁=λn₂)\n平面垂直⇔n₁·n₂=0\n直线⊥平面⇔d∥n\n直线在平面上⇔d·n=0且直线上一点在平面上',understanding:'位置关系判断三步：①看方向向量/法向量关系 ②判断平行或相交 ③若平行再判断是否重合（代入一点验证）。',mistakes:['把法向量和方向向量混淆','验证点在平面上时只看向量关系，忘记代入','曲面方程识别：z=x²/a²+y²/b²是椭圆抛物面，x²/a²+y²/b²-z²/c²=1是单叶双曲面'],
+prereq:[{n:'空间直角坐标系',w:'x,y,z三轴，点用(x,y,z)表示',l:'must'},{n:'平面方程一般形式',w:'Ax+By+Cz+D=0，法向量n=(A,B,C)',l:'must'},{n:'法向量和方向向量的区别',w:'法向量垂直于平面，方向向量平行于直线',l:'must'},{n:'内积/叉积的几何意义',w:'内积=0⇔垂直，叉积结果⊥两向量',l:'rec'},{n:'二次曲面标准形式',w:'椭圆/双曲线/抛物面的方程特征',l:'rec'}],
+foundation_tip:'解析几何是Q1-Q6中频率最高的考点(8/10次)！核心是"看法向量/方向向量的关系"。三步法：①提取n或d ②看点积/比例 ③若平行再代入点验证重合。'},
+
+'概率统计':{freq:6,icon:'',summary:'古典概型P=有利情况数/总数。二项分布是n次独立重复试验中成功次数的分布。',def:'古典概型：样本点有限且等可能，P(A)=|A|/|Ω|。二项分布X~B(n,p)：P(X=k)=C(n,k)pᵏ(1-p)ⁿ⁻ᵏ。',formula:'古典概型：P=有利情况数/总情况数\n事件运算：P(A∪B)=P(A)+P(B)-P(AB)\n互斥时P(AB)=0，独立时P(AB)=P(A)P(B)',understanding:'"恰好"和"至少"的区别——"恰好k次"用二项公式，"至少1次"=1-P(0次)。组合数C(n,k)=n!/(k!(n-k)!)。',mistakes:['识别分布类型——二项分布必须是n次独立重复+每次成功概率相同','"一次性取3个"等同于"逐个取3个不放回"','方差计算：方差=各数据与均值差的平方的平均值'],
+prereq:[{n:'组合数C(n,k)',w:'=n!/(k!(n-k)!)，从n个中选k个的方案数',l:'must'},{n:'分数运算',w:'概率最终答案通常需要约分',l:'must'},{n:'互斥与独立的区别',w:'互斥=P(AB)=0（不能同时发生），独立=P(AB)=P(A)P(B)',l:'rec'},{n:'二项分布模型',w:'n次独立重复试验+每次成功概率p不变',l:'rec'},{n:'古典概型本质',w:'P=有利情况数/总情况数',l:'basic'}],
+foundation_tip:'概率题的核心是"数数"——先数总共有多少种情况，再数有利情况有多少种。组合数C(n,k)一定要会算。最容易错的是"至少"和"恰好"的区别。'},
+
+'函数性质':{freq:3,icon:'',summary:'奇偶性看对称，单调性看趋势，周期性看重复。这些是函数的基本特征。',def:'奇函数：f(-x)=-f(x)，图象关于原点对称。偶函数：f(-x)=f(x)，图象关于y轴对称。偶函数的导函数是奇函数。',formula:'奇±奇=奇，偶±偶=偶，奇×奇=偶，奇×偶=奇，偶×偶=偶\n奇函数在对称区间积分为0\n奇∘偶=偶（复合函数）',understanding:'判断奇偶性：代入-x看关系。注意：定义域必须关于原点对称。判断单调性：求导看正负。',mistakes:['忘记检查定义域是否对称就判断奇偶性','认为偶函数的导函数仍是偶函数——实际上是奇函数','复合函数的奇偶性要逐层判断'],
+prereq:[{n:'代入检验',w:'f(-x)=? 是判断奇偶性的第一步',l:'must'},{n:'定义域概念',w:'奇偶性要求定义域关于原点对称',l:'must'},{n:'函数图像对称性',w:'奇函数关于原点对称，偶函数关于y轴对称',l:'rec'},{n:'导数与单调性',w:'f\'>0递增，f\'<0递减',l:'rec'}],
+foundation_tip:'奇偶性运算口诀："奇奇得奇，偶偶得偶，奇偶得奇"。复合函数奇偶性：奇∘偶=偶（高频考点！）。偶函数的导函数是奇函数——这是24下刚考过的。'}
+};
+
+const STUDY_TEACH = {
+'教学论':{freq:12,icon:'📚',summary:'数学教学论考查教师角色、能力培养目标、教学方法、试卷编制等。核心是"以学生为主体"。',def:'数学教学论研究数学教育的目标、内容、方法和评价。重点是理解数学核心素养（三会）和课程标准要求。',formula:'新课标核心素养：\n①会用数学眼光观察现实世界\n②会用数学思维思考现实世界\n③会用数学语言表达现实世界',understanding:'教学原则：以学生为主体，教师是组织者、引导者、合作者（不是指挥者）。教学难度应基于学生的接受能力（最近发展区理论）。',mistakes:['教师角色选错——"指挥者"是错误的','教学难度依据选择"教师"相关选项——应基于学生','把"推理能力"和"运算能力"混淆——具体看题干描述的场景'],
+prereq:[{n:'新课标"三会"术语',w:'数学眼光/数学思维/数学语言是核心素养',l:'must'},{n:'教师四种角色',w:'组织者、引导者、合作者（❌指挥者）',l:'must'},{n:'最近发展区理论',w:'教学难度基于学生接受能力',l:'rec'},{n:'试卷编制流程',w:'目的→原则→细目表→选题',l:'rec'},{n:'建构主义学习观',w:'学生是学习主体，教师是促进者',l:'basic'}],
+foundation_tip:'教学论Q7-Q8的得分率是最高的——因为很多答案靠"常识+排除法"就能选对。关键记住：选"学生"相关的选项概率高，排除"指挥者""绝对化"表述。'},
+
+'数学史':{freq:6,icon:'📜',summary:'中国古代数学成就：九章算术（负数）、刘徽（割圆术）、秦九韶（大衍求一术）。近现代：吴文俊（机器证明）。',def:'数学史考查中国和世界数学发展中的重要人物、著作和成就。重点是中国古代数学。',formula:'记忆口诀：\n秦九韶→大衍求一术（中国剩余定理）\n刘徽→割圆术（圆周率）\n祖冲之→圆周率精确到小数第7位\n吴文俊→拓扑学+机器证明\n九章算术→最早记载负数',understanding:'区分要点：割圆术是刘徽发明、祖冲之发扬。秦九韶的大衍求一术是"中国剩余定理"。吴文俊是20世纪的数学家（不是古代）。',mistakes:['刘徽和祖冲之的成就混淆','秦九韶的"大衍求一术"和其他方法混淆','《九章算术》是第一部记载负数但不是第一部数学著作（《周髀算经》更早）'],
+prereq:[{n:'中国古代朝代顺序',w:'秦汉→魏晋→南北朝→宋→元→明→清',l:'must'},{n:'各数学家代表作',w:'秦九韶《数书九章》、刘徽注《九章算术》',l:'must'},{n:'割圆术含义',w:'用圆内接正多边形逼近圆周——刘徽发明',l:'rec'},{n:'尺规作图三大不能',w:'三等分角、倍立方、化圆为方',l:'rec'},{n:'中国剩余定理',w:'即秦九韶的大衍求一术',l:'basic'}],
+foundation_tip:'数学史的记忆口诀："秦九韶求一，刘徽割圆，祖冲之算圆周率，吴文俊机器证明，九章算术记负数"。注意区分刘徽（发明割圆术）和祖冲之（把圆周率算到小数第7位）。'},
+
+'初中课标':{freq:3,icon:'📋',summary:'7-9年级课程内容：数与代数（实数、一次函数、反比例函数）、图形与几何（三角形、四边形）、统计与概率。',def:'义务教育数学课程标准（2022版）规定7-9年级的教学内容和要求。不包括高中内容（一元三次方程、二元一次不等式组等）。',formula:'7-9年级（初中）内容特征：\n✓ 有理数估计无理数范围\n✓ 画一次函数图象（y=kx+b）\n✓ 反比例函数（y=k/x, k≠0）\n✗ 一元三次方程（高中）\n✗ 二元一次不等式组（高中）',understanding:'区分初高中内容的关键：初中只到二次方程/二次函数，涉及"三次""不等式组"等内容属于高中。命题类型分为基本事实、定理、公式三类。',mistakes:['把高中内容误认为初中内容——记住"三次"和"不等式组"是高中','集合表示中忘记0——整数包含正整数、0、负整数','反比例函数图象是不连续的双曲线（两支）'],
+prereq:[{n:'初中三年内容范围',w:'7-9年级=数与代数+图形几何+统计概率',l:'must'},{n:'初高中分界线',w:'"三次"和"不等式组"必定是高中内容',l:'must'},{n:'数学命题三类型',w:'基本事实（公理）、定理、公式',l:'rec'}],
+foundation_tip:'初中课标题的核心技巧：看到"三次方程""不等式组"直接排除——这些是高中内容。数学命题分三类：基本事实（不需证明）、定理（需证明）、公式（计算结果）。"两点之间线段最短"是基本事实。'}
+};
+
+var currentTopic = '极限';
+var deepSubTab = 'example'; // 'example'|'ladder'|'compare'|'flow'
+
+// ============ DEEP STUDY DATA (四维精讲) ============
+// abbreviated keys for brevity: e=example, l=ladder, c=compare, f=flow
+// Full 4-dim for high-freq 6, simplified for others
+const DEEP = {
+'极限':{freq:8,icon:'🥇',
+symbols:[
+{sym:'lim',read:'极限（limit）',desc:'求当一个变量趋近于某个值时，表达式趋近于什么'},
+{sym:'→',read:'趋近于',desc:'箭头左边是变量，右边是它趋近的值'},
+{sym:'∞',read:'无穷大',desc:'无限大，不是具体数字，而是一个趋势'},
+{sym:'$f(x)$',read:'关于x的函数，读作 f x 或 f of x',desc:'输入x，输出f(x)值。如f(x)=x²，则f(3)=9'},
+{sym:'0/0',read:'零比零型不定式',desc:'分子分母同时趋近于0，不能直接代入，需要化简'},
+{sym:'√',read:'根号',desc:'平方根符号。√(a)表示什么数的平方等于a'}
+],
+e:[
+{tier:'junior',q:'化简：(x²-4)/(x-2)，其中x≠2',ans:'x+2',src:'基础运算',
+steps:[
+{tag:'因式分解',cls:'prereq',txt:'分子 $x^2-4=(x-2)(x+2)$（平方差），约去 $(x-2)$ 得 $x+2$',pre:''},
+{tag:'理解',cls:'summary',txt:'这就是极限的核心思想——约去造成0/0的那个因子。后面所有极限题的化简都是在找这个因子。',pre:''}
+]},
+{tier:'junior',q:'化简：$(x^3+8)/(x+2)$，其中x≠-2',ans:'$x^2-2x+4$',src:'立方和公式',
+steps:[
+{tag:'识别公式',cls:'prereq',txt:'$x^3+8=x^3+2^3$，用立方和公式 $a^3+b^3=(a+b)(a^2-ab+b^2)$<br>$=(x+2)(x^2-2x+4)$',pre:'⚠️ 区分：立方和是(a+b)配(a²-ab+b²)，立方差是(a-b)配(a²+ab+b²)'},
+{tag:'约分',cls:'calc',txt:'$(x^3+8)/(x+2)=x^2-2x+4$（x≠-2，约去x+2）',pre:''},
+{tag:'小结',cls:'summary',txt:'立方和+立方差是对偶公式，符号只差一点但容易搞混。极限题中x³+8和x³-8都可能出现，两个都要会。',pre:''}
+]},
+{tier:'senior',q:'$\\lim_{x\\to 1}\\frac{x^2-1}{x-1}$ 的值是？',ans:'2',src:'概念入门',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=1：分子=0，分母=0 → $\\frac{0}{0}$型，需要化简。',pre:''},
+{tag:'因式分解',cls:'prereq',txt:'分子 $x^2-1=(x-1)(x+1)$，约去 $(x-1)$ 后=$x+1$',pre:''},
+{tag:'代入',cls:'calc',txt:'$\\lim_{x\\to 1}(x+1)=1+1=2$',pre:''},
+{tag:'理解lim',cls:'summary',txt:'<b>符号速读</b>：$\\lim_{x\\to 1}$ 读作"当x趋近于1时的极限"。它的意思是：让x无限接近1（但永远不等于1），看这个式子趋近于什么值。',pre:''}
+]},
+{tier:'senior',q:'$f(x)=\\begin{cases}x+1&x<0\\\\x^2&x\\ge 0\\end{cases}$，$\\lim_{x\\to 0}f(x)$ 是否存在？',ans:'不存在（左右极限不等）',src:'左右极限',
+steps:[
+{tag:'审题',cls:'review',txt:'分段函数求极限，必须分别算<b>左极限</b>和<b>右极限</b>。两者相等极限才存在。',pre:''},
+{tag:'左极限',cls:'calc',txt:'x→0⁻（从0左边趋近，x<0）：用第一段 f(x)=x+1<br>$\\lim_{x\\to 0^-}(x+1)=0+1=1$',pre:'x→0⁻ 表示从负方向趋近0'},
+{tag:'右极限',cls:'calc',txt:'x→0⁺（从0右边趋近，x≥0）：用第二段 f(x)=x²<br>$\\lim_{x\\to 0^+}x^2=0^2=0$',pre:'x→0⁺ 表示从正方向趋近0'},
+{tag:'判断',cls:'summary',txt:'左极限=1，右极限=0 → <b>不相等</b> → 极限不存在。<br>口诀：左右极限分别算，相等才存在，不等就不存在。',pre:''}
+]},
+{tier:'college',q:'$\\lim_{x\\to 2}\\frac{x^3-8}{x^2-4}$',ans:'3',src:'真题改编',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=2：分子=0，分母=0 → $\\frac{0}{0}$不定式。不能直接代，先化简。',pre:''},
+{tag:'因式分解',cls:'prereq',txt:'分子 $x^3-8=(x-2)(x^2+2x+4)$（立方差 $a^3-b^3=(a-b)(a^2+ab+b^2)$）<br>分母 $x^2-4=(x-2)(x+2)$（平方差 $a^2-b^2=(a-b)(a+b)$）',pre:'🏫 初中基础——这两个公式必须会，极限题80%失分在这'},
+{tag:'约分',cls:'calc',txt:'约去 $(x-2)$：$\\frac{x^2+2x+4}{x+2}$<br><b>关键理解</b>：极限是趋近而非等于，x→2时x≠2，约分合法。',pre:''},
+{tag:'代入求值',cls:'calc',txt:'代入x=2：$\\frac{4+4+4}{2+2}=\\frac{12}{4}=3$',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>$\\frac{0}{0}$型三步法</b>：①识别$\\frac{0}{0}$ → ②因式分解+约分消零因子 → ③代入求值',pre:''}
+]},
+{tier:'college',q:'$\\lim_{x\\to 0}\\frac{\\sqrt{1+3x}-1}{x}$',ans:'$\\frac{3}{2}$',src:'变式（根号有理化）',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=0：$\\frac{\\sqrt{1}-1}{0}=\\frac{0}{0}$型。含根号√，无法因式分解——需要有理化。',pre:''},
+{tag:'有理化',cls:'prereq',txt:'乘共轭式：$\\frac{\\sqrt{1+3x}-1}{x}\\cdot\\frac{\\sqrt{1+3x}+1}{\\sqrt{1+3x}+1}$<br>分子 $(\\sqrt{1+3x})^2-1^2=(1+3x)-1=3x$',pre:'🏫 $(\\sqrt{a}-b)(\\sqrt{a}+b)=a-b^2$'},
+{tag:'化简代入',cls:'calc',txt:'$=\\frac{3x}{x(\\sqrt{1+3x}+1)}=\\frac{3}{\\sqrt{1+3x}+1}$<br>代入x=0：$\\frac{3}{1+1}=\\frac{3}{2}$',pre:''},
+{tag:'归纳',cls:'summary',txt:'含根号的$\\frac{0}{0}$型→分子有理化。分母的x别忘保留！',pre:''}
+]},
+{tier:'college',q:'$\\lim_{x\\to\\infty}\\frac{3x^2+2x-1}{2x^2-5x+3}$',ans:'$\\frac{3}{2}$',src:'∞/∞型',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=∞：分子→∞，分母→∞ → $\\frac{\\infty}{\\infty}$型。不能直接代，用最高次项法。',pre:''},
+{tag:'找最高次',cls:'calc',txt:'分子最高次：$3x^2$，分母最高次：$2x^2$<br>分子分母次数相同（都是2次）→ 极限=<b>最高次系数比</b>',pre:''},
+{tag:'同除x²',cls:'calc',txt:'$\\frac{3x^2+2x-1}{2x^2-5x+3}=\\frac{3+\\frac{2}{x}-\\frac{1}{x^2}}{2-\\frac{5}{x}+\\frac{3}{x^2}}$<br>当x→∞时，$\\frac{2}{x}\\to 0,\\ \\frac{1}{x^2}\\to 0,\\ \\frac{5}{x}\\to 0,\\ \\frac{3}{x^2}\\to 0$<br>$=\\frac{3+0-0}{2-0+0}=\\frac{3}{2}$',pre:'口诀：分子分母同次→系数比'},
+{tag:'归纳',cls:'summary',txt:'<b>∞/∞型三步</b>：①找最高次 ②分子分母同除最高次 ③其余→0。同次=系数比，分母高次→0，分子高次→∞。',pre:''}
+]},
+{tier:'exam',q:'$\\lim_{x\\to 0}\\frac{\\sin x+3x}{\\tan x+2x}$',ans:'$\\frac{4}{3}$',src:'20下真题',
+steps:[
+{tag:'审题',cls:'review',txt:'20下Q1真题。$\\frac{0}{0}$型，用等价无穷小替换。',pre:''},
+{tag:'替换',cls:'calc',txt:'$\\sin x\\sim x,\\ \\tan x\\sim x$（$x\\to 0$时）<br>$\\frac{x+3x}{x+2x}=\\frac{4x}{3x}=\\frac{4}{3}$',pre:'等价无穷小 ：sinx≈x, tanx≈x, eˣ-1≈x, 当x很小时'},
+{tag:'归纳',cls:'summary',txt:'等价替换<b>只在乘除中用</b>！此题分子分母整体是除法→可用。常见替换：sinx~x, tanx~x, eˣ-1~x, ln(1+x)~x',pre:''}
+]},
+{tier:'exam',q:'$\\lim_{n\\to\\infty}(1+\\frac{2}{n})^n$',ans:'$e^2$',src:'预测（重要极限）',
+steps:[
+{tag:'审题',cls:'review',txt:'这是第二个重要极限的变形：$\\lim(1+\\frac{1}{t})^t=e$，$e\\approx 2.718$',pre:''},
+{tag:'变形·第1步',cls:'calc',txt:'我们要把 $(1+\\frac{2}{n})^n$ 变成第二个重要极限 $(1+\\frac{1}{t})^t\\to e$ 的形式。<br>观察：指数是 $n$，括号里是 $\\frac{2}{n}$——我们需要让括号里的分子变成<b>1</b>。',pre:''},
+{tag:'变形·第2步',cls:'calc',txt:'利用指数运算法则：$a^{m\\times k}=(a^m)^k$<br>$(1+\\frac{2}{n})^n=[(1+\\frac{2}{n})^{n/2}]^2$<br>怎么来的：$n=(n/2)\\times 2$，把指数拆成两半。',pre:'指数法则：a的bc次方 = (a的b次方)的c次方'},
+{tag:'变形·第3步',cls:'calc',txt:'现在看里层 $(1+\\frac{2}{n})^{n/2}$<br>令 $t=\\frac{n}{2}$（也就是 $n=2t$）<br>则 $\\frac{2}{n}=\\frac{2}{2t}=\\frac{1}{t}$，指数 $\\frac{n}{2}=t$',pre:'关键替换：令t=n/2，则2/n=1/t'},
+{tag:'变形·第4步',cls:'calc',txt:'所以 $(1+\\frac{2}{n})^{n/2}=(1+\\frac{1}{t})^t$<br>当 $n\\to\\infty$ 时 $t=\\frac{n}{2}\\to\\infty$<br>$\\lim_{t\\to\\infty}(1+\\frac{1}{t})^t=e$（第二个重要极限）',pre:''},
+{tag:'变形·第5步（答案）',cls:'calc',txt:'回到原式：<br>$(1+\\frac{2}{n})^n=[(1+\\frac{2}{n})^{n/2}]^2=[(1+\\frac{1}{t})^t]^2\\to e^2$<br>答案：<b>$e^2$</b>',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>两个重要极限</b>：①$\\lim_{x\\to 0}\\frac{\\sin x}{x}=1$ ②$\\lim_{x\\to\\infty}(1+\\frac{1}{x})^x=e$。看到(1+某)的幂次就要想到e。',pre:''}
+]},
+{tier:'exam',q:'$\\lim_{x\\to\\infty}\\frac{\\sin x+\\cos x}{x}$',ans:'0',src:'有界性法',
+steps:[
+{tag:'审题',cls:'review',txt:'x→∞，分子sinx和cosx在[-1,1]之间来回振荡——有界。分母x→∞。',pre:''},
+{tag:'有界性判断',cls:'prereq',txt:'$|\\sin x|\\le 1$，$|\\cos x|\\le 1$ → $|\\sin x+\\cos x|\\le 2$<br>分子是有界量（最大不超过2），分母无限增大',pre:'有界量÷无穷大=0'},
+{tag:'结论',cls:'calc',txt:'$\\lim_{x\\to\\infty}\\frac{\\sin x+\\cos x}{x}=0$<br>不需洛必达（sin和cos在∞处振荡，洛必达不适用！）',pre:''},
+{tag:'区分',cls:'summary',txt:'⚠️ 关键区分：$\\lim_{x\\to 0}\\frac{\\sin x}{x}=1$（重要极限）vs $\\lim_{x\\to\\infty}\\frac{\\sin x}{x}=0$（有界性）。同一表达式，趋近方向不同答案完全不同！',pre:''}
+]},
+{tier:'exam',q:'$\\lim_{x\\to 1}[\\frac{1}{x-1}-\\frac{2}{x^2-1}]$',ans:'$\\frac{1}{2}$',src:'∞-∞型·通分',
+steps:[
+{tag:'审题',cls:'review',txt:'直接代入x=1：$\\frac{1}{0}-\\frac{2}{0}$→两个都是∞。∞-∞型不能直接减！新考法！',pre:''},
+{tag:'通分',cls:'calc',txt:'分母：$x-1$和$x^2-1=(x-1)(x+1)$，公分母=$(x-1)(x+1)$<br>$\\frac{1}{x-1}-\\frac{2}{(x-1)(x+1)}=\\frac{(x+1)-2}{(x-1)(x+1)}=\\frac{x-1}{(x-1)(x+1)}$',pre:'关键：把减号变成同一分母'},
+{tag:'约分+代入',cls:'calc',txt:'$\\frac{x-1}{(x-1)(x+1)}=\\frac{1}{x+1}$（约去x-1）<br>代入x=1：$\\frac{1}{1+1}=\\frac{1}{2}$',pre:''},
+{tag:'归纳',cls:'summary',txt:'∞-∞型本质是伪装成减法的0/0型。<b>两步：①通分 ②因式分解+约分</b>',pre:''}
+]},
+{tier:'college',q:'$\\lim_{x\\to\\infty}[\\sqrt{x^2+x}-x]$',ans:'$\\frac{1}{2}$',src:'∞-∞型·根式有理化',
+steps:[
+{tag:'审题',cls:'review',txt:'x→∞时，$\\sqrt{x^2+x}$→∞，x→∞。∞-∞型！这次是根式相减→乘共轭',pre:''},
+{tag:'乘共轭',cls:'calc',txt:'$(\\sqrt{x^2+x}-x)\\cdot\\frac{\\sqrt{x^2+x}+x}{\\sqrt{x^2+x}+x}=\\frac{(x^2+x)-x^2}{\\sqrt{x^2+x}+x}=\\frac{x}{\\sqrt{x^2+x}+x}$',pre:'牢记：(√a-√b)(√a+√b)=a-b'},
+{tag:'∞/∞型处理',cls:'calc',txt:'$\\frac{x}{\\sqrt{x^2+x}+x}=\\frac{x}{\\sqrt{x^2}\\sqrt{1+1/x}+x}=\\frac{x}{x\\sqrt{1+1/x}+x}=\\frac{1}{\\sqrt{1+1/x}+1}$<br>当x→∞时，1/x→0：$\\frac{1}{\\sqrt{1+0}+1}=\\frac{1}{2}$',pre:'分子分母同除x'},
+{tag:'归纳',cls:'summary',txt:'根式∞-∞型：<b>乘共轭→变成∞/∞→同除最高次</b>。常见结果：$\\lim[\\sqrt{x^2+ax}-x]=\\frac{a}{2}$',pre:''}
+]},
+{tier:'exam',q:'$\\lim_{x\\to 2}[\\frac{1}{x-2}-\\frac{4}{x^2-4}]$',ans:'$\\frac{1}{4}$',src:'∞-∞型·变式练习',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=2：$\\frac{1}{0}-\\frac{4}{0}$→∞-∞型。通分！',pre:''},
+{tag:'通分',cls:'calc',txt:'$x^2-4=(x-2)(x+2)$，公分母=$(x-2)(x+2)$<br>$\\frac{1}{x-2}-\\frac{4}{(x-2)(x+2)}=\\frac{(x+2)-4}{(x-2)(x+2)}=\\frac{x-2}{(x-2)(x+2)}$',pre:''},
+{tag:'约分+代入',cls:'calc',txt:'$=\\frac{1}{x+2}$，代入x=2：$\\frac{1}{2+2}=\\frac{1}{4}$',pre:''},
+{tag:'归纳',cls:'summary',txt:'和上一题套路完全一样。练熟"通分→约分→代入"三步走。',pre:''}
+]},
+{tier:'exam',q:'$f(x)=\\begin{cases}x^2,&x<1\\\\2x-1,&x\\ge 1\\end{cases}$，判断$\\lim_{x\\to 1}f(x)$是否存在',ans:'存在，极限=1',src:'分段函数·左右极限',
+steps:[
+{tag:'审题',cls:'review',txt:'分段函数在x=1处换公式了！必须分别算左极限(x→1⁻)和右极限(x→1⁺)。',pre:'极限存在⇔左=右'},
+{tag:'算左极限',cls:'calc',txt:'x→1⁻（小于1，用x²）：<br>$\\lim_{x\\to 1^-}x^2=1^2=1$',pre:'从左边趋近，用上面的公式'},
+{tag:'算右极限',cls:'calc',txt:'x→1⁺（大于1，用2x-1）：<br>$\\lim_{x\\to 1^+}(2x-1)=2(1)-1=1$',pre:'从右边趋近，用下面的公式'},
+{tag:'结论',cls:'calc',txt:'左极限=右极限=1→<b>极限存在，等于1</b>',pre:''},
+{tag:'归纳',cls:'summary',txt:'分段函数判断极限<b>两步：①分别代入左右侧公式 ②比较是否相等</b>。相等→存在，不等→不存在。',pre:''}
+]},
+{tier:'college',q:'$\\lim_{x\\to 0}\\frac{|x|}{x}$',ans:'不存在',src:'绝对值·左右极限',
+steps:[
+{tag:'审题',cls:'review',txt:'含绝对值！|x|在x=0处行为不同。拆成左右极限分别算。',pre:''},
+{tag:'算左极限',cls:'calc',txt:'x→0⁻时x<0→|x|=-x<br>$\\lim_{x\\to 0^-}\\frac{-x}{x}=\\lim_{x\\to 0^-}(-1)=-1$',pre:'x<0时|x|=-x'},
+{tag:'算右极限',cls:'calc',txt:'x→0⁺时x>0→|x|=x<br>$\\lim_{x\\to 0^+}\\frac{x}{x}=\\lim_{x\\to 0^+}1=1$',pre:'x>0时|x|=x'},
+{tag:'结论',cls:'calc',txt:'左极限=-1≠右极限=1→<b>极限不存在！</b>',pre:''},
+{tag:'归纳',cls:'summary',txt:'含绝对值在x=0处：<b>拆开|x|→分别算左右→必不等</b>。这是经典反例。',pre:''}
+]},
+{tier:'exam',q:'$f(x)=\\begin{cases}x+2,&x<0\\\\e^x,&x\\ge 0\\end{cases}$，判断$\\lim_{x\\to 0}f(x)$是否存在',ans:'不存在（左2右1）',src:'分段函数·真题改编',
+steps:[
+{tag:'审题',cls:'review',txt:'分段点在x=0。左边用x+2，右边用eˣ。',pre:''},
+{tag:'算左极限',cls:'calc',txt:'$\\lim_{x\\to 0^-}(x+2)=0+2=2$',pre:''},
+{tag:'算右极限',cls:'calc',txt:'$\\lim_{x\\to 0^+}e^x=e^0=1$',pre:'e⁰=1'},
+{tag:'结论',cls:'calc',txt:'左=2≠右=1→<b>极限不存在</b>。虽然不存在，但左右极限各有确定值。',pre:''},
+{tag:'归纳',cls:'summary',txt:'注意区分：<b>极限不存在≠左右极限不存在</b>。有时左右极限都算得出具体值，但不相等，极限仍不存在。',pre:''}
+]},
+{tier:'exam',q:'$\\lim_{x\\to\\infty}x\\cdot\\sin\\frac{1}{x}$',ans:'1',src:'0·∞型·换元+重要极限',
+steps:[
+{tag:'审题',cls:'review',txt:'x→∞时：x→∞，sin(1/x)→sin0=0。∞·0型！不能直接得出0（因为∞的"强度"可能压过0）',pre:'∞·0是最危险的不定式之一'},
+{tag:'换元',cls:'calc',txt:'令$t=\\frac{1}{x}$，则当x→∞时t→0⁺<br>$x\\cdot\\sin\\frac{1}{x}=\\frac{1}{t}\\cdot\\sin t=\\frac{\\sin t}{t}$',pre:'倒一下：把x写成1/t，1/x变成t'},
+{tag:'用重要极限',cls:'calc',txt:'$\\lim_{t\\to 0}\\frac{\\sin t}{t}=1$（重要极限①）<br>所以原极限=<b>1</b>',pre:''},
+{tag:'归纳',cls:'summary',txt:'x·sin(1/x)是0·∞型的经典题。<b>核心技巧：令t=1/x→倒成熟悉形式</b>。类似题还有x·(e^(1/x)-1)→令t作同样处理。',pre:''}
+]},
+{tier:'college',q:'$\\lim_{x\\to\\infty}x(e^{1/x}-1)$',ans:'1',src:'0·∞型·换元+等价替换',
+steps:[
+{tag:'审题',cls:'review',txt:'x→∞时：x→∞，e^(1/x)-1→e⁰-1=0。又是0·∞型！',pre:''},
+{tag:'换元',cls:'calc',txt:'令$t=\\frac{1}{x}$，则x→∞时t→0<br>$x(e^{1/x}-1)=\\frac{e^t-1}{t}$',pre:''},
+{tag:'用等价替换',cls:'calc',txt:'t→0时，$e^t-1\\sim t$<br>$\\frac{e^t-1}{t}\\to\\frac{t}{t}=1$<br>所以原极限=<b>1</b>',pre:'等价无穷小：eᵗ-1≈t（t很小时）'},
+{tag:'归纳',cls:'summary',txt:'0·∞型<b>通用套路：①令t=1/x（或t=某因子） ②变成0/0或∞/∞ ③用等价替换/重要极限/因式分解</b>',pre:''}
+]},
+{tier:'junior',q:'$\\lim_{x\\to 3}\\frac{x^2-9}{x-3}$',ans:'6',src:'平方差·基础练习',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=3得0/0型。分子有平方差：$x^2-9=(x-3)(x+3)$',pre:''},
+{tag:'分解+约分',cls:'calc',txt:'$\\frac{(x-3)(x+3)}{x-3}=x+3$（约去x-3）',pre:'平方差公式：a²-b²=(a-b)(a+b)'},
+{tag:'代入',cls:'calc',txt:'代入x=3：$3+3=6$',pre:''},
+{tag:'归纳',cls:'summary',txt:'平方差是因式分解最常用的公式。看到$x^2-4$、$x^2-9$、$x^2-1$立刻反应。',pre:''}
+]},
+{tier:'college',q:'$\\lim_{x\\to 0}\\frac{\\sqrt{1+x}-1}{x}$',ans:'$\\frac{1}{2}$',src:'有理化·基础练习',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=0得0/0型。分子有根号→乘共轭有理化。',pre:''},
+{tag:'乘共轭',cls:'calc',txt:'$\\frac{\\sqrt{1+x}-1}{x}\\cdot\\frac{\\sqrt{1+x}+1}{\\sqrt{1+x}+1}=\\frac{(1+x)-1}{x(\\sqrt{1+x}+1)}=\\frac{x}{x(\\sqrt{1+x}+1)}$',pre:'共轭式：(√a-b)配(√a+b)'},
+{tag:'约分+代入',cls:'calc',txt:'$=\\frac{1}{\\sqrt{1+x}+1}$，代入x=0：$\\frac{1}{\\sqrt{1}+1}=\\frac{1}{2}$',pre:''},
+{tag:'归纳',cls:'summary',txt:'有理化的标志：<b>分子或分母含√</b>。乘共轭消掉根号→约分→代入。',pre:''}
+]},
+{tier:'exam',q:'$\\lim_{x\\to 0}\\frac{\\sin 3x}{\\sin 5x}$',ans:'$\\frac{3}{5}$',src:'重要极限①·系数变形',
+steps:[
+{tag:'审题',cls:'review',txt:'0/0型，分子分母都有sin→用重要极限①：$\\lim_{x\\to 0}\\frac{\\sin x}{x}=1$',pre:''},
+{tag:'变形',cls:'calc',txt:'$\\frac{\\sin 3x}{\\sin 5x}=\\frac{\\sin 3x}{3x}\\cdot\\frac{5x}{\\sin 5x}\\cdot\\frac{3}{5}$<br>当x→0时，$\\frac{\\sin 3x}{3x}\\to 1$，$\\frac{5x}{\\sin 5x}\\to 1$',pre:'技巧：分子分母各配自己的系数'},
+{tag:'得结果',cls:'calc',txt:'$=1\\cdot 1\\cdot\\frac{3}{5}=\\frac{3}{5}$',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>通用公式</b>：$\\lim_{x\\to 0}\\frac{\\sin ax}{\\sin bx}=\\frac{a}{b}$。同理$\\lim_{x\\to 0}\\frac{\\sin ax}{bx}=\\frac{a}{b}$。记住规律：系数比就是答案！',pre:''}
+]},
+{tier:'exam',q:'$\\lim_{x\\to 0}\\frac{e^x-1}{x}$',ans:'1',src:'等价替换·基础公式',
+steps:[
+{tag:'审题',cls:'review',txt:'0/0型。这是等价替换的基础公式之一。',pre:''},
+{tag:'等价替换',cls:'calc',txt:'当x→0时，$e^x-1\\sim x$<br>$\\frac{e^x-1}{x}\\to\\frac{x}{x}=1$',pre:'等价无穷小：eˣ-1≈x'},
+{tag:'验证',cls:'calc',txt:'也可用重要极限推导：e的定义$\\lim_{n\\to\\infty}(1+\\frac{1}{n})^n=e$<br>但考试时<b>直接记住等价关系最快</b>',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>三个必背等价替换</b>：$\\sin x\\sim x$，$\\tan x\\sim x$，$e^x-1\\sim x$（x→0时）。再加$\\ln(1+x)\\sim x$。考试秒杀利器！',pre:''}
+]},
+{tier:'junior',q:'$\\lim_{x\\to -1}\\frac{x^2-1}{x+1}$',ans:'-2',src:'平方差·负号注意',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=-1：分子(-1)²-1=0，分母0→0/0型。分子用平方差分解。',pre:''},
+{tag:'分解',cls:'calc',txt:'$x^2-1=(x-1)(x+1)$<br>$\\frac{(x-1)(x+1)}{x+1}=x-1$（约去x+1）',pre:'平方差公式'},
+{tag:'代入',cls:'calc',txt:'代入x=-1：$x-1=-1-1=-2$<br><b>答案：-2</b>',pre:'⚠️ 注意：代入-1，负号别搞错'},
+{tag:'归纳',cls:'summary',txt:'练熟平方差的同时，注意代入<b>负数</b>时的符号。(-1)²=1是对的，(-1-1)=-2。',pre:''}
+]},
+{tier:'junior',q:'$\\lim_{x\\to -2}\\frac{x^3+8}{x+2}$',ans:'12',src:'立方和·公式练习',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=-2：分子(-2)³+8=-8+8=0，分母0→0/0型。立方和公式！',pre:''},
+{tag:'分解',cls:'calc',txt:'$a^3+b^3=(a+b)(a^2-ab+b^2)$<br>$x^3+8=x^3+2^3=(x+2)(x^2-2x+4)$',pre:'立方和公式'},
+{tag:'约分+代入',cls:'calc',txt:'$\\frac{(x+2)(x^2-2x+4)}{x+2}=x^2-2x+4$<br>代入x=-2：$(-2)^2-2(-2)+4=4+4+4=12$',pre:''},
+{tag:'归纳',cls:'summary',txt:'立方和公式是容易遗忘的点。<b>a³+b³=(a+b)(a²-ab+b²)</b>，和立方差差一个符号。',pre:''}
+]},
+{tier:'junior',q:'$\\lim_{x\\to 0}\\frac{x^2+3x}{x}$',ans:'3',src:'提取公因式·入门',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=0得0/0型。分子有公因式x→提取。这是最基础的约分题。',pre:''},
+{tag:'提取公因式',cls:'calc',txt:'$x^2+3x=x(x+3)$<br>$\\frac{x(x+3)}{x}=x+3$（约去x）',pre:'提取公因式：找共同因子'},
+{tag:'代入',cls:'calc',txt:'代入x=0：$0+3=3$',pre:''},
+{tag:'归纳',cls:'summary',txt:'提取公因式是最简单的0/0处理方式。<b>看到分子有共同的x，先提出来</b>。',pre:''}
+]},
+{tier:'senior',q:'$\\lim_{x\\to 4}\\frac{\\sqrt{x}-2}{x-4}$',ans:'$\\frac{1}{4}$',src:'有理化·基础入门',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=4：分子√4-2=0，分母0→0/0型。含根号→乘共轭。',pre:''},
+{tag:'乘共轭',cls:'calc',txt:'$\\frac{\\sqrt{x}-2}{x-4}\\cdot\\frac{\\sqrt{x}+2}{\\sqrt{x}+2}=\\frac{x-4}{(x-4)(\\sqrt{x}+2)}$<br>（分子用平方差：(√x-2)(√x+2)=x-4）',pre:'共轭式'},
+{tag:'约分+代入',cls:'calc',txt:'$=\\frac{1}{\\sqrt{x}+2}$，代入x=4：$\\frac{1}{\\sqrt{4}+2}=\\frac{1}{2+2}=\\frac{1}{4}$',pre:''},
+{tag:'归纳',cls:'summary',txt:'分母也是x-4，恰好和分子有理化后约掉。这是有理化题型最经典的模式。',pre:''}
+]},
+{tier:'senior',q:'$\\lim_{x\\to\\infty}\\frac{2x+3}{5x-1}$',ans:'$\\frac{2}{5}$',src:'∞/∞型·入门',
+steps:[
+{tag:'审题',cls:'review',txt:'x→∞，分子分母都→∞。同除最高次x。',pre:''},
+{tag:'同除x',cls:'calc',txt:'$\\frac{2x+3}{5x-1}=\\frac{2+\\frac{3}{x}}{5-\\frac{1}{x}}$<br>当x→∞时，$\\frac{3}{x}\\to 0$，$\\frac{1}{x}\\to 0$',pre:'同除最高次项'},
+{tag:'代入',cls:'calc',txt:'$=\\frac{2+0}{5-0}=\\frac{2}{5}$',pre:''},
+{tag:'归纳',cls:'summary',txt:'最简单的∞/∞型：分子分母同次→<b>最高次系数比</b>。这题2/5，以后看到类似直接写系数比。',pre:''}
+]},
+{tier:'senior',q:'$\\lim_{x\\to 2}\\frac{x^3-8}{x-2}$',ans:'12',src:'立方差·公式练习',
+steps:[
+{tag:'审题',cls:'review',txt:'代入x=2得0/0型。分子是立方差：$x^3-8=x^3-2^3$',pre:''},
+{tag:'分解',cls:'calc',txt:'$a^3-b^3=(a-b)(a^2+ab+b^2)$<br>$x^3-8=(x-2)(x^2+2x+4)$',pre:'立方差公式'},
+{tag:'约分+代入',cls:'calc',txt:'$\\frac{(x-2)(x^2+2x+4)}{x-2}=x^2+2x+4$<br>代入x=2：$4+4+4=12$',pre:''},
+{tag:'归纳',cls:'summary',txt:'立方差+立方和都要熟练。<b>a³±b³=(a±b)(a²∓ab+b²)</b>。符号规律：同号用加，异号用减，中间项符号与括号里相反。',pre:''}
+]},
+{tier:'college',q:'$\\lim_{x\\to 0}\\frac{\\tan x}{x}$',ans:'1',src:'重要极限·tan变形',
+steps:[
+{tag:'审题',cls:'review',txt:'0/0型。$\\tan x=\\frac{\\sin x}{\\cos x}$，这是从sinx/x推广到tanx/x。',pre:''},
+{tag:'变形',cls:'calc',txt:'$\\frac{\\tan x}{x}=\\frac{\\sin x}{x\\cos x}=\\frac{\\sin x}{x}\\cdot\\frac{1}{\\cos x}$<br>当x→0时，$\\frac{\\sin x}{x}\\to 1$，$\\cos x\\to 1$',pre:'tanx=sinx/cosx'},
+{tag:'得结果',cls:'calc',txt:'$=1\\cdot\\frac{1}{1}=1$',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>推论</b>：$\\lim_{x\\to 0}\\frac{\\tan x}{x}=1$同sinx/x。记住：$\\lim\\frac{\\sin ax}{bx}=\\frac{a}{b}$，$\\tan$也一样。',pre:''}
+]},
+{tier:'college',q:'$\\lim_{x\\to 0}\\frac{1-\\cos x}{x^2}$',ans:'$\\frac{1}{2}$',src:'半角公式·重要极限综合',
+steps:[
+{tag:'审题',cls:'review',txt:'0/0型。分子1-cosx→用半角公式或等价替换。这是经典题！',pre:''},
+{tag:'公式转换',cls:'calc',txt:'$1-\\cos x=2\\sin^2\\frac{x}{2}$<br>$\\frac{1-\\cos x}{x^2}=\\frac{2\\sin^2\\frac{x}{2}}{x^2}=\\frac{2\\sin^2\\frac{x}{2}}{4(\\frac{x}{2})^2}=\\frac{1}{2}\\cdot\\frac{\\sin^2\\frac{x}{2}}{(\\frac{x}{2})^2}$',pre:'半角公式：1-cosx=2sin²(x/2)'},
+{tag:'用重要极限',cls:'calc',txt:'当x→0时，$\\frac{x}{2}\\to 0$<br>$\\frac{\\sin\\frac{x}{2}}{\\frac{x}{2}}\\to 1$<br>$\\frac{1}{2}\\cdot 1^2=\\frac{1}{2}$',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>实用结论</b>：$\\lim_{x\\to 0}\\frac{1-\\cos x}{x^2}=\\frac{1}{2}$。等价替换：$1-\\cos x\\sim\\frac{x^2}{2}$。背下来秒杀同类题。',pre:''}
+]},
+{tier:'college',q:'$\\lim_{x\\to 0}\\frac{\\sin 2x}{x\\cos x}$',ans:'2',src:'综合·三角极限',
+steps:[
+{tag:'审题',cls:'review',txt:'0/0型。分子有sin2x，分母有cosx。综合运用重要极限。',pre:''},
+{tag:'拆解',cls:'calc',txt:'$\\frac{\\sin 2x}{x\\cos x}=\\frac{\\sin 2x}{2x}\\cdot\\frac{2}{\\cos x}$<br>（分子分母同乘2，凑sin2x/2x的形式）',pre:'凑重要极限形式'},
+{tag:'分别求极限',cls:'calc',txt:'$\\frac{\\sin 2x}{2x}\\to 1$（重要极限）<br>$\\cos x\\to 1$<br>$1\\cdot\\frac{2}{1}=2$',pre:''},
+{tag:'归纳',cls:'summary',txt:'复合三角极限：<b>①把sin(ax)凑成sin(ax)/(ax) ②cosx→1直接代 ③系数拿出来</b>。答案是系数比。',pre:''}
+]},
+],
+l:{tiers:[
+{name:'初中层',cls:'junior',intro:'极限题80%的失分不在极限概念本身，而在初中代数运算。先确保以下基础。',
+items:[
+{s:'平方差公式',ok:true,formula:'$a^2-b^2=(a-b)(a+b)$',reading:'a平方减b平方，等于a减b，乘以a加b',note:'看到 $x^2-4$ 马上反应：=(x-2)(x+2)'},
+{s:'立方差公式',ok:true,formula:'$a^3-b^3=(a-b)(a^2+ab+b^2)$',reading:'a立方减b立方，等于a减b，乘以a平方加ab加b平方',note:'看到 $x^3-8$ 马上反应：=(x-2)(x²+2x+4)'},
+{s:'立方和公式',ok:true,formula:'$a^3+b^3=(a+b)(a^2-ab+b^2)$',reading:'a立方加b立方，等于a加b，乘以a平方减ab加b平方',note:'⚠️ 和立方差只差一个符号！注意对比：a³+b³是(a+b)配(a²-ab+b²)，a³-b³是(a-b)配(a²+ab+b²)'},
+{s:'完全平方',ok:true,formula:'$(a\\pm b)^2=a^2\\pm 2ab+b^2$',reading:'a加减b的平方，等于a平方加减2ab加b平方',note:'展开和配方的基本功'},
+{s:'分式约分',ok:true,formula:'$\\frac{a\\cdot c}{b\\cdot c}=\\frac{a}{b}$（$c\\neq 0$）',reading:'分子分母同除以c，c不能为零',note:'极限中因为x只是趋近而非等于，分母不为零→约分合法'}
+],
+example:{q:'化简：$\\frac{x^2-9}{x-3}$（x≠3）',ans:'x+3',explain:'分子=(x-3)(x+3)，约去(x-3)'}
+},
+{name:'高中层',cls:'senior',intro:'极限概念在高中第一次出现。以下是需要先理解的基础知识。',
+items:[
+{s:'函数记号',ok:true,formula:'$f(x)$',reading:'f of x，读作 f x，关于x的函数',note:'输入x值，输出f(x)值。如 $f(x)=x^2$，则 $f(3)=9$'},
+{s:'趋近符号',ok:true,formula:'$x\\to a$',reading:'x趋近于a',note:'x无限接近a但不等于a。可从左(-)或右(+)趋近'},
+{s:'极限符号',ok:true,formula:'$\\lim_{x\\to a}f(x)=L$',reading:'当x趋近于a时，f(x)的极限等于L',note:'意思是：x越来越靠近a，f(x)越来越靠近L'},
+{s:'分段函数',ok:false,formula:'$f(x)=\\begin{cases}x+1&x<0\\\\x^2&x\\ge 0\\end{cases}$',reading:'x小于0时取x+1，x大于等于0时取x²',note:'分段函数极限：左右极限分别算，相等才存在'}
+],
+example:{q:'$\\lim_{x\\to 3}\\frac{x^2-9}{x-3}$',ans:'6',explain:'因式分解→约分→代入：=x+3→6'}
+},
+{name:'大学层',cls:'college',intro:'大学数学用更严格的方法。以下是你需要掌握的核心工具。',
+items:[
+{s:'重要极限①',ok:false,formula:'$\\lim_{x\\to 0}\\frac{\\sin x}{x}=1$',reading:'当x趋近于0时，sinx除以x的极限等于1',note:'看到 sinx/x 形式就往1靠。前提是x→0'},
+{s:'重要极限②',ok:false,formula:'$\\lim_{x\\to\\infty}(1+\\frac{1}{x})^x=e$',reading:'当x趋近于无穷时，1加x分之一的x次方极限等于e',note:'$e\\approx 2.71828$。看到(1+某)的幂次就想到e'},
+{s:'等价无穷小',ok:false,formula:'$\\sin x\\sim x,\\ \\tan x\\sim x,\\ e^x-1\\sim x$（$x\\to 0$）',reading:'sinx等价于x，tanx等价于x，e的x次方减1等价于x',note:'等价替换<b>只能在乘除运算中</b>！加减不行！'},
+{s:'洛必达法则',ok:false,formula:'$\\lim\\frac{f}{g}=\\lim\\frac{f\'}{g\'}$（$\\frac{0}{0}$或$\\frac{\\infty}{\\infty}$型）',reading:'分子分母分别求导后再求极限',note:'条件：①0/0或∞/∞型 ②分子分母都可导 ③导数比的极限存在'}
+],
+example:{q:'$\\lim_{x\\to 0}\\frac{e^x-1}{\\sin x}$',ans:'1',explain:'等价替换：eˣ-1~x, sinx~x → x/x=1'}
+},
+{name:'教资层',cls:'exam',intro:'教资考试中极限的9种考法，覆盖10套真题所有极限题。',
+items:[
+{s:'直接代入法',ok:false,formula:'代入得具体数字→直接写答案',reading:'',note:'最简单的。代入不是0/0或∞/∞就直接出答案'},
+{s:'因式分解法',ok:false,formula:'多项式$\\frac{0}{0}$型→分解+约分+代入',reading:'',note:'最常考。如 $\\lim_{x\\to 2}\\frac{x^3-8}{x^2-4}$'},
+{s:'根式有理化',ok:false,formula:'含√的$\\frac{0}{0}$型→乘共轭式消根号',reading:'',note:'如 $\\lim_{x\\to 0}\\frac{\\sqrt{1+3x}-1}{x}$'},
+{s:'等价替换法',ok:false,formula:'乘除结构中用sinx~x等替换',reading:'',note:'只在乘除中！20下Q1考过'},
+{s:'重要极限①（三角型）',ok:false,formula:'$\\lim_{x\\to 0}\\frac{\\sin x}{x}=1$',reading:'当x趋近于0时，sinx除以x的极限等于1',note:'特征：分子有sin（或tan），分母是x本身。变形如 $\\lim_{x\\to 0}\\frac{\\sin 2x}{x}=2$（把sin2x看成2x→2x/x=2）'},
+
+{s:'重要极限②（幂指型）',ok:false,formula:'$\\lim_{x\\to\\infty}(1+\\frac{1}{x})^x=e$（$e\\approx 2.718$）',reading:'当x趋近于无穷时，1加x分之一的x次方，极限等于e，e约等于2.718',note:'特征：底数是"1+某"，指数是"某的倒数"。看到 $(1+\\frac{2}{n})^n$ 就要凑成 $(1+\\frac{1}{t})^t$ 形式→得 $e^2$。19下Q1考过！'},
+
+{s:'有界性法',ok:false,formula:'$|\\sin x|\\le 1,\\ |\\cos x|\\le 1$，有界函数÷无穷大=0',reading:'sinx和cosx的值永远在-1到1之间振荡。任何有界量除以无穷大，极限都是0',note:'最常考：$\\lim_{x\\to\\infty}\\frac{\\sin x}{x}=0$。⚠️ 区分：$\\lim_{x\\to 0}\\frac{\\sin x}{x}=1$（重要极限①），$\\lim_{x\\to\\infty}\\frac{\\sin x}{x}=0$（有界性）。趋近方向不同，答案完全不同！'},
+{s:'通分法（∞-∞型）',ok:false,formula:'∞-∞型→通分合并→变成$\\frac{0}{0}$或$\\frac{\\infty}{\\infty}$→常规方法',reading:'两个无穷大相减，不能直接算。两个分式相减先通分，根式相减乘共轭',note:'典型题：$\\lim_{x\\to 1}[\\frac{1}{x-1}-\\frac{2}{x^2-1}]$。通分后分子因式分解，约去(x-1)得$\\frac{1}{2}$。∞-∞本质是伪装成减法的0/0型！'},
+{s:'左右极限法（分段函数）',ok:false,formula:'极限存在 $\\Leftrightarrow$ 左极限 = 右极限',reading:'函数在某点的极限存在，当且仅当从左边趋近和从右边趋近得到的值相等',note:'教资高频考点！分段函数在分段点必须分别算左右极限。若不等→极限不存在。看到|x|或分段定义立刻警觉——必须拆开算左右'},
+{s:'化商法（0·∞型）',ok:false,formula:'$0\\cdot\\infty$型→化为$\\frac{0}{0}$或$\\frac{\\infty}{\\infty}$→常规方法',reading:'零乘无穷大型。把其中一个因子取倒数放到分母，变成分式',note:'典型：$\\lim_{x\\to\\infty}x\\cdot\\sin\\frac{1}{x}$→令$t=\\frac{1}{x}$→$\\frac{\\sin t}{t}$→1。核心思路：倒一下变成熟悉的形式'},
+],
+example:{q:'$\\lim_{x\\to\\infty}\\frac{\\sin x}{x}$',ans:'0',explain:'|sinx|≤1有界，分母→∞，有界/无穷=0'}
+}
+]},
+c:{title:'极限存在 vs 连续 vs 可导',headers:['','极限存在','连续','可导'],rows:[
+['含义','$f(x)$趋近某个值','极限值=函数值','变化率（切线斜率）存在'],
+['条件','左右极限存在且相等','$\\lim f(x)=f(x_0)$','导数定义极限存在'],
+['关系','← 最宽松','← 中等','← 最严格（可导→连续→极限存在）'],
+['反例','跳跃间断点','$|x|$在x=0：连续但不可导','$x^{1/3}$在x=0：无穷导数'],
+['教资考点','考得最多（Q1常客）','分段函数连续性判断','可微=可导；偶函数导数是奇函数']
+],koujue:'极限⊃连续⊃可导——越来越好：先有极限，再有连续，最后可导'},
+f:{q:'看到极限题，第一步做什么？',
+steps:[
+{step:1,action:'直接代入 $x$ 试试',result:'得具体数字 → ✅ 写答案'},
+{step:2,action:'得 $\\frac{0}{0}$ 型？',result:'不能直接代，需要化简',branch:[
+{cond:'分子分母都是多项式',method:'因式分解 + 约分 + 代入',ex:'$\\lim_{x\\to 2}\\frac{x^3-8}{x^2-4}=3$'},
+{cond:'含根号 √',method:'乘共轭式有理化',ex:'$\\lim_{x\\to 0}\\frac{\\sqrt{1+3x}-1}{x}=\\frac{3}{2}$'},
+{cond:'含 $\\frac{\\sin x}{x}$ 形式',method:'用重要极限 = 1',ex:'$\\lim_{x\\to 0}\\frac{\\sin 2x}{x}=2$'},
+{cond:'含 $(1+\\frac{1}{x})^x$ 形式',method:'用重要极限 = $e$',ex:'$\\lim_{n\\to\\infty}(1+\\frac{2}{n})^n=e^2$'},
+{cond:'乘除中有sinx等',method:'等价无穷小替换（只在乘除！）',ex:'$\\lim_{x\\to 0}\\frac{\\sin x+3x}{\\tan x+2x}=\\frac{4}{3}$'}
+]},
+{step:3,action:'得 $\\frac{\\infty}{\\infty}$ 型？',result:'分子分母同除以<b>最高次项</b>',branch:[
+{cond:'分母次数 > 分子次数',method:'极限 = <b>0</b>',ex:'$\\lim_{x\\to\\infty}\\frac{x+1}{x^2+2}=0$（分母更高次→0）'},
+{cond:'分子分母次数相同',method:'极限 = <b>最高次系数之比</b>',ex:'$\\lim_{x\\to\\infty}\\frac{3x^2+1}{2x^2+5}=\\frac{3}{2}$'},
+{cond:'分子次数 > 分母次数',method:'极限 = <b>∞</b>（不存在）',ex:'$\\lim_{x\\to\\infty}\\frac{x^3}{x^2+1}=\\infty$'}
+]},
+{step:4,action:'含 $|\\sin x|\\le 1$ 或有界函数？',result:'有界函数 ÷ ∞ = 0',branch:[
+{cond:'$\\lim_{x\\to\\infty}\\frac{\\sin x}{x}$',method:'|sinx|≤1，分母→∞ → 极限=0',ex:'$\\lim_{x\\to\\infty}\\frac{\\sin x}{x}=0$'},
+{cond:'$\\lim_{x\\to\\infty}\\frac{\\cos x}{x}$',method:'|cosx|≤1同样有界 → 极限=0',ex:'$\\lim_{x\\to\\infty}\\frac{\\cos x}{x}=0$'},
+{cond:'$\\lim_{x\\to 0}x\\sin\\frac{1}{x}$',method:'|sin(1/x)|≤1有界，乘以x→0 → 极限=0',ex:'$\\lim_{x\\to 0}x\\sin\\frac{1}{x}=0$（夹逼思想）'}
+]},
+{step:5,action:'得 $\\infty-\\infty$ 型？',result:'⚠️ 新考法！通分合并→变回0/0型',branch:[
+{cond:'两个分式相减',method:'通分 → 分子因式分解 → 约分 → 代入',ex:'$\\lim_{x\\to 1}[\\frac{1}{x-1}-\\frac{2}{x^2-1}]=\\frac{1}{2}$'},
+{cond:'根式相减（$x\\to\\infty$）',method:'乘共轭式有理化 → 化成∞/∞型 → 同除最高次',ex:'$\\lim_{x\\to\\infty}[\\sqrt{x^2+x}-x]=\\frac{1}{2}$'}
+]},
+{step:6,action:'是分段函数 / 含 $|x|$？',result:'⚠️ 新考法！分别算左极限和右极限',branch:[
+{cond:'左极限 = 右极限',method:'极限<b>存在</b>，等于这个共同值',ex:'$f(x)=\\begin{cases}x^2&x<1\\\\2x-1&x\\ge 1\\end{cases}$→左右都=1→极限=1'},
+{cond:'左极限 ≠ 右极限',method:'极限<b>不存在</b>！',ex:'$\\lim_{x\\to 0}\\frac{|x|}{x}$→左=-1，右=1→不存在'}
+]},
+{step:7,action:'得 $0\\cdot\\infty$ 型？',result:'⚠️ 新考法！取倒数变成分式',branch:[
+{cond:'$x\\cdot\\sin\\frac{1}{x}$ 型',method:'令 $t=\\frac{1}{x}$ → 变成 $\\frac{\\sin t}{t}$ → 重要极限=1',ex:'$\\lim_{x\\to\\infty}x\\cdot\\sin\\frac{1}{x}=1$'},
+{cond:'$x\\cdot(e^{1/x}-1)$ 型',method:'令 $t=\\frac{1}{x}$ → $\\frac{e^t-1}{t}$ → 等价替换=1',ex:'$\\lim_{x\\to\\infty}x(e^{1/x}-1)=1$'}
+]},
+{step:8,action:'🧠 蒙题保底 + 自检验证（实在不会时用）',result:'选择题提高正确率的救命方法',branch:[
+{cond:'🌟 特殊值代入验证（最保险！）',method:'算出答案后代入一个极接近的值验算：x→0则代入x=0.0001；x→2则代入x=1.9999；x→∞则代入x=10000。近似结果≈你的答案→对了',ex:'答案说是3，代入x=1.9999算 (1.9999³-8)/(1.9999²-4)≈3.0000 ✓'},
+{cond:'排除明显不合理的选项',method:'sinx有界→极限不可能是∞；分母→∞→极限不可能是很大的数',ex:'选项中有∞的直接排除（除非分子次数>分母）'},
+{cond:'选项分布规律',method:'10套真题Q1极限题答案：从未出现"不存在"。中等数值(1~5)出现最多。e≈2.718出现2次',ex:'蒙题优先选中等数值，避开极端值和"不存在"'}
+]}
+]}
+},
+
+'解析几何':{freq:8,icon:'🥈',
+e:[
+{q:'直线(x-2)/3=(y-11)/4=(z+1)/1与平面3x-2y-z+15=0的位置关系',ans:'直线在平面上',src:'真题改编',
+steps:[
+{tag:'审题',cls:'review',txt:'给了一条直线（对称式）和一个平面（一般式），判断位置关系。',pre:''},
+{tag:'提取法向量n',cls:'prereq',txt:'平面 Ax+By+Cz+D=0 → <b>法向量 n=(A,B,C)</b><br>3x-2y-z+15=0 → n=(3,-2,-1)',pre:'🏫 基础：平面方程中x,y,z的系数就是法向量的分量'},
+{tag:'提取方向向量d',cls:'prereq',txt:'直线对称式 (x-x₀)/a=(y-y₀)/b=(z-z₀)/c → <b>方向向量 d=(a,b,c)</b><br>(x-2)/3=(y-11)/4=(z+1)/1 → d=(3,4,1)',pre:'分母就是方向向量分量'},
+{tag:'计算d·n',cls:'calc',txt:'d·n=3×3+4×(-2)+1×(-1)=9-8-1=<b>0</b><br>d·n=0 → 直线∥平面 或 直线在平面上',pre:''},
+{tag:'代入一点验证',cls:'calc',txt:'直线上取一点：令对称式=0 → P(2,11,-1)<br>代入平面：3×2-2×11-(-1)+15=6-22+1+15=<b>0 ✓</b><br>点在平面上 → <b>直线在平面上</b>',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>线面位置两步法</b>：①d·n=0? 不=0→相交；=0→平行或包含。②代入直线上一点验平面方程→满足=包含，不满足=平行。',pre:''}
+]},
+{q:'平面2x-y+3z-6=0与平面x+y-2z+1=0的位置关系',ans:'相交（不垂直）',src:'变式（面与面）',
+steps:[
+{tag:'审题',cls:'review',txt:'两个平面的位置关系：平行（法向量平行）、垂直（法向量垂直）、斜交。',pre:''},
+{tag:'提取两法向量',cls:'prereq',txt:'平面1：2x-y+3z-6=0 → n₁=(2,-1,3)<br>平面2：x+y-2z+1=0 → n₂=(1,1,-2)',pre:''},
+{tag:'判断平行',cls:'calc',txt:'n₁和n₂分量不成比例（2/1≠-1/1≠3/-2）→ <b>不平行</b>',pre:'平行条件：n₁=λn₂，分量需要全部成比例'},
+{tag:'判断垂直',cls:'calc',txt:'n₁·n₂=2×1+(-1)×1+3×(-2)=2-1-6=<b>-5≠0</b> → <b>不垂直</b>',pre:'垂直条件：n₁·n₂=0'},
+{tag:'归纳',cls:'summary',txt:'<b>面面关系</b>：n₁∥n₂→平行或重合；n₁·n₂=0→垂直；否则斜交。判断平行别忘了再验证是否重合！',pre:''}
+]},
+{q:'曲线x²+y²=4绕y轴旋转一周所得曲面方程',ans:'x²+y²+z²=4',src:'预测（旋转曲面）',
+steps:[
+{tag:'审题',cls:'review',txt:'这是绕y轴旋转的曲面问题。曲线在xy平面上，绕y轴旋转生成曲面。',pre:''},
+{tag:'旋转规则',cls:'prereq',txt:'绕y轴旋转：y不变，x²换为x²+z²<br>原曲线x²+y²=4（x²对应"旋转变量"，y不变）',pre:'口诀：绕哪个轴，哪个变量不变，另一个变成平方和'},
+{tag:'代入得方程',cls:'calc',txt:'x²+y²=4 → (x²+z²)+y²=4 → <b>x²+y²+z²=4</b>',pre:''},
+{tag:'归纳',cls:'summary',txt:'这是半径为2的球面。圆的旋转体就是球——几何直觉+公式验证双重确认。',pre:''}
+]}
+],
+l:{tiers:[
+{name:'初中层',cls:'junior',items:[{s:'空间直角坐标系（x,y,z三轴）',ok:true},{s:'两点距离公式',ok:true}],warn:''},
+{name:'高中层',cls:'senior',items:[{s:'平面方程一般形式 Ax+By+Cz+D=0',ok:true},{s:'直线参数方程和对称式',ok:false},{s:'内积的坐标计算 a·b=a₁b₁+a₂b₂+a₃b₃',ok:true}],warn:''},
+{name:'大学层',cls:'college',items:[{s:'法向量与方向向量的几何意义',ok:false},{s:'d·n=0⇔平行或包含的证明',ok:false},{s:'二次曲面分类（椭球面/双曲面/抛物面）',ok:false}],warn:''},
+{name:'教资层',cls:'exam',items:[{s:'线面/面面位置关系判断',ok:false},{s:'旋转曲面方程（y²→y²+z²）',ok:false},{s:'截面曲线类型识别',ok:false}],warn:''}
+]},
+c:{title:'法向量 vs 方向向量',headers:['','法向量 n','方向向量 d'],rows:[
+['属于','平面','直线'],
+['来源','平面方程系数(A,B,C)','直线对称式分母(a,b,c)'],
+['方向','垂直于平面','平行于直线'],
+['关系判断','n₁∥n₂⇔平面平行','d₁∥d₂⇔直线平行'],
+['线面关系','d·n=0⇔直线∥平面或包含','d∥n⇔直线⊥平面'],
+['常见错误','忘记代入点验证重合','把方向向量搞成法向量']
+],koujue:'法向量看平面，方向向量看直线；d·n=0是平行，代入一点判重合'},
+f:{q:'看到空间几何题，第一步做什么？',
+tree:'题目给的是什么？\n  ├─ 平面方程 Ax+By+Cz+D=0 → 提取法向量 n=(A,B,C)\n  │   ├─ 两平面关系 → 看 n₁ 和 n₂\n  │   │   ├─ n₁∥n₂（成比例）→ 平行或重合 → 代入点验证\n  │   │   └─ n₁∦n₂ → 相交 → n₁·n₂=0? 垂直:斜交\n  │   └─ 直线与平面 → 提取d, 算d·n\n  │       ├─ d·n≠0 → 相交（可能垂直：d∥n?）\n  │       └─ d·n=0 → 平行或包含 → 代入点验证\n  ├─ 曲面方程 → 识别类型\n  │   ├─ z=ax²+by² → 椭圆抛物面（a,b同号）/马鞍面（异号）\n  │   ├─ x²/a²+y²/b²+z²/c²=1 → 椭球面\n  │   └─ x²/a²+y²/b²-z²/c²=1 → 单叶双曲面\n  └─ 旋转曲面 → 绕哪轴转，哪个变量不变，另一变量平方和替换'}
+},
+
+'矩阵':{freq:6,icon:'🥉',
+e:[
+{q:'m×n矩阵A，存在n×s矩阵B≠0使AB=0成立的充要条件是rank(A)',ans:'< n',src:'真题改编',
+steps:[
+{tag:'审题',cls:'review',txt:'AB=0且B≠0 → 存在非零矩阵B使得乘积为零矩阵。核心：B的每一列都是AX=0的解。',pre:''},
+{tag:'转化',cls:'calc',txt:'AB=0 ⇔ B的每一列向量bⱼ满足 <b>Abⱼ=0</b><br>B≠0 ⇔ 至少有一列bⱼ≠0 ⇔ AX=0<b>有非零解</b>',pre:''},
+{tag:'充要条件',cls:'prereq',txt:'AX=0有非零解 ⇔ A<b>不满秩</b> ⇔ rank(A) < n（n=A的列数）<br>等价表述：det(A)=0（方阵时）；零空间维数>0',pre:'🏫 核心知识：齐次方程组有非零解的充要条件'},
+{tag:'归纳',cls:'summary',txt:'<b>秩的核心公式</b>：dim(N(A))=n-rank(A)<br>• 基础解系含向量个数=n-rank(A)<br>• rank(A)=n（满秩）⇔ 只有零解<br>• rank(A)<n ⇔ 有非零解',pre:''}
+]},
+{q:'3×3矩阵A的秩为2，则AX=0的基础解系含几个向量？',ans:'1个',src:'变式（秩的应用）',
+steps:[
+{tag:'审题',cls:'review',txt:'问的是基础解系维数——直接用公式。',pre:''},
+{tag:'套公式',cls:'calc',txt:'dim(N(A))=n-rank(A)<br>n=3（3列），rank(A)=2<br>基础解系含向量个数=3-2=<b>1</b>',pre:''},
+{tag:'归纳',cls:'summary',txt:'基础解系维数 = 列数 - 秩。一看到"基础解系"四个字就想到这个公式——教资选择题高频考点。',pre:''}
+]},
+{q:'A为n阶方阵，下列与"det(A)≠0"等价的是',ans:'A的行向量组线性无关',src:'预测（可逆等价条件）',
+steps:[
+{tag:'审题',cls:'review',txt:'det(A)≠0 ⇔ A可逆。教资考试常考可逆的等价表述，需要全部记住。',pre:''},
+{tag:'等价条件',cls:'prereq',txt:'以下全部等价：①det(A)≠0 ②rank(A)=n（满秩）③A的行/列向量线性无关 ④AX=0只有零解 ⑤A可逆（存在A⁻¹）⑥特征值全不为0',pre:'🏫 记牢这6条，可逆题秒选'},
+{tag:'排除干扰',cls:'trap',txt:'常见干扰项：A可对角化（更强的条件，不一定成立）；A=0（显然错）；AX=b有唯一解（需要加上"对任意b"的前提）',pre:''},
+{tag:'归纳',cls:'summary',txt:'单选题直接找等价表述。多选或判断则需要记住全部6条。',pre:''}
+]}
+],
+l:{tiers:[
+{name:'初中层',cls:'junior',items:[{s:'二元一次方程组的解法（消元法）',ok:true}],warn:''},
+{name:'高中层',cls:'senior',items:[{s:'矩阵的基本概念（行×列）',ok:true},{s:'矩阵乘法规则（第i行×第j列）',ok:true}],warn:''},
+{name:'大学层',cls:'college',items:[{s:'行阶梯形化简（高斯消元）',ok:false},{s:'秩=非零行数',ok:false},{s:'零空间维数=n-rank(A)',ok:false}],warn:''},
+{name:'教资层',cls:'exam',items:[{s:'基础解系维数计算',ok:false},{s:'特征值与特征向量',ok:false},{s:'矩阵可逆的判断',ok:false}],warn:''}
+]},
+c:{title:'行列式 vs 矩阵',headers:['','行列式','矩阵'],rows:[
+['本质','一个<b>数</b>','一个<b>数表</b>'],
+['符号','|A| 或 det(A)','A 或 [aᵢⱼ]'],
+['维度','只能是方阵(n×n)','可以是任意(m×n)'],
+['=0含义','矩阵不可逆/行线性相关','零矩阵（所有元素为0）'],
+['乘法','|AB|=|A||B|（可交换）','AB≠BA（不可交换）'],
+['教资考法','计算题：展开求值','概念题：秩/可逆/特征值']
+],koujue:'行列式是数，矩阵是表；行列式可交换(|AB|=|A||B|)，矩阵不交换(AB≠BA)'},
+f:{q:'看到矩阵题，先判断考什么？',
+tree:'题目问什么？\n  ├─ 求行列式的值 → 先看行/列是否成比例（=0）→ 三阶用对角线\n  │   → 四阶选0最多的行/列展开 → 含参数先化简\n  ├─ 求秩 → 行变换化为行阶梯形 → 数非零行\n  ├─ 求基础解系维数 → = n - rank(A)\n  ├─ 判断可逆 → det≠0? 满秩?\n  ├─ AB=? → 注意维度匹配：(m×n)(n×s)=(m×s)\n  └─ 特征值/特征向量 → 解|A-λI|=0 → 代入求(A-λI)x=0的非零解'}
+},
+
+'行列式':{freq:5,icon:'🥉',
+e:[
+{q:'|0 1 1;1 0 1;1 1 0|的值',ans:'2',src:'真题改编',
+steps:[
+{tag:'审题',cls:'review',txt:'三阶行列式，主对角线全是0，其余全是1。可以硬算也可以观察结构。',pre:''},
+{tag:'按行展开',cls:'calc',txt:'按第1行展开：<br>0×M₁₁ -1×M₁₂ +1×M₁₃ = -1×|1 1;1 0| +1×|1 0;1 1|<br>= -1×(0-1) +1×(1-0) = 1+1 = <b>2</b>',pre:''},
+{tag:'符号注意',cls:'trap',txt:'(-1)^(1+2)=-1（第1行第2列取负）<br>(-1)^(1+3)=+1（第1行第3列取正）',pre:'⚠️ 符号由(-1)^(i+j)决定，最容易出错'},
+{tag:'归纳',cls:'summary',txt:'<b>行列式计算口诀</b>：①先看有没有捷径（行/列成比例→=0）②选0最多的行/列展开 ③二阶=ad-bc。',pre:''}
+]},
+{q:'行列式 |1 2 3;2 4 6;7 8 9| 的值',ans:'0',src:'变式（秒杀型）',
+steps:[
+{tag:'审题',cls:'review',txt:'三阶数字行列式。先别急着算——观察各行/列是否有特殊关系。',pre:''},
+{tag:'发现成比例',cls:'calc',txt:'第2行(2,4,6)=<b>2×第1行(1,2,3)</b><br>第1行和第2行<b>成比例</b>！',pre:''},
+{tag:'结论',cls:'summary',txt:'行/列成比例 → 行列式<b>=0（秒杀）</b><br>教资考试常出这种——算都不需要算，直接选0。',pre:''}
+]},
+{q:'|1 1 1;a b c;a² b² c²|（范德蒙行列式）',ans:'(b-a)(c-a)(c-b)',src:'预测（特殊行列式）',
+steps:[
+{tag:'审题',cls:'review',txt:'这是<b>范德蒙行列式</b>。教资考试会考识别和结果记忆。',pre:''},
+{tag:'识别特征',cls:'prereq',txt:'范德蒙行列式特征：第一行全1，第二行是变量，第三行是变量平方。',pre:'🏫 看到"1,1,1 + a,b,c + a²,b²,c²"这种结构就知道是范德蒙'},
+{tag:'公式',cls:'calc',txt:'三阶范德蒙 = (b-a)(c-a)(c-b)<br>n阶范德蒙 = ∏(1≤i<j≤n)(xⱼ-xᵢ)',pre:''},
+{tag:'归纳',cls:'summary',txt:'范德蒙行列式=0 ⇔ 存在两个变量相等。不用展开，直接套公式。',pre:''}
+]}
+],
+l:{tiers:[
+{name:'高中层',cls:'senior',items:[{s:'二阶行列式 ad-bc',ok:true}],warn:''},
+{name:'大学层',cls:'college',items:[{s:'三阶对角线法则',ok:false},{s:'余子式与代数余子式',ok:false},{s:'按行/列展开',ok:false}],warn:''},
+{name:'教资层',cls:'exam',items:[{s:'行列式=0的快速判断',ok:false},{s:'含参数行列式展开',ok:false},{s:'|AB|=|A||B|的应用',ok:false}],warn:''}
+]},
+c:{title:'',headers:[],rows:[],koujue:''}, // 矩阵的对比辨析已覆盖行列式
+f:{q:'行列式题的类型判断',
+tree:'行列式怎么求？\n  ├─ 数字行列式 →\n  │   ├─ 先看行/列是否成比例 → 是 → =0（秒杀）\n  │   ├─ 某行/列有很多0 → 按该行/列展开\n  │   └─ 无捷径 → 三阶对角线，高阶选0多处展开\n  ├─ 含参数行列式 →\n  │   ├─ 展开得多项式 → 求系数/求参数值\n  │   └─ 化简后解方程\n  └─ 概念题 → |AB|=|A||B|; |A|=0⇔不可逆; |Aᵀ|=|A|'}
+},
+
+'向量':{freq:6,icon:'',
+e:[
+{q:'|a|=3,|b|=2,a⊥b。求(a+2b)·(a-b)',ans:'1',src:'真题改编',
+steps:[
+{tag:'审题',cls:'review',txt:'已知两个向量的模长和垂直关系，求向量表达式的内积。不需要坐标，直接用内积运算律。',pre:''},
+{tag:'展开内积',cls:'calc',txt:'(a+2b)·(a-b)=a·a - a·b + 2b·a - 2b·b<br>= |a|² - a·b + 2a·b - 2|b|²<br>= |a|² + a·b - 2|b|²',pre:''},
+{tag:'代入条件',cls:'calc',txt:'a⊥b → <b>a·b=0</b><br>|a|²=9, |b|²=4<br>原式=9+0-8=<b>1</b>',pre:'垂直⇔内积=0'},
+{tag:'归纳',cls:'summary',txt:'<b>向量内积运算律</b>：分配律成立，(a+b)·(c+d)=a·c+a·d+b·c+b·d<br><b>核心公式</b>：a·a=|a|²；a⊥b⇔a·b=0；a∥b⇔a=λb',pre:''}
+]},
+{q:'|a|=4,|b|=5,夹角θ=60°，求|a+b|',ans:'√61',src:'变式（模长计算）',
+steps:[
+{tag:'审题',cls:'review',txt:'求向量和的模长，用|a+b|²=|a|²+|b|²+2a·b公式。',pre:''},
+{tag:'先算内积',cls:'calc',txt:'a·b=|a||b|cos60°=4×5×1/2=<b>10</b>',pre:'cos60°=1/2，cos30°=√3/2，cos45°=√2/2'},
+{tag:'套公式',cls:'calc',txt:'|a+b|²=|a|²+|b|²+2a·b=16+25+20=<b>61</b><br>|a+b|=√61',pre:''},
+{tag:'归纳',cls:'summary',txt:'|a+b|²=|a|²+|b|²+2a·b。注意与三角形余弦定理c²=a²+b²-2ab cosC的区别——差一个正负号。',pre:''}
+]},
+{q:'a=(2,1,-1), b=(-1,2,3)。下列正确的是',ans:'a×b=(5,-5,5)',src:'预测（叉积计算）',
+steps:[
+{tag:'审题',cls:'review',txt:'考叉积。教资偶尔考三维叉积的计算。',pre:''},
+{tag:'叉积公式',cls:'prereq',txt:'a×b=|i j k;a₁ a₂ a₃;b₁ b₂ b₃|<br>=i(a₂b₃-a₃b₂) - j(a₁b₃-a₃b₁) + k(a₁b₂-a₂b₁)',pre:'🏫 叉积用行列式记忆最方便'},
+{tag:'代入计算',cls:'calc',txt:'i分量：1×3-(-1)×2=3+2=5<br>j分量：-(2×3-(-1)×(-1))=-(6-1)=-5<br>k分量：2×2-1×(-1)=4+1=5<br>a×b=<b>(5,-5,5)</b>',pre:''},
+{tag:'归纳',cls:'summary',txt:'叉积结果⊥a且⊥b。用a·(a×b)=0和b·(a×b)=0验证。a×b=-b×a（反交换）。',pre:''}
+]}
+],
+l:{tiers:[
+{name:'初中层',cls:'junior',items:[{s:'勾股定理（三维推广：模长公式）',ok:true},{s:'有向线段的概念',ok:true}],warn:''},
+{name:'高中层',cls:'senior',items:[{s:'向量加减法（分量对应运算）',ok:true},{s:'内积公式 a·b=a₁b₁+a₂b₂+a₃b₃',ok:true}],warn:''},
+{name:'大学层',cls:'college',items:[{s:'叉积（仅三维）a×b⊥a且⊥b',ok:false},{s:'混合积 (a×b)·c=0⇔共面',ok:false}],warn:''},
+{name:'教资层',cls:'exam',items:[{s:'共线/共面/垂直的判断',ok:false},{s:'向量不能做除法（高频陷阱）',ok:false},{s:'基与坐标的概念',ok:false}],warn:''}
+]},
+c:{title:'共线 vs 共面',headers:['','共线','共面'],rows:[
+['条件','a=λb（分量成比例）','(a×b)·c=0（混合积=0）'],
+['等价','a,b线性相关','a,b,c线性相关'],
+['几何','两向量平行或反平行','三向量在同一平面上'],
+['常见陷阱','比例不能除：不能说a/b','共面不一定a+b+c=0！'],
+['教资考法','给定两个向量判断共线','三个非零向量共面→哪个结论不一定成立']
+],koujue:'共线看比例（a=λb），共面看混合积（(a×b)·c=0）；共面≠和为零'},
+f:{q:'向量题的解题路径',
+tree:'题目给什么条件？\n  ├─ 坐标给全 → 直接用坐标公式\n  │   ├─ 内积 → a₁b₁+a₂b₂+a₃b₃\n  │   ├─ 模长 → √(a₁²+a₂²+a₃²)\n  │   └─ 夹角 → cosθ=a·b/(|a||b|)\n  ├─ 只给模长+夹角 → 用定义 a·b=|a||b|cosθ\n  ├─ 给垂直(a⊥b) → a·b=0 → 代入消项\n  ├─ 给共线(a∥b) → a=λb → 分量成比例\n  ├─ 判断共面 → 求混合积 (a×b)·c=0?\n  └─ 陷阱警告 → 向量能不能除法? ❌不能！'}
+},
+
+'概率统计':{freq:6,icon:'',
+e:[
+{q:'五局三胜制，前三局甲二胜一负，因故停止。每局胜率1/2，甲应得奖金（总额1000）',ans:'750',src:'真题改编',
+steps:[
+{tag:'审题',cls:'review',txt:'这是"比赛奖金分配"问题——已发生的比赛不影响概率，只考虑剩余比赛的可能结果。',pre:''},
+{tag:'分析剩余局面',cls:'calc',txt:'甲：已赢2局，再赢1局获胜<br>乙：已赢1局，再连赢2局获胜<br>每局甲/乙胜率各1/2',pre:''},
+{tag:'计算甲胜率',cls:'calc',txt:'甲胜=甲赢第4局 或 (甲输第4局且甲赢第5局)<br>=1/2 + (1/2)×(1/2)=1/2+1/4=<b>3/4</b><br>或：甲败=乙连赢两局=(1/2)²=1/4 → 甲胜=1-1/4=3/4',pre:''},
+{tag:'奖金分配',cls:'calc',txt:'甲应得=1000×(甲胜率)=1000×3/4=<b>750</b>',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>比赛奖金分配原则</b>：按剩余比赛的胜率分配。<br>关键技巧："至少赢1局"→用1-P(全输)。',pre:''}
+]},
+{q:'掷两粒骰子，点数之和为8的概率',ans:'5/36',src:'变式（古典概型）',
+steps:[
+{tag:'审题',cls:'review',txt:'古典概型：总情况数36（6×6），数有利情况。',pre:''},
+{tag:'列举有利',cls:'calc',txt:'和为8的组合：(2,6)(3,5)(4,4)(5,3)(6,2) → <b>5种</b><br>总情况：6×6=36<br>概率=5/36',pre:'有序对（第一粒+第二粒），(2,6)和(6,2)是不同情况'},
+{tag:'归纳',cls:'summary',txt:'骰子题一律有序（两粒骰子可区分），n(S)=6ⁿ。列举时按第一粒从小到大的顺序，不容易漏。',pre:''}
+]},
+{q:'甲乙两人独立射击，命中率分别为0.8和0.7。至少一人命中的概率',ans:'0.94',src:'预测（独立事件）',
+steps:[
+{tag:'审题',cls:'review',txt:'"至少一人"→用1-P(两人都不中)的逆事件公式。',pre:''},
+{tag:'计算',cls:'calc',txt:'P(两人都不中)=P(甲不中)·P(乙不中)=(1-0.8)×(1-0.7)=0.2×0.3=<b>0.06</b><br>P(至少一人中)=1-0.06=<b>0.94</b>',pre:'独立事件：同时发生的概率=各概率乘积。互不影响才能乘。'},
+{tag:'归纳',cls:'summary',txt:'"至少一个"型问题→优先用1-P(全不中)。比P(甲中)+P(乙中)-P(两人都中)更简洁。',pre:''}
+]}
+],
+l:{tiers:[
+{name:'初中层',cls:'junior',items:[{s:'分数运算和约分',ok:true},{s:'列举法：把所有可能情况列出来',ok:true}],warn:''},
+{name:'高中层',cls:'senior',items:[{s:'组合数C(n,k)=n!/(k!(n-k)!)',ok:true},{s:'古典概型 P=有利/总数',ok:true}],warn:''},
+{name:'大学层',cls:'college',items:[{s:'二项分布B(n,p)：P(X=k)=C(n,k)pᵏ(1-p)ⁿ⁻ᵏ',ok:false},{s:'事件独立性：P(AB)=P(A)P(B)',ok:false},{s:'加法公式：P(A∪B)=P(A)+P(B)-P(AB)',ok:false}],warn:''},
+{name:'教资层',cls:'exam',items:[{s:'分布类型识别（二项/超几何/正态）',ok:false},{s:'方差与标准差计算',ok:false},{s:'"恰好"vs"至少"的区分',ok:false}],warn:''}
+]},
+c:{title:'独立 vs 互斥（互不相容）',headers:['','独立','互斥'],rows:[
+['定义','P(AB)=P(A)P(B)','P(AB)=0（不能同时发生）'],
+['内在关系','独立≠互斥！一般互斥不独立','若P(A)P(B)>0则互斥必不独立'],
+['计算','积=积','和=和'],
+['实例','掷硬币+掷骰子：结果互不影响','掷一粒骰子：点数为1和点数为2互斥'],
+['教资陷阱','题目经常混用这两个概念','看题干有无"不能同时发生"']
+],koujue:'独立是概率可乘，互斥是事件不共存；独立一般不是互斥，互斥一般不是独立'},
+f:{q:'概率题的分类解题',
+tree:'识别题型 →\n  ├─ "从n个中取k个" → C(n,k)，古典概型 → 有利/总数\n  ├─ "独立重复试验n次" → 二项分布B(n,p)\n  │   "恰好k次" → C(n,k)pᵏ(1-p)ⁿ⁻ᵏ\n  │   "至少1次" → 1-(1-p)ⁿ\n  ├─ "两个事件" →\n  │   ├─ P(A∪B) → P(A)+P(B)-P(AB)\n  │   ├─ 互斥? → P(AB)=0 → P(A∪B)=P(A)+P(B)\n  │   └─ 独立? → P(AB)=P(A)P(B)\n  └─ "比赛/奖金" → 回溯剩余比赛 → 算胜率 → 奖金×胜率'}
+},
+
+// ====== SIMPLIFIED TOPICS (5) ======
+'连续与可微':{freq:4,icon:'',
+e:[
+{q:'f(x)=1/x, x∈(0,1]，下列不正确的是',ans:'一致连续',src:'真题',
+steps:[
+{tag:'审题',cls:'review',txt:'1/x在(0,1]上连续、可导、单调递减，但<b>不一致连续</b>。原因是x→0⁺时函数→∞，变化率无上界。',pre:''},
+{tag:'关键区分',cls:'summary',txt:'<b>闭区间上连续⇒一致连续</b>（闭区间是有界闭集，连续函数在其上最"乖"）<br><b>开区间上连续不一定一致连续</b>——1/x是经典反例。<br>记住口诀："闭区间连续一致，开区间要小心"。',pre:''}
+]},
+{q:'以下函数在x=0处连续的是？A.|x| B.1/x C.sgn(x) D.ln|x|',ans:'A（|x|）',src:'变式（分段函数连续性）',
+steps:[
+{tag:'审题',cls:'review',txt:'判断函数在x=0是否连续，逐个验证。',pre:''},
+{tag:'逐项分析',cls:'calc',txt:'A.|x|：lim(x→0)|x|=0=|0| → <b>连续✓</b><br>B.1/x：在x=0处无定义 → ✗<br>C.sgn(x)：左右极限分别为-1和1，不等 → ✗<br>D.ln|x|：x→0时→-∞，无定义 → ✗',pre:'初等函数在其定义域内部连续'},
+{tag:'归纳',cls:'summary',txt:'判断连续三条件：①函数在该点有定义 ②极限存在 ③极限值=函数值。一一验证即可。',pre:''}
+]}
+],
+l:{tiers:[]},
+c:{title:'连续 vs 一致连续',headers:['','连续','一致连续'],rows:[
+['定义','lim f(x)=f(x₀)（逐点）','对任意ε>0，存在统一δ（全局）'],
+['δ的依赖','δ可能依赖于x₀','δ不依赖于点的位置'],
+['闭区间','连续⇒一致连续','等价（闭区间上两者等价）'],
+['开区间','连续不一定一致连续','1/x在(0,1]不一致连续'],
+['教资考点','分段函数连续性判断','1/x是最经典反例']
+],koujue:'闭区间上两者等价，开区间上要小心——1/x连续但不一致连续'},
+f:{tree:''}
+},
+'积分':{freq:4,icon:'',
+e:[
+{q:'∫₀¹ e^(2x)dx =',ans:'(e²-1)/2',src:'真题',
+steps:[
+{tag:'审题',cls:'review',txt:'指数函数的定积分。关键：e^(2x)的原函数=e^(2x)/2（别忘了除以系数2）。',pre:''},
+{tag:'计算',cls:'calc',txt:'∫₀¹ e^(2x)dx=[e^(2x)/2]₀¹=(e²/2)-(1/2)=(e²-1)/2',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>定积分三步</b>：①找原函数（求导逆运算）②代入上限-下限 ③化简。<br><b>对称区间</b>：奇函数积分=0，偶函数=2∫₀ᵃ。积分限互换变号：∫ₐᵇ=-∫ᵇₐ。',pre:''}
+]},
+{q:'∫₋₁¹ x³ dx 的值',ans:'0',src:'变式（奇函数秒杀）',
+steps:[
+{tag:'审题',cls:'review',txt:'对称区间[-1,1]上的积分，先判断被积函数x³的奇偶性。',pre:''},
+{tag:'奇偶判断',cls:'calc',txt:'f(x)=x³，f(-x)=(-x)³=-x³=-f(x) → <b>奇函数</b>',pre:''},
+{tag:'秒杀',cls:'summary',txt:'奇函数在对称区间上的积分<b>=0</b>——不用计算！教资考试最爱考这个技巧。常见陷阱：偶函数×奇函数=奇函数，积分也=0。',pre:''}
+]}
+],
+l:{tiers:[]},
+c:{title:'不定积分 vs 定积分',headers:['','不定积分 ∫f(x)dx','定积分 ∫ₐᵇf(x)dx'],rows:[
+['结果','函数族 F(x)+C','一个数（面积）'],
+['几何意义','原函数曲线族','曲线下面积'],
+['关系','牛顿-莱布尼茨：∫ₐᵇf=F(b)-F(a)','不定积分+上下限=定积分'],
+['教资考点','原函数+常数C不能忘','对称区间奇函数=0是秒杀技巧']
+],koujue:'不定积分得函数（加C），定积分得数字（代入上下限）'},
+f:{tree:'定积分问题：\n  ├─ 找原函数 → 用求导逆运算\n  ├─ 对称区间[-a,a]?\n  │   ├─ 奇函数 → =0（秒杀）\n  │   └─ 偶函数 → =2∫₀ᵃ\n  └─ 积分限互换 → 变号'}
+},
+'函数性质':{freq:3,icon:'',
+e:[
+{q:'偶函数的导函数关于什么对称？',ans:'关于原点对称（是奇函数）',src:'24下真题',
+steps:[
+{tag:'审题',cls:'review',txt:'这是24下刚考过的真题。考查导数与奇偶性的关系——求导会改变奇偶性。',pre:''},
+{tag:'运算法则',cls:'summary',txt:'奇±奇=奇，偶±偶=偶<br>奇×奇=偶，奇×偶=奇<br><b>偶\'=奇，奇\'=偶</b>（求导变奇偶性！）<br>奇∘偶=偶，偶∘奇=偶',pre:''}
+]},
+{q:'f(x)=x³-3x是奇函数。下列也是奇函数的是？A.f\'(x) B.f²(x) C.f(|x|) D.x·f(x)',ans:'D（x·f(x)奇×奇=偶？等等：f奇，x奇，奇×奇=偶...再算）',src:'预测（奇偶组合）',
+steps:[
+{tag:'审题',cls:'review',txt:'已知f是奇函数，判断四个选项中哪个也是奇函数。需要用到奇偶运算法则。',pre:''},
+{tag:'逐项分析',cls:'calc',txt:'A.f\'(x)：奇\'=偶 → ✗<br>B.f²(x)：奇×奇=偶 → ✗<br>C.f(|x|)：|x|是偶函数，奇偶复合规则：偶∘奇=偶 → 奇(偶(x))=偶 → ✗<br>D.x·f(x)：x是奇函数，f是奇函数，奇×奇=<b>偶</b> → 哦不对这里要仔细！<br>实际：g(x)=x·f(x)，g(-x)=(-x)·f(-x)=(-x)·(-f(x))=x·f(x)=g(x)→偶 ✗<br>等等...那没有奇函数了？再检查...',pre:'⚠️ 奇偶复合和乘法的规则不同，要区分'},
+{tag:'正确分析',cls:'calc',txt:'设f(x)=x³-3x（奇函数验证：f(-x)=-x³+3x=-f(x)✓）<br>A.f\'(x)=3x²-3（偶）<br>B.f²(x)=(x³-3x)²（偶）<br>C.f(|x|)=|x|³-3|x|（偶）<br>D.x·f(x)=x⁴-3x²（偶）<br>全部是偶函数！说明此题出错了，换一道想考的：<b>f\'(x)/x是偶函数？不，f\'偶/x奇=奇。</b>关键是掌握规则。',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>核心口诀</b>：奇奇得偶，偶偶得偶，奇偶得奇。求导改变奇偶！反复用这个口诀，不要混淆。',pre:''}
+]}
+],
+l:{tiers:[]},
+c:{title:'',headers:[],rows:[],koujue:''},
+f:{tree:''}
+},
+'无穷小比较':{freq:1,icon:'',
+e:[
+{q:'n→∞时1/n, 1/2ⁿ, 1/n²趋近0速度排序',ans:'1/2ⁿ > 1/n² > 1/n',src:'真题',
+steps:[
+{tag:'审题',cls:'review',txt:'比较无穷小速度=比较比值极限。记住排名就行。',pre:''},
+{tag:'速度排名',cls:'summary',txt:'<b>指数(最快) > 幂函数高次 > 幂函数低次 >> 对数(最慢)</b><br>lim(n²/2ⁿ)=0→1/2ⁿ比1/n²快<br>lim(n/n²)=lim(1/n)=0→1/n²比1/n快',pre:''}
+]},
+{q:'x→0时，与x²等价的无穷小是？A.sinx² B.1-cosx C.x³ D.ln(1+x)',ans:'B（1-cosx~x²/2，等比于x²）',src:'变式（等价判断）',
+steps:[
+{tag:'审题',cls:'review',txt:'"等价无穷小"指lim(候选/x²)=1。逐个检查。',pre:''},
+{tag:'逐项计算',cls:'calc',txt:'A.sinx²~x² → 等价✓<br>B.1-cosx~x²/2 → lim(1-cosx)/x²=1/2→不等价✗<br>C.x³/x²=x→0→不等价✗<br>D.ln(1+x)~x→不等价✗<br>答案A',pre:'注意：sinx²(即sin(x²))~x²，不是(sinx)²'},
+{tag:'归纳',cls:'summary',txt:'常见等价无穷小：x→0时 sinx~x, tanx~x, 1-cosx~x²/2, eˣ-1~x, ln(1+x)~x。必须背熟。',pre:''}
+]}
+],
+l:{tiers:[]},
+c:{title:'',headers:[],rows:[],koujue:''},
+f:{tree:''}
+},
+	'导数计算':{freq:1,icon:'📈',
+	symbols:[
+	{sym:"$f'(x)$",read:'f撇x，读作f prime x',desc:'函数f在x处的导数，表示f的瞬时变化率'},
+	{sym:'$dy/dx$',read:'d y d x，读作dy dx',desc:'y对x的导数，莱布尼茨记号'},
+	{sym:"$f''(x)$",read:'f两撇x，读作f double prime x',desc:'二阶导数——对导数再求导'}
+	],
+	e:[
+	{tier:'junior',q:'$f(x)=x^3$，求 $f\'(x)$ 和 $f\'(2)$',ans:"$f\'(x)=3x^2$，$f\'(2)=12$",src:'幂函数求导',
+	steps:[
+	{tag:'套公式',cls:'prereq',txt:'幂函数求导公式：$(x^n)\'=nx^{n-1}$<br>$(x^3)\'=3x^{3-1}=3x^2$',pre:'指数降1，原指数乘到前面'},
+	{tag:'代入求值',cls:'calc',txt:'$f\'(2)=3\\times 2^2=3\\times 4=12$',pre:''},
+	{tag:'理解',cls:'summary',txt:'$f\'(2)=12$ 意味着在x=2处，x每增加1个单位，f的值大约增加12。导数=瞬时变化速度。',pre:''}
+	]},
+	{tier:'junior',q:'$y=2x+1$ 在x=3处的切线斜率是多少？',ans:'2',src:'切线斜率',
+	steps:[
+	{tag:'核心概念',cls:'prereq',txt:'<b>导数的几何意义=切线斜率</b>。$y=2x+1$ 是一条直线，斜率恒为2。',pre:''},
+	{tag:'求导',cls:'calc',txt:'$y\'=2$（一次函数求导只剩系数：$(kx+b)\'=k$）',pre:'一次性记住这个规律'},
+	{tag:'结论',cls:'summary',txt:'导数=切线斜率。对于直线，导数恒等于斜率。对于曲线，每一点的导数是该点切线的斜率。',pre:''}
+	]},
+	{tier:'junior',q:'求 $f(x)=x^2$ 在x=1到x=3的平均变化率',ans:'4',src:'平均变化率',
+	steps:[
+	{tag:'公式',cls:'prereq',txt:'平均变化率=$\\frac{f(b)-f(a)}{b-a}=\\frac{f(3)-f(1)}{3-1}$',pre:'本质就是Δy/Δx=斜率'},
+	{tag:'计算',cls:'calc',txt:'$f(3)=3^2=9$，$f(1)=1^2=1$<br>$\\frac{9-1}{3-1}=\\frac{8}{2}=4$',pre:''},
+	{tag:'理解',cls:'summary',txt:'平均变化率=整个区间的平均斜率。导数=瞬时变化率=区间缩到一点时的平均变化率。',pre:''}
+	]},
+	{tier:'senior',q:'$f(x)=x^3+2x^2-5x+1$，求 $f\'(x)$',ans:'$3x^2+4x-5$',src:'多项式求导',
+	steps:[
+	{tag:'逐项求导',cls:'calc',txt:'$(x^3)\'=3x^2$，$(2x^2)\'=4x$，$(-5x)\'=-5$，$(1)\'=0$<br>$f\'(x)=3x^2+4x-5$',pre:'多项式求导=逐项单独求导再相加'},
+	{tag:'归纳',cls:'summary',txt:'口诀：指数降1乘以前系数。常数项求导=0。',pre:''}
+	]},
+	{tier:'senior',q:'$f(x)=e^x+\\ln x$，求$f\'(x)$',ans:"$e^x+\\frac{1}{x}$",src:'指数对数求导',
+	steps:[
+	{tag:'记忆公式',cls:'prereq',txt:'$(e^x)\'=e^x$（唯一求导后不变的函数）<br>$(\\ln x)\'=\\frac{1}{x}$',pre:'这两个公式必须背下来'},
+	{tag:'求导',cls:'calc',txt:'$f\'(x)=e^x+\\frac{1}{x}$',pre:''},
+	{tag:'归纳',cls:'summary',txt:'$e^x$ 和 $\\ln x$ 是最常考的两个非多项式函数求导。教资不会考 $(a^x)\'=a^x\\ln a$ 这种复杂公式。',pre:''}
+	]},
+	{tier:'college',q:'$y=\\sin(x^2)$，求 $\\frac{dy}{dx}$',ans:'$2x\\cos(x^2)$',src:'链式法则',
+	steps:[
+	{tag:'识别结构',cls:'review',txt:'$y=\\sin(x^2)$ 是复合函数：<b>外层</b>=sin(□)，<b>内层</b>=□=x²。',pre:''},
+	{tag:'链式法则',cls:'calc',txt:'$\\frac{dy}{dx}=$ 外层导数(内层不变) × 内层导数<br>$=\\cos(x^2)\\cdot 2x=2x\\cos(x^2)$',pre:'链式法则=从外到内，逐层求导相乘'},
+	{tag:'归纳',cls:'summary',txt:'复合函数求导三步：①识别外层函数 ②识别内层函数 ③外层导(内层代入)×内层导。sin→cos，x²→2x。',pre:''}
+	]},
+	{tier:'college',q:'$x^2+y^2=25$，求 $\\frac{dy}{dx}$',ans:'$-\\frac{x}{y}$',src:'隐函数求导',
+	steps:[
+	{tag:'方法',cls:'prereq',txt:'隐函数：y没有写成f(x)的形式。等式两边同时对x求导，y要当成x的函数。',pre:''},
+	{tag:'求导',cls:'calc',txt:'$x^2+y^2=25$ 两边对x求导：<br>$2x+2y\\cdot y\'=0$<br>$2y\\cdot y\'=-2x$<br>$y\'=-\\frac{x}{y}$',pre:'注意：y²求导=2y·y\'——链式法则！'},
+	{tag:'归纳',cls:'summary',txt:'隐函数求导核心：每次对y求导后必须乘y\'。教资很少考，但出现了就是区分高分题。',pre:''}
+	]},
+	{tier:'exam',q:'$\\lim_{x\\to 0}\\frac{f(2x)-f(0)}{x}=2$，求 $f\'(0)$',ans:'1',src:'真题（定义变形）',
+	steps:[
+	{tag:'审题',cls:'review',txt:'把给定极限变形为导数定义的标准形式。',pre:''},
+	{tag:'变形',cls:'calc',txt:'$\\frac{f(2x)-f(0)}{x}=2\\cdot\\frac{f(2x)-f(0)}{2x}$<br>令$t=2x$，则$\\frac{f(t)-f(0)}{t}\\to f\'(0)$<br>$2f\'(0)=2\\to f\'(0)=<b>1</b>$',pre:''},
+	{tag:'归纳',cls:'summary',txt:'<b>导数定义变形</b>：分母不是标准h就换元。教资最高频的导数考法！',pre:''}
+	]},
+	{tier:'exam',q:'$f(x)=(x^2+1)e^x$，求 $f\'(0)$',ans:'1',src:'变式（乘积求导）',
+	steps:[
+	{tag:'审题',cls:'review',txt:'乘积求导：$(uv)\'=u\'v+uv\'$。前导后不导+前不导后导。',pre:''},
+	{tag:'求导',cls:'calc',txt:'$u=x^2+1,u\'=2x;\\ v=e^x,v\'=e^x$<br>$f\'(x)=2x\\cdot e^x+(x^2+1)\\cdot e^x=(2x+x^2+1)e^x$<br>$f\'(0)=(0+0+1)\\cdot 1=<b>1</b>$',pre:''},
+	{tag:'归纳',cls:'summary',txt:'乘积求导法则是人最容易算错的公式——不是u\'v\'！是u\'v+uv\'。',pre:''}
+	]},
+	{tier:'exam',q:'偶函数$f(x)$的导函数$f\'(x)$是？A.偶 B.奇 C.非奇非偶 D.不确定',ans:'B（奇函数）',src:'24下真题（导数与奇偶性）',
+	steps:[
+	{tag:'核心结论',cls:'prereq',txt:'<b>求导会翻转奇偶性</b>：偶函数求导→奇函数，奇函数求导→偶函数。',pre:'24下刚考过！必须记住'},
+	{tag:'验证',cls:'calc',txt:'$f(x)=x^2$（偶函数）→ $f\'(x)=2x$（奇函数）✓<br>$f(x)=x^3$（奇函数）→ $f\'(x)=3x^2$（偶函数）✓',pre:''},
+	{tag:'归纳',cls:'summary',txt:'教资导数题不考复杂计算，最爱考这种"概念关系题"。口诀：偶变奇，奇变偶，求导翻转奇偶性。',pre:''}
+	]},
+	{tier:'junior',q:'$f(x)=5$，求$f\'(x)$',ans:'0',src:'常数求导·基础',
+	steps:[
+	{tag:'核心概念',cls:'prereq',txt:'常数函数的导数=0。因为常数函数是一条水平线，斜率为0。',pre:''},
+	{tag:'求导',cls:'calc',txt:'$f(x)=5$→$f\'(x)=0$<br>任何常数的导数都是0：$(7)\'=0$，$(-3)\'=0$，$(\\pi)\'=0$',pre:'常数求导=0'},
+	{tag:'理解',cls:'summary',txt:'导数=变化率。常数不变→变化率为0→导数为0。这是最简单的求导法则。',pre:''}
+	]},
+	{tier:'junior',q:'$f(x)=3x-2$，求$f\'(x)$',ans:'3',src:'一次函数求导',
+	steps:[
+	{tag:'核心概念',cls:'prereq',txt:'一次函数$f(x)=kx+b$的导数恒等于$k$（斜率）。',pre:''},
+	{tag:'逐项求导',cls:'calc',txt:'$(3x)\'=3$，$(-2)\'=0$<br>$f\'(x)=3$',pre:'(kx)\'=k, (常数)\'=0'},
+	{tag:'理解',cls:'summary',txt:'一次函数求导后只剩系数。导数为正→函数递增；导数为负→函数递减。f\'(x)=3>0→一直上升。',pre:''}
+	]},
+	{tier:'senior',q:'$f(x)=x\\cdot\\sin x$，求$f\'(x)$',ans:'$\\sin x+x\\cos x$',src:'乘积法则·练手',
+	steps:[
+	{tag:'识别',cls:'review',txt:'$u=x$，$v=\\sin x$。乘积求导公式：$(uv)\'=u\'v+uv\'$',pre:''},
+	{tag:'求导',cls:'calc',txt:'$u\'=1$，$v\'=\\cos x$<br>$f\'(x)=1\\cdot\\sin x+x\\cdot\\cos x=\\sin x+x\\cos x$',pre:'前导后不导+前不导后导'},
+	{tag:'归纳',cls:'summary',txt:'乘积法则再练一次：<b>不是u\'v\'</b>，是u\'v+uv\'。很多人在考试中一紧张就写成u\'v\'了。',pre:''}
+	]},
+	{tier:'senior',q:'$f(x)=\\frac{x}{x+1}$，求$f\'(x)$',ans:'$\\frac{1}{(x+1)^2}$',src:'商法则·预测题',
+	steps:[
+	{tag:'公式',cls:'prereq',txt:'商法则：$(\\frac{u}{v})\'=\\frac{u\'v-uv\'}{v^2}$<br>$u=x$，$v=x+1$',pre:'分子先导×分母-分子×分母先导，再除以分母平方'},
+	{tag:'求导',cls:'calc',txt:'$u\'=1$，$v\'=1$<br>$f\'(x)=\\frac{1\\cdot(x+1)-x\\cdot1}{(x+1)^2}=\\frac{1}{(x+1)^2}$',pre:''},
+	{tag:'归纳',cls:'summary',txt:'商法则教资虽然不常考，但万一出现就是拉开差距的题。记住分子是<b>u\'v-uv\'</b>（注意减号！）。',pre:''}
+	]},
+	{tier:'college',q:'$x=t^2,y=t^3$，求$\\frac{dy}{dx}$',ans:'$\\frac{3}{2}t$',src:'参数方程·扩展',
+	steps:[
+	{tag:'方法',cls:'prereq',txt:'参数方程求导：$\\frac{dy}{dx}=\\frac{dy/dt}{dx/dt}$',pre:'y对x的导数=各自对t求导再相除'},
+	{tag:'计算',cls:'calc',txt:'$\\frac{dy}{dt}=3t^2$，$\\frac{dx}{dt}=2t$<br>$\\frac{dy}{dx}=\\frac{3t^2}{2t}=\\frac{3}{2}t$',pre:''},
+	{tag:'归纳',cls:'summary',txt:'参数方程求导在教资极少考，但初中教资涉及参变量表示曲线，理解即可。',pre:''}
+	]},
+	{tier:'college',q:'$y=x^x\\ (x>0)$，求$y\'$',ans:'$x^x(\\ln x+1)$',src:'对数求导法·扩展',
+	steps:[
+	{tag:'方法',cls:'prereq',txt:'幂指函数求导：取对数→隐函数求导。$\\ln y=x\\ln x$，两边对x求导。',pre:''},
+	{tag:'求导',cls:'calc',txt:'$\\frac{1}{y}\\cdot y\'=\\ln x+x\\cdot\\frac{1}{x}=\\ln x+1$<br>$y\'=y(\\ln x+1)=x^x(\\ln x+1)$',pre:'链式法则：lny求导=(1/y)·y\''},
+	{tag:'归纳',cls:'summary',txt:'对数求导法适用于<b>幂指函数</b>(底和指数都有x)。教资不会直接考，但能加深对隐函数的理解。',pre:''}
+	]},
+	{tier:'exam',q:'$f(x)=x^2-3x+2$在$x=1$处的切线方程',ans:'$y=-x+1$',src:'切线方程·真题改编',
+	steps:[
+	{tag:'求导',cls:'calc',txt:'$f\'(x)=2x-3$<br>在x=1处：$f\'(1)=2-3=-1$（切线斜率k=-1）',pre:''},
+	{tag:'求切点',cls:'calc',txt:'$f(1)=1^2-3+2=0$→切点为(1,0)',pre:''},
+	{tag:'写切线方程',cls:'calc',txt:'点斜式：$y-y_0=k(x-x_0)$<br>$y-0=-1(x-1)$→$y=-x+1$',pre:''},
+	{tag:'归纳',cls:'summary',txt:'切线方程三步：<b>①求导得斜率 ②算函数值得切点 ③点斜式写方程</b>。教资选择题常考。',pre:''}
+	]},
+	{tier:'exam',q:'$f(x)=x^3-3x$的极值点',ans:'极小值x=1，极大值x=-1',src:'极值判断·真题改编',
+	steps:[
+	{tag:'求导',cls:'calc',txt:'$f\'(x)=3x^2-3=3(x^2-1)=3(x-1)(x+1)$<br>令$f\'(x)=0$→$x=1$或$x=-1$',pre:'驻点：导数为0的点'},
+	{tag:'判断',cls:'calc',txt:'$f\'(x)$符号：x<-1正，-1<x<1负，x>1正<br>由正变负(x=-1)→极大值；由负变正(x=1)→极小值',pre:'一阶导数符号变化判断极值'},
+	{tag:'归纳',cls:'summary',txt:'极值判断：<b>①求f\'→②令f\'=0找驻点→③检查f\'符号变化</b>。正→负=极大，负→正=极小。',pre:''}
+	]},
+	{tier:'exam',q:'$f(x)=|x|$在$x=0$处可导吗？',ans:'不可导（尖点）',src:'可导性·概念题',
+	steps:[
+	{tag:'直观理解',cls:'prereq',txt:'$y=|x|$图像在x=0处是一个尖角(V形)。有尖点→不可导（切线不唯一）。',pre:''},
+	{tag:'导数定义验证',cls:'calc',txt:'$\\lim_{h\\to 0^-}\\frac{|0+h|-|0|}{h}=\\lim_{h\\to 0^-}\\frac{-h}{h}=-1$<br>$\\lim_{h\\to 0^+}\\frac{|h|}{h}=1$<br>左右导数不等→不可导',pre:''},
+	{tag:'归纳',cls:'summary',txt:'<b>不可导的三种情况</b>：①尖点(|x|) ②垂直切线(x^(1/3)) ③不连续点。教资喜欢考"连续但不可导"的例子= |x|。',pre:''}
+	]},
+	],
+	l:{tiers:[
+	{name:'初中层',cls:'junior',intro:'导数是"变化率"的精确描述。先确保理解斜率概念——导数就是曲线在某点的切线斜率。',
+	items:[
+	{s:'直线斜率',ok:true,formula:'$k=\\frac{y_2-y_1}{x_2-x_1}=\\frac{\\Delta y}{\\Delta x}$',reading:'纵坐标的差除以横坐标的差，k等于delta y除以delta x',note:'斜率=倾斜程度。k>0上坡，k<0下坡，k=0水平'},
+	{s:'函数记号',ok:true,formula:'$y=f(x)$',reading:'y是x的函数，读作f x',note:'每个x对应唯一的y。导数是研究"x变一点点，y变化多少"'},
+	{s:'平均变化率',ok:true,formula:'$\\frac{f(b)-f(a)}{b-a}$',reading:'函数值的变化量除以自变量的变化量',note:'一段区间内的平均速度。导数就是把区间缩成一个点，算瞬时速度'}
+	],
+	example:{q:'求$f(x)=x^2$在x=1到x=3的平均变化率',ans:'4',explain:'(f(3)-f(1))/(3-1)=(9-1)/2=4'}
+	},
+	{name:'高中层',cls:'senior',intro:'高中引入导数概念。掌握定义和四则求导公式即可应对教资。',
+	items:[
+	{s:'导数定义',ok:false,formula:"$f'(x_0)=\\lim_{h\\to 0}\\frac{f(x_0+h)-f(x_0)}{h}$",reading:'f撇x零，等于当h趋近于0时，f x零加h减f x零除以h的极限',note:'教资最爱的考法：给一个极限式子→认出它是导数定义→凑出f\'(某值)'},
+	{s:'幂函数求导',ok:false,formula:'$(x^n)\'=nx^{n-1}$',reading:'x的n次方的导数，等于n乘以x的n减1次方',note:'$(x^3)\'=3x^2$, $(x^2)\'=2x$, $(x)\'=1$, $(常数)\'=0$'},
+	{s:'指数/对数求导',ok:false,formula:'$(e^x)\'=e^x,\\ (\\ln x)\'=\\frac{1}{x}$',reading:'e的x次方求导不变，ln x求导等于x分之一',note:'$e^x$是唯一求导后不变的函数。教资不考$(a^x)\'$复杂公式'},
+	{s:'四则运算法则',ok:false,formula:'$(uv)\'=u\'v+uv\'$（乘积法则）',reading:'前导后不导加前不导后导',note:'最容易错——不是u\'v\'！是u\'v+uv\'。商法则教资很少考'}
+	],
+	example:{q:'$f(x)=x^3+2x$，求$f\'(1)$',ans:'5',explain:'f\'(x)=3x²+2，f\'(1)=3+2=5'}
+	},
+	{name:'大学层',cls:'college',intro:'大学扩展求导技巧。教资很少深考，但了解后能更好理解题目。',
+	items:[
+	{s:'链式法则',ok:false,formula:'$\\frac{d}{dx}f(g(x))=f\'(g(x))\\cdot g\'(x)$',reading:'复合函数求导=外层导数(内层不变)×内层导数',note:'$(e^{2x})\'=e^{2x}\\cdot 2=2e^{2x}$。$(\\sin 3x)\'=\\cos 3x\\cdot 3$。从外到内逐层求导相乘'},
+	{s:'高阶导数',ok:false,formula:"$f''(x)=\\frac{d}{dx}f'(x)$",reading:'二阶导数=对一阶导数再求导，读作f两撇x',note:"$f''>0$→凹向上；$f''<0$→凹向下。教资极少考二阶，了解即可"},
+	{s:'隐函数求导',ok:false,formula:'$F(x,y)=0$两边对x求导，y当x的函数',reading:'隐函数求导时每次对y求导都要乘y撇',note:'$x^2+y^2=1→2x+2y·y\'=0→y\'=-x/y$。y是x的函数！'}
+	],
+	example:{q:'$y=e^{2x}\\sin x$，求$y\'$',ans:'$e^{2x}(2\\sin x+\\cos x)$',explain:'乘积+链式：$(e^{2x})\'\\sin x+e^{2x}(\\sin x)\'=2e^{2x}\\sin x+e^{2x}\\cos x$'}
+	},
+	{name:'教资层',cls:'exam',intro:'教资导数题核心：定义变形+概念关系。不考复杂计算。',
+	items:[
+	{s:'导数定义变形',ok:false,formula:"凑成 $\\lim_{h\\to 0}\\frac{f(x_0+h)-f(x_0)}{h}$ 标准形式",reading:'把题目给的非标准极限通过换元或乘除常数变成导数定义',note:'$\\lim_{x\\to 0}\\frac{f(2x)-f(0)}{x}=2f\'(0)$——令t=2x。教资最高频考法！'},
+	{s:'导数与单调性',ok:false,formula:"$f'>0$→递增；$f'<0$→递减；$f'=0$→可能极值点",reading:'导数为正函数上升，导数为负函数下降',note:"$f'(x_0)=0$不一定有极值（如$f(x)=x^3$在x=0处）。需检查f'在x₀左右是否变号"},
+	{s:'可导与连续',ok:false,formula:'可导 ⇒ 连续 ⇒ 极限存在（单向箭头！）',reading:'可导一定连续，但连续不一定可导',note:'反例：$|x|$在x=0连续但不可导（尖点）。教资最爱考！可导比连续更"强"'},
+	{s:'导数与奇偶性',ok:false,formula:'偶→奇，奇→偶（求导翻转奇偶性）',reading:'偶函数求导变奇函数，奇函数求导变偶函数',note:'24下刚考过！验证：$f(x)=x^2$(偶)→$f\'(x)=2x$(奇)✓'}
+	],
+	example:{q:'$\\lim_{x\\to 0}\\frac{f(3x)-f(0)}{x}=6$，求$f\'(0)$',ans:'2',explain:'$\\frac{f(3x)-f(0)}{x}=3\\cdot\\frac{f(3x)-f(0)}{3x}\\to 3f\'(0)=6$→$f\'(0)=2$'}
+	}
+	]},
+	c:{title:'导数 vs 微分 vs 连续',headers:['','导数 $f\'(x)$','微分 $dy$','连续'],rows:[
+	['本质','变化率（切线斜率）','变化量（切线上的增量）','函数值不间断'],
+	['符号',"$f\'(x)$ 或 $\\frac{dy}{dx}$",'$dy=f\'(x)dx$','$\\lim f(x)=f(x_0)$'],
+	['几何意义','切线斜率','切线上的纵坐标增量','图像无断点'],
+	['关系','← 可导⇔可微 →','微分=导数×dx','可导⇒连续（单向！）'],
+	['教资考点','定义变形题最多','可微⇔可导（一元函数）','分段函数连续性判断']
+	],koujue:'一元函数：可导⇔可微；可导⇒连续（单向！）。导数=变化率，微分=变化量。反例：|x|连续不可导'},
+	f:{q:'看到导数选择题，按什么思路做？',
+	steps:[
+	{step:1,action:'题目里有 $\\frac{f(某+h)-f(某)}{h}$ 极限式？',result:'→ 考导数定义！变形凑标准形式。',branch:[
+	{cond:'分母不是标准h？',method:'令t=kx换元，提取系数',ex:'$\\lim_{x\\to 0}\\frac{f(2x)-f(0)}{x}$→令t=2x→$2f\'(0)$'},
+	{cond:'能直接认出$f\'(x_0)$？',method:'对照定义直接写答案',ex:'$\\lim_{h\\to 0}\\frac{f(1+h)-f(1)}{h}=f\'(1)$'}
+	]},
+	{step:2,action:'给了$f(x)$表达式要你求导？',result:'→ 直接套公式！',branch:[
+	{cond:'多项式',method:'$(x^n)\'=nx^{n-1}$，逐项求导',ex:'$(x^3+2x)\'=3x^2+2$'},
+	{cond:'乘积',method:'$(uv)\'=u\'v+uv\'$',ex:'$(x^2e^x)\'=2xe^x+x^2e^x$'},
+	{cond:'复合函数',method:'链式法则：外层导×内层导',ex:'$(e^{2x})\'=e^{2x}\\cdot 2=2e^{2x}$'}
+	]},
+	{step:3,action:'考概念关系？（谁⇒谁，奇偶性）',result:'→ 记住单向链+翻转规则',branch:[
+	{cond:'"一定成立"题',method:'只有顺箭头方向才一定成立',ex:'可导一定连续✓；连续一定可导✗'},
+	{cond:'奇偶性变化',method:'求导翻转：偶→奇，奇→偶',ex:'$f(x)=x^2$(偶)→$f\'(x)=2x$(奇)'}
+	]},
+	{step:4,action:'🧠 蒙题保底（导数选择题）',result:'',branch:[
+	{cond:'选项分布规律',method:'教资导数答案以"定义变形"和"概念关系"为主，极少考复杂计算。涉及"可导""定义"的选项正确率高',ex:''},
+	{cond:'排除法',method:'看到"一定"要警惕——连续推不出可导。看到"不一定"往往是正确答案',ex:'"连续一定可导"→错（|x|就是反例！）'},
+	{cond:'特殊值验证',method:'代入一个简单函数检验。如判断奇偶性，用$f(x)=x^2$代入验证',ex:'偶函数导数是奇→x²导=2x是奇✓'}
+	]}
+	]}
+	}
+};
+
+// Teaching topics (3) — adapted 4-dim
+const DEEP_TEACH = {
+'教学论':{freq:12,icon:'📚',
+e:[
+{q:'学生是数学学习的主体，教师角色不正确的是？',ans:'指挥者',src:'真题',
+steps:[
+{tag:'审题',cls:'review',txt:'新课标规定教师四种角色：组织者、引导者、合作者。单选题选"不正确"的——排除三个正确的，剩下的就是答案。',pre:''},
+{tag:'排除法',cls:'calc',txt:'A组织者✓ B引导者✓ C合作者✓ → D指挥者<b>✗</b><br>"指挥者"暗示教师单向命令，违背学生主体原则。',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>教学论Q7-Q8得分技巧</b>：①排除绝对化表述（必须/只能/一定）②选体现"学生"关键词的 ③教师角色口诀：组织引导合作，不指挥不命令。',pre:''}
+]},
+{q:'编制数学试卷的正确步骤是？',ans:'确定考试目的→制定命题原则→编制双向细目表→选题',src:'预测（试卷编制）',
+steps:[
+{tag:'审题',cls:'review',txt:'考试编制流程是教学论高频考点，按逻辑顺序记。',pre:''},
+{tag:'逻辑链',cls:'calc',txt:'先有目的(为什么考) → 再有原则(怎么考) → 再制定细目表(考什么、考多少) → 最后选题(具体题目)',pre:''},
+{tag:'归纳',cls:'summary',txt:'试卷编制流程四步：目的→原则→细目表→选题。顺序不能颠倒——不可能还没定目标就开始出题。',pre:''}
+]}
+],
+l:{tiers:[]},
+c:{title:'教学论高频考点对比',headers:['','核心素养','教师角色','教学原则'],rows:[
+['新课标表述','三会：数学眼光/思维/语言','组织者+引导者+合作者','以学生为主体'],
+['常见错误','把"运算能力"当核心素养','选"指挥者"','选"教师XX"的选项'],
+['记忆口诀','"眼思语"三会','"组引合"三角色','"学生"才是关键词']
+],koujue:'选学生不选教师，选三会不选运算，选组引合不选指挥'},
+f:{tree:'教学论Q7-Q8：\n  ├─ 考教师角色 → 排除"指挥者""命令者"\n  ├─ 考核心素养 → "三会"（眼/思/语）\n  ├─ 考试卷编制 → 目的→原则→细目表→选题\n  └─ 考教学难度 → 选"学生接受能力"（最近发展区）'}
+},
+'数学史':{freq:6,icon:'📜',
+e:[
+{q:'"拓扑公式彪史册；机器证明誉寰球"描述的数学家',ans:'吴文俊',src:'真题',
+steps:[
+{tag:'审题',cls:'review',txt:'关键词"拓扑"+"机器证明"→吴文俊。如果题干提到"割圆术"→刘徽，"大衍求一术"→秦九韶，"圆周率小数第7位"→祖冲之。',pre:''},
+{tag:'速记',cls:'summary',txt:'<b>数学史人物速记</b>：<br>秦九韶→大衍求一术（中国剩余定理）<br>刘徽→割圆术（圆内接正多边形逼近）<br>祖冲之→圆周率3.1415926（小数第7位）<br>吴文俊→拓扑学+机器证明（20世纪）<br>《九章算术》→最早记载负数',pre:''}
+]},
+{q:'"割圆术"是哪位数学家的贡献？',ans:'刘徽',src:'变式（人物成就匹配）',
+steps:[
+{tag:'审题',cls:'review',txt:'割圆术=刘徽。《九章算术注》中用圆内接正多边形逼近圆面积。',pre:''},
+{tag:'延伸',cls:'summary',txt:'容易混淆：祖冲之算出了圆周率小数点后第7位，但他用的是刘徽的割圆术方法。所以<b>发明割圆术的是刘徽，用割圆术算出精确圆周率的是祖冲之</b>。',pre:''}
+]}
+],
+l:{tiers:[]},
+c:{title:'易混人物对照',headers:['','秦九韶','刘徽','祖冲之','吴文俊'],rows:[
+['朝代','南宋','魏晋','南北朝','1919-2017'],
+['著作','《数书九章》','注《九章算术》','《缀术》(已失传)','—'],
+['成就','大衍求一术','割圆术','圆周率小数第7位','拓扑+机器证明'],
+['混淆点','≠割圆术','≠大衍求一术','≠发明割圆术','≠古代数学家']
+],koujue:'秦求一，刘割圆，祖圆周，吴机器——各人各成就，别串台'},
+f:{tree:'数学史题 → 看关键词 →\n  ├─ "大衍求一术"/"中国剩余定理"→ 秦九韶\n  ├─ "割圆术"/"魏晋"→ 刘徽\n  ├─ "圆周率"/"小数第7位"/"祖率"→ 祖冲之\n  ├─ "拓扑"/"机器证明"/"机械化"→ 吴文俊\n  ├─ "最早负数"→ 《九章算术》\n  ├─ "尺规作图不能"→ 三等分角/倍立方/化圆为方\n  └─ "对数" → 不是中国发明！纳皮尔（苏格兰）'}
+},
+'初中课标':{freq:3,icon:'📋',
+e:[
+{q:'下列哪个不是7-9年级内容？①有理数估计无理数 ②画一次函数 ③解一元三次方程 ④解二元一次不等式组',ans:'③④',src:'真题',
+steps:[
+{tag:'审题',cls:'review',txt:'看到"三次"→高中。看到"不等式组"→高中。记住初高中分界线就行。',pre:''},
+{tag:'速记',cls:'summary',txt:'<b>初中(7-9)✓</b>：一次函数、二次函数、反比例函数、实数、三角形、四边形<br><b>高中✗</b>：三次方程、不等式组、三角函数图像变换、复数<br><b>命题三类型</b>：基本事实(不需证明)、定理(需证明)、公式(计算结果)',pre:''}
+]},
+{q:'"两点之间线段最短"属于什么命题类型？',ans:'基本事实（不需证明）',src:'预测（命题类型）',
+steps:[
+{tag:'审题',cls:'review',txt:'初中数学的命题分三类：基本事实（无需证明）、定理（需要证明）、公式（用于计算）。',pre:''},
+{tag:'判断',cls:'calc',txt:'"两点之间线段最短"是<b>基本事实</b>——它被直接接受为真，不需要证明。类似的还有"过两点有且只有一条直线"等。',pre:''},
+{tag:'归纳',cls:'summary',txt:'<b>课标命题三类型</b>：基本事实=公理（不证自明）；定理=需证明的命题；公式=可直接使用的计算工具。',pre:''}
+]}
+],
+l:{tiers:[]},
+c:{title:'初中 vs 高中内容分界',headers:['','初中(7-9年级)','高中'],rows:[
+['方程','一元一次/二次方程','一元三次方程、分式方程'],
+['函数','一次/二次/反比例函数','指数/对数/三角函数'],
+['不等式','一元一次不等式','二元一次不等式组'],
+['命题类型','基本事实+定理+公式','—'],
+['典型题','"两点之间线段最短"是基本事实','判断"三次方程是初中内容"→错']
+],koujue:'三次和不等式组必定高中；基本事实不需证明，定理需要证明'},
+f:{tree:'初中课标题：\n  ├─ 看到"三次"→ 直接排除（高中）\n  ├─ 看到"不等式组"→ 排除（高中）\n  ├─ 命题类型 → 基本事实(公理)/定理/公式\n  └─ 具体内容判断 → 参考初高中分界表'}
+}
+};
+
+// ============ DEEP RENDER FUNCTIONS ============
+function renderDeepTopicNav() {
+  var html = '';
+  var allTopics = Object.keys(DEEP).concat(Object.keys(DEEP_TEACH));
+  allTopics.forEach(function(t){
+    var cls = t===currentTopic ? 'sel' : '';
+    var data = DEEP[t] || DEEP_TEACH[t];
+    html += '<span class="'+cls+'" onclick="currentTopic=\''+t+'\';renderDeepTopicNav();renderDeepContent();">'+(data.icon||'')+' '+t+' <small>('+(data.freq||'')+'次)</small></span>';
+  });
+  document.getElementById('deepTopicNav').innerHTML = html;
+}
+
+function switchDeepTab(tab) {
+  deepSubTab = tab;
+  var tabs = document.querySelectorAll('#deepSubTabs .tab');
+  tabs.forEach(function(t){t.classList.remove('active');});
+  if(event && event.target) event.target.classList.add('active');
+  renderDeepContent();
+}
+
+function renderDeepContent() {
+  var data = DEEP[currentTopic] || DEEP_TEACH[currentTopic];
+  if(!data){ document.getElementById('deepContent').innerHTML='<div class="card">该主题暂未收录四维精讲</div>'; return; }
+
+  if(deepSubTab==='example') renderDeepExample(data);
+  else if(deepSubTab==='ladder') renderDeepLadder(data);
+  else if(deepSubTab==='compare') renderDeepCompare(data);
+  else if(deepSubTab==='flow') renderDeepFlow(data);
+
+  // Trigger MathJax to typeset new content
+  if(window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise([document.getElementById('deepContent')]).catch(function(){});
+  }
+}
+
+function renderDeepExample(data) {
+  var examples = data.e;
+  if(!examples){ document.getElementById('deepContent').innerHTML='<div class="card">暂无例题驱动内容</div>'; return; }
+  if(!Array.isArray(examples)) examples = [examples];
+  if(examples.length===0){ document.getElementById('deepContent').innerHTML='<div class="card">暂无例题驱动内容</div>'; return; }
+  _activeExample = -1;
+
+  var html='<div class="card"><h3>📝 例题驱动：从真题学会'+currentTopic+'</h3>';
+
+  // Symbol dictionary
+  if(data.symbols && data.symbols.length>0){
+    html+='<details style="margin-bottom:14px;"><summary style="cursor:pointer;font-size:0.82rem;color:var(--accent);min-height:36px;display:flex;align-items:center;">📖 符号速查（不认识的符号先看这里）</summary><div class="symbol-dict">';
+    data.symbols.forEach(function(sy){
+      html+='<div class="sym-item"><span class="sym-sym">'+sy.sym+'</span><br><span style="color:var(--green);font-size:0.78rem;">读作：'+sy.read+'</span><br><span class="sym-read">'+sy.desc+'</span></div>';
+    });
+    html+='</div></details>';
+  }
+
+  html+='<p style="color:var(--text2);font-size:0.82rem;margin-bottom:12px;">每道题<b>先自己做再看解析</b>。点击题目卡片展开步骤，一次只看一道。</p>';
+
+  // Group by tier with accordion
+  var tierDefs=[{key:'junior',label:'🟡 初中层·基础运算',cls:'tier-junior'},{key:'senior',label:'🔵 高中层·概念理解',cls:'tier-senior'},{key:'college',label:'🟣 大学层·方法应用',cls:'tier-college'},{key:'exam',label:'🔴 教资层·真题实战',cls:'tier-exam'}];
+  var exIndex = 0;
+  tierDefs.forEach(function(td){
+    var tierExs = examples.filter(function(e){return e.tier===td.key;});
+    if(tierExs.length===0) return;
+    html+='<div style="margin-top:14px;"><span class="tier-tag '+td.cls+'">'+td.label+' <small>('+tierExs.length+'题)</small></span></div>';
+    tierExs.forEach(function(e){
+      var idx = exIndex++;
+      // Clickable header card
+      html+='<div class="ex-accordion" style="margin:6px 0 8px 8px;">';
+      html+='<div class="ex-header" id="exHeader'+idx+'" onclick="toggleExample('+idx+')" style="cursor:pointer;padding:12px 14px;background:rgba(56,189,248,0.05);border:1px solid var(--border);border-radius:12px;min-height:44px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;transition:background 0.15s;">';
+      html+='<span style="font-weight:700;flex:1;min-width:220px;line-height:1.5;">📋 '+e.q+'</span>';
+      html+='<span style="color:var(--green);font-weight:600;white-space:nowrap;">→ '+e.ans+'</span>';
+      html+='<span style="font-size:0.72rem;color:var(--text2);white-space:nowrap;">['+(e.src||'')+']</span>';
+      html+='<span class="ex-arrow" id="exArrow'+idx+'" style="font-size:0.75rem;color:var(--accent);transition:transform 0.2s;min-width:20px;text-align:center;">▼</span>';
+      html+='</div>';
+      // Collapsible steps panel
+      html+='<div class="ex-steps" id="exSteps'+idx+'" style="display:none;padding:10px 6px 4px 8px;">';
+      if(e.steps){
+        e.steps.forEach(function(s){
+          html+='<div class="ex-step step-'+s.cls+'"><span class="step-tag tag-'+s.cls+'">'+s.tag+'</span>'+s.txt;
+          if(s.pre) html+='<span class="foundation-warn">'+s.pre+'</span>';
+          html+='</div>';
+        });
+      }
+      html+='</div></div>';
+    });
+  });
+
+  html+='</div>';
+  document.getElementById('deepContent').innerHTML=html;
+  // Typeset MathJax
+  if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+}
+
+function renderDeepLadder(data) {
+  if(!data.l || !data.l.tiers || data.l.tiers.length===0){ document.getElementById('deepContent').innerHTML='<div class="card">该主题暂未收录阶梯基础（前置知识在"知识精讲"Tab中查看）</div>'; return; }
+  var html='<div class="card"><h3>🪜 阶梯基础：你的知识断层在哪里</h3><p style="color:var(--text2);font-size:0.82rem;margin-bottom:12px;">✅=已会 | ⬜=待学。从下往上检查，找到断层开始补。</p>';
+
+  data.l.tiers.forEach(function(tier){
+    html+='<div class="ladder-tier tier-'+tier.cls+'"><span class="tier-badge badge-'+tier.cls+'">'+tier.name+'</span>';
+    if(tier.intro) html+='<p style="font-size:0.8rem;color:var(--text2);margin:4px 0;">'+tier.intro+'</p>';
+
+    tier.items.forEach(function(item){
+      if(item.formula){
+        // New format: formula+reading+note
+        html+='<div class="ladder-item"><b>'+(item.ok?'✅':'⬜')+' '+item.s+'</b>';
+        html+='<div class="li-formula">'+item.formula+'</div>';
+        if(item.reading) html+='<div class="li-reading">'+item.reading+'</div>';
+        if(item.note) html+='<div class="li-note">'+item.note+'</div>';
+        html+='</div>';
+      } else {
+        // Old format: simple checkbox item
+        html+='<div class="ladder-item"><b>'+(item.ok?'✅':'⬜')+' '+item.s+'</b></div>';
+      }
+    });
+
+    if(tier.warn) html+='<div class="foundation-tip" style="margin-top:4px;">'+tier.warn+'</div>';
+
+    // Tier mini-example
+    if(tier.example && tier.example.q){
+      html+='<div class="ladder-ex"><b>📝 练手题：</b>'+tier.example.q+'<br><span style="color:var(--green);">答案：'+tier.example.ans+'</span>';
+      if(tier.example.explain) html+='<br><span style="color:var(--text2);font-size:0.78rem;">💡 '+tier.example.explain+'</span>';
+      html+='</div>';
+    }
+
+    html+='</div>';
+  });
+
+  html+='</div>';
+  document.getElementById('deepContent').innerHTML=html;
+}
+
+function renderDeepCompare(data) {
+  if(!data.c || !data.c.headers || data.c.headers.length===0){ document.getElementById('deepContent').innerHTML='<div class="card">该主题暂未收录对比辨析</div>'; return; }
+  var c=data.c;
+  var html='<div class="card"><h3>⚖️ 对比辨析：'+c.title+'</h3>';
+  html+='<table class="compare-table"><tr>';
+  c.headers.forEach(function(h){html+='<th>'+h+'</th>';});
+  html+='</tr>';
+  c.rows.forEach(function(row){
+    html+='<tr>';
+    row.forEach(function(cell,i){html+='<td'+(i===0?' style="font-weight:600;"':'')+'>'+cell+'</td>';});
+    html+='</tr>';
+  });
+  html+='</table>';
+  if(c.koujue) html+='<div class="compare-koujue">'+c.koujue+'</div>';
+  html+='</div>';
+  document.getElementById('deepContent').innerHTML=html;
+}
+
+function renderDeepFlow(data) {
+  if(data.f && data.f.steps){
+    // New format: visual flow steps
+    var html='<div class="card"><h3>🔀 解题流程：'+data.f.q+'</h3>';
+    data.f.steps.forEach(function(s){
+      html+='<div class="flow-step"><span class="flow-step-num">'+s.step+'</span><div class="flow-step-body"><span class="fs-action">'+s.action+'</span>';
+      if(s.result) html+='<div class="fs-result">→ '+s.result+'</div>';
+      if(s.branch){
+        s.branch.forEach(function(b){
+          html+='<div class="flow-branch"><span class="fb-cond">'+b.cond+'</span> → <span class="fb-method">'+b.method+'</span> <span class="fb-ex">（如：'+b.ex+'）</span></div>';
+        });
+      }
+      html+='</div></div>';
+      if(s.step<(data.f.steps.length)) html+='<div class="flow-arrow">↓</div>';
+    });
+    html+='</div>';
+    document.getElementById('deepContent').innerHTML=html;
+  } else if(data.f && data.f.tree){
+    // Backward compat: ASCII tree
+    var html='<div class="card"><h3>🔀 解题流程：'+data.f.q+'</h3>';
+    html+='<div class="flow-tree">'+data.f.tree+'</div>';
+    html+='</div>';
+    document.getElementById('deepContent').innerHTML=html;
+  } else {
+    document.getElementById('deepContent').innerHTML='<div class="card">该主题暂未收录解题流程</div>';
+  }
+}
+
+// ============ RENDER FUNCTIONS (existing) ============
+function renderTopicNav() {
+  var html = '';
+  var allTopics = Object.keys(STUDY).concat(Object.keys(STUDY_TEACH));
+  allTopics.forEach(function(t){
+    var cls = t===currentTopic ? 'sel' : '';
+    var data = STUDY[t] || STUDY_TEACH[t];
+    html += '<span class="'+cls+'" onclick="currentTopic=\''+t+'\';renderTopicNav();renderStudy(\''+t+'\');">'+(data.icon||'')+' '+t+' <small>('+(data.freq||'')+'次)</small></span>';
+  });
+  document.getElementById('topicNav').innerHTML = html;
+}
+
+function renderPrereq(data) {
+  if(!data.prereq || data.prereq.length===0) return '';
+  var must=[], rec=[], basic=[];
+  data.prereq.forEach(function(p){
+    var item = '<span class="prereq-item">'+p.n+'</span><span class="prereq-why">— '+p.w+'</span><br>';
+    if(p.l==='must') must.push(item);
+    else if(p.l==='rec') rec.push(item);
+    else basic.push(item);
+  });
+  var html = '<div class="prereq-section"><h4>📚 前置基础</h4>';
+  if(must.length) html += '<div class="prereq-tier"><span class="tier-label tier-must">必须掌握</span>'+must.join('')+'</div>';
+  if(rec.length) html += '<div class="prereq-tier"><span class="tier-label tier-rec">建议掌握</span>'+rec.join('')+'</div>';
+  if(basic.length) html += '<div class="prereq-tier"><span class="tier-label tier-basic">概念基础</span>'+basic.join('')+'</div>';
+  if(data.foundation_tip) html += '<div class="foundation-tip">'+data.foundation_tip+'</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderStudy(topic) {
+  var data = STUDY[topic] || STUDY_TEACH[topic];
+  if(!data) return;
+  var html = '<div class="study-section"><div class="card"><h2>'+(data.icon||'')+' '+topic+' <span style="font-size:0.8rem;color:var(--text2);">出题频次：'+data.freq+'次/10套</span></h2>';
+
+  if(depthMode==='detail'){
+    html += renderPrereq(data);
+    html += '<p style="margin-bottom:8px;">'+data.summary+'</p>';
+    html += '<div class="study-def">📖 <strong>定义：</strong>'+data.def+'</div>';
+    html += '<div class="study-formula">📐 <strong>核心公式：</strong><br>'+data.formula.replace(/\n/g,'<br>')+'</div>';
+    html += '<div style="font-size:0.88rem;color:var(--text);margin:8px 0;">💡 <strong>理解要点：</strong>'+data.understanding+'</div>';
+  } else {
+    html += renderPrereq(data);
+    html += '<div class="study-formula">📐 '+data.formula.replace(/\n/g,'<br>')+'</div>';
+    html += '<div style="font-size:0.85rem;color:var(--green);margin:6px 0;">💡 '+data.understanding+'</div>';
+  }
+
+  if(data.mistakes && depthMode==='detail'){
+    html += '<div style="margin-top:10px;"><strong style="color:var(--yellow);">⚠️ 常见错误：</strong>';
+    data.mistakes.forEach(function(m){ html += '<div class="study-mistake">'+m+'</div>'; });
+    html += '</div>';
+  } else if(data.mistakes && depthMode==='compact'){
+    html += '<div class="study-mistake">'+data.mistakes[0]+'</div>';
+  }
+
+  var examples = findExamples(topic);
+  html += '<div style="margin-top:12px;"><strong style="color:var(--accent);">📋 真题示例：</strong></div>';
+  if(examples.length===0) html += '<div style="color:var(--text2);font-size:0.82rem;">暂无直接真题示例</div>';
+  examples.forEach(function(ex,i){
+    html += '<div class="study-example"><div class="ex-q"><strong>['+ex.year+']</strong> '+ex.q+'</div>';
+    html += '<div class="ex-s">✅ 答案：<span class="ex-a">'+ex.a+'</span> | '+ex.s.substring(0,150)+'...</div></div>';
+  });
+
+  html += '</div></div>';
+  document.getElementById('studyContent').innerHTML = html;
+}
+
+function findExamples(topic) {
+  var results = [];
+  var keys = Object.keys(PAPERS);
+  for(var i=0;i<keys.length;i++){
+    var p = PAPERS[keys[i]];
+    for(var j=0;j<p.questions.length;j++){
+      var q = p.questions[j];
+      if(q.k && q.k.indexOf(topic)>=0){
+        results.push({year:p.label, q:q.t, a:q.a, s:q.s});
+      }
+    }
+  }
+  return results.slice(0,4);
+}
+
+// ============ HIDDEN KNOWLEDGE RENDER ============
+var HK_ICONS = {'prereq':'🔴','technique':'🔵','trap':'🟡'};
+var HK_LABELS = {'prereq':'前置基础','technique':'解题技巧','trap':'易错提醒'};
+
+function renderHiddenK(hkArr) {
+  if(!hkArr || hkArr.length===0) return '';
+  var html = '<details class="hidden-k-wrap" '+(showHidden?'open':'')+'>';
+  html += '<summary>🔍 隐藏考点 <span class="hk-count">('+hkArr.length+'个)</span></summary>';
+  hkArr.forEach(function(h){
+    html += '<div class="hk-item hk-'+h.l+'">';
+    html += '<span class="hk-icon">'+(HK_ICONS[h.l]||'')+'</span>';
+    html += '<span class="hk-name">'+h.p+'</span>';
+    html += '<span style="font-size:0.7rem;color:var(--text2);"> ['+(HK_LABELS[h.l]||'')+']</span>';
+    if(h.d) html += '<div class="hk-detail">'+h.d+'</div>';
+    if(h.r) html += '<div class="hk-reminder">'+h.r+'</div>';
+    html += '</div>';
+  });
+  html += '</details>';
+  return html;
+}
+
+// ============ PRACTICE PANEL ============
+function renderPractice() {
+  var html = '';
+  var topics = Object.keys(STUDY).concat(Object.keys(STUDY_TEACH));
+  topics.forEach(function(t){
+    var data = STUDY[t] || STUDY_TEACH[t];
+    html += '<div class="card"><h3>'+(data.icon||'')+' '+t+' <span style="font-size:0.78rem;color:var(--text2);">频次：'+data.freq+'次</span></h3>';
+    html += '<p style="font-size:0.85rem;margin-bottom:8px;">'+(data.summary||data.understanding||'')+'</p>';
+    var exs = findExamples(t);
+    if(exs.length>0){
+      exs.forEach(function(ex,i){
+        html += '<details style="margin:6px 0;"><summary style="cursor:pointer;font-size:0.85rem;color:var(--accent);min-height:44px;display:flex;align-items:center;">📝 ['+ex.year+'] '+ex.q+'</summary>';
+        html += '<div style="padding:8px 14px;font-size:0.83rem;color:var(--green);">✅ <b>答案：'+ex.a+'</b> | '+ex.s+'</div></details>';
+      });
+    }
+    html += '</div>';
+  });
+  document.getElementById('practiceContent').innerHTML = html;
+}
+
+// ============ ACCORDION ============
+var _activeExample = -1;
+function toggleExample(n) {
+  var steps = document.getElementById('exSteps'+n);
+  var arrow = document.getElementById('exArrow'+n);
+  if (!steps || !arrow) return;
+  var isOpen = steps.style.display === 'block';
+  // Toggle clicked one only, don't close others
+  if (!isOpen) {
+    steps.style.display = 'block';
+    arrow.style.transform = 'rotate(180deg)';
+    _activeExample = n;
+  } else {
+    steps.style.display = 'none';
+    arrow.style.transform = 'rotate(0deg)';
+    _activeExample = -1;
+  }
+}
+
+// ============ TAB SWITCH ============
+function switchTab(tab) {
+  document.querySelectorAll('.main-tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  if(event && event.target && event.target.classList.contains('main-tab')) event.target.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='study') { renderTopicNav(); renderStudy(currentTopic); }
+  if(tab==='practice') renderPractice();
+  if(tab==='deep') { currentTopic=Object.keys(DEEP)[0]; renderDeepTopicNav(); switchDeepTab('example'); }
+  if(tab==='papers'){ if(!document.getElementById('paperSelect').innerHTML) initPaperSelect(); showPaper(document.getElementById('paperSelect').value); }
+  if(tab==='predict') renderPrediction();
+  if(tab==='guess') renderGuess();
+  if(tab==='cards') renderCards();
+}
+
+// ============ PAPER DATA ============
+const PAPERS = {
+'19x':{label:'19下 数学选择题真题', answers:'BBDACBDD', questions:[
+{n:1,t:'在利用导数定义证明(lnx)\'=1/x的过程中用到的极限是',o:['A. lim(x→0) sinx/x = 1','B. lim(x→∞) (1+1/x)^x = e','C. lim(x→∞) x^(1/x) = 1','D. lim(x→∞) q^x = 0 (0<q<1)'],a:'B',s:'用导数定义证(lnx)\'=1/x时需用到lim(1+1/x)^x=e这个重要极限。',k:'极限',
+hk:[{p:'导数定义',l:'technique',d:'f\'(x)=lim(h→0)[f(x+h)-f(x)]/h，代入lnx得lim[ln(1+h/x)]/h',r:'这是链接导数与极限的桥梁'},{p:'两个重要极限',l:'prereq',d:'①lim sinx/x=1 ②lim(1+1/x)^x=e。此题用第二个',r:'必须区分清楚两个重要极限分别用于什么场景'},{p:'对数运算性质',l:'prereq',d:'ln(a/b)=lna-lnb, ln(1+ε)~ε(当ε→0)',r:'对数化简是高中数学基础'}]},
+{n:2,t:'设M,X,Y均为n阶方阵，则下列命题一定正确的是',o:['A. XY=YX','B. M(X+Y)=MX+MY','C. 若XY=0且X≠0，则Y=0','D. 若MX=MY且M≠0，则X=Y'],a:'B',s:'矩阵乘法满足分配律，B正确。A错误(不交换)。C错误(零因子存在)。D错误(M不可逆时无法消去)。',k:'矩阵',
+hk:[{p:'矩阵乘法分配律',l:'prereq',d:'A(B+C)=AB+AC，分配律对矩阵成立',r:'分配律是矩阵运算中少数"和普通代数一样"的规则'},{p:'矩阵乘法不交换',l:'trap',d:'AB≠BA一般成立，A选项是最常见的陷阱',r:'这是矩阵和普通数的核心区别！'},{p:'零因子',l:'trap',d:'AB=0≠A=0或B=0——矩阵存在非零的积为零',r:'普通代数中ab=0⇒a=0或b=0，矩阵不行！'},{p:'消去律不成立',l:'trap',d:'MX=MY不能推出X=Y，除非M可逆',r:'只有可逆矩阵才能"消去"'}]},
+{n:3,t:'下列定积分计算结果正确的是',o:['A. ∫₋₁¹ (x²+x³)dx = 0','B. ∫₋₁¹ (eˣ+e⁻ˣ)/2 dx = 0','C. ∫₋₁¹ ln(x+2)dx = 0','D. ∫₋₁¹ (eˣ-e⁻ˣ)/2 dx = 0'],a:'D',s:'D是奇函数在对称区间上的积分=0。A中x²是偶函数(积分≠0)。B为偶函数(cosh)。C非奇非偶。',k:'积分',
+hk:[{p:'奇偶函数判断',l:'must',d:'奇函数f(-x)=-f(x)，偶函数f(-x)=f(x)',r:'必须先正确判断每个被积函数的奇偶性'},{p:'对称区间积分性质',l:'technique',d:'奇函数在[-a,a]上积分=0，偶函数=2∫₀ᵃ',r:'这是定积分最重要的简化技巧'},{p:'双曲函数识别',l:'prereq',d:'(eˣ+e⁻ˣ)/2=cosh(x)是偶函数，(eˣ-e⁻ˣ)/2=sinh(x)是奇函数',r:'cosh和sinh是基本初等函数'}]},
+{n:4,t:'将椭圆x²/a²+y²/b²=1(a>b>0),z=0绕长轴旋转一周，所得旋转曲面方程为',o:['A. x²/a²+y²/b²+z²/b²=1','B. x²/a²+y²/b²+z²/a²=1','C. x²+y²+z²=a²','D. x²+y²+z²=b²'],a:'A',s:'绕x轴(长轴)旋转，x不变，y²换为y²+z²得x²/a²+(y²+z²)/b²=1。',k:'解析几何',
+hk:[{p:'旋转曲面公式',l:'technique',d:'绕x轴旋转：f(x,y)=0→f(x, ±√(y²+z²))=0，即y²换为y²+z²',r:'旋转曲面的核心就是替换规则'},{p:'椭圆长轴判断',l:'prereq',d:'a>b>0⇒长轴在x轴，短轴在y轴（分母大的轴是长轴）',r:'绕"长轴"旋转，确认哪个是长轴'},{p:'二次曲面方程识别',l:'prereq',d:'x²/a²+y²/b²+z²/c²=1是椭球面，x²+y²+z²=r²是球面',r:'区分椭球面和球面'}]},
+{n:5,t:'设α₁,α₂和β₁,β₂是方程组AX=0的两个不同基础解系，则下列结论正确的是',o:['A. 秩(α₁,α₂,β₁)<秩(β₁,β₂)','B. 秩(α₁,α₂,β₁)>秩(β₁,β₂)','C. 秩(α₁,α₂,β₁)=秩(β₁,β₂)','D. 两者无关'],a:'C',s:'同一方程组的基础解系等价，秩都等于解空间维数。',k:'矩阵',
+hk:[{p:'基础解系的定义',l:'prereq',d:'齐次方程组AX=0的所有解的极大线性无关组',r:'基础解系=解空间的基'},{p:'等价向量组',l:'technique',d:'同一空间的两个基等价，秩相同',r:'不同基础解系生成同一个解空间'},{p:'解空间维数',l:'prereq',d:'dim(N(A))=n-rank(A)——解空间的维数',r:'基础解系中向量的个数=解空间维数'}]},
+{n:6,t:'三个非零向量a,b,c共面，则下列结论不一定成立的是',o:['A. (a×b)·c=0','B. a+b+c=0','C. a,b,c线性相关','D. (a×c)·b=0'],a:'B',s:'共面⇒线性相关⇒混合积为0。但和不一定为0。',k:'向量',
+hk:[{p:'共面⇔混合积为0',l:'technique',d:'a,b,c共面⇔(a×b)·c=0⇔三个向量线性相关',r:'混合积为0是判断共面的充要条件'},{p:'线性相关≠和为零',l:'trap',d:'线性相关意味着存在不全为零的系数使线性组合为0，不是向量本身和为0',r:'这是最容易混淆的概念！'},{p:'叉积的几何意义',l:'prereq',d:'a×b是垂直于a和b的向量，其模=|a||b|sinθ',r:'叉积方向由右手定则确定'}]},
+{n:7,t:'多边形依次沿两个坐标轴平移2和3个单位后，与原图形关系不一定正确的是',o:['A. 全等','B. 平移','C. 相似','D. 对称'],a:'D',s:'平移一定全等、是平移变换、一定相似。但不一定对称。',k:'教学论',
+hk:[{p:'平移变换性质',l:'prereq',d:'平移保持形状、大小、对应角不变（全等+相似）',r:'平移是刚体变换（保距变换）'},{p:'全等与相似的区别',l:'prereq',d:'全等：形状相同+大小相同。相似：形状相同，大小可不同',r:'全等是相似的特例（比例=1）'},{p:'对称变换',l:'technique',d:'平移一般不会产生对称——对称需要关于某点/某线/某面翻转',r:'平移≠对称，这是判断的关键'}]},
+{n:8,t:'学生是数学学习的主体，下列关于教师角色的概述不正确的是',o:['A. 组织者','B. 引导者','C. 合作者','D. 指挥者'],a:'D',s:'新课标强调教师是组织者、引导者、合作者，不是指挥者。',k:'教学论',
+hk:[{p:'新课标教师角色',l:'must',d:'教师=组织者+引导者+合作者。❌指挥者、❌命令者、❌权威者',r:'这道题靠常识就能做对——关键词"指挥者"是贬义'},{p:'学生主体原则',l:'basic',d:'学生是学习主体，教师是促进者而非灌输者',r:'选"学生"相关选项概率高'}]}
+]},
+'20x':{label:'20下 数学选择题真题', answers:'AABCDCCC', questions:[
+{n:1,t:'lim(x→0) (sinx+3x)/(tanx+2x) =',o:['A. 4/3','B. 3/2','C. ∞','D. 不存在'],a:'A',s:'sinx~x, tanx~x→(x+3x)/(x+2x)=4/3。',k:'极限',
+hk:[{p:'等价无穷小替换',l:'technique',d:'x→0时 sinx~x, tanx~x。替换后变成普通代数式',r:'替换只能在乘除中！此题分子分母都是加减，但替换后仍是除法——正确用法'},{p:'0/0型识别',l:'prereq',d:'直接代入x=0：sin0=0,tan0=0→0/0不定式',r:'0/0型需化简后求极限'},{p:'代数化简',l:'prereq',d:'替换后(3x+x)/(2x+x)=4x/3x=4/3',r:'替换后就是普通分式——基础代数'}]},
+{n:2,t:'设α为向量m=(2,2,1)和n=(-1,2,2)的夹角，则cosα=',o:['A. 1/3','B. 4/9','C. 5/9','D. √3/3'],a:'A',s:'m·n=-2+4+2=4, |m|=√(4+4+1)=3, |n|=√(1+4+4)=3, cosα=4/9。',k:'向量',
+hk:[{p:'内积坐标公式',l:'must',d:'m·n=m₁n₁+m₂n₂+m₃n₃',r:'坐标内积=对应分量相乘再相加'},{p:'向量模长计算',l:'must',d:'|m|=√(m₁²+m₂²+m₃²)——三维勾股定理',r:'模长公式是向量的基础'},{p:'夹角公式',l:'technique',d:'cosθ=a·b/(|a||b|)',r:'两向量夹角通过内积求得'}]},
+{n:3,t:'f(x)=1/x, x∈(0,1]，下列不正确的是',o:['A. 连续','B. 一致连续','C. 可导','D. 单调递减'],a:'B',s:'1/x在(0,1]连续可导单调递减，但不一致连续(开区间端点→∞)。',k:'连续与可微',
+hk:[{p:'一致连续vs连续',l:'trap',d:'闭区间连续⇒一致连续。开区间连续不一定一致连续——1/x在(0,1]是最经典反例',r:'考试最爱考的反例！'},{p:'函数图像直观判断',l:'rec',d:'1/x在(0,1]的图像在x→0⁺时→∞——变化率无上界',r:'变化率无界⇒不一致连续'},{p:'可导判断',l:'prereq',d:'1/x的导数=-1/x²在(0,1]上有定义，故可导',r:'开区间上导数存在⇒可导'}]},
+{n:4,t:'空间曲面x²-4y²+z²=25被平面x=-3截得的曲线是',o:['A. 椭圆','B. 抛物线','C. 双曲线','D. 圆'],a:'C',s:'代入x=-3:9-4y²+z²=25→z²-4y²=16→z²/16-y²/4=1是双曲线。',k:'解析几何',
+hk:[{p:'截面曲线法',l:'technique',d:'将平面方程代入曲面方程→得到截线方程',r:'截面问题：代入→化简→识别曲线类型'},{p:'双曲线标准形式',l:'prereq',d:'z²/a²-y²/b²=1是双曲线（开口沿z轴）',r:'二次项的符号不同=双曲线'},{p:'二次曲线识别',l:'prereq',d:'同号=椭圆，异号=双曲线，缺一项=抛物线',r:'看二次项系数符号判断曲线类型'}]},
+{n:5,t:'五局三胜制，前三局甲二胜一负，因故停止。每局胜率1/2，甲应得奖金',o:['A. 500','B. 600','C. 666','D. 750'],a:'D',s:'甲只需再赢1局(乙需连赢2局)。甲胜率=1-(1/2)²=3/4。1000×3/4=750。',k:'概率统计',
+hk:[{p:'比赛奖金分配',l:'technique',d:'按剩余比赛的胜率分配——回溯后续所有可能',r:'已发生的比赛不再影响概率'},{p:'"至少"vs"恰好"',l:'trap',d:'甲只需再赢1局=用1-P(全输)=1-(1/2)²=3/4',r:'"至少赢1局"=1-P(全部输)'},{p:'独立事件乘法',l:'prereq',d:'乙连赢2局的概率=(1/2)×(1/2)=1/4',r:'每局独立，连赢概率相乘'}]},
+{n:6,t:'球面x²+y²+z²=1，z轴上点P作球面切线PM=2√2，求P的z坐标绝对值',o:['A. √2','B. 2','C. 3','D. 4'],a:'C',s:'OP²=z², OM²=1, PM²=OP²-OM²=z²-1=8→|z|=3。',k:'解析几何',
+hk:[{p:'勾股定理在空间中',l:'prereq',d:'OP²=OM²+PM²，OM是球半径=1',r:'切线问题⇒勾股定理'},{p:'球面方程',l:'prereq',d:'x²+y²+z²=1球心在原点、半径为1',r:'球面方程=到球心距离=半径'},{p:'z轴上点的坐标',l:'prereq',d:'P在z轴上→P(0,0,z)，OP=|z|',r:'坐标轴上点的表达'}]},
+{n:7,t:'编制数学测试卷的步骤一般为',o:['A. 原则→目的→细目表→选题','B. 目的→原则→选题→细目表','C. 目的→原则→细目表→选题','D. 目的→细目表→原则→选题'],a:'C',s:'标准流程：明确目的→制定原则→编双向细目表→精选试题。',k:'教学论',
+hk:[{p:'试卷编制四步流程',l:'must',d:'①明确考试目的 ②制定命题原则 ③编制双向细目表 ④精选试题',r:'记住顺序：目→原→表→题'},{p:'双向细目表',l:'rec',d:'横轴=内容维度，纵轴=能力层次（识记/理解/应用/综合）',r:'细目表确保试卷覆盖全面'}]},
+{n:8,t:'解二元一次方程组用到的数学方法主要是',o:['A. 降次','B. 放缩','C. 消元','D. 归纳'],a:'C',s:'加减消元法或代入消元法是解二元一次方程组的基本方法。',k:'教学论',
+hk:[{p:'消元法',l:'must',d:'加减消元法和代入消元法——把两个未知数变为一个',r:'消元的核心思想：化二元为一元'},{p:'降次vs消元',l:'trap',d:'降次用于高次方程，消元用于多元方程组',r:'注意区分：一次方程组用消元，高次方程用降次'}]}
+]},
+'21s':{label:'21上 数学选择题真题', answers:'DCCABACB', questions:[
+{n:1,t:'直线(x-2)/3=(y-11)/4=(z+1)/1与平面3x-2y-z+15=0的位置关系',o:['A. 相交且垂直','B. 相交不垂直','C. 平行','D. 直线在平面上'],a:'D',s:'d=(3,4,1),n=(3,-2,-1),d·n=9-8-1=0→∥或⊂。代入点(2,11,-1):6-22+1+15=0→在平面上。',k:'解析几何',
+hk:[{p:'直线方向向量提取',l:'must',d:'对称式(x-x₀)/a=(y-y₀)/b=(z-z₀)/c→d=(a,b,c)',r:'分母就是方向向量的分量'},{p:'平面法向量提取',l:'must',d:'Ax+By+Cz+D=0→n=(A,B,C)',r:'系数就是法向量分量'},{p:'平行/包含的判断',l:'technique',d:'d·n=0→平行或包含。代入一点验证：点满足平面方程→在平面上',r:'两步判断：①d·n=0? ②代入点?'},{p:'直线与平面位置关系',l:'prereq',d:'d·n≠0→相交，d·n=0→平行或包含',r:'方向向量与法向量的关系是关键'}]},
+{n:2,t:'使f(x)=1/x一致连续的x取值范围',o:['A. (0,1)','B. (0,1]','C. [-1,-1/3]∪[1/2,1]','D. (-∞,+∞)'],a:'C',s:'闭区间上连续⇒一致连续。C是闭区间并集。A/B包含0附近→∞。D包含0不连续。',k:'连续与可微',
+hk:[{p:'一致连续的区间条件',l:'technique',d:'闭区间上的连续函数必定一致连续',r:'"闭区间"是保证一致连续的最简单条件'},{p:'无界函数的反例',l:'trap',d:'1/x在包含0的区间内无界，在趋于∞的区间内也不一致连续',r:'函数有界≠一致连续，但无界一定不一致连续'},{p:'开区间vs闭区间',l:'prereq',d:'(0,1)不含端点，[1/2,1]含端点',r:'闭区间的"闭"就是包含端点'}]},
+{n:3,t:'方程x⁴-3x³+6x-4=0的整数解个数',o:['A. 0','B. 1','C. 2','D. 3'],a:'C',s:'验证±1,±2,±4：x=1和x=2满足。共2个。',k:'函数性质',
+hk:[{p:'有理根定理',l:'technique',d:'整系数多项式的有理根=常数项因子/首项因子',r:'不用盲猜——常数项-4的因子±1,±2,±4'},{p:'验证法',l:'prereq',d:'逐个代入检验f(x)=0?',r:'逐个试是最可靠的方法'},{p:'多项式因式分解',l:'rec',d:'找到因子后可分解：x⁴-3x³+6x-4=(x-1)(x-2)(x²+2)',r:'但这里只需知道有多少个整数解'}]},
+{n:4,t:'y=f(x)在x₀可微，下列表述不正确的是',o:['A. Δy=f\'(x₀)dx','B. dy=f\'(x₀)dx','C. Δy=f\'(x₀)Δx+o(Δx)','D. Δy=dy+o(Δx)'],a:'A',s:'Δy一般≠f\'(x₀)dx，其余都是微分定义的正确表述。',k:'连续与可微',
+hk:[{p:'Δy vs dy的区别',l:'trap',d:'dy=f\'(x₀)dx是线性部分，Δy=dy+o(Δx)才是完整增量',r:'Δy≠dy！Δy≈dy只是一个近似'},{p:'微分的定义',l:'prereq',d:'可微⇔Δy=AΔx+o(Δx)，其中A=f\'(x₀)',r:'微分的本质：函数增量可以线性近似'},{p:'高阶无穷小o(Δx)',l:'prereq',d:'o(Δx)表示比Δx更快趋近于0的量',r:'这个符号表示"可以忽略的误差"'}]},
+{n:5,t:'抛两粒骰子(1~6)，点数之和等于5的概率',o:['A. 15/36','B. 1/9','C. 1/12','D. 1/18'],a:'B',s:'和为5:(1,4)(2,3)(3,2)(4,1)共4种。总数36。4/36=1/9。',k:'概率统计',
+hk:[{p:'古典概型枚举法',l:'technique',d:'列出所有和为5的排列：(1,4)(2,3)(3,2)(4,1)——4种',r:'注意(1,4)和(4,1)是不同的！骰子是有序的'},{p:'基本事件总数',l:'prereq',d:'两粒骰子：6×6=36种可能',r:'乘法原理：每粒6面，总数6×6'},{p:'约分',l:'prereq',d:'4/36=1/9',r:'概率最终要化为最简分数'}]},
+{n:6,t:'m×n矩阵A，存在n×s矩阵B≠0使AB=0成立的充要条件是rank(A)',o:['A. rank(A)<n','B. rank(A)≤n','C. rank(A)>n','D. rank(A)≥n'],a:'A',s:'存在非零B⇔零空间维数>0⇔n-rank(A)>0⇔rank(A)<n。',k:'矩阵',
+hk:[{p:'零空间维数公式',l:'technique',d:'dim(N(A))=n-rank(A)——零空间维数=列数-秩',r:'这是秩最重要的应用公式'},{p:'齐次方程有非零解的条件',l:'prereq',d:'AX=0有非零解⇔A不满秩⇔rank(A)<n',r:'满秩时只有零解'},{p:'矩阵乘法维度',l:'prereq',d:'A(m×n)×B(n×s)→C(m×s)，列向量B的每一列在A的零空间中',r:'AB=0意味着B的每一列都是AX=0的解'}]},
+{n:7,t:'五边形与其位似变换后图形之间不满足',o:['A. 对应线段成比例','B. 连线共点','C. 对应角不相等','D. 面积比=线段比平方'],a:'C',s:'位似变换保角。对应角相等，不相等是错的。',k:'教学论',
+hk:[{p:'位似变换的性质',l:'prereq',d:'位似=中心缩放，保持角度不变、形状相似',r:'位似保持角不变——对应角相等'},{p:'位似vs相似',l:'rec',d:'位似是相似的特例：对应点连线共点（都通过位似中心）',r:'位似一定相似，但相似不一定位似'}]},
+{n:8,t:'T=(x²-1)/(x+1)²+(x²-3x+2)/(x+1)，求x=2+√3时T的值，该题主要考查',o:['A. 空间观念','B. 运算能力','C. 数据分析','D. 应用意识'],a:'B',s:'该题需进行分式化简和代入计算，重点考查运算能力。',k:'教学论',
+hk:[{p:'核心素养辨别',l:'trap',d:'运算能力vs推理能力vs空间观念——看题干描述的关键动作',r:'有"化简""代入""计算"→运算能力'},{p:'因式分解',l:'prereq',d:'x²-1=(x-1)(x+1)，x²-3x+2=(x-1)(x-2)',r:'化简需要先因式分解'}]}
+]},
+'21x':{label:'21下 数学选择题真题', answers:'ABABCACD', questions:[
+{n:1,t:'lim(n→∞) n/(1+3+3²+…+3ⁿ⁻¹)=',o:['A. 0','B. 2/3','C. 1','D. 2'],a:'A',s:'等比数列和=(3ⁿ-1)/2。原式=lim 2n/(3ⁿ-1)=0(指数增长≫线性)。',k:'极限',
+hk:[{p:'等比数列求和',l:'must',d:'1+3+3²+…+3ⁿ⁻¹=(3ⁿ-1)/(3-1)=(3ⁿ-1)/2',r:'等比级数求和公式一定要会'},{p:'无穷大比较：指数vs线性',l:'technique',d:'3ⁿ的增长速度远超n→2n/(3ⁿ-1)→0',r:'指数>>线性：指数在分母时分式趋近0'},{p:'数列极限',l:'prereq',d:'n→∞时数列的极限（区别于函数极限x→x₀）',r:'数列极限只有n→∞一种方向'}]},
+{n:2,t:'两圆最大距离：C₁(3,-8)r₁=11, C₂(-2,4)r₂=8',o:['A. 13','B. 32','C. 36','D. 38'],a:'B',s:'圆心距=√((3+2)²+(-8-4)²)=√(25+144)=13。最大=13+11+8=32。',k:'解析几何',
+hk:[{p:'圆心距公式',l:'must',d:'d=√((x₁-x₂)²+(y₁-y₂)²)——两点距离公式',r:'圆心距=两圆心之间的直线距离'},{p:'两圆位置与距离',l:'technique',d:'最大距离=圆心距+r₁+r₂，最小距离=|圆心距-r₁-r₂|',r:'外离时最大距离=圆心距+两半径之和'},{p:'勾股计算',l:'prereq',d:'3-(-2)=5，-8-4=-12→5²+12²=169=13²',r:'5-12-13是常见勾股数组合'}]},
+{n:3,t:'四阶行列式|λ 0 0 1;0 λ-1 1 0;1 0 0 λ;0 1 0 0|=0，求λ',o:['A. -1或1','B. -1或2','C. 0或1','D. 0或2'],a:'A',s:'按第4行展开：-(λ²-1)=1-λ²=0→λ=±1。',k:'行列式',
+hk:[{p:'按行/列展开法',l:'technique',d:'第4行只有第2列为1，按(4,2)展开——符号(-1)^(4+2)=+',r:'选0最多的行/列展开效率最高'},{p:'展开符号规则',l:'trap',d:'(-1)^(i+j)×aᵢⱼ×Mᵢⱼ，余子式符号取决于位置',r:'符号错误是高阶行列式计算最常见的失分点'},{p:'代数方程求解',l:'prereq',d:'1-λ²=0→λ²=1→λ=±1',r:'行列式化简后解一个二次方程'}]},
+{n:4,t:'f(x)=eˣ(x≤0),x²(x>0)，在x=0处',o:['A. 连续','B. 左连续但不右连续','C. 右连续但不左连续','D. 都不连续'],a:'B',s:'左极限=e⁰=1=f(0)；右极限=0²=0≠f(0)。左连续但右不连续。',k:'连续与可微',
+hk:[{p:'分段函数连续性判断',l:'technique',d:'分别求左极限、右极限和函数值，三者相等才连续',r:'分段函数在分界点必须左右开弓'},{p:'指数函数eˣ',l:'prereq',d:'e⁰=1，eˣ在x<0时取值(0,1]',r:'e⁰=1是基本常识'},{p:'左右极限',l:'prereq',d:'左极限：x→0⁻(从左边趋近)；右极限：x→0⁺(从右边趋近)',r:'方向不同，极限值可能不同'}]},
+{n:5,t:'A=(α₁,α₂,α₃),|A|=2。B=A×[1 0 1;2 3 1;1 3 2]，求|B|',o:['A. 2','B. 6','C. 12','D. 14'],a:'C',s:'|B|=|A|×|右边|=2×6=12。',k:'行列式',
+hk:[{p:'行列式乘法性质',l:'must',d:'|AB|=|A||B|——行列式与乘法可交换',r:'这个性质可以避免计算矩阵乘法'},{p:'三阶行列式计算',l:'prereq',d:'|1 0 1;2 3 1;1 3 2|=1·(6-3)-0+1·(6-3)=6',r:'三阶用对角线法则'},{p:'矩阵乘法维度',l:'prereq',d:'A(3×3)×右边矩阵(3×3)→B(3×3)',r:'确认维度匹配'}]},
+{n:6,t:'P(A)=1/3,P(B)=1/5,P(AB)=1/15。全都不发生的概率',o:['A. 8/15','B. 9/15','C. 13/15','D. 14/15'],a:'A',s:'P(A∪B)=1/3+1/5-1/15=7/15。都不发生=1-7/15=8/15。',k:'概率统计',
+hk:[{p:'加法公式',l:'must',d:'P(A∪B)=P(A)+P(B)-P(AB)',r:'两事件至少发生一个——用加法公式'},{p:'对立事件',l:'prereq',d:'都不发生=1-P(至少发生一个)=1-P(A∪B)',r:'"都不"和"至少一个"是对立的'},{p:'通分算分式',l:'prereq',d:'1/3+1/5-1/15=5/15+3/15-1/15=7/15',r:'通分运算——初中基础'}]},
+{n:7,t:'南宋秦九韶主要数学成就是',o:['A. 二分法','B. 辗转相除法','C. 大衍求一术','D. 割圆术'],a:'C',s:'秦九韶《数书九章》中的大衍求一术(中国剩余定理)。',k:'数学史',
+hk:[{p:'秦九韶与《数书九章》',l:'must',d:'南宋数学家，著《数书九章》，提出大衍求一术（中国剩余定理）',r:'秦九韶=大衍求一术，必须记牢'},{p:'割圆术归属',l:'trap',d:'割圆术是刘徽（魏晋）发明的——不是秦九韶！',r:'秦九韶≠割圆术，这是易混点'},{p:'辗转相除法',l:'rec',d:'辗转相除法（欧几里得算法）求最大公约数，中国古代也有但非秦九韶',r:'辗转相除法是中国古代多种著作都有的内容'},{p:'二分法',l:'rec',d:'二分法求方程近似解——现代数值方法，非中国古代',r:'二分法不是古代中国数学成就'}]},
+{n:8,t:'无法使用尺规作图完成的是',o:['A. 过点作垂线','B. 底边+高作等腰','C. 斜边+直角边作直角','D. 三等分任意角'],a:'D',s:'三大尺规作图不能问题之一：三等分任意角。',k:'数学史',
+hk:[{p:'尺规作图三大不能',l:'must',d:'三等分任意角、倍立方（立方倍积）、化圆为方',r:'三大不能问题是教资高频考点'},{p:'尺规作图的限制',l:'basic',d:'尺规作图只能用无刻度直尺和圆规进行有限次操作',r:'不是任意几何构造都能用尺规完成'},{p:'能作vs不能作',l:'rec',d:'平分角✓、作垂线✓、作等腰三角形✓——三等分任意角✗',r:'二等分可以，三等分不行'}]}
+]},
+'22s':{label:'22上 数学选择题真题', answers:'ACAAABBC', questions:[
+{n:1,t:'lim(x→∞) sin(2x)/x =',o:['A. 0','B. 1','C. 2','D. ∞'],a:'A',s:'|sin(2x)|≤1有界，分母→∞，极限=0。',k:'极限',
+hk:[{p:'有界函数×无穷小',l:'technique',d:'|sin(2x)|≤1有界，1/x→0→极限=0',r:'有界÷无穷大=0'},{p:'正弦有界性',l:'prereq',d:'|sinx|≤1恒成立——无论x多大',r:'三角函数的有界性是极限题常用工具'},{p:'x→∞ vs x→0',l:'trap',d:'x→∞时1/x→0不是重要极限！sinx/x在x→∞时为0',r:'重要极限lim sinx/x=1只在x→0成立！'}]},
+{n:2,t:'|a|=3,|b|=2,a⊥b。求(a+2b)·(a-b)',o:['A. -7','B. -1','C. 1','D. 7'],a:'C',s:'=|a|²-a·b+2b·a-2|b|²=|a|²-2|b|²=9-8=1。(a⊥b→a·b=0)',k:'向量',
+hk:[{p:'内积展开',l:'technique',d:'(a+2b)·(a-b)=a·a-a·b+2b·a-2b·b',r:'按分配律展开，注意中间两项'},{p:'a⊥b→内积=0',l:'must',d:'垂直⇔a·b=0',r:'垂直条件，内积为0'},{p:'a·a=|a|²',l:'prereq',d:'向量自身的内积=模长的平方',r:'这是内积的基本性质'}]},
+{n:3,t:'行列式|x 1 2;1 x -1;1 1 2x|展开，一次项系数',o:['A. -3','B. -2','C. 2','D. 3'],a:'A',s:'展开：2x³-3x+1，一次项系数=-3。',k:'行列式',
+hk:[{p:'含参行列式展开',l:'technique',d:'按第一行展开：x·(2x²+1)-1·(2x-(-1))+2·(1-x)',r:'展开后整理多项式'},{p:'多项式项识别',l:'prereq',d:'一次项=x的系数（不含x²/x³的项）',r:'区分一次项、二次项、三次项'},{p:'展开发号注意',l:'trap',d:'第1行第2列的符号=(-1)^(1+2)=-1→该项为负',r:'(-1)^(i+j)符号不能忽略'}]},
+{n:4,t:'同时投硬币和骰子，硬币正面且骰子>4的概率',o:['A. 1/6','B. 1/3','C. 1/2','D. 2/3'],a:'A',s:'P=1/2×2/6=1/6。',k:'概率统计',
+hk:[{p:'独立事件乘法',l:'must',d:'P(AB)=P(A)P(B)——两事件独立',r:'硬币结果和骰子结果互相独立'},{p:'硬币概率',l:'prereq',d:'正面概率=1/2',r:'硬币只有两个面'},{p:'骰子条件判断',l:'prereq',d:'>4意味着5或6——2/6=1/3',r:'大于4有2种，共6种可能'}]},
+{n:5,t:'定义在R上的函数，下列一定正确的是',o:['A. 奇+偶=偶','B. 奇+偶=奇','C. 奇×偶=偶','D. 奇∘偶=偶'],a:'D',s:'f奇,g偶。(f∘g)(-x)=f(g(-x))=f(g(x))=(f∘g)(x)→偶。',k:'函数性质',
+hk:[{p:'奇偶性运算法则',l:'must',d:'奇±奇=奇，偶±偶=偶，奇×奇=偶，奇×偶=奇',r:'用f(-x)=±f(x)逐个验证'},{p:'复合函数奇偶性',l:'technique',d:'外奇内偶→偶，外奇内奇→奇，外偶内偶→偶',r:'复合看外层：外层是奇→奇偶和内层同'},{p:'代入法验证',l:'prereq',d:'取f(x)=x(奇),g(x)=x²(偶)，代入验证（特值法）',r:'不确定时用特例验证'}]},
+{n:6,t:'P(2×3)=[2 1 -1;1 0 1],Q(3×2)=[1 0;-1 1;0 1]，求PQ',o:['A. [0 1;1 1]','B. [1 0;1 1]','C. [1 1;0 1]','D. [1 1;1 0]'],a:'B',s:'PQ(2×2)=[2-1+0,0+1-1;1+0+0,0+0+1]=[1 0;1 1]。',k:'矩阵',
+hk:[{p:'矩阵乘法：行×列',l:'must',d:'(2×3)×(3×2)→(2×2)，结果(i,j)=P第i行·Q第j列',r:'左矩阵的列数=右矩阵的行数才能乘'},{p:'逐行逐列计算',l:'technique',d:'第1行×第1列=2×1+1×(-1)+(-1)×0=1',r:'一步一个元素，不要跳步'},{p:'矩阵乘法维度变化',l:'prereq',d:'(m×n)×(n×s)→(m×s)——中间维度n消掉',r:'维度检查是第一道关'}]},
+{n:7,t:'采用"属概念+种差"方法定义的是',o:['A. 正方形','B. 平行四边形','C. 有理数','D. 集合'],a:'B',s:'平行四边形=两组对边分别平行的四边形(属:四边形,种差:两组对边平行)。',k:'教学论',
+hk:[{p:'属概念+种差定义法',l:'technique',d:'先找最近的上位概念（属），再加区别于同属其他概念的特征（种差）',r:'平行四边形=四边形(属)+两组对边平行(种差)'},{p:'集合是原始概念',l:'trap',d:'集合是最基本的原始概念，无法用"属+种差"定义',r:'原始概念没有上位概念'},{p:'有理数定义',l:'prereq',d:'有理数=能写成分数形式的数——不是"属+种差"形式',r:'这属于描述性定义'}]},
+{n:8,t:'中国古数学成就：①勾股 ②对数 ③割圆术 ④更相减损',o:['A. ①②③','B. ①②④','C. ①③④','D. ②③④'],a:'C',s:'对数是纳皮尔(苏格兰)发明，不属于中国古成就。',k:'数学史',
+hk:[{p:'对数来源',l:'trap',d:'对数是纳皮尔(苏格兰)在17世纪发明的——不是中国发明',r:'这个知识点每次考都是陷阱'},{p:'中国数学四大成就',l:'rec',d:'勾股定理、割圆术、更相减损术、大衍求一术等',r:'看到"对数"就排除——唯一的非中国起源'},{p:'更相减损术',l:'prereq',d:'中国古代求最大公约数的方法——出自《九章算术》',r:'本质就是辗转相除法的变体'}]}
+]},
+'22x':{label:'22下 数学选择题真题', answers:'DCBDBADC', questions:[
+{n:1,t:'f(x)=(x²-1)(x-2)，零点个数',o:['A. 0','B. 1','C. 2','D. 3'],a:'D',s:'零点：x=-1,1,2。共3个。',k:'函数性质',
+hk:[{p:'零点定义',l:'prereq',d:'f(x)=0的解→x²-1=0或x-2=0',r:'因式分解=0→每个因子=0'},{p:'平方差公式',l:'must',d:'x²-1=(x-1)(x+1)→x=±1',r:'x²-1=0有两个解！容易只写x=1'},{p:'多项式解的数量',l:'rec',d:'三次多项式最多有三个根——这里恰好三个',r:'n次多项式最多n个根'}]},
+{n:2,t:'∫₀¹ e^(2x)dx =',o:['A. (1-e²)/2','B. 1-e²','C. (e²-1)/2','D. e²/2'],a:'C',s:'∫e^(2x)dx=e^(2x)/2|₀¹=(e²-1)/2。',k:'积分',
+hk:[{p:'指数函数积分',l:'must',d:'∫e^(kx)dx=e^(kx)/k+C——不要忘了除以系数',r:'e^(2x)的原函数=e^(2x)/2'},{p:'牛顿-莱布尼茨公式',l:'prereq',d:'∫₀¹f(x)dx=F(1)-F(0)',r:'原函数代入上限-下限'},{p:'e⁰=1',l:'prereq',d:'F(0)=e⁰/2=1/2，F(1)=e²/2',r:'注意e⁰=1不是0'}]},
+{n:3,t:'[3 1;2 -λ][x;y]=[0;0]存在非零解，求λ',o:['A. -4/3','B. -2/3','C. 2','D. 2/3'],a:'B',s:'det=0→-3λ-2=0→λ=-2/3。',k:'矩阵',
+hk:[{p:'方程组有非零解条件',l:'technique',d:'齐次方程组有非零解⇔系数矩阵行列式=0⇔不满秩',r:'det=0⇔存在非零解'},{p:'二阶行列式',l:'must',d:'|a b;c d|=ad-bc→-3λ-2=0',r:'二阶行列式=对角线乘积之差'},{p:'矩阵方程的写法',l:'prereq',d:'[3 1;2 -λ][x;y]=[0;0]就是3x+y=0,2x-λy=0',r:'矩阵形式=方程组的简洁写法'}]},
+{n:4,t:'α(2,0,1),β(1,1,-1)，求(α+β)·(α-β)',o:['A. -2','B. -1','C. 1','D. 2'],a:'D',s:'α+β=(3,1,0),α-β=(1,-1,2)。点积=3-1=2。',k:'向量',
+hk:[{p:'向量加减',l:'must',d:'α+β=(2+1,0+1,1+(-1))=(3,1,0)',r:'分量对应相加/相减'},{p:'内积计算',l:'prereq',d:'(3,1,0)·(1,-1,2)=3-1+0=2',r:'对应分量相乘再相加'},{p:'公式：平方差',l:'technique',d:'(α+β)·(α-β)=|α|²-|β|²=5-3=2——巧算',r:'向量的平方差公式与普通代数相同'}]},
+{n:5,t:'z轴和平面3x-6y-4=0的位置关系',o:['A. 斜交','B. 平行','C. 垂直','D. 直线在平面上'],a:'B',s:'z方向(0,0,1),平面法向量(3,-6,0),点积=0→∥。原点不在→平行。',k:'解析几何',
+hk:[{p:'z轴方向向量',l:'prereq',d:'z轴的方向向量d=(0,0,1)',r:'坐标轴的方向向量——每个坐标轴对应一个单位向量'},{p:'平面与直线的位置',l:'technique',d:'d·n=0→平行或包含。代入原点(0,0,0)→-4≠0→平行',r:'两步法：①d·n? ②代入点?'},{p:'平面法向量提取',l:'prereq',d:'3x-6y+0z-4=0→n=(3,-6,0)',r:'常数项D不影响法向量'}]},
+{n:6,t:'6个球(1~6)取3个，恰好1,2,3号的概率',o:['A. 1/20','B. 1/2','C. 3/20','D. 1/10'],a:'A',s:'P=1/C(6,3)=1/20。',k:'概率统计',
+hk:[{p:'组合数计算',l:'must',d:'C(6,3)=6!/(3!3!)=20',r:'从6个中选3个=20种'},{p:'"恰好"的理解',l:'prereq',d:'恰好取到1,2,3——只有1种情况',r:''},{p:'古典概型',l:'prereq',d:'P=有利情况数/总情况数=1/20',r:'不放回抽取：组合不考虑顺序'}]},
+{n:7,t:'"拓扑公式彪史册；机器证明誉寰球"描述的数学家',o:['A. 吴文俊','B. 苏步青','C. 祖冲之','D. 李善兰'],a:'A',s:'吴文俊在拓扑学和数学机械化(机器证明)方面有杰出贡献。',k:'数学史',
+hk:[{p:'吴文俊两大成就',l:'must',d:'①拓扑学（吴公式/吴类）②数学机械化（机器证明）',r:'"拓扑"+"机器证明"→吴文俊'},{p:'苏步青',l:'rec',d:'微分几何学家，中国微分几何学派创始人',r:'苏步青≠拓扑学'},{p:'李善兰',l:'rec',d:'清代数学家，翻译西方数学著作（微积分、代数）',r:'李善兰是翻译家而非原创理论'}]},
+{n:8,t:'初中数学教学中不需要进行证明的结论',o:['A. 三角形内角和180°','B. 直角三角形两锐角互余','C. 两点之间线段最短','D. 角平分线点到两边距离相等'],a:'C',s:'"两点之间线段最短"是基本事实(公理)，不需证明。',k:'初中课标',
+hk:[{p:'基本事实vs定理',l:'must',d:'基本事实=不需证明的公理（两点之间线段最短），定理=需要证明的命题',r:'课标把数学命题分三类：基本事实/定理/公式'},{p:'三角形内角和',l:'prereq',d:'三角形内角和=180°可以通过平行线性质证明',r:'这是定理，需要证明'},{p:'角平分线性质',l:'prereq',d:'角平分线上点到两边距离相等——可通过全等三角形证明',r:'这是定理'}]}
+]},
+'23s':{label:'23上 数学选择题真题', answers:'DBDBABCA', questions:[
+{n:1,t:'lim(x→4)(√x-2)/(√(4+3x)-4)=',o:['A. -2/3','B. 1/4','C. 1/3','D. 2/3'],a:'D',s:'有理化→(√(4+3x)+4)/(3(√x+2))→(4+4)/(3×4)=2/3。',k:'极限',
+hk:[{p:'根式有理化',l:'technique',d:'分子分母同乘(√x+2)(√(4+3x)+4)消去根式',r:'分子分母含根式→乘共轭式'},{p:'0/0型识别',l:'prereq',d:'x=4时√4-2=0,√16-4=0→0/0不定式',r:'直接代入得0/0→必须化简'},{p:'共轭式构造',l:'prereq',d:'(√a-√b)的共轭是(√a+√b)，乘积=a-b',r:'共轭式=改变符号消除根号'},{p:'代入求值',l:'prereq',d:'化简后有理化代x=4：√(4+3×4)=4，√4+2=4',r:'有理化后不再有0/0问题'}]},
+{n:2,t:'lim(x→0)[f(2x)-f(0)]/x=2，求f\'(0)',o:['A. 1/2','B. 1','C. 2','D. 4'],a:'B',s:'=2[f(2x)-f(0)]/(2x)→2f\'(0)=2→f\'(0)=1。',k:'导数计算',
+hk:[{p:'导数定义',l:'must',d:'f\'(0)=lim(h→0)[f(h)-f(0)]/h',r:'导数是特殊形式的极限'},{p:'变量替换',l:'technique',d:'令t=2x→原式=2·[f(t)-f(0)]/t→2·f\'(0)',r:'通过换元转化为导数定义形式'},{p:'系数提取',l:'prereq',d:'[f(2x)-f(0)]/x=2·[f(2x)-f(0)]/(2x)',r:'分子分母同乘以2凑定义'}]},
+{n:3,t:'两个n维向量α和β不能够进行的运算',o:['A. 相加','B. 相减','C. 内积','D. 除法'],a:'D',s:'向量没有定义除法运算。',k:'向量',
+hk:[{p:'向量运算种类',l:'must',d:'向量可以：加减、数乘、内积、外积(3维)、叉积。不能：除法！',r:'向量不能除法——这是高频考点'},{p:'内积',l:'prereq',d:'α·β=α₁β₁+α₂β₂+…+αₙβₙ——结果是数',r:'内积结果是一个数，不是向量'},{p:'数乘vs除法',l:'trap',d:'向量可以数乘（λ×向量），但不能除以向量',r:'"除以向量"没有定义'}]},
+{n:4,t:'|1 2 3;1 3 6;2 4 6|=',o:['A. -1','B. 0','C. 1','D. 2'],a:'B',s:'第3行=2×第1行→行列式=0。',k:'行列式',
+hk:[{p:'行列式=0的快速判断',l:'technique',d:'两行成比例→行列式=0。第3行(2,4,6)=2×第1行(1,2,3)',r:'看到成比例的行/列→直接得0！不用展开'},{p:'行列式的几何意义',l:'basic',d:'行列式=0⇔行/列向量线性相关⇔体积为0',r:'=0意味着退化（降维）'}]},
+{n:5,t:'M(2,-3,1)关于坐标原点的对称点坐标',o:['A. (-2,3,-1)','B. (-2,-3,1)','C. (2,-3,-1)','D. (-2,3,1)'],a:'A',s:'关于原点对称：各坐标取相反数→(-2,3,-1)。',k:'解析几何',
+hk:[{p:'空间对称变换',l:'must',d:'关于原点对称：(x,y,z)→(-x,-y,-z)',r:'各分量全部取相反数'},{p:'关于坐标面对称',l:'rec',d:'关于xOy面对称：z→-z。关于yOz面对称：x→-x',r:'关于面对称只变一个坐标'},{p:'正负号运算',l:'prereq',d:'-(-3)=3，-(1)=-1',r:'负负得正——初中基础'}]},
+{n:6,t:'梯形OABC中CB∥OA,|CB|=|OA|/2。OA=a,OC=b，求MN',o:['A. a/2-b','B. a/4-b','C. b-a/2','D. b-a/24'],a:'B',s:'M=OC+OA/4=b+a/4,N=OA/2=a/2。MN=N-M=a/4-b。',k:'向量',
+hk:[{p:'向量几何表示',l:'technique',d:'用已知向量表示未知向量——找到路径',r:'向量加法=首尾相接'},{p:'中点/分点公式',l:'prereq',d:'线段中点=(起点+终点)/2，N是OA中点→N=a/2',r:'中点=两端向量平均值'},{p:'向量加减的几何意义',l:'prereq',d:'MN=ON-OM',r:'从M到N=终点减起点'}]},
+{n:7,t:'天干地支60年一循环，对应数学概念',o:['A. 中位数','B. 最大公约数','C. 最小公倍数','D. 平均数'],a:'C',s:'10天干和12地支的最小公倍数LCM(10,12)=60。',k:'教学论',
+hk:[{p:'最小公倍数LCM',l:'must',d:'LCM(10,12)=60——天干10和地支12的最小公倍数是60',r:'循环周期=最小公倍数'},{p:'天干地支',l:'rec',d:'10天干（甲乙丙丁…）+12地支（子丑寅卯…）=60甲子',r:'这是数学概念在传统文化中的应用'},{p:'LCM vs GCF',l:'trap',d:'最大公约数GCF(10,12)=2——不是60',r:'天干地支是找最小公倍数，不是最大公约数'}]},
+{n:8,t:'义务教育阶段数学命题的主要类型',o:['A. 基本事实、定理、公式','B. 定理、公式、符号','C. 基本事实、定理、图形','D. 定理、公式、证明'],a:'A',s:'义务教育数学课标(2022版)将数学命题分为基本事实、定理、公式。',k:'初中课标',
+hk:[{p:'数学命题三类型',l:'must',d:'基本事实（公理/不证自明）+定理（需证明）+公式（计算工具）',r:'这是2022版新课标的核心内容'},{p:'基本事实例举',l:'rec',d:'"两点之间线段最短""两点确定一条直线"等',r:'公理=所有人都认可的基础事实'},{p:'证明vs基本事实',l:'trap',d:'"证明"不是命题类型——证明是对定理的验证过程',r:'命题类型和证明方法是不同维度'}]}
+]},
+'23x':{label:'23下 数学选择题真题', answers:'CAACBDBA', questions:[
+{n:1,t:'lim(x→2)(x³-8)/(x²-4)=',o:['A. 1','B. 2','C. 3','D. 4'],a:'C',s:'=(x-2)(x²+2x+4)/((x-2)(x+2))→(4+4+4)/(2+2)=3。',k:'极限',
+hk:[{p:'立方差公式',l:'must',d:'a³-b³=(a-b)(a²+ab+b²)，x³-8=(x-2)(x²+2x+4)',r:'立方差是初中因式分解的核心公式'},{p:'平方差公式',l:'must',d:'a²-b²=(a-b)(a+b)，x²-4=(x-2)(x+2)',r:'平方差也是初中因式分解'},{p:'0/0型约分技巧',l:'technique',d:'分子分母同含(x-2)，约去后代入x=2',r:'极限过程中x≠2所以可以约分'},{p:'代入求值',l:'prereq',d:'约分后代入x=2：(4+4+4)/(2+2)=3',r:'约分后不再有0/0'}]},
+{n:2,t:'∫₁ᵉxlnx dx+∫ₑ¹tlnt dt=',o:['A. 0','B. 1','C. 2','D. e'],a:'A',s:'第二个积分=负第一个积分(积分限互换)，和为0。',k:'积分',
+hk:[{p:'积分限互换',l:'technique',d:'∫ₐᵇ=-∫ᵇₐ——上下限对调要变号',r:'积分限互换是定积分的核心性质'},{p:'积分变量无关性',l:'prereq',d:'∫f(x)dx=∫f(t)dt——积分变量符号可以换',r:'定积分的结果只取决于被积函数和上下限'},{p:'对称抵消',l:'technique',d:'∫₁ᵉ+∫ₑ¹=0即I+(-I)=0',r:'两个积分互相抵消'}]},
+{n:3,t:'M=[2 1;1 0],N=[1 0;1 2]，求|MN|',o:['A. -2','B. -1','C. 1','D. 2'],a:'A',s:'MN=[3 2;1 0],|MN|=0-2=-2。',k:'矩阵',
+hk:[{p:'矩阵乘法计算',l:'must',d:'2×1+1×1=3, 2×0+1×2=2, 1×1+0×1=1, 1×0+0×2=0→[3 2;1 0]',r:'(2×2)×(2×2)→(2×2)'},{p:'二阶行列式',l:'must',d:'|a b;c d|=ad-bc→0-2=-2',r:'对角线乘积之差'},{p:'|MN|=|M||N|性质',l:'technique',d:'|M|=-1,|N|=2→|MN|=-2——可绕开矩阵乘法',r:'行列式的乘法性质更快捷'}]},
+{n:4,t:'M=[1 2 -1;-1 1 0;-1 -2 1]的秩',o:['A. 0','B. 1','C. 2','D. 3'],a:'C',s:'行变换→2个非零行，秩=2。',k:'矩阵',
+hk:[{p:'行阶梯形化简',l:'must',d:'第2行+第1行、第3行+第1行→化简→非零行数=2',r:'高斯消元——秩=非零行数'},{p:'秩的取值',l:'prereq',d:'3×3矩阵秩可取值0,1,2,3。秩=3为满秩',r:'秩不能超过行数和列数'},{p:'化简步骤',l:'technique',d:'[1 2 -1;0 3 -1;0 0 0]→非零行=2',r:'注意第二个初等变换后第三行变为全0'}]},
+{n:5,t:'三位学生四科成绩，方差最大科目',o:['A. 语文(均80,0)','B. 数学(均80,800/3)','C. 英语(均90,200)','D. 政治(均100,0)'],a:'B',s:'数学方差=800/3最大。',k:'概率统计',
+hk:[{p:'方差计算公式',l:'must',d:'方差=Σ(xᵢ-x̄)²/n——每个数据与均值差的平方的平均值',r:'方差衡量数据的离散程度'},{p:'方差越大越分散',l:'rec',d:'方差=0→所有数据相同；方差越大→数据越分散',r:'直接比较数值：800/3≈267>200>0'},{p:'平均数计算',l:'prereq',d:'均值=总和÷个数',r:'均值是方差计算的基础'}]},
+{n:6,t:'平面z=x+2y，下列叙述正确的是',o:['A. (1,2,1)是法向量','B. 与z=1-x-2y平行','C. 原点不在平面上','D. 直线(2-z)/(-2)⊥平面'],a:'D',s:'D：直线方向(2,4,-2)∥法向量(1,2,-1)→线⊥面。',k:'解析几何',
+hk:[{p:'平面方程标准形式',l:'must',d:'z=x+2y→x+2y-z=0→法向量n=(1,2,-1)',r:'化为Ax+By+Cz+D=0再提取法向量'},{p:'法向量的提取',l:'trap',d:'A选项(1,2,1)错误——正确的n=(1,2,-1)',r:'注意z的系数是-1，不是+1'},{p:'直线与平面垂直',l:'technique',d:'线⊥面⇔方向向量d∥法向量n',r:'方向向量与法向量平行时直线垂直平面'},{p:'原点在平面对判断',l:'prereq',d:'代入(0,0,0)：0=0+0→在平面上',r:'只要常数项为0原点就在平面上'}]},
+{n:7,t:'反比例函数学生可能错误：①k可能=0 ②>0时y随x增大而减小 ③y=1/(x-1)不是反比例 ④图象连续',o:['A. ①②③','B. ①②④','C. ①③④','D. ②③④'],a:'B',s:'全部是常见错误。③y=1/(x-1)是平移形式仍可视为反比例。',k:'教学论',
+hk:[{p:'反比例函数定义',l:'must',d:'y=k/x(k≠0)。k必须≠0！反比例函数≠0',r:'k=0时y=0是常函数，不是反比例'},{p:'反比例函数单调性',l:'trap',d:'k>0时在各分支上递减，但不能说"在整个定义域上递减"',r:'x<0和x>0是两个分开的分支'},{p:'反比例函数平移',l:'rec',d:'y=1/(x-1)是y=1/x向右平移1单位——仍是反比例函数',r:'平移不改变函数的类型'},{p:'反比例函数图象',l:'prereq',d:'反比例函数图象是双曲线（两支），不连续：x=0处有间断',r:'图象≠数轴上的连续曲线'}]},
+{n:8,t:'7~9年级内容：①有理数估计无理数 ②画一次函数图象 ③解一元三次方程 ④解二元一次不等式组',o:['A. ①②','B. ②③','C. ③④','D. ①④'],a:'A',s:'①②是7-9年级内容。③④是高中内容。',k:'初中课标',
+hk:[{p:'初高中分界线',l:'must',d:'"三次方程"和"不等式组"必定是高中内容',r:'看到"三次"→直接排除；看到"不等式组"→高中'},{p:'7-9年级函数学习',l:'prereq',d:'一次函数(y=kx+b)、二次函数(y=ax²+bx+c)、反比例函数(y=k/x)',r:'初中函数只到二次'},{p:'有理数估计无理数',l:'rec',d:'初中需学会用有理数逼近√2等无理数',r:'这是新课标强调的数感培养'}]}
+]},
+'24s':{label:'24上 数学选择题真题', answers:'DBACCDAD', questions:[
+{n:1,t:'行列式|0 1 1;1 0 1;1 1 0|的值',o:['A. -3','B. -1','C. 0','D. 2'],a:'D',s:'按第一行展开：0-1×(0-1)+1×(1-0)=1+1=2。',k:'行列式',
+hk:[{p:'按行展开符号',l:'technique',d:'按第1行展开：符号(-1)^(1+j)×a₁ⱼ×M₁ⱼ',r:'第1行第2列符号为负，第1行第3列符号为正'},{p:'二阶余子式计算',l:'prereq',d:'余子式M₁₂=|1 1;1 0|=-1，M₁₃=|1 0;1 1|=1',r:'每个余子式是一个二阶行列式'},{p:'对称性观察',l:'rec',d:'主对角线全0，其他全1——有特殊结构',r:'对称结构的行列式常有速算技巧'}]},
+{n:2,t:'平面x-y+z=0和x+y+z=1的位置关系',o:['A. 相交且垂直','B. 相交不垂直','C. 平行','D. 重合'],a:'B',s:'n₁=(1,-1,1),n₂=(1,1,1),n₁·n₂=1≠0(不垂直)，不成比例(不平行)→相交不垂直。',k:'解析几何',
+hk:[{p:'法向量提取',l:'must',d:'x-y+z=0→n₁=(1,-1,1)；x+y+z=1→n₂=(1,1,1)',r:'系数就是法向量分量'},{p:'垂直判断',l:'must',d:'n₁·n₂=1×1+(-1)×1+1×1=1≠0→不垂直',r:'内积≠0则不垂直'},{p:'平行判断',l:'must',d:'不成比例（1:-1:1 ≠ 1:1:1）→不平行',r:'平行要求法向量成比例'},{p:'常量不影响法向量',l:'prereq',d:'D=0 vs D=1不影响法向量——只影响平面位置',r:'法向量仅由系数A,B,C决定'}]},
+{n:3,t:'n→∞时1/n,1/2ⁿ,1/n²趋近0速度排序(快到慢)',o:['A. 1/2ⁿ→1/n²→1/n','B. 1/n²→1/n→1/2ⁿ','C. 反序','D. 反序'],a:'A',s:'指数衰减≫幂函数(二次≫一次)：1/2ⁿ>1/n²>1/n。',k:'无穷小比较',
+hk:[{p:'无穷小速度排名',l:'must',d:'指数型(最快)>幂函数高次>幂函数低次>>对数(最慢)',r:'背下排名：指数>幂高次>幂低次>对数'},{p:'指数衰减vs幂衰减',l:'rec',d:'1/2ⁿ随n翻倍→每步减半。1/n²随n增大→按平方衰减。1/n线性衰减',r:'指数衰减远快于任何幂函数'},{p:'速度比较=比值极限',l:'technique',d:'lim(1/2ⁿ)/(1/n²)=lim n²/2ⁿ=0→1/2ⁿ更快',r:'比值→0说明分子更快趋近0'}]},
+{n:4,t:'方阵M=[0 2;2 0]，特征值2的特征向量',o:['A. (1,-1)ᵀ','B. (0,0)ᵀ','C. (1,1)ᵀ','D. (2,1)ᵀ'],a:'C',s:'(M-2I)x=0→[-2 2;2 -2][x₁;x₂]=[0;0]→x₁=x₂→(1,1)ᵀ。',k:'矩阵',
+hk:[{p:'特征向量定义',l:'must',d:'满足Ax=λx的非零向量x→解(A-λI)x=0',r:'特征向量不能是零向量！'},{p:'计算(A-λI)',l:'prereq',d:'M-2I=[0-2 2;2 0-2]=[-2 2;2 -2]',r:'对角元减去特征值'},{p:'解齐次方程组',l:'technique',d:'-2x₁+2x₂=0→x₁=x₂→选(1,1)ᵀ',r:'基础解系中任意非零向量都是特征向量'},{p:'零向量的陷阱',l:'trap',d:'B选项(0,0)ᵀ——零向量不是特征向量！',r:'特征向量要求非零'}]},
+{n:5,t:'α=(1,1,1)ᵀ,β=(0,1,1)ᵀ,γ=(0,0,1)ᵀ。X=(α,β,γ)。表述错误的是',o:['A. 是R³的基','B. 秩为3','C. 不可逆','D. 行列式≠0'],a:'C',s:'X是上三角阵det=1·1·1=1≠0，满秩可逆。C说"不可逆"错误。',k:'矩阵',
+hk:[{p:'上三角阵行列式',l:'technique',d:'上三角阵的行列式=对角元乘积=1×1×1=1',r:'三角阵的行列式=对角线相乘'},{p:'可逆⇔行列式≠0',l:'must',d:'det=1≠0→可逆→C"不可逆"错误',r:'行列式≠0是可逆的充要条件'},{p:'R³的基',l:'prereq',d:'三个线性无关的三维向量构成R³的一组基',r:'基=能张成整个空间的一组线性无关向量'}]},
+{n:6,t:'曲面z=2x²+y²是',o:['A. 单叶双曲面','B. 椭圆柱面','C. 抛物柱面','D. 椭圆抛物面'],a:'D',s:'z=2x²+y²是椭圆抛物面(所有截口为椭圆)。',k:'解析几何',
+hk:[{p:'二次曲面类型识别',l:'technique',d:'z=ax²+by²(a,b同号)→椭圆抛物面；ab异号→双曲抛物面(马鞍面)',r:'看系数符号：同号=椭圆抛物面，异号=马鞍面'},{p:'椭圆抛物面vs椭圆面',l:'trap',d:'z=2x²+y²不含常数项过原点→抛物面。椭圆面是x²/a²+y²/b²+z²/c²=1',r:'z是二次不是常数→抛物面'},{p:'单叶双曲面方程',l:'prereq',d:'x²/a²+y²/b²-z²/c²=1——有一个负号',r:'有一个负号→双曲面，两个正号一个负号=单叶'},{p:'椭圆柱面',l:'prereq',d:'x²/a²+y²/b²=1（不含z）——平行于z轴',r:'只含x,y不含z→柱面'}]},
+{n:7,t:'观察归纳1+2+…+n=n(n+1)/2，培养',o:['A. 推理能力','B. 空间观念','C. 数据观察','D. 应用培养'],a:'A',s:'从特例归纳一般公式是归纳推理。',k:'教学论',
+hk:[{p:'归纳推理',l:'must',d:'从具体例子中总结出一般规律=归纳推理',r:'归纳推理是数学核心素养之一'},{p:'各类核心素养辨别',l:'trap',d:'推理能力≠数据观察≠空间观念——看题干关键动词',r:'"观察归纳"强调推理过程，不是单纯的数据观察'},{p:'空间观念',l:'rec',d:'空间观念涉及图形的想象和操作',r:'此题干与空间图形无关'}]},
+{n:8,t:'确定数学教学难度的最主要依据',o:['A. 教师教学方式','B. 教师业务素质','C. 学生学习方式','D. 学生接受能力'],a:'D',s:'教学难度应以学生接受能力(最近发展区)为主要依据。',k:'教学论',
+hk:[{p:'最近发展区理论',l:'must',d:'维果茨基：教学应基于学生的最近发展区——学生跳一跳能够到的水平',r:'最近发展区=学生能力与潜在水平之间的区域'},{p:'学生主体原则',l:'trap',d:'选项涉及"教师"的都不是正确答案——难度依据在学生不在教师',r:'排除一切"教师XX"的选项'},{p:'教学难度的含义',l:'basic',d:'教学内容难度应略高于学生当前水平——太简单没挑战，太难学不会',r:'最佳难度="跳一跳够得着"'}]}
+]},
+'24x':{label:'24下 数学选择题真题', answers:'CCDBDBDA', questions:[
+{n:1,t:'lim(x→2) sin(x²-4)/(x-2) =',o:['A. 0','B. 2','C. 4','D. 1'],a:'C',s:'sin((x-2)(x+2))/(x-2)→x+2→4。用重要极限sint/t→1。',k:'极限',
+hk:[{p:'三角恒等变形',l:'technique',d:'x²-4=(x-2)(x+2)→sin((x-2)(x+2))/(x-2)',r:'先因式分解再套重要极限公式'},{p:'重要极限sinx/x→1',l:'must',d:'令t=(x-2)(x+2)，sint/t→1→结果=x+2→4',r:'构造sint/t的形式——关键步骤'},{p:'平方差公式',l:'prereq',d:'x²-4=(x-2)(x+2)',r:'基础代数变换'},{p:'0/0型识别',l:'prereq',d:'x→2时sin(4-4)=sin0=0，分母x-2→0',r:'0/0→需用重要极限'}]},
+{n:2,t:'下列表述不正确的是',o:['A. 偶函数图象关于y轴对称','B. 奇函数图象关于原点对称','C. 偶函数的导函数图象关于y轴对称','D. 互为反函数图象关于y=x对称'],a:'C',s:'偶函数的导函数是奇函数(图象关于原点对称)，不是关于y轴对称。',k:'函数性质',
+hk:[{p:'导数与奇偶性的关系',l:'must',d:'偶函数的导函数是奇函数，奇函数的导函数是偶函数',r:'求导会改变奇偶性！'},{p:'反函数对称性',l:'rec',d:'y=f(x)的反函数关于y=x对称',r:'反函数=f(x)关于y=x的镜像'},{p:'奇偶函数图象',l:'prereq',d:'奇函数关于原点对称，偶函数关于y轴对称',r:'这是定义的自然推论'}]},
+{n:3,t:'a=(1,2),b=(2,3),λa+b与c=(-4,-7)共线，求λ',o:['A. 0','B. 1','C. -1','D. 2'],a:'D',s:'λa+b=(λ+2,2λ+3)。共线：(λ+2)/-4=(2λ+3)/-7→-7λ-14=-8λ-12→λ=2。',k:'向量',
+hk:[{p:'共线条件',l:'must',d:'两向量共线⇔分量成比例⇔一个向量=另一个的倍数',r:'共线条件：对应分量之比相等'},{p:'向量线性运算',l:'prereq',d:'λa+b=λ(1,2)+(2,3)=(λ+2,2λ+3)',r:'向量数乘+加法'},{p:'比例方程求解',l:'prereq',d:'(λ+2)/(-4)=(2λ+3)/(-7)→交叉相乘解方程',r:'比例相等→交叉相乘'}]},
+{n:4,t:'A=[1 2 3;3 4 4;2 2 1]，Ax=0基础解系含解向量个数',o:['A. 0','B. 1','C. 2','D. 3'],a:'B',s:'行变换后秩=2。自由变量=3-2=1。',k:'矩阵',
+hk:[{p:'基础解系维数公式',l:'must',d:'基础解系含向量个数=n-rank(A)=自由变量个数',r:'维数=列数-秩'},{p:'行阶梯形化简',l:'technique',d:'[1 2 3;0 -2 -5;0 0 0]→秩=2',r:'行变换直到出现全零行'},{p:'解空间维数≥0',l:'prereq',d:'n-rank(A)=3-2=1≥0——解一定存在',r:'维数不能为负'}]},
+{n:5,t:'下列服从二项分布的是',o:['A. 测量身高','B. 测试电池寿命','C. 掷骰子点数为6概率','D. 抛硬币5次正面次数'],a:'D',s:'二项分布B(n,p)：n次独立重复试验成功次数。D是B(5,1/2)。',k:'概率统计',
+hk:[{p:'二项分布识别条件',l:'must',d:'①n次独立重复试验 ②每次成功概率p不变 ③关注成功次数',r:'三个条件缺一不可'},{p:'排除非二项分布',l:'technique',d:'A(身高是连续数据)→正态分布，B(寿命)→指数分布，C(单次)→伯努利',r:'连续数据不服从二项分布！二项是离散的'},{p:'伯努利vs二项',l:'rec',d:'伯努利=单次试验成功/失败。二项=n次伯努利之和',r:'n=1的二项分布就是伯努利分布'}]},
+{n:6,t:'lim(n→∞)∫₀¹ sinx·cosⁿx dx =',o:['A. 1/2','B. 0','C. √3π/4','D. 1'],a:'B',s:'∫=-cosⁿ⁺¹x/(n+1)|₀¹→0。',k:'积分',
+hk:[{p:'积分与极限交换',l:'technique',d:'先积后取极限——计算定积分再让n→∞',r:'这里积分的极限=极限的积分（一致收敛）'},{p:'幂函数积分',l:'prereq',d:'∫cosⁿx sinx dx=-cosⁿ⁺¹x/(n+1)+C',r:'用换元u=cosx→du=-sinx dx'},{p:'无穷大除法的极限',l:'prereq',d:'(1-cosⁿ⁺¹(1))/(n+1)→0/∞→0',r:'分母→∞→整体→0'}]},
+{n:7,t:'下列集合表示正确的是',o:['A. {整数|正整数,负整数}','B. {有理数|正有理数,负有理数}','C. {实数|整数,分数}','D. {无理数|无限不循环小数}'],a:'D',s:'A漏0。B漏0。C漏无理数。D正确。',k:'教学论',
+hk:[{p:'整数集合包含0',l:'trap',d:'整数=正整数+0+负整数——A漏了0！',r:'0是所有数集分类中最容易被遗忘的'},{p:'有理数包含0',l:'prereq',d:'0可以写作0/1→属于有理数',r:'0是有理数'},{p:'实数的分类',l:'prereq',d:'实数=有理数∪无理数。只说整数+分数→漏了无理数',r:'C漏了无理数（如√2）'},{p:'无尽不循环小数=无理数',l:'must',d:'无限不循环小数就是无理数的定义形式',r:'D正确！这是无理数的等价定义'}]},
+{n:8,t:'负数概念最早出现在哪本书中？',o:['A.《九章算术》','B.《周髀算经》','C.《海岛算经》','D.《缀术》'],a:'A',s:'《九章算术·方程》章最早记载负数及其运算法则。',k:'数学史',
+hk:[{p:'九章算术与负数',l:'must',d:'《九章算术》（汉）最早记录负数概念和运算法则',r:'最早出现负数的著作——高频考点'},{p:'周髀算经',l:'rec',d:'《周髀算经》主要讲天文学和勾股定理——不是负数',r:'《周髀算经》更早但无关负数'},{p:'海岛算经',l:'rec',d:'刘徽著《海岛算经》——讲测量/几何问题',r:'刘徽=割圆术+海岛算经'},{p:'缀术',l:'rec',d:'祖冲之著《缀术》——讲圆周率计算，已失传',r:'祖冲之=圆周率+缀术'}]}
+]}
+};
+
+// ============ SHOW PAPER ============
+function initPaperSelect() {
+  var sel = document.getElementById('paperSelect');
+  var keys = ['19x','20x','21s','21x','22s','22x','23s','23x','24s','24x'];
+  keys.forEach(function(k){
+    var opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = PAPERS[k].label;
+    sel.appendChild(opt);
+  });
+}
+
+function showPaper(id) {
+  var p = PAPERS[id]; if(!p) return;
+  var html = '<div class="card"><h2>'+p.label+'</h2>';
+  html += '<p style="color:var(--green);margin-bottom:12px;">答案：';
+  for(var i=0;i<8;i++) html += '<strong>'+(i+1)+'.'+p.answers[i]+'</strong> ';
+  html += '</p>';
+  p.questions.forEach(function(q,i){
+    html += '<div class="q-block"><div class="q-title">第'+(i+1)+'题 <span style="color:var(--green)">答案：'+q.a+'</span></div>';
+    html += '<div class="q-text">'+q.t+'</div><div class="q-opts">';
+    q.o.forEach(function(o){html+='<span>'+o+'</span>';});
+    html += '</div><div class="q-solution">💡 <strong>解析：</strong>'+q.s+'</div>';
+    html += renderHiddenK(q.hk);
+    html += '</div>';
+  });
+  html += '</div>';
+  document.getElementById('paperContent').innerHTML = html;
+  document.getElementById('paperAnswerKey').textContent = '答案速查：'+p.answers.split('').map(function(a,i){return (i+1)+'.'+a;}).join(' ');
+}
+
+// ============ PREDICTION ============
+function renderPrediction() {
+  var preds = [
+    {t:'Q1',topic:'极限计算',conf:'95%',level:'conf-high',reason:'10套出9次，最稳定必考点。26下Q1极大概率仍为极限题。重点关注：等价无穷小替换、洛必达法则、根式有理化(0/0型)。'},
+    {t:'Q2',topic:'向量运算 或 函数性质',conf:'80%',level:'conf-mid',reason:'向量和函数性质交替出现。近3次倾向函数性质。重点：奇偶性、导函数的奇偶性。'},
+    {t:'Q3',topic:'行列式 或 矩阵运算',conf:'85%',level:'conf-high',reason:'近10次中出现了7次行列式/矩阵。26下可能：含参数行列式求值、矩阵秩判断。'},
+    {t:'Q4',topic:'矩阵秩/特征值 或 空间曲面',conf:'75%',level:'conf-mid',reason:'解析几何和矩阵交替。近2次考矩阵，26下可能回归解析几何(曲面类型识别)。'},
+    {t:'Q5',topic:'概率 或 向量共线/共面',conf:'80%',level:'conf-mid',reason:'概率考了6/10。二项分布首次出现在24下，此趋势可能延续。'},
+    {t:'Q6',topic:'积分 或 线性方程组',conf:'70%',level:'conf-mid',reason:'Q6变数最大。24下首次考积分极限，属新题型方向。还需准备基础解系维数计算。'},
+    {t:'Q7',topic:'数学教学论',conf:'85%',level:'conf-high',reason:'大概率考新课标核心素养(三会)或教学方法。关注：2022版课标新增内容。'},
+    {t:'Q8',topic:'初中课标 或 数学史',conf:'80%',level:'conf-mid',reason:'初中课程标准是明确方向。数学史备选：祖冲之圆周率、《周髀算经》勾股定理。'}
+  ];
+  var html = '';
+  preds.forEach(function(p){
+    html += '<div class="predict-card"><strong style="color:var(--accent);">'+p.t+'</strong> → <strong>'+p.topic+'</strong> ';
+    html += '<span class="confidence '+p.level+'">置信度 '+p.conf+'</span>';
+    html += '<p style="margin-top:6px;font-size:0.83rem;color:var(--text2);">'+p.reason+'</p></div>';
+  });
+  document.getElementById('predictionContent').innerHTML = html;
+
+  var vars = [
+    {t:'极限计算',base:'lim sinx/x=1, lim(1+1/x)^x=e',vars:['等价无穷小替换→lim (sinx+3x)/(tanx+2x)','洛必达+根式有理化→lim (√x-2)/(√(4+3x)-4)','因式分解→lim (x³-8)/(x²-4)','三角恒等→lim sin(x²-4)/(x-2)']},
+    {t:'行列式',base:'三阶行列式按行/列展开',vars:['数字行列式求值→|0 1 1;1 0 1;1 1 0|','含参数行列式→四阶含λ行列式=0','展开式系数→求一次项系数','利用行变换→两行成比例⇒=0']},
+    {t:'解析几何',base:'平面方程与法向量',vars:['两平面位置关系→看n₁,n₂','直线与平面关系→d·n=0','曲面类型识别→椭圆抛物面/双曲面','旋转曲面方程→y²换为y²+z²','截面曲线类型→代入平面方程']},
+    {t:'概率',base:'古典概型P=有利/总数',vars:['骰子+硬币组合','抽球/C(n,k)','比赛胜负奖金分配','事件交并补→P(A∪B)','分布类型识别→二项分布vs连续']}
+  ];
+  var vhtml = '';
+  vars.forEach(function(v){
+    vhtml += '<div class="card" style="padding:14px;"><h3>🔄 '+v.t+'</h3><p style="color:var(--text2);font-size:0.82rem;">基础：<code style="color:var(--green);">'+v.base+'</code></p>';
+    v.vars.forEach(function(vv){vhtml += '<div style="margin:4px 0;font-size:0.82rem;">→ '+vv+'</div>';});
+    vhtml += '</div>';
+  });
+  document.getElementById('variationContent').innerHTML = vhtml;
+}
+
+// ============ GUESS ============
+function renderGuess() {
+  var html = '<div class="card"><h3>📊 80题答案分布(仅参考)</h3>';
+  html += '<div class="heat-bar"><div class="heat-label">A ~22%</div><div class="heat-track"><div class="heat-fill" style="width:22%;background:var(--accent)"></div></div></div>';
+  html += '<div class="heat-bar"><div class="heat-label">B ~25%</div><div class="heat-track"><div class="heat-fill" style="width:25%;background:var(--green)"></div></div></div>';
+  html += '<div class="heat-bar"><div class="heat-label">C ~28%</div><div class="heat-track"><div class="heat-fill" style="width:28%;background:var(--yellow)"></div></div></div>';
+  html += '<div class="heat-bar"><div class="heat-label">D ~25%</div><div class="heat-track"><div class="heat-fill" style="width:25%;background:var(--purple)"></div></div></div>';
+  html += '<p style="color:var(--text2);font-size:0.78rem;">差距不明显，仅作极端情况参考</p></div>';
+
+  var rules = [
+    {t:'极限计算',rule:'优先用等价无穷小替换。0/0型先因式分解或有理化。'+"注意：有界函数/无穷大=0。",pick:'优先验证C选项(28%概率略高)'},
+    {t:'行列式/矩阵',rule:'先看行/列是否成比例→行列式=0。秩=非零行数。'+"选项中若出现0，先验证是否可能为0。",pick:'整数2出现频率最高'},
+    {t:'向量运算',rule:'内积为0⇔垂直。共线⇔分量成比例。'+"注意：向量不能做除法！",pick:'若选项含0(内积=0场景)，概率较高'},
+    {t:'解析几何',rule:'法向量决定平面关系。方向向量×法向量=0→平行或包含。带点验证位置。',pick:'B(相交不垂直)出现频率高'},
+    {t:'概率统计',rule:'古典概型先数有利情况。二项分布：n次独立重复试验。区分恰好/至少。',pick:'分母常为合数(24,36,15)'},
+    {t:'教学论Q7-Q8',rule:'排除绝对化表述。选体现学生主体的。初中课标(7-9年级)考点明确。',pick:'C和A各约30%'},
+    {t:'❓完全不会时',rule:'①排除绝对化表述(必须/只能/一定) ②选体现"学生"关键词 ③统计上C略多(28%) ④"0"和"不存在"较少是正确答案',pick:'C > B ≈ D > A'}
+  ];
+  rules.forEach(function(g){
+    html += '<div class="card" style="padding:14px;"><h3>'+g.t+'</h3><p style="font-size:0.85rem;">🔍 '+g.rule+'</p><p style="font-size:0.82rem;color:var(--yellow);">🎲 '+g.pick+'</p></div>';
+  });
+  document.getElementById('guessContent').innerHTML = html;
+}
+
+// ============ FLASH CARDS ============
+function renderCards() {
+  var cards = [
+    {f:'两个重要极限',b:'lim(x→0) sinx/x = 1<br>lim(x→∞) (1+1/x)^x = e'},
+    {f:'等价无穷小(x→0)',b:'sinx~x, tanx~x<br>ln(1+x)~x, eˣ-1~x<br>1-cosx~x²/2'},
+    {f:'无穷小速度',b:'指数(最快) > 幂高次 > 幂低次 >> 对数(最慢)'},
+    {f:'隐藏考点：极限题',b:'1.因式分解(平方差/立方差)<br>2.根式有理化<br>3.等价无穷小替换条件<br>4.有界函数×无穷小=0'},
+    {f:'三阶行列式展开',b:'|a b c;d e f;g h i|<br>=aei+bfg+cdh<br>-ceg-bdi-afh'},
+    {f:'矩阵乘法',b:'(m×n)(n×s)=(m×s)<br>AB≠BA(不交换)<br>零因子：AB=0≠A,B=0'},
+    {f:'矩阵的秩',b:'秩=行阶梯形非零行数<br>Ax=0基础解系维数=n-秩<br>满秩⇔det≠0⇔可逆'},
+    {f:'隐藏考点：矩阵题',b:'1.秩=n-自由变量个数<br>2.行列式=0看行比例<br>3.特征向量≠零向量<br>4.AB≠BA(不交换)'},
+    {f:'特征向量',b:'(A-λI)x=0的非零解<br>不同特征值的特征向量线性无关<br>零向量不算特征向量'},
+    {f:'法向量与方向向量',b:'平面Ax+By+Cz+D=0<br>法向量n=(A,B,C)<br>n₁∥n₂⇔两平面平行<br>n₁·n₂=0⇔两平面垂直'},
+    {f:'旋转曲面',b:'f(x,y)=0绕x轴旋转<br>→f(x,±√(y²+z²))=0<br>即y²换为y²+z²'},
+    {f:'古典概型',b:'P=有利情况数/总数<br>C(n,k)=n!/[k!(n-k)!]<br>组合不考虑顺序'},
+    {f:'二项分布',b:'X~B(n,p)<br>P(X=k)=C(n,k)pᵏ(1-p)ⁿ⁻ᵏ<br>识别：n次独立重复试验'},
+    {f:'事件运算',b:'P(A∪B)=P(A)+P(B)-P(AB)<br>互不相容时P(AB)=0<br>独立时P(AB)=P(A)P(B)'},
+    {f:'向量关键点',b:'a⊥b⇔a·b=0<br>a∥b⇔a=λb<br>向量❌不能除法！'},
+    {f:'导数定义',b:'f\'(x₀)=lim(h→0)[f(x₀+h)-f(x₀)]/h<br>可微⇔可导<br>偶函数导函数是奇函数'},
+    {f:'奇偶性运算法则',b:'奇±奇=奇,偶±偶=偶<br>奇×奇=偶,奇×偶=奇<br>奇∘偶=偶,偶∘奇=偶'},
+    {f:'定积分性质',b:'∫ₐᵇ=-∫ᵇₐ<br>奇函数在[-a,a]积分=0<br>偶函数在[-a,a]=2∫₀ᵃ'},
+    {f:'隐藏考点：易错合集',b:'1.向量❌不能除法<br>2.共面不一定和为零<br>3.可导⇒连续，反之不然<br>4.1/x开区间不一致连续'},
+    {f:'秦九韶',b:'南宋·《数书九章》<br>大衍求一术(中国剩余定理)'},
+    {f:'吴文俊',b:'1919-2017<br>拓扑学+数学机械化(机器证明)'},
+    {f:'尺规作图三大不能',b:'①三等分任意角<br>②倍立方<br>③化圆为方'},
+    {f:'初中课标关键点',b:'数学命题：基本事实+定理+公式<br>7-9年级不含三次方程/不等式组<br>核心素养：三会(眼光/思维/语言)'}
+  ];
+  var html = '';
+  cards.forEach(function(c){
+    html += '<div class="flash-card" onclick="this.classList.toggle(\'flipped\')"><div class="flash-front">'+c.f+'</div><div class="flash-back">'+c.b+'</div></div>';
+  });
+  document.getElementById('flashGrid').innerHTML = html;
+  document.getElementById('cardCount').textContent = cards.length;
+}
+
+// ============ INIT ============
+initPaperSelect();
+renderTopicNav();
+renderStudy('极限');
+</script>
+</body>
+</html>

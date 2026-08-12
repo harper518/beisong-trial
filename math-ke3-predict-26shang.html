@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>26上 数学科三选择题 · 预测</title>
+<style>
+:root { --bg:#0f172a; --card:#1e293b; --border:#334155; --text:#e2e8f0; --text2:#94a3b8; --accent:#38bdf8; --green:#4ade80; --yellow:#fbbf24; --red:#ef4444; --purple:#c084fc; --radius:12px; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); max-width:860px; margin:0 auto; padding:24px 16px; line-height:1.6; }
+h1 { color:var(--accent); text-align:center; font-size:1.6rem; margin-bottom:4px; }
+.subtitle { text-align:center; color:var(--text2); font-size:0.85rem; margin-bottom:28px; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:14px; }
+.conf-high { background:#166534; color:#4ade80; padding:2px 10px; border-radius:10px; font-size:0.78rem; font-weight:700; }
+.conf-mid { background:#1e3a5f; color:#38bdf8; padding:2px 10px; border-radius:10px; font-size:0.78rem; font-weight:700; }
+.conf-low { background:#1e293b; color:#94a3b8; padding:2px 10px; border-radius:10px; font-size:0.78rem; font-weight:700; }
+.heat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:6px; margin-top:10px; }
+.heat-row { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg); border-radius:6px; gap:8px; }
+.note-box { padding:12px; border-radius:8px; font-size:0.82rem; margin-top:14px; }
+.footer { text-align:center; color:var(--text2); font-size:0.75rem; margin-top:28px; padding-top:14px; border-top:1px solid var(--border); }
+details { cursor:pointer; }
+summary { color:var(--text2); }
+ul { margin:4px 0; padding-left:18px; }
+li { margin:2px 0; font-size:0.8rem; }
+@media (max-width:600px) {
+  body { padding:16px 10px; }
+  h1 { font-size:1.3rem; }
+  .heat-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<h1>🔮 26上 数学科三选择题 · 命题预测</h1>
+<p class="subtitle">基于10套真题(19下~24下) · 80题数据 · 上下半年差异分析<br>预测方法论：频次(35%) + 趋势(30%) + 交替(20%) + 空白潜力(15%)</p>
+
+<!-- METHODOLOGY NOTE -->
+<div class="card" style="border-left:4px solid var(--yellow);background:rgba(251,191,36,0.06);">
+<h3 style="margin:0;font-size:0.9rem;">⚠️ 预测说明</h3>
+<p style="margin:6px 0 0 0;font-size:0.8rem;color:var(--text2);">
+此预测仅基于19下~24下数据，<b>未使用25上/25下数据</b>。用于验证方法论准确性。<br>
+关键差异：上半年(3月)和下半年(10月)考试有不同出题偏好——
+<b style="color:var(--yellow)">积分在4次上考试中出现0次，是下半年专属模块。</b>
+</p>
+</div>
+
+<!-- HEAT MAP -->
+<div class="card">
+<h3 style="margin:0 0 12px 0;">📊 26上热度排名总览</h3>
+<div class="heat-grid">
+<div class="heat-row"><span>🔴 解析几何</span><span style="font-weight:700;color:var(--green)">95%</span><span style="font-size:0.72rem;color:var(--text2)">4/4上必考，24上高达2题</span></div>
+<div class="heat-row"><span>🔴 矩阵</span><span style="font-weight:700;color:var(--green)">95%</span><span style="font-size:0.72rem;color:var(--text2)">4/4上必考，覆盖极全</span></div>
+<div class="heat-row"><span>🔴 行列式</span><span style="font-weight:700;color:var(--green)">85%</span><span style="font-size:0.72rem;color:var(--text2)">连续3次上出现</span></div>
+<div class="heat-row"><span>🟡 向量</span><span style="font-weight:700;color:var(--accent)">80%</span><span style="font-size:0.72rem;color:var(--text2)">3/4上，24下刚考</span></div>
+<div class="heat-row"><span>🟡 极限</span><span style="font-weight:700;color:var(--accent)">75%</span><span style="font-size:0.72rem;color:var(--text2)">上仅2/4，非上半年偏好</span></div>
+<div class="heat-row"><span>🟡 概率统计</span><span style="font-weight:700;color:var(--accent)">70%</span><span style="font-size:0.72rem;color:var(--text2)">缺席2次上，二项分布新趋势</span></div>
+<div class="heat-row"><span>🟡 连续与可微</span><span style="font-weight:700;color:var(--accent)">70%</span><span style="font-size:0.72rem;color:var(--text2)">缺席3次上，饥渴回归</span></div>
+<div class="heat-row"><span>🟢 函数性质</span><span style="font-weight:700;color:var(--text2)">55%</span><span style="font-size:0.72rem;color:var(--text2)">缺席2次上</span></div>
+<div class="heat-row"><span>🟢 导数计算</span><span style="font-weight:700;color:var(--text2)">50%</span><span style="font-size:0.72rem;color:var(--text2)">仅1次/上，低频</span></div>
+<div class="heat-row"><span>🟢 无穷小比较</span><span style="font-weight:700;color:var(--text2)">45%</span><span style="font-size:0.72rem;color:var(--text2)">仅1次，24上首现</span></div>
+<div class="heat-row"><span>⚫ 积分</span><span style="font-weight:700;color:var(--red)">15%</span><span style="font-size:0.72rem;color:var(--text2)">0/4上，下半年专属</span></div>
+</div>
+</div>
+
+<!-- PER-TOPIC DETAIL -->
+<div class="card" style="border-left:4px solid var(--green);">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+<h3 style="margin:0;">解析几何 <span style="font-size:0.8rem;color:var(--text2);">上4/4次 · 必考</span></h3>
+<span class="conf-high">置信度 95%</span>
+</div>
+<p style="font-size:0.83rem;color:var(--text2);margin-top:6px;">📊 <b>趋势：</b>24上出现2题（Q2两平面位置+Q6曲面类型），是所有模块中上半年最稳定的。26上至少1题，大概率2题。</p>
+<details><summary>已考过的子类型</summary>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">直线与平面位置(21上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">空间对称(23上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">两平面关系(24上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">二次曲面类型(24上)</span>
+</details>
+<p style="font-size:0.83rem;margin-top:6px;">🎯 <b style="color:var(--yellow)">⚠️ 未考方向：</b>①点到平面距离公式 ②双曲抛物面(马鞍面)识别 ③直线与直线的位置关系</p>
+<div style="margin-top:6px;padding:10px;background:rgba(56,189,248,0.08);border-radius:8px;">
+<strong style="font-size:0.8rem;color:var(--accent);">📌 26上重点：</strong>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>二次曲面识别</b>：z=ax²+by²同号→椭圆抛物面，异号→马鞍面</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>点到平面距离</b>：d=|Ax₀+By₀+Cz₀+D|/√(A²+B²+C²)——从未考过</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>法向量核心地位</b>：n=(A,B,C)决定平面的一切位置关系</div>
+</div>
+</div>
+
+<div class="card" style="border-left:4px solid var(--green);">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+<h3 style="margin:0;">矩阵 <span style="font-size:0.8rem;color:var(--text2);">上4/4次 · 必考</span></h3>
+<span class="conf-high">置信度 95%</span>
+</div>
+<p style="font-size:0.83rem;color:var(--text2);margin-top:6px;">📊 <b>趋势：</b>21上Q6→22上Q6→24上Q4+Q5（2题！）。矩阵在24上爆发，26上可能回归1题。</p>
+<details><summary>已考过的子类型（点击展开）</summary>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">零空间维数(21上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">矩阵乘法(22上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">特征向量(24上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">基/秩/可逆(24上)</span>
+</details>
+<p style="font-size:0.83rem;margin-top:6px;">🎯 <b style="color:var(--yellow)">⚠️ 未考方向：</b>①特征值λ具体数值 ②二次型与正定性 ③矩阵方程求解</p>
+<div style="margin-top:6px;padding:10px;background:rgba(56,189,248,0.08);border-radius:8px;">
+<strong style="font-size:0.8rem;color:var(--accent);">📌 26上重点：</strong>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>特征值计算</b>：解|A-λI|=0→λ值→代入求特征向量</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>秩的判断</b>：n-rank(A)=基础解系维数=自由变量个数</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>矩阵可逆⇔</b>det≠0⇔满秩⇔行/列线性无关⇔特征值全不为0</div>
+</div>
+</div>
+
+<div class="card" style="border-left:4px solid var(--green);">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+<h3 style="margin:0;">行列式 <span style="font-size:0.8rem;color:var(--text2);">上3/4次 · 连续3次</span></h3>
+<span class="conf-high">置信度 85%</span>
+</div>
+<p style="font-size:0.83rem;color:var(--text2);margin-top:6px;">📊 <b>趋势：</b>22上Q3→23上Q4→24上Q1。<b style="color:var(--green)">连续3次上考试都有行列式！</b>此趋势极可能延续到26上。</p>
+<details><summary>已考过的子类型</summary>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">展开式系数(22上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">成比例⇒=0(23上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">对称行列式(24上)</span>
+</details>
+<p style="font-size:0.83rem;margin-top:6px;">🎯 <b style="color:var(--yellow)">⚠️ 未考方向：</b>①范德蒙行列式 ②伴随矩阵A*求逆 ③克拉默法则</p>
+<div style="margin-top:6px;padding:10px;background:rgba(56,189,248,0.08);border-radius:8px;">
+<strong style="font-size:0.8rem;color:var(--accent);">📌 26上重点：</strong>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>行列式=0速判</b>：两行/列成比例→直接=0（不要展开）</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>含参展开</b>：按零最多的行/列展开→多项式→解方程</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>|AB|=|A||B|</b>：利用乘法性质绕开矩阵乘法</div>
+</div>
+</div>
+
+<div class="card" style="border-left:4px solid var(--accent);">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+<h3 style="margin:0;">向量 <span style="font-size:0.8rem;color:var(--text2);">上3/4次</span></h3>
+<span class="conf-mid">置信度 80%</span>
+</div>
+<p style="font-size:0.83rem;color:var(--text2);margin-top:6px;">📊 <b>趋势：</b>22上Q2→23上Q3+Q6（2题！）→24上缺席→24下Q3。上考试偏好向量，24上缺席是例外。</p>
+<details><summary>已考过的子类型</summary>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">内积展开+垂直(22上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">运算种类(23上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">几何表示(23上)</span>
+</details>
+<p style="font-size:0.83rem;margin-top:6px;">🎯 <b style="color:var(--yellow)">⚠️ 未考方向：</b>①叉积计算与方向判断 ②施密特正交化 ③线性相关性判断</p>
+<div style="margin-top:6px;padding:10px;background:rgba(56,189,248,0.08);border-radius:8px;">
+<strong style="font-size:0.8rem;color:var(--accent);">📌 26上重点：</strong>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>叉积a×b</b>：结果⊥a且⊥b，右手定则判方向——从未考过</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>共面条件</b>：(a×b)·c=0⇔混合积为零</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>❌向量不能除法</b>：每次向量题都可能出现的陷阱</div>
+</div>
+</div>
+
+<div class="card" style="border-left:4px solid var(--accent);">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+<h3 style="margin:0;">极限 <span style="font-size:0.8rem;color:var(--text2);">上仅2/4次</span></h3>
+<span class="conf-mid">置信度 75%</span>
+</div>
+<p style="font-size:0.83rem;color:var(--text2);margin-top:6px;">📊 <b>趋势：</b>21上缺席→22上Q1→23上Q1→24上缺席。<b style="color:var(--yellow);">上考试中极限只在一半的年份当Q1！</b>与下考试(7/8次)差异显著。</p>
+<details><summary>已考过的子类型（上考试）</summary>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">有界性×无穷小(22上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">根式有理化(23上)</span>
+</details>
+<p style="font-size:0.83rem;margin-top:6px;">🎯 <b>若出现：</b>∞-∞通分法 or 0·∞化商法（上考试从未考过这些新子类型）</p>
+<div style="margin-top:6px;padding:10px;background:rgba(56,189,248,0.08);border-radius:8px;">
+<strong style="font-size:0.8rem;color:var(--accent);">📌 26上重点（若出现）：</strong>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>因式分解+约分</b>：上考试极限题偏基础</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>等价无穷小替换</b>：只在乘除结构中使用</div>
+</div>
+</div>
+
+<div class="card" style="border-left:4px solid var(--accent);">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+<h3 style="margin:0;">概率统计 <span style="font-size:0.8rem;color:var(--text2);">上2/4次 · 缺席2次</span></h3>
+<span class="conf-mid">置信度 70%</span>
+</div>
+<p style="font-size:0.83rem;color:var(--text2);margin-top:6px;">📊 <b>趋势：</b>21上Q5→22上Q4→23上缺席→24上缺席。<b style="color:var(--yellow);">连续2次上考试缺席！</b>但24下Q5首次考二项分布——新趋势可能影响26上。</p>
+<details><summary>已考过的子类型</summary>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">骰子古典概型(21上)</span>
+<span style="display:inline-block;background:var(--bg);padding:2px 8px;border-radius:4px;margin:2px;font-size:0.72rem;">独立事件乘法(22上)</span>
+</details>
+<p style="font-size:0.83rem;margin-top:6px;">🎯 <b style="color:var(--yellow)">若回归：</b>①二项分布计算P(X=k) ②条件概率P(A|B)——两个都从未考过</p>
+<div style="margin-top:6px;padding:10px;background:rgba(56,189,248,0.08);border-radius:8px;">
+<strong style="font-size:0.8rem;color:var(--accent);">📌 26上重点（若出现）：</strong>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>古典概型</b>：枚举法+C(n,k)——基本功</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>事件运算</b>：P(A∪B)=P(A)+P(B)-P(AB)</div>
+</div>
+</div>
+
+<div class="card" style="border-left:4px solid var(--accent);">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+<h3 style="margin:0;">连续与可微 <span style="font-size:0.8rem;color:var(--text2);">上2/4次 · 缺席3次</span></h3>
+<span class="conf-mid">置信度 70%</span>
+</div>
+<p style="font-size:0.83rem;color:var(--text2);margin-top:6px;">📊 <b>趋势：</b>21上Q2+Q4（2题！）→22上缺席→23上缺席→24上缺席。<b style="color:var(--yellow);">连续3次上考试缺席。</b>整体也连续6次未考，极饥渴。</p>
+<p style="font-size:0.83rem;margin-top:6px;">🎯 <b>若回归：</b>①导数定义lim[f(x)-f(0)]/x ②连续⇏可导反例 ③闭区间⇒一致连续</p>
+<div style="margin-top:6px;padding:10px;background:rgba(56,189,248,0.08);border-radius:8px;">
+<strong style="font-size:0.8rem;color:var(--accent);">📌 26上重点（若出现）：</strong>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>导数定义式</b>：f'(x₀)=lim[f(x₀+h)-f(x₀)]/h</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>经典反例</b>：|x|在x=0连续但不可导</div>
+<div style="font-size:0.78rem;margin:3px 0;">→ <b>一致连续</b>：闭区间连续⇒一致连续</div>
+</div>
+</div>
+
+<!-- LOW CONFIDENCE -->
+<div class="card" style="border-left:4px solid var(--text2);">
+<h3 style="margin:0;">🟢 低概率模块</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+<div><strong>函数性质</strong> <span class="conf-low">55%</span>
+<div style="font-size:0.78rem;color:var(--text2);margin-top:4px;">上2次(21上+22上)，后缺席2次。24下刚考过，上考试短期重复概率低。</div></div>
+<div><strong>导数计算</strong> <span class="conf-low">50%</span>
+<div style="font-size:0.78rem;color:var(--text2);margin-top:4px;">仅23上1次。低频震荡，非上半年偏好。</div></div>
+<div><strong>无穷小比较</strong> <span class="conf-low">45%</span>
+<div style="font-size:0.78rem;color:var(--text2);margin-top:4px;">仅24上1次。上考试独占但仅1次，趋势不明。</div></div>
+<div><strong style="color:var(--red)">积分 ✗</strong> <span class="conf-low" style="background:#7f1d1d;color:#fca5a5;">15%</span>
+<div style="font-size:0.78rem;color:var(--red);margin-top:4px;"><b>4次上考试出现0次！</b>积分是下半年(Q4位置)专属模块——这是最可靠的反向预测。</div></div>
+</div>
+</div>
+
+<!-- Q7-Q8 -->
+<div class="card" style="border-left:4px solid var(--yellow);background:rgba(251,191,36,0.06);">
+<h3 style="margin:0;">📚 Q7+Q8 教学论 / 数学史 / 初中课标</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:10px;">
+<div>
+<strong style="color:var(--accent);">教学论（Q7主力）</strong>
+<ul>
+<li><b>核心素养"三会"</b></li>
+<li>教师角色（❌指挥者）</li>
+<li>最近发展区理论</li>
+<li>试卷编制四步流程</li>
+<li>属+种差定义法</li>
+</ul>
+</div>
+<div>
+<strong style="color:var(--green);">数学史（Q8备选）</strong>
+<ul>
+<li>★刘徽→割圆术</li>
+<li>★《九章算术》</li>
+<li>秦九韶→大衍求一术</li>
+<li>吴文俊→机器证明</li>
+<li><b style="color:var(--yellow)">⚠️未考：</b>《周髀算经》</li>
+</ul>
+</div>
+<div>
+<strong style="color:var(--purple);">初中课标（Q8备选）</strong>
+<ul>
+<li>命题三类型</li>
+<li>7-9年级内容范围</li>
+<li>反比例函数易错点</li>
+<li><b style="color:var(--yellow)">⚠️未考：</b>尺规作图课标要求</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- PREDICTION DIFF from 26下 -->
+<div class="card" style="border-left:4px solid var(--accent);">
+<h3 style="margin:0;font-size:0.9rem;">🔄 26上 vs 26下 预测差异</h3>
+<div style="font-size:0.82rem;margin-top:8px;">
+<table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+<tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:4px;">模块</th><th style="text-align:center;padding:4px;">26上</th><th style="text-align:center;padding:4px;">26下</th><th style="text-align:left;padding:4px;">原因</th></tr>
+<tr style="border-bottom:1px solid var(--border);"><td style="padding:4px;">解析几何</td><td style="text-align:center;color:var(--green);">95%</td><td style="text-align:center;color:var(--green);">90%</td><td style="padding:4px;">上4/4必考 vs 下缺席过</td></tr>
+<tr style="border-bottom:1px solid var(--border);"><td style="padding:4px;">矩阵</td><td style="text-align:center;color:var(--green);">95%</td><td style="text-align:center;color:var(--accent);">80%</td><td style="padding:4px;">上4/4必考，极高确定性</td></tr>
+<tr style="border-bottom:1px solid var(--border);"><td style="padding:4px;">极限</td><td style="text-align:center;color:var(--accent);">75%</td><td style="text-align:center;color:var(--green);">95%</td><td style="padding:4px;">上仅2/4，下7/8——差距最大</td></tr>
+<tr style="border-bottom:1px solid var(--border);"><td style="padding:4px;color:var(--red);">积分</td><td style="text-align:center;color:var(--red);">15%</td><td style="text-align:center;color:var(--accent);">70%</td><td style="padding:4px;">上0/4 vs 下4/6——下半年专属</td></tr>
+<tr style="border-bottom:1px solid var(--border);"><td style="padding:4px;">概率统计</td><td style="text-align:center;color:var(--accent);">70%</td><td style="text-align:center;color:var(--accent);">80%</td><td style="padding:4px;">上连续缺席2次</td></tr>
+</table>
+</div>
+<p style="font-size:0.75rem;color:var(--text2);margin-top:8px;">💡 核心差异：<b>上半年偏好几何/代数，下半年偏好分析（极限/积分）</b>。这是验证方法论的关键。</p>
+</div>
+
+<div class="footer">
+📐 26上 数学科三选择题预测 · 基于19下~24下共10套真题 · 未使用25年数据<br>
+预测方法：频次(35%) + 趋势(30%) + 交替规律(20%) + 空白潜力(15%)<br>
+生成时间：2026年8月12日
+</div>
+
+</body>
+</html>
