@@ -3,17 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>教资工具 · 链接汇总</title>
-<meta property="og:title" content="教资工具 · 链接汇总">
-<meta property="og:description" content="教资《教育知识与能力》分析工具 + 刷题练习 + 部署后台，所有链接一站汇总">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://harper518.github.io/sama-quiz/链接汇总.html">
-<meta name="twitter:card" content="summary">
-<meta name="description" content="教资分析工具 + 刷题练习，所有链接一站汇总">
-<meta name="apple-mobile-web-app-title" content="教资链接">
+<title>🔒 需要验证</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Crect width='36' height='36' rx='8' fill='%2338bdf8'/%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%2338bdf8'/%3E%3C/svg%3E">
 <style>
+
   :root { --bg:#0f172a; --card:#1e293b; --border:#334155; --text:#e2e8f0; --text2:#94a3b8; --accent:#38bdf8; --green:#4ade80; --radius:12px; }
   body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); max-width:800px; margin:0 auto; padding:24px 16px; line-height:1.6; }
   h1 { color:var(--accent); text-align:center; font-size:1.8rem; margin-bottom:4px; }
@@ -39,200 +33,143 @@
     .link-row { flex-direction:column; align-items:flex-start; gap:4px; }
     a { font-size:0.85rem; }
   }
+
+  #lockWrap { display:flex; justify-content:center; padding:48px 16px; }
+  #lockCard { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px 24px; width:100%; max-width:340px; }
+  #pwdInput { width:100%; box-sizing:border-box; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:1.25rem; text-align:center; letter-spacing:8px; min-height:48px; }
+  #unlockBtn { width:100%; margin-top:14px; padding:13px; border:none; border-radius:10px; background:var(--accent); color:#0f172a; font-weight:700; font-size:1.05rem; cursor:pointer; min-height:48px; }
+  #unlockBtn:disabled { opacity:0.5; cursor:default; }
+  #pwdInput:disabled { opacity:0.5; }
+  #lockMsg { text-align:center; color:#f87171; font-size:0.85rem; margin-top:12px; min-height:1.2em; }
 </style>
 </head>
 <body>
-
-<h1>📎 教资工具 · 链接汇总</h1>
-<p class="subtitle">所有在用的工具链接，按分类整理。点击直接打开。</p>
-
-<!-- 教资分析工具 -->
-<div class="group">
-  <h2>📊 教资《教育知识与能力》历年真题科学分析 <span class="badge badge-main">主力工具</span></h2>
-  <p class="desc">8大模块分析 · 知识点精讲 · 刷题库(600题) · 预测模型 · 回溯验证<br>当前版本：<strong>v1.12</strong>（9套主题：5基础+浅紫+3种多巴胺撞色）</p>
-  <div class="link-row">
-    <span class="platform gh">GitHub Pages</span>
-    <a href="https://harper518.github.io/sama-quiz/教资分析工具_v1.1.html">https://harper518.github.io/sama-quiz/教资分析工具_v1.1.html</a>
-  </div>
-  <div class="link-row">
-    <span class="platform cf">Cloudflare</span>
-    <a href="https://jiaozifenxi.pages.dev/教资分析工具_v1.1.html">https://jiaozifenxi.pages.dev/教资分析工具_v1.1.html</a>
+<div id="lockWrap">
+  <div id="lockCard">
+    <div style="font-size:52px;text-align:center;line-height:1">🔒</div>
+    <div style="text-align:center;font-weight:700;font-size:1.25rem;color:var(--text);margin-top:12px">私密页面</div>
+    <div style="text-align:center;color:var(--text2);font-size:0.85rem;margin:6px 0 22px">请输入访问密码</div>
+    <input id="pwdInput" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••••">
+    <button id="unlockBtn">解 锁</button>
+    <div id="lockMsg"></div>
   </div>
 </div>
-
-<!-- 简答题专项分析 -->
-<div class="group">
-  <h2>📝 教资《教育知识与能力》简答题专项分析 <span class="badge badge-new">NEW</span></h2>
-  <p class="desc">13套真题52道简答题 · 8大模块 · 得分点拆解 · 万能答题模板 · 5模型预测+滚动验证 · 子考点地图 · 默写自测<br>当前版本：<strong>v2.6</strong>（9个Tab + 扩展题库50道 + 题变对照表）</p>
-  <div class="link-row">
-    <span class="platform gh">GitHub Pages</span>
-    <a href="https://harper518.github.io/sama-quiz/简答题分析工具_v1.0.html">https://harper518.github.io/sama-quiz/简答题分析工具_v1.0.html</a>
-  </div>
-  <div class="link-row">
-    <span class="platform cf">Cloudflare</span>
-    <a href="https://jiaozifenxi.pages.dev/简答题分析工具_v1.0.html">https://jiaozifenxi.pages.dev/简答题分析工具_v1.0.html</a>
-  </div>
-</div>
-
-
-  <!-- 辨析题专项分析 -->
-  <div class="group">
-    <h2>🔍 教资《教育知识与能力》辨析题专项分析 <span class="badge badge-new">NEW</span></h2>
-    <p class="desc">13套真题51道辨析题 · 6大陷阱类型 · 三步法答题技巧 · 7维预测模型 · 陷阱分类地图 · 默写自测<br>当前版本：<strong>v3.0</strong>（概念级预测+3主题+考前速览+陷阱自测过滤）</p>
-    <div class="link-row">
-      <span class="platform gh">GitHub Pages</span>
-      <a href="https://harper518.github.io/sama-quiz/辨析题分析工具_v1.0.html">https://harper518.github.io/sama-quiz/辨析题分析工具_v1.0.html</a>
-    </div>
-    <div class="link-row">
-      <span class="platform cf">Cloudflare</span>
-      <a href="https://jiaozifenxi.pages.dev/辨析题分析工具_v1.0.html">https://jiaozifenxi.pages.dev/辨析题分析工具_v1.0.html</a>
-    </div>
-  </div>
-<!-- 整卷预测 + 跨题型知识整合 -->
-  <div class="group">
-    <h2>📋 教资科二 · 整卷预测与跨题型知识整合 <span class="badge badge-new">NEW</span></h2>
-    <p class="desc">5模型集成预测 · 考纲43条指标驱动 · 整卷10道主观题模拟分布 · 跨题型知识点地图 · 必背清单(21个) · 考前速览(15个)<br>回溯验证Top-2准确率：<strong>88.9%</strong> · 当前版本：<strong>v1.0</strong></p>
-    <div class="link-row">
-      <span class="platform gh">GitHub Pages</span>
-      <a href="https://harper518.github.io/sama-quiz/整卷预测_跨题型知识整合_v1.0.html">https://harper518.github.io/sama-quiz/整卷预测_跨题型知识整合_v1.0.html</a>
-    </div>
-    <div class="link-row">
-      <span class="platform cf">Cloudflare</span>
-      <a href="https://jiaozifenxi.pages.dev/整卷预测_跨题型知识整合_v1.0.html">https://jiaozifenxi.pages.dev/整卷预测_跨题型知识整合_v1.0.html</a>
-    </div>
-  </div>
-<!-- 材料分析题专项分析 -->
-  <div class="group">
-    <h2>📋 教资《教育知识与能力》材料分析题专项分析 <span class="badge badge-new">NEW</span></h2>
-    <p class="desc">13套真题26道材料分析题 · 7模型集成预测 · 万能答题模板(5步法) · 采分点辞典 · 通用话术库 · 考点地图 · 模拟自测<br>当前版本：<strong>v1.1</strong>（10个Tab + 考纲43条指标逐条比对 + 权重优化验证）</p>
-    <div class="link-row">
-      <span class="platform gh">GitHub Pages</span>
-      <a href="https://harper518.github.io/sama-quiz/材料分析题分析工具_v1.0.html">https://harper518.github.io/sama-quiz/材料分析题分析工具_v1.0.html</a>
-    </div>
-    <div class="link-row">
-      <span class="platform cf">Cloudflare</span>
-      <a href="https://jiaozifenxi.pages.dev/材料分析题分析工具_v1.0.html">https://jiaozifenxi.pages.dev/材料分析题分析工具_v1.0.html</a>
-    </div>
-  </div>
-
-<!-- 刷题练习 -->
-<div class="group">
-  <h2>📝 教资科二刷题练习 <span class="badge badge-new">个人练习</span></h2>
-  <p class="desc">36个知识点题库 · 589道选择题 · 错题记录 · PWA离线可用<br>仅个人使用，不对外公开</p>
-  <div class="link-row">
-    <span class="platform gh">GitHub Pages</span>
-    <a href="https://harper518.github.io/sama-quiz/教资科二刷题练习.html">https://harper518.github.io/sama-quiz/教资科二刷题练习.html</a>
-  </div>
-  <p class="note">💡 这是交互刷题模式（点击选项判断对错+记录错题），分析工具里的刷题库是浏览复习模式。两个互补使用。</p>
-</div>
-
-<!-- 选择题刷题工具（出售版） -->
-<div class="group">
-  <h2>📝 选择题刷题工具（出售版） <span class="badge badge-main">出售</span></h2>
-  <p class="desc">教资刷题助手 · PWA离线可用 · 题库管理 · 错题复习 · 清单视图<br>出售版，独立部署。当前版本：<strong>v271</strong></p>
-  <div class="link-row">
-    <span class="platform gh">GitHub Pages</span>
-    <a href="https://harper518.github.io/sama-quiz-deploy/">https://harper518.github.io/sama-quiz-deploy/</a>
-  </div>
-  <div class="link-row">
-    <span class="platform cf">Cloudflare</span>
-    <a href="https://quiz.rruuaann.top">https://quiz.rruuaann.top</a>
-  </div>
-</div>
-
-<!-- 挖空背诵工具 -->
-<div class="group">
-  <h2>🧩 教资科二 · 主观题高频考点挖空背诵 <span class="badge badge-new">个人背诵</span></h2>
-  <p class="desc">基于跨题型知识整合的21个高频考点 · 挖空模式 + 口诀模式 · 错题记录 · 多主题色<br>来源于整卷预测工具的必背清单。当前版本：<strong>v1.0</strong></p>
-  <div class="link-row">
-    <span class="platform gh">GitHub Pages</span>
-    <a href="https://harper518.github.io/sama-quiz/主观题高频考点挖空背诵.html">https://harper518.github.io/sama-quiz/主观题高频考点挖空背诵.html</a>
-  </div>
-  <div class="link-row">
-    <span class="platform cf">Cloudflare</span>
-    <a href="https://jiaozifenxi.pages.dev/主观题高频考点挖空背诵.html">https://jiaozifenxi.pages.dev/主观题高频考点挖空背诵.html</a>
-  </div>
-  <p class="note">💡 本地文件：<code>C:\Users\Harper\Desktop\历史粘贴\分析教资考试\主观题高频考点挖空背诵.html</code></p>
-</div>
-
-<!-- 挖空背诵工具（出售版） -->
-<div class="group">
-  <h2>🧩 教资科二 · 挖空背诵（出售版） <span class="badge badge-main">密码5826</span></h2>
-  <p class="desc">基于跨题型知识整合的高频考点 · 挖空模式 + 口诀模式 · 错题记录 · 多主题色<br>出售版，需密码访问。当前版本：<strong>v1.0</strong></p>
-  <div class="link-row">
-    <span class="platform gitee">Gitee Pages</span>
-    <a href="https://rruuaann.gitee.io/beisong-trial">https://rruuaann.gitee.io/beisong-trial</a>
-  </div>
-  <div class="link-row">
-    <span class="platform cf">Cloudflare</span>
-    <a href="https://beisong-8ua.pages.dev">https://beisong-8ua.pages.dev</a>
-  </div>
-</div>
-
-<!-- 数学科三选择题分析 -->
-<div class="group">
-  <h2>📐 数学科三《数学学科知识与教学能力》选择题分析 <span class="badge badge-new">NEW</span></h2>
-  <p class="desc">10套真题(19下~24下) · 80题全解析+隐藏考点揭示 · 16个知识板块前置基础 · 四维精讲（例题驱动+阶梯基础+对比辨析+解题流程） · 预测+蒙题+速记卡片<br>适用：<strong>初中数学教资科三</strong> · 当前版本：<strong>v1.13</strong></p>
-  <div class="link-row">
-    <span class="platform gh">GitHub Pages</span>
-    <a href="https://harper518.github.io/sama-quiz/数学科三选择题分析工具_v1.0.html">https://harper518.github.io/sama-quiz/数学科三选择题分析工具_v1.0.html</a>
-  </div>
-  <div class="link-row">
-    <span class="platform cf">Cloudflare</span>
-    <a href="https://jiaozifenxi.pages.dev/math-ke3-v1.13.html">https://jiaozifenxi.pages.dev/math-ke3-v1.13.html</a>
-  </div>
-</div>
-
-<!-- 数学科三26上预测 -->
-<div class="group">
-  <h2>🔮 数学科三 · 26上选择题预测 <span class="badge badge-new">NEW</span></h2>
-  <p class="desc">仅预测页 · 基于10套真题(19下~24下) · 上下半年差异分析 · 未使用25年数据<br>用于验证预测方法论准确性 · 当前版本：<strong>v1.0</strong></p>
-  <div class="link-row">
-    <span class="platform gh">GitHub Pages</span>
-    <a href="https://harper518.github.io/sama-quiz/math-ke3-predict-26shang.html">https://harper518.github.io/sama-quiz/math-ke3-predict-26shang.html</a>
-  </div>
-  <div class="link-row">
-    <span class="platform cf">Cloudflare</span>
-    <a href="https://jiaozifenxi.pages.dev/math-ke3-predict-26shang.html">https://jiaozifenxi.pages.dev/math-ke3-predict-26shang.html</a>
-  </div>
-</div>
-
-<!-- 部署信息 -->
-<div class="group">
-  <h2>🔧 部署后台</h2>
-  <p class="desc">GitHub仓库 · Cloudflare Pages管理</p>
-  <div class="link-row">
-    <span class="platform gh">GitHub 仓库</span>
-    <a href="https://github.com/harper518/sama-quiz">https://github.com/harper518/sama-quiz</a>
-  </div>
-  <div class="link-row">
-    <span class="platform cf">Cloudflare 面板</span>
-    <a href="https://dash.cloudflare.com/832134c5a06e0f89382ec0d59c01ccb2/pages/view/jiaozifenxi">https://dash.cloudflare.com/.../pages/view/jiaozifenxi</a>
-  </div>
-</div>
-
-<p class="footer">
-  📅 最后更新：2026年8月13日 · 分数全面改为纸张竖排样式(719处\frac+358个分数组件) · 阶梯自测可点击记录 · 精讲↔四维双向同步 · 数学科三v1.13<br>
-  本页线上地址：<a href="https://harper518.github.io/sama-quiz/链接汇总.html">https://harper518.github.io/sama-quiz/链接汇总.html</a><br>
-  本地文件：<code>C:\Users\Harper\Desktop\历史粘贴\分析教资考试\链接汇总\index.html</code><br>
-  <span style="font-size:0.7rem;">💡 每次新增工具或更换链接后会自动更新线上版本，手机刷新即可看到最新</span>
-</p>
-
+<div id="content" style="display:none"></div>
 <script>
-// Auto version check — fetches links_version.json, compares with embedded version
-var EMBEDDED_VERSION = 33;
-(function checkUpdate() {
-  var url = 'https://harper518.github.io/sama-quiz/links_version.json?t=' + Date.now();
-  fetch(url).then(function(r) { return r.json(); }).then(function(data) {
-    if (data.v > EMBEDDED_VERSION) {
-      var banner = document.createElement('div');
-      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#0f172a;text-align:center;padding:10px 16px;z-index:9999;font-weight:600;font-size:0.9rem;cursor:pointer;';
-      banner.textContent = '🔔 链接有更新！点击刷新页面查看最新 (' + data.msg + ')';
-      banner.onclick = function() { location.reload(true); };
-      document.body.prepend(banner);
-      document.body.style.paddingTop = '44px';
+var PAYLOAD = {salt:'Ys7lSDONDs8rbTXK2aHtpg==', iv:'Inf4QtuIp8toATuD', iters:150000, ct:'RiCa74NnmWy6Hat+J/UMcnI/KAwYEx972WMQnTkOEMcImka20eKmeuLSj4oD2QCjHoeySR2YaDvHIyslEgWLEK5N7W50DS6tqto2GtMNRAlEf9ZEq1jP4uLsomeLLrL3xQf/zs3QATa0sr/BMzZ7SFqQFWpV1ogPRNss0s5D6a9iSNq7zSZviKH2cOVH8Klm1dCEQSJ+hyqv+2z1JDXbSpjzNhN30ke6Ji1MGvZFqnuzTcE8GpnegYDPJyYqlZKd88D2qXTKYs7JnwYIVQKTs6n3fRGsNsCHx4I5mjKiA83sSmBe7HCS7tr8ouKjSgYq94CAmAgV94ooLaqhTy8QZDAL6XyOLeTvnCdLyHz51JblyOYzQ+GCTaGvlebYh7Jp5f7Nds0s3Gbu77DOWmIAb9nQxE2mi17WHdl1RnqajtYbFZ0aSSxyTCt9SBIlNBbbNXE+dzajAnBWmC8DAtggJ+dD3C3u9rgho4Y8Qb2KLB6SeHf3I3zP+TdwWUCOTjbdIAAfKP8CqMxrqkm05QNi9iHhcP1AApbTuMcCSRhTjAIlWHdiDsHfmd6R1+hVz1N8mEGTTKpGLGud6dmpouuVO8DebAjxphuLKyIEGPRI9VT5hp3IGNR6v4FV9nBwx0jnVzOj480UjLyapHUY/KAZcDwvQqReCcc2sbmD42PpM1cozxHBBNtJdCd03u9QaGGws61Xd4K822w5veyribxayDfMNrbsz2klK5jtyNfoTGYMjqCHfF5RnIG1KgX5U62QfGabKOS25J3RVhs3MZyz5C/OwbSWJGcqky5P34GgkMfgmX0RyxoNDLbjfkWZQSgAhCba1dzzzn1BrMyF+InNULadDA7HbqEMiu+WlnxMxo8HQTfdX5pwpXlJT2cQ0tbJZyMUiBFgZ5jb7xf0HS/MLZ9VJcOUhT5hCXnPFGdmmQMVO1t/PKDes0eOFHLW0Ip/0Pv+/z2lfxkUOwo2DpYQ8hnKSdE5mKU0/rUjKecqAC4JyiFnxj/A45M6qbgR+DCDOhT4p/+QSPhVQnieUpWkoVIZckCfjR5JGzdGvsfyV/mcdyUZxYuvvQHchs+tmIxEsYiP4IEuAXlRwpx9RYlvRhmlH5fPhvvcdSKUihxLfaF8r9e8CaESwWlYbFgbRE9rpakq3I9i19h0wfmDKcL4bOITZDQ4B1BGFabmPzBl75hq0TQtKdne6afYnZPlK4G+oeattG4mfd6tdahBLeRzxOPf0xoI8Gv4CmPFW2nAG8z8gTH4ldmxr2aN9YRmb3N0+gfAbt+rWeCooBxwe3uhjvuc/e8QvnN9qujTHc/o7sXm56zaSIF1kj73IsvlytHYcKrUD6vFI2OSuZVzYbPXx7gkGlipUXdS8jpuWDuFJ3B0og6YBdm0Bzvd576h1Rsempwlbf80hLDZY/XALfDqFPXVSyLaEe1UK6tJvLSAao55CKrz8/9ZmQYXmkLgktIPqpcO6RmTycJ3RWyEG9LJClt5mAM4rx6q0vClTNA62rPhO5nDIcbX03iS4yJHCnQfVy7XJOb634WyEYimq57ANYS1fvgzBNqB/bSLfPZ981e+k2WUaMDAfsjkDaLb4YfBx6GbW0TaEF/kHcqP4KGnxQSS46sJcg2YxjIz4wooy7HLXgDnK90KFaLj1QEMGbcAQn5hlY8qOoJulfa3LTsKCZ6262xDH24emJ5Fxfke+NHn5soEaCL0fYdcQSVVx6pthUGbi4BK3TOJu2OgdXtg5phSilLry08pZgEQCT5kjaqCWfWi0QgZ47d4IjJDGpAbHS2kD+EVHhurB/lIunJZOLQnFdxAzZ3XpAuadqevhCmqLdHHDVduezqzpxF8jr9ykYCSlgw8Da7Kvkeg30v79xDoJJEUYxhemSGJ0Ul317C1eY+A/Y98Z7k3f7OKuuOmC40PQjsJpgfAHFVT5GR13EG/N91OiVytQ+RhJfNs0jw7m/0k9d/47nxDyr6yvGxp1w4NISgE1puhq1Rw5gVggiDFqppOggL2/qy7w6cwWvR0MDanUGGJc0Bs7JRr4rRmyxaTc6SVTpHqKh0/7Yg92gRcJQoV1MDi1zOLtoJkM7sOq3W3zXGl1Yvet3WHDxC/G2+gZTS4gI1htMPklSkkBK/5rIgqcrdCtSI1W7GgxESDCbkWHY6Hx5+A+arMhQ2lhC6XPto2hDWNYGM6B7u9b9daNwjFWQvcTj8nyO66v2Y42QyJaVbYWp2tlxWAWaZfOw83o6/K2W3ox//oDnZzoQdFsKcgvEK2/uW6JZb7Nu7wQoPADHZmXltga0QZs/Pmd4wJsGIFFoZ4Nc5DWnJbnDN5OWaby0L/zLK7Z7utJ1R9CdgrFMV437HTc4j/+w5DU7XbbiXyY+nWxBMEACXLRsgqA+seYwrukzQknrDb/+FQgj6hamwd1ANBnoriRf2hVrsSS0qZ9IL7Tn3tTJheIBZSOYFT1WbcXwODREWa78AXIaPju/TDqB3DA1s9JEazerMSfDEryOpo57Uul6t5tzzkNHjg39BzygrRrGm520WqtyKAtFR5GWBfBZSplYczGwYT/f1ooqMFPcM3GIRdVQZC1c9beI1LMhE3A9gbavmsbBehzo+9IFAevv6Xy12uBPpV9qlfQnTVWVsq4xwXqafWlmtxbIKvOVLs8GD5mCuu76mw6xAmhbCz4RKl2sp0UFpopIbbiF84dhlCTuVJCcjFno7xx4VrivChtRroK1bn+NxQZdmTpajCFXsf8xvFamI4g1rWEdwB1OE/pf5omlTe2S+yrY+8woUVB5HIhs9R5EUsdKiU3Zx1KRnyxh0txYu0q9PY1zHkR8oWBI7+AHVAVxiFdAhzU6jqQTLmezj6spxN011zMlarJ2G7lxc8nJewE1vCtfjO9iZFXAdMHA1c/nggFgzNw1tzqHDsrF6ZDjErM4bRDlO3tVO/r9Ekbfm7IRrms1wbFXdGSwj0VpYXun4Eq5B0u9YYAanijeg5hc22pSxPMH0rWHQ5xoHiltc01ragNw+NTxI6A3BY+6RNATt8KOSFEwIOWZzXSXgimKkNy18tKPDiGWCltb/QAa3s3qxk+gyFLcnCf9pO2jRIbXwFMWqzMdhg7aaXHq2znij9nIwoGWGh85ujTwVERlNst6KIzIiVLPVaebaEpeCiGOF/zwhZ1TPoLZC2+SCCFqh0NBIo2yw+Bkqcqqx5E8ECY3600NkK9ypnF+N+IoQ/hhaAngVXVMXpxJVtXh67GAqPLkUXu9kwpA//RMdHBl708vqGY76ecYQnt1dVoupFTOT6VftUnY9JchQnqG+llQZiU+bp84M+X0o2E2jkBaj+1bpm+md6vewcqtfQNsZ5x8UOcQEOo7ReZlzFHl1X0wTkbrnmD9Fuuyor0eQQwWLOM4upw6UQb9VQEJynQ/sxP+B4Xhu8X7DTEuD4ke/2mo9ng4/rpbo8c+O9Qa1nwIUtQZTrzorz4puNGy0apkvR4cG1dv6VzYnrL9fYA8HPzGodSWIdCePLCMHlmntTl47mNnoIILxGgbDwkP118jDT6ZCtBI5BTiY+JFSOEXLjwR56sGBgK5QmtWmmw8xWZKnar6WHTAGSz5GJG8IParc/EsOLwGEAhC1jShmiv8oocxEnJXqtD16RaRKU5D8LOz9OXvNDxTcKd6dO1tJ4QwM3pOXgLPz2bURSDXkjxTBnLN7c75GuQN0+tXJZCl9vu5SNuObozkhsCSc+rIeBX/E2OabGuqNuv98n2DEycF1sloHIT2bu2Fbx2oN2o4ddH7ZL7lwoH29y4K0Fwtd9fna3M8YziccBw4si4/eU6Pbb6SYjvLM95WS6+afR2sIb5fRhkQUzGE1L9a6xx7KUqD606wvocncUOTgYIanUJOOM2qruqnNdlW+oyHKUgrqh2e5paDmkUbwK/flzsCNd3cReEKBJIUh1I2z5znJ2+cMkEt8jfUqk73Am8Cw4T4Wa+R0IDWOsy8E+xDvOqNfiKyYQso1OtIyHgt9XyMAMDsGTHo72ANFZLkkrKkeBpFVs/wMVYfCzvfB0RRXylTLx0KsNhZwg5YuvwN6Tx0evjPzEfXVgjPfTyMeB5SJPDA8x2q5xHjOD0dxRkKFJM1flKssb3STT0TmVQCYmHFS4hrFRw16OW8Wdv52N+8DicDAY8Lq4SJBez+E7rU+BuG7Iz0cvApC62EQghRbgh4XSxRQlfI8VjJzRbQMocCNeRUqrRxG5mA68A5kvheEM1v9ctMDWhDPSUM99wj302+Zo5Mbq+WganSDs3jmJonOOwsBSddEq7SeR01qg4syUUNRNeHcJiHFkNDezwTa7zGK058AyzbpOd+0igj4gMKGqrAhs+AdRuIovaxEsn5AT/JLbiKGc6O0s0yW+EM2UgbAySFWUTYA0325ENDn4rUYnWHJYjID9AverOWjVzVfJMKhoneo5V7LLCOn/Hb28hDYbyRDbfOm/nkHWSO7ehwJs6HQCpKsir/wG3j0lmgFFLiNQSofVyb8s7EEOwEFNLQa0bHOyNq1Lbq47Uc/so6V2JGbiwO+6mfaGHdbF7Dn4/Syd9smHiq6X9VPZQfIP40dvGxiuMv47Y24z7OO0CiZmOa4S3jZJAQQ6B3xjxER12IVvr0oxdhPG9WtihIHJtPMyuSouzWq2M3IUob7eAEnV69iOMpqgdkZC4hJXZDv14htntBrLcEB0CXHAjkBRr51ubffr8pYzACI5vRwkjhq/7WvB+yWKt88P6OFQfP15cLtbqG7WyUjlR1EMDF1xvcRF2ozuV+4mxN1KSm/F5lmz6Mr13e823q1fYa8foytKUWLQeeol6ybvQuuktT9lU7JP+JyJB40Id8aHbNR4lZhqZMpHy3pBUeZkStwxncJpelpbIyQetPE7DEt0hEi6WRJllr3/ziNfMmtfmnJQktgxw/aL3tU31HvJisFcRMYY3jEr5Ohpr84sHb4AWAD5NdQBvSSqRf3OPay9OsUy9rGuHXTxKrMw3kJdDrK3hwBFuw0xwcqOW4XPM0+VIQQGwxLwnzsOFhTp276nfIRSa8ApJgYqyBEZRb51msZ+jqPwTcqw8JbD4Gyyo82bqxom1MVo6XD4yrl5tevYaP0AZPT/VohO3rfxnmNY5g36iJmEnyay5SMDo+8QjN8xaaZG6immdwlRLf0lDUHzVAhWQO7Z/HVDgOddsZl7pvfS4R1zMpcR8qDj+65ltW2hiSVebAQ7FYmXNjM/JGbfSq49i/wiasKb+d4vW2C6owG270EQgZjuUzSkWR/zDToCZY/k5NTXvq6tq8aosMgtj25eT4quUmSd9f9P/GN00/2qsPeO0L8OhJBWxup2Zi6K7ZTMjdTvkR1IWbYHGCs0jAVIU7zAHq+x6fXh509tCnrw37FNNN971tksmsBRU3hHp26mzuxGop9/aTdgz7HSuLfURFShhExmFPYYEizQE99yVW0Q6tS46SzSSs9l66Xdo0knoaZXEkCJuOBjhci7sRUZzZKqCcozDEH3BWMs6OqHCIMG0tuoWLAlbIbkE68UFTHjWgQqHksE87H+cZG377wYVAhiqUd/vpQgGG1er51CWIDA5dDynItfAFkeeAqK4l8F121DWRtZpJlPzOldvwPo7zdgDzJv26PNYedm1PgwdPnCJ/pATV4c2PW8onGyyk9cQpa34DEw5IcdAgpWc/mb/WjPSJNYUFMqeEATLtroom6Vk53ythPj9NKb/cuLWy9uyqST5AGy898oZYbqo33+qBVMxLdtdRNuldnl3yHRpvT/Cq3yHywQAyucbbLAwRxXiJwZh9ojYv41Xx13x0POeBBF1h/8rWR4NvWCnSmeUiMEe/61tjCYB86omm9tVMjfp4JOhAGRz0Nf0pLJxkJwgncfAQjqkjhsPSvK+JH51LBrr1s0mOcA1FJNQlgRBrqDDkh7DPC62Z/ktLftLE9ALXhr062Zp9VHfyR+W3aYzlC7ThFMCJgUKaSB8CtKZ546WAF+SgQutpjymAiFhqKgnvSUrRQU4ui9J7fI4BlnJtQcEVtHZJT2TOgoq8euT8bnD2aEvt86rlk0Ub5OB7tqQX+ihYS8FkI1bnLY8YwqOq3Aoa0xcZMTg1olzqCkX3dylpkMD4JN8WvC+7wSrpZ1xkeBcQTrHHsFY+gnnRPbLlhhwJ6fTDz8ealSpdg+swakLnXjmYgVKDgHcDRprWIDPP9N6+Z9WqeocCwZHuwX6Qb+hnVrwXQ23mD8d+eCjvrn0QHX4sG4ut8caeXxkKGxhXihGkqslDOKaFc9lLG0fAM0LuEXvhVM8JE7BD+YBFc6LnKTrrAYzmwtibPYWMcTpmXh62jc3AfH3hh/Id6xnlTHgXbz42keornr5V1pJs1AatBcI79sGjyxjKFhA+02/rVYwD5eajmjvXMa553XYb5BvC2EI7sHRH0fZe7ftxFevQ6HGr5efrSo5b/pXRlq4JTB6NQ7pJHL3PzItfiIbJ3FVD4Vp6Pwbzzhr/hsQoHeWXlydg45UEIx6zIJ5BHBVVfASyLYIUo8g7iirl18eWF5CSY3/EWoqfhepyYbJI4OJ2JttWZ1MZ5zomzaXQNnvg/NhWsVjkB27C1gylRR0HjiSDKkBUHCloO6cTfWldIknqASXuq/U8SemusCw37sUiDaGeJiZO+ka7ZXz+Ul7FBzdSlc4o+YeFu8Nvs4MC3pxU1zRD/FtZFY+DoGa5m7oLOG03sh++mw1Vb/MrGwjQLb6ziIZ36pB6D2ha0j+ISnQ8xehDja4mYLHE7Zh06dux0Ox9svLoTAr0RHkXfekYfMbVcPEfa+SQ/PZbP+Ehy3UC7N6UJO1453GExUzxgBt26sndzOxAKwHvn+FE+beHQOaeWvjLCDY1PopljBCRpM2jQJY1sV9v34jbMdPJvWhPsCoXe7nLz+uTn3m0Oq06BJ4ZiUH2aLWlssVooGt2qfrKFCcncmZYnMJMXclgqP1VWJP6EBklDqyx4Fyzf91a0R8rwgU+INlTxSlGfWlURHtCAfBL4SmGnbvVQQLPfKAij2W4KklxjtE/m4jx0Sg9MtJ7562HuElViatVV+YZzK/rnYs1oiZ5m1mesUi5QVqWMpCXGilfOoBFkyfUtgvYFurWPx0sHAl0ReAcWz3ow584DcVuO1PhtahAehgeySY27LfyfJ0lEa8Qd0OsGzgxfqGDw5l8zzW0hl0Gy6JCmiGkdlcFFj87DPAG7pEEqmuPshqnjbgWzSdHCYonkyi87NwmuvtNQ68NDTcG3ZtJjAd45T3+Zvn0yRMWddN20pVLWyIsZqK2fTcOY0iTZX8Rqei6H3SoducntmKI9ZZqncA1lZbnmCjYpmMMovkomYMXM6dEGcLPSxv1u1+RjJEHsONWEMs5g1xjX31TGMq5c4sxpBWijXBhit6c+bZmMUguT4n3Ic5/AfkGZf3/johlCs6PiSm0HqJWNA5ypdHkhERlCi2jf3YSSkz/XBXExhESqD+Gs2paNcbYHmZ9658J0DrTwECR8dTkpJQC7LM7f74Qc/xzXuZN+rACZjfCBYf8o3zHKV8kD4S+uXL73v4qFPDwfcsZsxAEN1tSIUYrmlB+4Vy6CkNxin+LJCYTo3l+F8U8o0p5upEqPt4i+D8d82PIkYCjKOE227nMv4VN2mlQVIypfdvs0VPFYTzxuO6GnE0EoJbds0GhFtgA6IN+glRMCLm4xR034k0warD/EgrGF6gFiin9zXH1eQa765enr2UrEb6UxcRZID6lqr4g1rxBLTZW8yoX5PjgozsgVcyu5h9PKB9PXMmDqLfoOspBq0DIwwBkV91vNMmBDHrTSYRJhllURdV8W6a31nQmselF6I4BxmojGI/ShY3/o09ReEk3I1bQyU/BrWfTvRmudscepNpYaviBMkomRCTdz7QO+Qzm/V9GZl3jZNFTwSgLXg5MNg4thqCLhFeJKpvwC4j+UspM5ahWX/O6qeIrGK0q3WFOr6/Vym2/oXCiRVHTQ0HY74ttJBPYFtwumsJDiFPfZxNLRU+nlHZDomGwln9/X+C/Ivo2Oxhh5Wg599P+N4CqQVn6vCUrhYlFZ/fxfIbciwteRhv/UetbIqKAOSirFQ4urPlHNxtF+rkRiQ69zX9de0BHsg5PFqv6Xyasa2uYoPL7zzG9eEVnvEwCmIKZMsnThwcIWVlGraJdblj2ofS82P4DgLArORjUaSS1vqClFcUkN8uobYyJ3tSFeZEhwBc/KF/qsXCybn3+iHE53wTs14CUODslaE25GYTEgZfcLVluv/0tdtWnmjDW5v7AdJJ6LcBkVHQFqcrsI5IPvQ2t9qa5n+yMcJcSPeYZ5eqss1PJQZPmhB7AYwezTRCH1kVA3ZYP21OVBnaEt93nwsaLASQDq43TTxMLfvKtjmk3VMj2+iy4ZVGkw8OXq0/ZsBtnAx5vYGmMNBh3xtcUNv1OKhfNHA3ZBIc8ozON9C4oo0kIUwbvaOV74oVfCX0YsFRKELB4tk/kplbvN9filWdfZ90d6/dT2MKKgFh2KaKjiq5dgnKABZgSBoAd3YMJYYPbBhbWYOPRAnzME/vrD4xNZpN+SqzmKvgODIm5qAC14FtV7ucbiaTVNeD+YXA0kFh+O2ckCVLHOr56RRtpt/73SEfQalxVLcM+DKYlyrOpLws3Z/tSMXVfXZj5ezFXWt8oTP17LAZw0yM9bR2YGzCyGBZ3nLI7YMukfbOCtLpPj17TsOMRiDOhJvGbg3g+l+kOvepcew8EcIumF4wnmQyYMLJHeSGe8S4x2PkzgLMzmMDgc1JGVLrCvFMgPCW9BrUHVuthGoUuxls1sQiVckTP66O1a7fIWg01FlF8NMNCDlsltSfvxwzsvO5tvAOr49ujza88Gri6d3KN7ib/f0S6Tp8iKytsheQaJjemENDMgEzxM6XYSjTwEap8uBilz/rwsS7Z9JmTo5vOn8GlNR5qb6iHSAWvV/DNotiWK5b64auUB4nh41T8eKhTABaMJsw3SUZ/cUvdczCk8YhKjTrhoaWiTpx5rUdSOIxHsRReiHjXbcLA075ttVE4wld608CWQ3ksdVhDZ7fKFAP9UNYsf3L7bRlz80CKtFH9nneuI3uArnlqfAPnjZcyO1ZqcapiVp99SDkOwIfUV0/S2AJUMB9h0e4ZeCkZBNSHDjC1LzWs2pUHLKT64pkwjXZuqIPpA+x+OFxOuIrxvZP1hG+irrTzqGtqHlLy6Usey2BgD/cS4wuWfPZoXebPm4aR7CWr50JRtQPVLe4J7XD1Y3QDGbcQWdnJcI2knW5LBWfu0351fOm3oJWUZ6PMx5LKQYZmVN0kFaMwBaPtF1QdqrbkrmK3N1gjQzpWoBjCbkrHqNpBgCvv7b/QEGhOWOsPV4THud7Nrhmcep81knFnaYlRQlq1Nu6Mu78ayGbZtkfTwDzKU/jyUUL9+O9KeuhXVZU+2V8LZbWbHs06eZZmt2JZPwy1DbjeMx01ftGesHh+T4jrgaljO/w9D3Lc7TYTOBxuOz/uwgNRmf8lvobmUbcFPUT0u6e0kTPFBHLa2GqH/4WRWvEwAX2LLWLJXrBD2cwmTThTW3fQVylARuES/mK2QHthRUAYv9ANaGhQAh9sQOqlp6x2gHlnaG23HzyOpN8KeyY0p1r5SBW0JKwZ3MWIQtZEL5/nBafzMHBU66JRQgHuheNPbw+FRa63XbPqgE68BBv36moTLf/WUiUFtMAP9w8hydD2SXQrW0NSD6sYqJMvp+CkHTBSxmGWz59y0snCQa6uRd+twDZ4F+ddequj8AAx6tghqmRb2Oi7shrhrCymaMCcZcsxZi9qXQyctKZ4rXaPbF+2GEk3S101/DS/bQJL+bat2x2S8QEFOEnBxPhPgpu22tzdtWPasCmRmzIbk8fYw349JANbLcc2/0Z6coZbsrvzKNW4EspNZj3A7vLKp9hZKSNNO3sA8b/Ub42Xpm9QNYXY8oQER5BLN0fj4/0GJf5YfwdD/9TF0/TVIEHyVsQu5VUhtk19zZEY2i3sc/9nJpNm4LgHAEQyCeGwna6VBX5GAGktbwC2mhyY2FqiBFx0NiXNpfbcPjRWudp1AXYkHkG46EHPSJzppE13YWu42m3PYabt/Fgsx6eq+ySzl7C7C0qgKmYCVs+pE4B3l1PrtuDRcH+ImSVeFKiwc9tXTZGoTVSO6Reukk67NTv0VnhQnzl5EOynuzdmevL28JI5JGgAMDA5hVC5rKmx3fVMJdz772sKDUftaUypOroYcE44HLLxZcl+K+ItCTMVG0H5ZKOzU2Q9t2OyBki4hUhpTnl74KegAnQgp1VsXuYUwGrEVJWBcMr7Nquz3IuRXF2llNwc0UycC17+EvR3akXqMZF4rHAeMCv+evaFDMfL9a8SKIsefqmU5mfm7Xr2CU9RezxkfaR/iciQAfys4KoWNF9Znjz5AQINovEp9EhH4Z/VBqwzw8fBMvYAZnZ7d4/GaALuRyI0Oy66CqwAbn6sV6/Ud2cC10w698o8t+u1xLWLaBjNGSEXk4eDaDEQ3602G+anhihSMlYsppLigIDio5w1Z5WEeAs4N+2gIxNUZp0+tLb7Pdcc8xjWcP1mouFNsrk1uZx9FxbivIQeB0RLRgkYcQv2lDILFaCk6M+Fa4bJ3QhpTfyCCe3TBzOEOSRG4gtSWCEyHxsQLk80gV0BdCSx1fjcE/otzPganLQt4uxpxJanIQ+WGZtWIMfKEt4WiS+a6+w7mGUBfpO8+HfkDBRSdSrVhYuI7OCg9hq8nUeMP9aV1p1BYG/W92eTDPUlp3WSusQFBPlywKAAflPY7BQg/hc6khiT6K5mQIFEsDlHHqol07bFPZbViqmfEepNCbcHdLABheTDaQuh79E+d+AgNOGD5wmCNuzZJqrMShBIN5ZaKocbrDPRcwaTPP+UyXpAd1mLBShwzBSOAVTSSRCGjuK6fnuB2obTk7dztvViH3VSomUfxTFe8u10kpb/cD1s6r2xXD3WmRBmh678PWEDRe4k+wISDq5Tv+iMfBrk1EhG2lRf3iLD5zwjyg6ACSXEKpr5R8lmDKorRk/+lL1S2G1Ez6NuzkKcx0/NNe1ApCzQJ4HXkTfyoDMXgqrHW3cddtwagjnDdXZd2X/etAQwOOt7E0bGn2Q1wwLWTYrFGr1DL7CYZ0i7rWee8tgafhKHvT1xzlUXzDLEoPMBgKRU6p75jtYXOXOAguorb97AKmMammHkLNNU38XKpAomYHweZ5tCVHXn2/sumi7nTG2wAsAOQeSWXXXTPPe86KMfoeV7BnYFwmiS4+1z9IzfOCLSetWqXVfbwZRO0N9gypzO1BrWAPZg6giWAhIQoQN8D4x+xZmdMNmonelH0fuX59Sy7dg0tpjL78T4udsqE1W7Ndjke6D/Blkxu384sQ3gKXcJJ0mqvlIrDzcxT8duZz6xG+whYmqQv2hf4+aXVR2YxKTETvWLI9GMMI13f7rssuFBYOhcB8HOnb8r87MEIfNOHAQhYu9NG1nw17fgkD/qrK1cmOraqkHRxCcKFbIjRbl+dnNfG/TYlXBbmrvH2kl5qmJVG36lW2RlrOnEvKoy2+yMF4DasyI1+xxDEV/O4rsbyWNtoXhineYvXRu11LdtbHWjqfrAKeu7YUSJVQ9TCCcXtNKP/Di/wu1DVCKXmemJo9vG7R1XIFfK/05jgYYhRVJlfgBoYdZefBLRgdUgvPE+lsgbf1JZCSpJXnF4NaGmXzKN0nr2sPq2oiZkJZNEsn7ouh/VlHO6L9NLZ6PW7hx57nsq+zNLAd1QAPi1jXkeHNQaxmVHefGfXjsflLBhkHPjEh+WWw2w0I5weBJVMG6cC4/WlHBaT6YdLkVEPyCWKDAhXzfbugE8nonQ/mllMaDmF8lRgRPle/h0qipewU0Gai5depZNRYfGUNUCkjkMyUZJy07at5UHEN39I+LMgxNxj+6rwd2VEWrn+y31joEz7ZD8ul2lJ9M+EPBeXKRMbqngY04/wd90Y0RkFsALvovYYyGZSSE7LXnegxJ3NGJ+3YyqODheMeZHR1Ha3iGOA3rtXIAUBGWimumrUuDBVouFUCns+/SbMGBLBSmUaI7DDepaFxCS+4UDjW8kqaTdNfNcGnSWMyN0sGKH6gSloWzM8i0gjMsnZ2gZcUkAMb6tJGaFFX5k/B4K5Am4TC2nlmmBMtfs2zhOSMy1ybBcwqDgxX5uTZomrykA/V9aXLwE8GhdIycILEjobfv8mDCvQeUzYRu/RZwM9kZjuu58W4XKA6HcigUDqqxAQTSCOc0FjuF4yYARtxrTjCkKSUqn7smkqLE3WLh3DBfn3i8Mdf4KfqUy4BoRRHt4EG93+ce206pJ3Wtmiuu4MPNXHiXe6nMIwzH/Ce4+fW4i5FklhIaoNTFXc7+lAQtNMiZvvHeHsdFvQJiTrR4kUoBtuuehXYj2mAMsAMKK9UmuKjyfQ5D6Li5bdEcSIl4+ipYUXGOYuHKc4a70raefHr66RMDHoPOofWFYaserp6IchuyEi8KdC4ogb/qUTQwr+g6/w2BHA8S0ydEnF+XDWtHjQUyvlG8nAAC4zSkf+qVB2dMG5BvdNd9yrZnZ1AvwYUYyli4rJ1yFJYiOUN0DX7zxyWECZxqIq9iWQYz4nYlyFYDxi2ydMeqWmSAOIL6XF7AOPapt7HfB5KJO4KeHN50L9h8djY2N2NIE9R6aNrIkePu7WXdp7X7LpoXghpG/cM3FfqT0ziI971ODN67B5aXmJibqdWG9WA6bkMeePjQPqG8JLBjqxQivXWpqnzuVSEQXiFgJ2WKa0VZCHmyVmMdoaERJU0I2tFqhR0aH5W0/3LFO8gfkEruyaMXbgPLaxx65cBvUWN5NMnaXCzlh5zQbTJcSfeW8kjPvuuZ8JC5vNYbgxVC7m3ZiweYIufW0SfGYlAAWMUGIaYvVkH8XCg8Cixi2Av+pIHnQ7OmlGJWR2BUoq0YhA5bjYBOsQKmuJiJAl6zXkBzZiDreLE7UZKbS4P7Bqesos2AUI2yeMHMJmfdnYCqJPGF9pV6Ndw2uSL4qqKO0rCgul3m4jHBdn7EUWuCiN4V/gkPAUE8ABS/5lFKIr71khNffyN4xTAWhcwNw+mA6A21EvEaxe4skBOn6rw4Iz0txhVjT5FGp1SavqjoMADQUG9B4dXXVb2DUAzEb9SDrjFKcp165+/OZZYztDncj/fY9zr9FP2I/hnqHeND2w13RZ3NJWP0ZeliPrmLyHGD8ej6r1LiMhEXWgFxLCn0YphfTMDdYk7e8mgWdlbAyMXvFh4prTXb4uJCvG6pfBwf7m+IuYCqi7EsO5Tf4cQSmHyIFozifiz54uCe8clB61R0AFFWUgkBYraKo1YEPiyuIIPuLoYE3/mHryb06GWuUL9eCphFqYXDpJCaRsKFpahjBGRBeUxTXa7NxcwArHfkvFDFnMsSXfS+qIQ8I6ftCADRIzWHaikpkJUG+t19IxE1GToWm5Kb3kXcwzrZV3vCQLytEurmtmxhPs2mh/ZNXGu+8vPLbSAg66pLWzfNGuA4IkTjy2BYuyplsVuerTKjKmwl9ZAmFz/xHi4sZVALR3HpNulS+8vLh927yYlbkKDEqrafzW1ccdTOK5jplv4714YPPdgqYrN6YaBJkSopCrfDUW41hdEr+uG7EAaMjYYv+ZUDQm38I9zgdPKRRe8DNCTb+2/uN+VugBkNtYJpVksWFRm1OTgLtzkLvgfslqc4DOB3etg0sAr+M+5N+DSht/6/AXDckWae7kRhDMmXfvrIkE2V2hW9ozanJ7PNw8OBAAxUYDkuNflHlZspabxPC0vs4LupaWzzxFL4j8ebmFd1GRmdOiJnmOTdT5X5xfpimrEK9LB//usJph2wMwf8hW/dxi4+1SqYjrwJSZsQKaW79ovRFor1syiDNzM6SEnQQlyr6Ox8+wUkg+ThaZnEsP/brtzDj2xG1bgFmFkI3NpyoV6qzD5gZYl3yVQ3aEx5Aot2JjdBXJFlYmhcpbvM9gelnBNd6XNX9ypJDJMiZJWwklIRw3lo67XGS/HuPDzng59AjZr8Ccfaig4w5R93UEwV/lcJH5BNmY9J+WWqAs8+kfxWwgMcgW136UNDAidsorExXH26m7inCrk9Aj3dRdqjTTlLZL0zK2k4ElXLYmuPnWpXLEpi1PnBthcn6Vz437dhJGv7QYMxVaHkffS5tpofgr5nqKetlS+kH9QPFo0eAnKZpaY17opbzH7hsO2CJSF7S5nmN9Kf0J6e99cyM7s+gZt8sFfmam4eTUQP7yjlM9Dc20uJ69D4OoIPK6GRV8k4nORP2tdTfOa2y3g2UyjwrQ8074JJ9To3FC49PBwyZ8MkwlEPGUZDt/Acyw7zSmo06vhCjTIOaXAiJGAlRtStI6fOZcuCTLTRElUNz+t96VbwiKNyc1fkRiyPxVr4zaL4qY780u2iNDq46l2LiYpxPXscWLmfYrFAQZfq3Vj+4F/zTuMKY1biP5Ac+BFHICzp6vhuApXbUbis8Uda+7T0cOzpb77PqlYo7lSImScMpY/K/bCh1tTu0StpPRgFqkaMXQEvzZDLjQqrkcJsXKtsNlX5Q4z14dC1585fl0lO8QMmQ3LTZi7E8oxKlESGYHlDrnEAMC6a3e/GIJLhJcMJbVrIOZWdBKRwOMrEralU5K69WT8q3+VEskIwbH+CVtkiP9uw7cJHAoqW2WmnSxcqQ=='};
+var EMBEDDED_VERSION = 35;
+(function(){
+  var LS_LOCK = 'lk_links_lock';
+  var SS_KEY = 'lk_links_key';
+  var UNLOCKED = false;
+  var BUSY = false;
+
+  function b64ToBuf(b64){ var bin = atob(b64); var u = new Uint8Array(bin.length); for (var i=0;i<bin.length;i++) u[i] = bin.charCodeAt(i); return u; }
+  function bufToB64(buf){ var b = new Uint8Array(buf); var s = ''; for (var i=0;i<b.length;i++) s += String.fromCharCode(b[i]); return btoa(s); }
+  function getLock(){ try { return JSON.parse(localStorage.getItem(LS_LOCK)||'{}') || {}; } catch(e){ return {}; } }
+  function setLock(o){ try { localStorage.setItem(LS_LOCK, JSON.stringify(o)); } catch(e){} }
+  function setMsg(t){ document.getElementById('lockMsg').textContent = t || ''; }
+  function setDisabled(v){ document.getElementById('unlockBtn').disabled = v; document.getElementById('pwdInput').disabled = v; }
+
+  function countdown(){
+    if (UNLOCKED) return;
+    var st = getLock(); var now = Date.now();
+    if (st.until && now < st.until) {
+      setDisabled(true);
+      setMsg('⏳ 尝试次数过多，请 ' + Math.ceil((st.until - now)/1000) + ' 秒后再试');
+      setTimeout(countdown, 1000);
+    } else {
+      if (st.until) setLock({});
+      setDisabled(false);
     }
-  }).catch(function() { /* network error, ignore */ });
+  }
+
+  function decryptWithKeyBytes(keyBytes){
+    return crypto.subtle.importKey('raw', keyBytes, {name:'AES-GCM'}, false, ['decrypt'])
+      .then(function(k){ return crypto.subtle.decrypt({name:'AES-GCM', iv: b64ToBuf(PAYLOAD.iv)}, k, b64ToBuf(PAYLOAD.ct)); })
+      .then(function(pt){ return new TextDecoder().decode(pt); });
+  }
+
+  function render(html){
+    UNLOCKED = true;
+    document.getElementById('lockWrap').style.display = 'none';
+    var c = document.getElementById('content');
+    c.innerHTML = html;
+    c.style.display = 'block';
+    document.title = '📎 链接汇总';
+    checkUpdate();
+  }
+
+  function unlock(){
+    if (BUSY || UNLOCKED) return;
+    var st = getLock(); var now = Date.now();
+    if (st.until && now < st.until) { countdown(); return; }
+    var pwd = document.getElementById('pwdInput').value.trim();
+    if (!pwd) { setMsg('请输入密码'); return; }
+    BUSY = true;
+    setDisabled(true);
+    document.getElementById('unlockBtn').textContent = '验证中…';
+    crypto.subtle.importKey('raw', new TextEncoder().encode(pwd), 'PBKDF2', false, ['deriveKey'])
+      .then(function(km){
+        return crypto.subtle.deriveKey({name:'PBKDF2', salt:b64ToBuf(PAYLOAD.salt), iterations:PAYLOAD.iters, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, true, ['decrypt']);
+      })
+      .then(function(k){ return crypto.subtle.exportKey('raw', k); })
+      .then(function(kb){
+        return decryptWithKeyBytes(kb).then(function(html){
+          setLock({});
+          try { sessionStorage.setItem(SS_KEY, bufToB64(kb)); } catch(e){}
+          render(html);
+        });
+      })
+      .catch(function(){
+        var st2 = getLock();
+        var f = (st2.fails || 0) + 1;
+        BUSY = false;
+        document.getElementById('unlockBtn').textContent = '解 锁';
+        if (f >= 5) {
+          setLock({fails:0, until: Date.now() + 60000});
+          countdown();
+        } else {
+          setLock({fails:f});
+          setDisabled(false);
+          setMsg('❌ 密码错误，还可尝试 ' + (5 - f) + ' 次');
+        }
+      });
+  }
+
+  function checkUpdate(){
+    var url = 'https://harper518.github.io/sama-quiz/links_version.json?t=' + Date.now();
+    fetch(url).then(function(r){ return r.json(); }).then(function(data){
+      if (data.v > EMBEDDED_VERSION) {
+        var banner = document.createElement('div');
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#0f172a;text-align:center;padding:10px 16px;z-index:9999;font-weight:600;font-size:0.9rem;cursor:pointer;';
+        banner.textContent = '🔔 链接有更新！点击刷新页面查看最新 (' + data.msg + ')';
+        banner.onclick = function(){ location.reload(true); };
+        document.body.prepend(banner);
+        document.body.style.paddingTop = '44px';
+      }
+    }).catch(function(){});
+  }
+
+  function init(){
+    if (!window.crypto || !crypto.subtle) {
+      setMsg('❌ 浏览器版本过低，无法解密（请升级浏览器）');
+      return;
+    }
+    document.getElementById('unlockBtn').addEventListener('click', unlock);
+    document.getElementById('pwdInput').addEventListener('keydown', function(e){ if (e.key === 'Enter') unlock(); });
+    var sk = null;
+    try { sk = sessionStorage.getItem(SS_KEY); } catch(e){}
+    if (sk) {
+      decryptWithKeyBytes(b64ToBuf(sk)).then(render).catch(function(){
+        try { sessionStorage.removeItem(SS_KEY); } catch(e){}
+        countdown();
+      });
+    } else {
+      countdown();
+    }
+  }
+  init();
 })();
 </script>
 </body>
