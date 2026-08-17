@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg?v=2">
-<title>挖空背诵工具 v146 · 小阮出品</title>
+<title>挖空背诵工具 v147 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -916,7 +916,7 @@ var TIER_PRICES = { basic: '', pro: '' };
 var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 60;
-var APP_VERSION = 146;
+var APP_VERSION = 147;
 // ==== API 后端（开发者留言云同步 + 社区留言板）====
 var API_BASE = 'https://beisong-api.rruuaann.top';
 function apiGet(path) {
@@ -1089,7 +1089,7 @@ function showTierCompare() {
 // 激活码验证
 function activateCode(input) {
   var code = formatActivationCode(input);
-  if (code.length < 14) { return showToast('❌ 激活码格式不正确'); }
+  if (code.length < 6) { return showToast('❌ 激活码格式不正确'); }
   if (window._track) window._track('upgradeClick');
   sha256Browser(code).then(function(hash) {
     // 检查管理码（硬编码，不走网络）
@@ -1109,12 +1109,13 @@ function activateCode(input) {
         var entry = codes[hash];
         if (!entry) { return showToast('❌ 无效的激活码'); }
         if (entry.status === 'revoked') { return showToast('❌ 此激活码已被撤销'); }
-        // 调用后端检查激活次数（10次上限）
+        if (entry.expires && Date.now() > entry.expires) { return showToast('❌ 此激活码已过期'); }
+        // 调用后端检查激活次数（10次上限，unlimited 码不限）
         apiPost('/activate', { codeHash: hash })
           .then(function(ar) {
             if (!ar.success) { showToast('❌ ' + (ar.error || '激活失败')); return; }
             var now = Date.now();
-            var expires = now + 370 * 86400000; // ~1年
+            var expires = entry.expires || (now + 370 * 86400000); // 码表指定到期日优先，否则默认1年
             appData.activation = { tier: entry.tier, codeHash: hash, activatedAt: now, expires: expires, _trialUsedBasic: (appData.activation||{})._trialUsedBasic||false, _trialUsedPro: (appData.activation||{})._trialUsedPro||false, _isTrial: false, _trialExpires: null, _trialStarted: null };
             saveData(appData);
             if (window._trialExpiryTimer) { clearInterval(window._trialExpiryTimer); window._trialExpiryTimer = null; }
@@ -11185,7 +11186,7 @@ function renderSettings() {
       '<div class="setting-item" style="cursor:pointer" onclick="showFeedbackBoard()"><div><div class="setting-label">💌 开发者反馈</div><div class="setting-desc">建议、Bug、功能请求…直接告诉开发者</div></div><div style="display:flex;align-items:center">→</div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="showManualMenu()"><div><div class="setting-label">📖 使用说明</div><div class="setting-desc">查看使用指南</div></div><div style="display:flex;align-items:center">→</div></div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:12px;transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:14px;resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:12px"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v146</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v147</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
     '</div></div>';
   // 应用折叠状态

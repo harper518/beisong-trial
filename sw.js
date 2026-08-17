@@ -1,9 +1,9 @@
 /* ====== 挖空背诵工具 Service Worker ====== */
-/* v146 策略变更：页面文件改为【缓存优先】——
+/* v147 策略变更：页面文件改为【缓存优先】——
    打开时优先用本地已缓存的版本，不会自动变成新版；
    只有用户点「立即更新」时前端清缓存+刷新，才切换到新版。
    数据（题库/错题/激活状态）存在 localStorage，与文件缓存无关，不受影响。 */
-var CACHE_NAME = 'beisong-trial-v146';
+var CACHE_NAME = 'beisong-trial-v147';
 
 // CDN 静态资源（缓存优先）
 var CDN_URLS = [

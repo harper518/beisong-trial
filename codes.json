@@ -358,5 +358,12 @@
     "created": "2026-08-08T00:00:00.000Z",
     "status": "active",
     "expires": "5d"
+  },
+  "5576d6025a84ede90bf035b2bdff03f959397018b175c5583e4654785038c96c": {
+    "tier": "pro",
+    "status": "active",
+    "unlimited": true,
+    "expires": 1789747199000,
+    "created": "2026-08-15"
   }
 }
