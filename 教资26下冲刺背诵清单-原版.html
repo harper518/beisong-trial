@@ -1,0 +1,2141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover">
+<title>教资26下 考前冲刺背诵清单 v1.3（原版·无AI补充）</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f5f7fa; --card:#fff; --ink:#1a2332; --ink2:#5a6a7e; --line:#e3e8ef;
+  --k2:#2563eb; --k2bg:#eff4ff; --k1:#c2410c; --k1bg:#fff4ec;
+  --ok:#16a34a; --okbg:#eafaf0; --un:#f59e0b; --unbg:#fff8e6;
+  --hot:#dc2626; --hotbg:#fef2f2;
+  --sh:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+}
+body[data-theme="dark"]{
+  --bg:#0f1720; --card:#18212e; --ink:#e8eef6; --ink2:#95a3b8; --line:#2a3644;
+  --k2:#6ea8ff; --k2bg:#16253c; --k1:#ff9a63; --k1bg:#2d1d14;
+  --ok:#4ade80; --okbg:#132a1c; --un:#fbbf24; --unbg:#2b2410;
+  --hot:#f87171; --hotbg:#2d1616;
+  --sh:0 1px 3px rgba(0,0,0,.4);
+}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+  font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:860px;margin:0 auto;padding:0 14px 90px}
+
+/* ===== 水印层 =====
+   平铺「兴休预测」，瓦片150x140含两处、错位排布，实测间距74px>包围盒64px 不重合。
+   opacity 5.5% 只做防盗，不影响阅读。z-index:4 盖在正文之上、顶栏(50)之下。 */
+body{position:relative}
+body::after{
+  content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
+  background-repeat:repeat;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='140'%3E%3Ctext x='38' y='48' font-family='sans-serif' font-size='16' fill='%23000' fill-opacity='.055' text-anchor='middle' transform='rotate(-28 38 48)'%3E%E5%85%B4%E4%BC%91%E9%A2%84%E6%B5%8B%3C/text%3E%3Ctext x='112' y='95' font-family='sans-serif' font-size='16' fill='%23000' fill-opacity='.055' text-anchor='middle' transform='rotate(-28 112 95)'%3E%E5%85%B4%E4%BC%91%E9%A2%84%E6%B5%8B%3C/text%3E%3C/svg%3E");
+  -webkit-print-color-adjust:exact;print-color-adjust:exact
+}
+body[data-theme="dark"]::after{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='140'%3E%3Ctext x='38' y='48' font-family='sans-serif' font-size='16' fill='%23fff' fill-opacity='.06' text-anchor='middle' transform='rotate(-28 38 48)'%3E%E5%85%B4%E4%BC%91%E9%A2%84%E6%B5%8B%3C/text%3E%3Ctext x='112' y='95' font-family='sans-serif' font-size='16' fill='%23fff' fill-opacity='.06' text-anchor='middle' transform='rotate(-28 112 95)'%3E%E5%85%B4%E4%BC%91%E9%A2%84%E6%B5%8B%3C/text%3E%3C/svg%3E")
+}
+
+/* ===== 顶栏 ===== */
+.top{
+  position:sticky;top:0;z-index:50;background:var(--card);
+  border-bottom:1px solid var(--line);padding:10px 14px 0;
+  box-shadow:0 1px 8px rgba(0,0,0,.04)
+}
+.topbar{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.3px;flex:1;min-width:150px}
+h1 small{font-weight:400;color:var(--ink2);font-size:12px;display:block;margin-top:1px}
+.topact{display:flex;gap:6px}
+.tbtn{
+  min-height:44px;padding:0 12px;border-radius:8px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);font-size:13px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:4px;font-family:inherit
+}
+.tbtn:active{transform:scale(.97)}
+.cd{
+  background:linear-gradient(135deg,#dc2626,#f97316);color:#fff;
+  border-radius:10px;padding:5px 11px;font-size:13px;font-weight:700;white-space:nowrap
+}
+.cd b{font-size:17px}
+
+/* ===== 下滑后收起的细横条（点击展开完整顶栏）===== */
+.minibar{
+  display:none;position:sticky;top:0;z-index:60;
+  min-height:46px;align-items:center;gap:10px;padding:0 14px;
+  background:var(--card);border-bottom:1px solid var(--line);
+  box-shadow:0 1px 8px rgba(0,0,0,.05);cursor:pointer;font-size:14px
+}
+body.mini .minibar{display:flex}
+body.mini .top{display:none}
+.minibar .mname{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.minibar .mprog{font-size:12px;color:var(--ink2);white-space:nowrap}
+.minibar .marrow{
+  font-size:12px;color:var(--k2);font-weight:700;background:var(--k2bg);
+  padding:4px 10px;border-radius:7px;white-space:nowrap
+}
+
+/* ===== 弹窗（移动端打印提示）===== */
+.mask{
+  display:none;position:fixed;inset:0;z-index:200;background:rgba(10,16,24,.55);
+  align-items:center;justify-content:center;padding:20px
+}
+.mask.on{display:flex}
+.modal{
+  background:var(--card);border-radius:14px;max-width:430px;width:100%;
+  padding:18px 18px 14px;box-shadow:0 10px 40px rgba(0,0,0,.3);
+  max-height:82vh;overflow-y:auto
+}
+.modal h3{margin:0 0 10px;font-size:16px}
+.modal p{margin:0 0 9px;font-size:14px;line-height:1.7}
+.modal ol{margin:6px 0 12px;padding-left:20px;font-size:14px;line-height:1.8}
+.modal .mrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+
+/* ===== Tabs ===== */
+/* 手机上横向滑动 + 右侧渐隐提示；电脑上自动换行，保证 9 个标签全都点得到 */
+.tabswrap{position:relative;max-width:860px;margin:0 auto}
+.tabswrap::after{
+  content:"";position:absolute;right:0;top:0;bottom:0;width:34px;pointer-events:none;
+  background:linear-gradient(to right,rgba(255,255,255,0),var(--card));
+  opacity:1;transition:opacity .18s
+}
+.tabswrap.atend::after{opacity:0}
+body[data-theme="dark"] .tabswrap::after{
+  background:linear-gradient(to right,rgba(24,33,46,0),var(--card))
+}
+.tabs{
+  display:flex;gap:6px;overflow-x:auto;padding:9px 0 0;
+  scrollbar-width:none
+}
+.tabs::-webkit-scrollbar{display:none}
+/* 只要是用鼠标的设备（不管窗口多窄）就换行铺开——电脑上横向滚动条被隐藏了，
+   鼠标又不像手指能滑，一旦退回滚动模式后面几个标签就永远点不到。 */
+@media (min-width:900px), (hover:hover) and (pointer:fine){
+  .tabswrap{max-width:860px}
+  .tabs{flex-wrap:wrap;overflow-x:visible;padding-bottom:2px}
+  .tabswrap::after{display:none}
+}
+.tab{
+  flex:0 0 auto;min-height:44px;padding:0 13px;border-radius:9px 9px 0 0;
+  border:1px solid transparent;border-bottom:none;background:transparent;
+  color:var(--ink2);font-size:13.5px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;font-family:inherit;white-space:nowrap
+}
+.tab.on{background:var(--bg);border-color:var(--line);color:var(--ink)}
+
+/* 进度条 */
+.pbar{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:8px;padding:6px 0 8px;font-size:12px;color:var(--ink2)}
+.pbar .track{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.pbar .fill{height:100%;width:0;background:linear-gradient(90deg,var(--ok),#22c55e);transition:width .3s}
+
+/* ===== 卡片通用 ===== */
+.panel{display:none;padding-top:14px}
+.panel.on{display:block}
+.sec-t{font-size:15px;font-weight:700;margin:22px 0 10px;padding-left:9px;border-left:4px solid var(--k2);line-height:1.3}
+.sec-t.k1{border-left-color:var(--k1)}
+.sec-t small{font-weight:400;color:var(--ink2);font-size:12px;margin-left:6px}
+
+.q{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;margin-bottom:11px;box-shadow:var(--sh)
+}
+.q.mark-ok{border-color:var(--ok);background:var(--okbg)}
+.q.mark-un{border-color:var(--un);background:var(--unbg)}
+.q-head{display:flex;gap:9px;align-items:flex-start}
+.q-num{
+  flex:0 0 auto;min-width:25px;height:25px;border-radius:7px;background:var(--k2bg);color:var(--k2);
+  font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;padding:0 5px
+}
+.q-body{flex:1;min-width:0}
+.q-title{font-weight:600;font-size:15.5px;line-height:1.55}
+.q-title .src{font-weight:400;color:var(--ink2);font-size:12.5px}
+.tag{
+  display:inline-block;font-size:11px;font-weight:700;padding:1.5px 7px;border-radius:5px;
+  margin-left:6px;vertical-align:1px;white-space:nowrap
+}
+.t-hot{background:var(--hotbg);color:var(--hot)}
+.t-mid{background:var(--unbg);color:#b45309}
+.t-low{background:var(--k2bg);color:var(--k2)}
+/* 标记「Claude 补充」的内容 */
+.t-add{background:#f3e8ff;color:#7c3aed;border:1px solid #ddd0fb}
+body[data-theme="dark"] .t-mid{color:var(--un)}
+body[data-theme="dark"] .t-add{background:#2a1f3d;color:#c4b5fd;border-color:#3d2f57}
+.addbox{background:#faf7ff;border-left:3px solid #a78bfa;border-radius:0 8px 8px 0;padding:9px 11px;margin:9px 0;font-size:14px}
+body[data-theme="dark"] .addbox{background:#1e1830}
+/* 「我的不熟」汇总页 */
+.empty{text-align:center;padding:44px 20px;color:var(--ink2);line-height:1.9;font-size:15px;
+  border:2px dashed var(--line);border-radius:12px;background:var(--card)}
+.rvhead{font-size:14px;color:var(--ink2);padding:10px 12px;margin-bottom:12px;
+  background:var(--unbg);border:1px solid var(--un);border-radius:9px}
+.qclone{border-left:3px solid var(--un)}
+.rvfrom{display:inline-block;font-size:12px;color:var(--ink2);background:var(--bg2);
+  padding:2px 9px;border-radius:6px;margin-bottom:8px}
+.rvtop{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+@media print{.qclone{border-left:0}.rvtop,.rvfrom{display:none!important}}
+
+.acts{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.btn{
+  min-height:46px;padding:0 15px;border-radius:9px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);font-size:13.5px;font-weight:600;
+  cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px
+}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--k2);border-color:var(--k2);color:#fff}
+.btn.k1p{background:var(--k1);border-color:var(--k1);color:#fff}
+.btn.mini{min-height:44px;font-size:13px;padding:0 12px}
+
+.ans{display:none;margin-top:11px;padding-top:11px;border-top:1px dashed var(--line)}
+.ans.show{display:block}
+.ans p{margin:0 0 8px}
+.ans p:last-child{margin-bottom:0}
+.ans .kv{margin:0 0 7px}
+.ans b{color:var(--k2)}
+.ans .k1 b{color:var(--k1)}
+li{margin-bottom:4px}
+ul,ol{margin:6px 0;padding-left:20px}
+
+.warn{
+  background:var(--hotbg);border-left:3px solid var(--hot);border-radius:0 8px 8px 0;
+  padding:9px 11px;margin:9px 0;font-size:14px
+}
+.tip{
+  background:var(--okbg);border-left:3px solid var(--ok);border-radius:0 8px 8px 0;
+  padding:9px 11px;margin:9px 0;font-size:14px
+}
+.blue{
+  background:var(--k2bg);border-left:3px solid var(--k2);border-radius:0 8px 8px 0;
+  padding:9px 11px;margin:9px 0;font-size:14px
+}
+.big{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:14px;margin-bottom:13px;box-shadow:var(--sh)
+}
+.big h3{margin:0 0 9px;font-size:15.5px;display:flex;align-items:center;gap:7px}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{background:var(--bg);font-weight:700;white-space:nowrap}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* 时间轴 */
+.tl{position:relative;padding-left:26px;margin:14px 0}
+.tl::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.slot{position:relative;margin-bottom:16px}
+.slot::before{
+  content:"";position:absolute;left:-22px;top:6px;width:12px;height:12px;border-radius:50%;
+  background:var(--k2);border:2px solid var(--card);box-shadow:0 0 0 2px var(--k2)
+}
+.slot.k1c::before{background:var(--k1);box-shadow:0 0 0 2px var(--k1)}
+.slot-h{font-weight:700;font-size:14.5px;margin-bottom:5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.slot-time{background:var(--k2bg);color:var(--k2);font-size:12px;padding:2px 8px;border-radius:6px;font-weight:700}
+.slot.k1c .slot-time{background:var(--k1bg);color:var(--k1)}
+.slot ul{margin:5px 0;padding-left:19px}
+.slot li{margin-bottom:3px;font-size:14.5px}
+
+.foot{text-align:center;color:var(--ink2);font-size:12px;padding:26px 0 10px}
+.stat{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;margin-bottom:13px;font-size:14px
+}
+
+@media (min-width:900px){
+  .wrap{padding:0 20px 100px}
+  h1{font-size:19px}
+}
+/* ===== 打印 ===== */
+@media print{
+  body{background:#fff;color:#000;font-size:11.5pt;line-height:1.6;
+       -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .top{position:static;box-shadow:none;border-bottom:2px solid #000;page-break-after:avoid}
+  .topact,.tabs,.tabswrap,.pbar,.acts,.minibar,.mask,.foot .noprint{display:none!important}
+  body.mini .top{display:block!important}
+  .tabswrap::after{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .panel{display:block!important;page-break-before:always}
+  .panel:first-of-type{page-break-before:auto}
+  .q{box-shadow:none;border:1px solid #bbb;page-break-inside:avoid;margin-bottom:7px}
+  .q.mark-ok,.q.mark-un{background:#fff;border-color:#bbb}
+  .ans{display:block!important;border-top:1px dashed #999}
+  .sec-t{page-break-after:avoid}
+  a{text-decoration:none;color:#000}
+  .printhead{display:block!important}
+}
+.printhead{display:none;text-align:center;padding:8px 0 12px;border-bottom:2px solid #000;margin-bottom:10px}
+.printhead h2{margin:0;font-size:16pt}
+.printhead p{margin:4px 0 0;font-size:9pt;color:#444}
+</style>
+</head>
+<body data-theme="light">
+<!-- 下滑时出现的细横条：点一下恢复完整顶栏 -->
+<div class="minibar" id="miniBar" onclick="expandTop()">
+  <span class="mname" id="miniName">⏱ 冲刺时间表</span>
+  <span class="mprog" id="miniProg">0 / 0</span>
+  <span class="marrow">▲ 展开</span>
+</div>
+
+<div class="top" id="topFull">
+  <div class="topbar">
+    <h1>📚 教资26下 考前冲刺背诵清单<small>科一 · 科二 ｜ 初中 · 2026年9月13日笔试 ｜ v1.3 原版·无AI补充</small></h1>
+    <div class="cd" id="cdBox">距考试 <b id="cdNum">--</b> 天</div>
+    <div class="topact">
+      <button class="tbtn" onclick="expandAll()">展开全部</button>
+      <button class="tbtn" onclick="collapseAll()">折叠全部</button>
+      <button class="tbtn" onclick="switchTheme()">🌓</button>
+      <button class="tbtn" onclick="doPrint()">🖨️ 打印</button>
+    </div>
+  </div>
+  <div class="tabswrap" id="tabswrap"><div class="tabs" id="tabs"></div></div>
+  <div class="pbar">
+    <span>已掌握</span>
+    <div class="track"><div class="fill" id="pfill"></div></div>
+    <span id="ptext">0 / 0</span>
+    <button class="tbtn mini" onclick="resetAll()">重置</button>
+  </div>
+</div>
+
+<!-- 移动端打印提示弹窗 -->
+<div class="mask" id="printMask" onclick="if(event.target===this)closeModal('printMask')">
+  <div class="modal">
+    <h3>🖨️ 手机上这样打印</h3>
+    <p>手机浏览器不允许网页自己调起打印，需要你手动操作一下：</p>
+    <ol>
+      <li><b>iPhone / iPad：</b>点浏览器底部的「<b>分享</b>」按钮 → 往下找「<b>打印</b>」</li>
+      <li><b>安卓：</b>点右上角「<b>⋮</b>」菜单 → 「<b>分享</b>」或「<b>打印</b>」</li>
+      <li><b>通用替代：</b>菜单里选「<b>打印为PDF</b>」，存下来再发给打印店</li>
+    </ol>
+    <p class="tip" style="margin-bottom:12px"><b>💡 想效果最好：</b>本页在电脑上打开后按 <b>Ctrl+P</b>（Mac 是 ⌘+P），会自动展开所有答案、每个板块另起一页。</p>
+    <div class="mrow">
+      <button class="btn primary" onclick="tryNativePrint()">仍然尝试直接打印</button>
+      <button class="btn" onclick="closeModal('printMask')">知道了</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="printhead">
+  <h2>教资26下 考前冲刺背诵清单</h2>
+  <p>科一 · 科二 ｜ 姓名：__________ 日期：__________</p>
+</div>
+
+<!-- ==================== 1. 冲刺时间表 ==================== -->
+<section class="panel on" id="panel-plan">
+  <div class="big">
+    <h3>⏱️ 你手里的时间：今晚 + 明天全天（约18小时）</h3>
+    <p style="margin:0 0 8px"><b>核心策略：主观题优先，模板先背，素材后补。</b></p>
+    <div class="tip">
+      <b>为什么这样排？</b><br>
+      科二：主观题 108 分（辨析32+简答40+材料36），选择题只有 42 分 → <b>先把主观题模板背死</b><br>
+      科一：主观题 92 分（材料42+作文50），选择题 58 分 → <b>作文提纲+三观模板是命根子</b><br>
+      客观题（选择）范围太广，投入产出比低，放在最后用"速览+蒙题"兜底。
+    </div>
+  </div>
+
+  <div class="tl">
+    <div class="slot">
+      <div class="slot-h"><span class="slot-time">今晚 19:00-20:30</span> 科二·材料分析模板（36分）</div>
+      <ul>
+        <li>背「万能5步框架」（判断→解释→引材料→结合→建议）</li>
+        <li>背「9大德育原则」名称+识别关键词（考频62%）</li>
+        <li>背「8大教学原则」名称+识别关键词（考频31%）</li>
+        <li><b>要求：能默写出全部名称，看到材料能对上号</b></li>
+      </ul>
+    </div>
+    <div class="slot">
+      <div class="slot-h"><span class="slot-time">今晚 20:30-22:00</span> 科二·简答题第一轮（40分）</div>
+      <ul>
+        <li>只背 ★★★ 的 10 道（教学过程规律、启发性原则、班级授课制、学习动机激发、意志品质、课堂纪律…）</li>
+        <li>背法：看题目→想3个要点→再看答案补漏，不要逐字背</li>
+        <li><b>要求：每道题能说出3-5个要点的关键词</b></li>
+      </ul>
+    </div>
+    <div class="slot k1c">
+      <div class="slot-h"><span class="slot-time">今晚 22:00-23:00</span> 科一·三观+职业道德模板（28分）</div>
+      <ul>
+        <li>背学生观/教师观/教育观/职业道德 四套模板</li>
+        <li>背答题格式（先说正确与否→分点→回扣材料→综上所述）</li>
+        <li><b>要求：四个模板都能默写要点名称</b></li>
+      </ul>
+    </div>
+
+    <div class="slot">
+      <div class="slot-h"><span class="slot-time">明天 07:30-09:30</span> 科二·辨析题（32分）</div>
+      <ul>
+        <li>背答题三步：判断 → 理论依据 → 扣题</li>
+        <li>过 17 道高频辨析题（含8组易混概念对）</li>
+        <li><b>提醒：辨析题"错误"判断占75%，但不要一律判错！</b></li>
+      </ul>
+    </div>
+    <div class="slot">
+      <div class="slot-h"><span class="slot-time">明天 09:30-11:30</span> 科二·简答题第二轮 + 知识点精讲</div>
+      <ul>
+        <li>补 ★★ 的简答题 + 回看昨晚 ★★★ 的（艾宾浩斯：先快后慢，必须复习！）</li>
+        <li>过知识点精讲里的「⚡易混辨析」全部条目</li>
+      </ul>
+    </div>
+    <div class="slot">
+      <div class="slot-h"><span class="slot-time">明天 11:30-12:30</span> 科二·选择题速览 + 蒙题口诀</div>
+      <ul>
+        <li>过一遍高频考点清单（教家著作/学制/知觉/注意/记忆/气质）</li>
+        <li>记蒙题口诀：B(26.7%)＞A＞C＞D(21.6%)</li>
+      </ul>
+    </div>
+
+    <div class="slot k1c">
+      <div class="slot-h"><span class="slot-time">明天 14:00-16:30</span> 科一·作文（50分，最大单题）</div>
+      <ul>
+        <li>背 6 大方向 + 12 篇范文提纲（每篇只背7个段落首句）</li>
+        <li>背万能工具箱：开头×3 / 结尾×2 / 过渡句 / 人物素材×5</li>
+        <li><b>动手：挑1个方向，限时45分钟写一篇完整作文（必须写一次！）</b></li>
+      </ul>
+    </div>
+    <div class="slot k1c">
+      <div class="slot-h"><span class="slot-time">明天 16:30-18:00</span> 科一·法律法规 + 基本能力</div>
+      <ul>
+        <li>背8部法的优先级顺序（=出题概率排序）</li>
+        <li>重点攻高频条款：教师法第7条、教育法第43条、学生伤害事故办法第9/10/13条</li>
+        <li>逻辑题：文氏图解法（所有/有些/是/不是）</li>
+      </ul>
+    </div>
+
+    <div class="slot">
+      <div class="slot-h"><span class="slot-time">明天 19:30-21:30</span> 全科复盘（只看"△不熟"标记）</div>
+      <ul>
+        <li>打开本工具的「不熟」标记列表，逐个消灭</li>
+        <li>默写：9大德育原则 + 8大教学原则 + 三观四模板</li>
+      </ul>
+    </div>
+    <div class="slot">
+      <div class="slot-h"><span class="slot-time">明天 21:30-22:30</span> 考前1小时速览（背最后一遍）</div>
+      <ul>
+        <li>只打开「📖 考前速览」标签页，从头到尾读一遍</li>
+        <li>23:00前睡觉！睡眠是记忆固化的关键，熬夜复习得不偿失</li>
+      </ul>
+    </div>
+
+    <div class="slot k1c">
+      <div class="slot-h"><span class="slot-time">考试当天早上</span> 只看速览，不做新题</div>
+      <ul>
+        <li>科一 9:00-11:00 ｜ 科二 13:00-15:00（具体以准考证为准）</li>
+        <li>进考场前只读「考前速览」，不要碰新内容（会慌）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="big">
+    <h3>🎯 时间不够时的取舍顺序</h3>
+    <p style="margin:0 0 6px">如果某段时间被占用，按这个顺序砍：</p>
+    <ol style="margin:0">
+      <li><b>绝对不能砍</b>：科二材料分析模板、科二简答★★★、科一作文提纲、科一三观模板</li>
+      <li><b>可以压缩</b>：科二辨析题（记住"判断+理由"格式，临场编）、知识点精讲</li>
+      <li><b>可以砍掉</b>：科一文化素养（范围无限，性价比最低）、科二低频知识点</li>
+    </ol>
+  </div>
+</section>
+<!-- ==================== 2. 科二·简答题 ==================== -->
+<section class="panel" id="panel-k2jian">
+  <div class="blue">
+    <b>科二简答题 = 4题×10分 = 40分</b>，是全卷性价比最高的部分——考点固定、答案成体系、可以背。<br>
+    <b>答题格式：</b>先写"是什么/有几点"总起句 → 分点作答（每点先给名称，再解释一句）→ 不需要联系材料。
+  </div>
+
+  <div class="sec-t">M3 中学教学 <small>模块3已3场未考，回归概率高 ← 你的文档标注</small></div>
+
+  <div class="q" data-id="k2j01">
+    <div class="q-head"><div class="q-num">1</div><div class="q-body">
+      <div class="q-title">简述教学过程的基本规律 <span class="tag t-hot">★★★ 极高频</span><br><span class="src">M3 · 你的文档：🔥极可能考</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）直接经验与间接经验相统一</b>：以学习间接经验（书本知识）为主，以直接经验为基础。</p>
+      <p><b>（2）掌握知识与发展能力（智力）相统一</b>：掌握知识是发展能力的基础，发展能力又是掌握知识的重要条件。</p>
+      <p><b>（3）教师主导作用与学生主体地位相统一</b>：既要发挥教师的主导作用，又要调动学生的主动性、积极性。</p>
+      <p><b>（4）传授知识与思想品德教育相统一</b>（教学的教育性规律）：教学不仅要传授知识，还要进行思想品德教育。</p>
+      <p class="tip" style="margin:8px 0 0"><b>记忆口诀：</b>「直接间接、知识能力、主导主体、知识品德」——四个"相统一"。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j02">
+    <div class="q-head"><div class="q-num">2</div><div class="q-body">
+      <div class="q-title">简述贯彻启发性教学原则的基本要求 <span class="tag t-hot">★★★ 极高频</span><br><span class="src">M3 · 你的文档：未考←高概率</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）调动学生学习的主动性</b>（这是启发的首要问题）。</p>
+      <p><b>（2）启发学生独立思考，发展学生的逻辑思维能力。</b>（善于提问、善用反问）</p>
+      <p><b>（3）让学生动手实践，培养独立解决问题的能力。</b></p>
+      <p><b>（4）发扬教学民主</b>：建立民主平等的师生关系，允许学生质疑。</p>
+      <p class="tip" style="margin:8px 0 0"><b>速记：</b>调主动 → 启思维 → 动手做 → 讲民主。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j03">
+    <div class="q-head"><div class="q-num">3</div><div class="q-body">
+      <div class="q-title">简述贯彻直观性教学原则的基本要求 <span class="tag t-mid">★★ 高频</span><br><span class="src">M3 · 你的文档：未考←高概率</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）正确选择直观教具和现代化教学手段。</b></p>
+      <p><b>（2）直观要与讲解相结合。</b>（不能只展示不讲）</p>
+      <p><b>（3）重视运用语言直观。</b>（用生动形象的语言描述）</p>
+      <p><b>（4）防止直观的不当与滥用。</b>（直观是手段不是目的）</p>
+      <p class="tip" style="margin:8px 0 0"><b>三种直观：</b>实物直观（看实物）＞模像直观（模型/图片）＞言语直观（语言描述）。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j04">
+    <div class="q-head"><div class="q-num">4</div><div class="q-body">
+      <div class="q-title">简述贯彻循序渐进（系统性）教学原则的基本要求 <span class="tag t-mid">★★ 高频</span><br><span class="src">M3 · 你的文档：未考←高概率</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）按教材的系统性进行教学</b>（按学科逻辑和学生认识顺序）。</p>
+      <p><b>（2）抓住主要矛盾，解决好重点与难点的教学。</b></p>
+      <p><b>（3）由浅入深、由易到难、由简到繁。</b>（"不陵节而施"）</p>
+      <p><b>（4）将系统连贯性与灵活多样性结合起来。</b></p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j05">
+    <div class="q-head"><div class="q-num">5</div><div class="q-body">
+      <div class="q-title">简述班级授课制的优点和不足 <span class="tag t-hot">★★★ 极高频</span><br><span class="src">M3 · 你的文档：🔥极可能考</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>优点：</b></p>
+      <p>（1）有利于大面积培养人才，提高教学效率；</p>
+      <p>（2）有利于发挥教师的主导作用；</p>
+      <p>（3）有利于发挥班集体的教育作用（学生之间相互交流、共同提高）；</p>
+      <p>（4）有利于学生系统地掌握科学知识。</p>
+      <p><b>不足：</b></p>
+      <p>（1）难以满足学生个性化的学习需要，<b>不利于因材施教</b>；</p>
+      <p>（2）不利于学生创新精神和实践能力的培养；</p>
+      <p>（3）教学形式固定化，不利于学生之间的交往与沟通（学生的主体地位受到一定限制）。</p>
+      <p class="tip" style="margin:8px 0 0"><b>答题技巧：</b>优点答3-4条、不足答3条，写"有利/不利于"开头最稳。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j06">
+    <div class="q-head"><div class="q-num">6</div><div class="q-body">
+      <div class="q-title">简述教学评价的分类（按功能/实施时间） <span class="tag t-mid">★★ 高频</span><br><span class="src">M3 · 你的文档：🔥极可能考</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）诊断性评价</b>：教学之前进行，摸清学生已有水平（摸底考试）。</p>
+      <p><b>（2）形成性评价</b>：教学过程中进行，及时反馈、改进教学（课堂提问、单元测验）。</p>
+      <p><b>（3）总结性评价</b>：教学结束后进行，评定成绩、甄别等级（期末考试）。</p>
+      <p class="tip" style="margin:8px 0 0"><b>关键词对应：</b>之前=诊断 ｜ 之中=形成 ｜ 之后=总结。</p>
+    </div>
+  </div>
+
+  <div class="sec-t">M4 中学生学习心理 <small>机构疯狂押的方向，但仍是必考模块</small></div>
+
+  <div class="q" data-id="k2j07">
+    <div class="q-head"><div class="q-num">7</div><div class="q-body">
+      <div class="q-title">简述如何激发和培养中学生的学习动机 <span class="tag t-hot">★★★ 极高频</span><br><span class="src">M4 · 你的文档：明确点名</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）创设问题情境，实施启发式教学</b>，激发学生的求知欲。</p>
+      <p><b>（2）根据作业难度，恰当控制动机水平</b>（耶克斯-多德森：简单任务高动机，困难任务低动机）。</p>
+      <p><b>（3）充分利用反馈信息，妥善进行奖惩。</b>（及时反馈+合理评价）</p>
+      <p><b>（4）正确指导结果归因，促使学生继续努力</b>（引导归因于努力，避免能力归因导致习得性无助）。</p>
+      <p><b>（5）设置合理目标，培养学生的自我效能感。</b>（让学生体验成功）</p>
+      <p><b>（6）表达明确期望，进行积极的心理暗示。</b></p>
+      <p class="tip" style="margin:8px 0 0"><b>速记：</b>创情境 → 控水平 → 用反馈 → 导归因 → 设目标 → 给期望。（3-4条即可拿分）</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j08">
+    <div class="q-head"><div class="q-num">8</div><div class="q-body">
+      <div class="q-title">简述学习迁移的分类 <span class="tag t-hot">★★★ 极高频</span><br><span class="src">M4 · 你的文档：🔥极可能考</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>按性质分：</b>正迁移（积极促进）／负迁移（消极干扰）</p>
+      <p><b>按方向分：</b>顺向迁移（先学→影响后学）／逆向迁移（后学→影响先学）</p>
+      <p><b>按内容分：</b>水平迁移（同一难度水平，如举一反三）／垂直迁移（不同难度水平，如由具体到抽象）</p>
+      <p><b>按结果分：</b>一般迁移（原理、方法、态度的迁移）／具体迁移（具体经验的迁移）</p>
+      <p><b>按情境分：</b>近迁移（相似情境）／远迁移（差异大的情境）</p>
+      <p class="warn" style="margin:8px 0 0"><b>⚠️ 易错：</b>顺向迁移≠正迁移！顺向是按<b>方向</b>分（先影响后），正迁移是按<b>性质</b>分（好的影响）。先学促进后学 = 既是顺向迁移又是正迁移，但两个维度不能混。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j09">
+    <div class="q-head"><div class="q-num">9</div><div class="q-body">
+      <div class="q-title">简述促进学习迁移的教学措施 <span class="tag t-mid">★★ 高频</span><br><span class="src">M4 · 你的文档：整卷预测第6条</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）精选教材</b>：选择具有广泛迁移价值的科学成果作为教材内容。</p>
+      <p><b>（2）合理编排教学内容</b>：做到结构化、一体化、网络化。</p>
+      <p><b>（3）合理安排教学程序</b>（教学程序是迁移的基本条件之一）。</p>
+      <p><b>（4）教授学习策略，提高学生的迁移意识。</b></p>
+      <p><b>（5）加强基本概念和原理的教学</b>（原理的概括水平越高，迁移范围越广）。</p>
+      <p class="tip" style="margin:8px 0 0"><b>速记：</b>选教材 → 编内容 → 排程序 → 教策略 → 抓原理。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j10">
+    <div class="q-head"><div class="q-num">10</div><div class="q-body">
+      <div class="q-title">简述学习策略的分类（麦基奇三分法） <span class="tag t-hot">★★★ 极高频</span><br><span class="src">M4 · 你的文档：⚠️未考 ← 极高概率</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）认知策略</b>——加工信息：</p>
+      <p style="padding-left:16px">① <b>复述策略</b>：画线、圈重点、重复、抄写<br>
+         ② <b>精加工策略</b>：记忆术（谐音/口诀）、做笔记、提问、类比<br>
+         ③ <b>组织策略</b>：列提纲、画思维导图、归类、表格化</p>
+      <p><b>（2）元认知策略</b>——管理自己的学习过程：</p>
+      <p style="padding-left:16px">① <b>计划策略</b>：设置目标、浏览材料、分析任务<br>
+         ② <b>监控策略</b>：自我检查、集中注意、跟踪进度<br>
+         ③ <b>调节策略</b>：调整速度、重新阅读、更换方法</p>
+      <p><b>（3）资源管理策略</b>——管理环境与资源：</p>
+      <p style="padding-left:16px">① 时间管理　② 环境管理　③ 努力管理　④ 学业求助（寻求他人支持）</p>
+      <p class="tip" style="margin:8px 0 0"><b>口诀：</b>认知策略管信息，元认知策略管自己，资源管理策略管环境。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j11">
+    <div class="q-head"><div class="q-num">11</div><div class="q-body">
+      <div class="q-title">简述影响问题解决的主要因素 <span class="tag t-mid">★★ 高频</span><br><span class="src">M4 · 你的文档：整卷预测第7条</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）问题情境</b>：问题的呈现方式、难度影响解决。</p>
+      <p><b>（2）已有的知识经验</b>：经验丰富有助于迁移，但经验固化也会阻碍。</p>
+      <p><b>（3）定势与功能固着</b>：定势（心理准备状态）既可能促进也可能阻碍；功能固着（只看到事物惯常功能）通常起阻碍作用。</p>
+      <p><b>（4）原型启发</b>：从其他事物中获得解决问题的启示（如鲁班从茅草发明锯）。</p>
+      <p><b>（5）动机与情绪状态</b>：动机强度与效率呈倒U型（耶克斯-多德森），适度紧张效率最高。</p>
+      <p><b>（6）个性特征</b>：智力水平、认知风格、性格等。</p>
+      <p class="warn" style="margin:8px 0 0"><b>⚠️ 易错：</b>定势≠功能固着。定势是"用老办法解决问题"，功能固着是"只想到物体的常规用途"，两者常一起考。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j12">
+    <div class="q-head"><div class="q-num">12</div><div class="q-body">
+      <div class="q-title">简述创造性思维的特征及培养方法 <span class="tag t-mid">★★ 高频</span><br><span class="src">M4 · 你的文档：整卷预测第7条</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>特征（三个）：</b></p>
+      <p>（1）<b>流畅性</b>——短时间内产生大量想法（数量多）；</p>
+      <p>（2）<b>变通性（灵活性）</b>——随机应变、触类旁通（类型多）；</p>
+      <p>（3）<b>独创性（独特性）</b>——想法新颖独特、与众不同。</p>
+      <p><b>培养方法：</b></p>
+      <p>（1）创设宽松的心理环境，保护学生的好奇心和求知欲；</p>
+      <p>（2）培养学生的发散思维（一题多解、头脑风暴）；</p>
+      <p>（3）发展学生的直觉思维（鼓励大胆猜测）；</p>
+      <p>（4）开设创造性思维训练课程，教给学生思维策略。</p>
+    </div>
+  </div>
+
+  <div class="sec-t">M2 中学课程</div>
+
+  <div class="q" data-id="k2j13">
+    <div class="q-head"><div class="q-num">13</div><div class="q-body">
+      <div class="q-title">简述新课程改革的具体目标（六项） <span class="tag t-mid">★★ 高频</span><br><span class="src">M2 · 你的文档：新课改核心理念相关</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）课程功能</b>：改变过于注重知识传授的倾向，强调形成积极主动的学习态度（三维目标：知识与技能、过程与方法、情感态度价值观）。</p>
+      <p><b>（2）课程结构</b>：改变过于强调学科本位、科目过多缺乏整合，设置综合课程（均衡性、综合性、选择性）。</p>
+      <p><b>（3）课程内容</b>：改变"繁、难、偏、旧"和偏重书本知识，加强与学生生活、社会发展的联系。</p>
+      <p><b>（4）课程实施</b>：改变过于强调接受学习、死记硬背、机械训练，倡导自主、合作、探究的学习方式。</p>
+      <p><b>（5）课程评价</b>：改变过分强调甄别与选拔，发挥评价促进学生发展、教师提高的功能（发展性评价）。</p>
+      <p><b>（6）课程管理</b>：改变管理过于集中，实行国家、地方、学校三级课程管理（校本课程）。</p>
+      <p class="tip" style="margin:8px 0 0"><b>速记：</b>功能 → 结构 → 内容 → 实施 → 评价 → 管理。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j14">
+    <div class="q-head"><div class="q-num">14</div><div class="q-body">
+      <div class="q-title">简述影响（制约）课程开发的主要因素 <span class="tag t-low">★ 中频</span><br><span class="src">M2 · 你的文档：已考"制约因素"</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）社会发展的要求</b>：一定社会的政治、经济、文化等制约课程的内容与结构。</p>
+      <p><b>（2）学生的身心发展规律与特点</b>：课程要考虑学生的年龄特征、知识水平和接受能力。</p>
+      <p><b>（3）学科知识的逻辑体系与发展水平</b>：课程内容要反映学科的基本结构和最新发展。</p>
+      <p class="tip" style="margin:8px 0 0"><b>口诀：</b>社会、学生、学科——"三制约因素"。</p>
+    </div>
+  </div>
+
+  <div class="sec-t">M5 中学生发展心理</div>
+
+  <div class="q" data-id="k2j15">
+    <div class="q-head"><div class="q-num">15</div><div class="q-body">
+      <div class="q-title">简述如何培养中学生的意志品质 <span class="tag t-hot">★★★ 极高频</span><br><span class="src">M5 · 你的文档：明确点名</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）加强目的性教育，树立科学的世界观</b>（明确目标，产生持久动力）。</p>
+      <p><b>（2）组织实践活动，在克服困难的过程中锻炼意志</b>（从小事做起，坚持到底）。</p>
+      <p><b>（3）发挥榜样示范作用</b>（伟人、同伴的意志榜样）。</p>
+      <p><b>（4）启发学生进行自我教育</b>（自我锻炼、自我修养、自我控制）。</p>
+      <p><b>（5）根据学生意志品质的个别差异，因材施教。</b></p>
+      <p><b>（6）给予适当的挫折教育，培养坚韧性。</b></p>
+      <p class="tip" style="margin:8px 0 0"><b>速记：</b>明目标 → 常锻炼 → 树榜样 → 促自教 → 因材教 → 抗挫折。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j16">
+    <div class="q-head"><div class="q-num">16</div><div class="q-body">
+      <div class="q-title">简述中学生情绪的特点 <span class="tag t-mid">★★ 高频</span><br><span class="src">M5 · 你的文档：整卷预测第9条</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）情绪体验迅速而强烈，具有两极性</b>：一会儿激情满怀，一会儿心灰意冷。</p>
+      <p><b>（2）情绪表现具有内隐性与外露性并存（文饰性）</b>：不再像童年那样全写在脸上。</p>
+      <p><b>（3）情绪内容丰富，社会性情感增强</b>：集体感、友谊感、爱国感等发展起来。</p>
+      <p><b>（4）情绪稳定性提高，但仍易波动。</b></p>
+      <p><b>（5）情感的深刻性增强，高级情感（道德感、理智感、美感）发展。</b></p>
+      <p class="tip" style="margin:8px 0 0"><b>记"两极性"是答题必写词。</b></p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j17">
+    <div class="q-head"><div class="q-num">17</div><div class="q-body">
+      <div class="q-title">简述皮亚杰认知发展阶段理论 <span class="tag t-mid">★★ 高频</span><br><span class="src">M5 · 你的文档：整卷预测第11条</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）感知运动阶段（0-2岁）</b>：通过感觉和动作认识世界，获得<b>客体永久性</b>。</p>
+      <p><b>（2）前运算阶段（2-7岁）</b>：<b>自我中心</b>、思维不可逆、<b>泛灵论</b>、思维不守恒、刻板性。</p>
+      <p><b>（3）具体运算阶段（7-11岁）</b>：获得<b>守恒</b>概念、思维可逆、去自我中心，但需具体事物支持。</p>
+      <p><b>（4）形式运算阶段（11-16岁）</b>：<b>抽象逻辑思维</b>、假设-演绎推理、命题思维，思维具有灵活性。</p>
+      <p class="tip" style="margin:8px 0 0"><b>中学生（11-15岁）主要处于"形式运算阶段"</b>——这个结论是常考点。</p>
+    </div>
+  </div>
+
+  <div class="sec-t">M7 中学德育</div>
+
+  <div class="q" data-id="k2j18">
+    <div class="q-head"><div class="q-num">18</div><div class="q-body">
+      <div class="q-title">简述中学常用的德育方法 <span class="tag t-mid">★★ 高频</span><br><span class="src">M7 · 你的文档：整卷预测第3条</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）说服教育法</b>：摆事实、讲道理（讲解、谈话、报告、参观）。</p>
+      <p><b>（2）榜样示范法</b>：用榜样人物的高尚品德影响学生（伟人、教师、同伴）。</p>
+      <p><b>（3）情感陶冶法</b>：潜移默化地熏陶（人格感化、环境陶冶、艺术陶冶）。</p>
+      <p><b>（4）实际锻炼法</b>：在实践活动中培养品德（练习、制度、委托任务、组织活动）。</p>
+      <p><b>（5）品德评价法</b>：通过评价引导（表扬、奖励、批评、处分）。</p>
+      <p><b>（6）自我修养法（道德修养法）</b>：指导学生自我教育（自我反省、座右铭、自我评价）。</p>
+      <p class="tip" style="margin:8px 0 0"><b>速记：</b>说服、榜样、陶冶、锻炼、评价、修养。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j19">
+    <div class="q-head"><div class="q-num">19</div><div class="q-body">
+      <div class="q-title">简述德育过程的基本规律 <span class="tag t-low">★ 中频</span><br><span class="src">M7 · 你的文档：低概率但未考</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）德育过程是培养学生知、情、意、行的过程</b>（知是基础，行是关键，四者统一）。</p>
+      <p><b>（2）德育过程是促使学生思想内部矛盾转化的过程</b>（教育与自我教育相结合）。</p>
+      <p><b>（3）德育过程是组织学生的活动和交往、统一多方面教育影响的过程。</b></p>
+      <p><b>（4）德育过程是一个长期的、反复的、逐步提高的过程。</b></p>
+      <p class="warn" style="margin:8px 0 0"><b>⚠️ 别和"教学过程规律"记混：</b>德育过程是"知情意行"，教学过程是"直接间接/知识能力/主导主体/知识品德"。</p>
+    </div>
+  </div>
+
+  <div class="sec-t">M8 班级管理与教师心理</div>
+
+  <div class="q" data-id="k2j20">
+    <div class="q-head"><div class="q-num">20</div><div class="q-body">
+      <div class="q-title">简述教师如何建立和维持良好的课堂纪律 <span class="tag t-hot">★★★ 极高频</span><br><span class="src">M8 · 你的文档：明确点名</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）建立积极、有效的课堂规则</b>（师生共同制定，明确具体、合理可行）。</p>
+      <p><b>（2）合理组织课堂教学，维持学生的注意</b>（节奏紧凑、内容充实）。</p>
+      <p><b>（3）做好课堂监控，及时发现问题行为</b>（目光接触、走近提醒）。</p>
+      <p><b>（4）培养学生的自律品质</b>（自我管理、自我约束）。</p>
+      <p><b>（5）正确处理课堂问题行为</b>（尊重学生、不中断教学、机智处理、事后教育）。</p>
+      <p><b>（6）教师以身作则，发挥示范作用。</b></p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j21">
+    <div class="q-head"><div class="q-num">21</div><div class="q-body">
+      <div class="q-title">简述福勒（富勒）教师专业发展阶段 <span class="tag t-hot">★★★ 极高频</span><br><span class="src">M8 · 你的文档：92% 极高概率</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）任教前关注阶段</b>：还没有教学经验，只关注自己（想象中自己是教师）。</p>
+      <p><b>（2）早期生存关注阶段</b>：初次任教，关注自己的生存适应（能不能站住脚）。</p>
+      <p><b>（3）教学情境关注阶段</b>：关注教学任务和教学情境（怎么把课教好）。</p>
+      <p><b>（4）关注学生阶段</b>：关注学生的需要和个体差异。</p>
+      <p class="tip" style="margin:8px 0 0"><b>关键结论：</b>能否<b>自觉关注学生</b>是衡量一个教师是否成熟的重要标志。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j22">
+    <div class="q-head"><div class="q-num">22</div><div class="q-body">
+      <div class="q-title">简述班主任如何培养良好的班集体 <span class="tag t-mid">★★ 高频</span><br><span class="src">M8 · 你的文档：班主任工作预测</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）确定班集体的发展目标</b>（目标是导向和动力）。</p>
+      <p><b>（2）建立班集体的核心队伍</b>（选拔和培养班干部）。</p>
+      <p><b>（3）建立班集体的正常秩序</b>（规章制度、班级常规）。</p>
+      <p><b>（4）组织形式多样的教育活动</b>（在活动中凝聚集体）。</p>
+      <p><b>（5）培养正确的集体舆论和良好的班风</b>（集体舆论是形成班集体的重要标志）。</p>
+      <p><b>（6）做好个别教育工作</b>（面向全体、因材施教）。</p>
+    </div>
+  </div>
+
+  <div class="sec-t">M1 教育基础</div>
+
+  <div class="q" data-id="k2j23">
+    <div class="q-head"><div class="q-num">23</div><div class="q-body">
+      <div class="q-title">简述影响个体身心发展的主要因素 <span class="tag t-hot">★★★ 极高频</span><br><span class="src">M1 · 你的文档：整卷预测第1条</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>（1）遗传</b>：是人身心发展的物质前提（生理基础），提供了可能性。</p>
+      <p><b>（2）环境</b>：把遗传提供的发展可能性变为现实（外部条件）。</p>
+      <p><b>（3）学校教育</b>：在人的身心发展中起<b>主导作用</b>（有目的、有计划、有组织，有专门人员）。</p>
+      <p><b>（4）个体主观能动性</b>：是人身心发展的<b>内在动力（决定因素）</b>。</p>
+      <p class="tip" style="margin:8px 0 0"><b>口诀：</b>遗传可能 → 环境现实 → 学校主导 → 主观决定。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2j24">
+    <div class="q-head"><div class="q-num">24</div><div class="q-body">
+      <div class="q-title">简述教育目的的个人本位论与社会本位论 <span class="tag t-low">★ 中频</span><br><span class="src">M1 · 你的文档：85% 高概率</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>个人本位论</b>：主张教育目的应以个人需要为出发点，强调发展人的本性、尊重人的价值。</p>
+      <p style="padding-left:16px">代表人物：<b>卢梭、裴斯泰洛齐、罗杰斯、马斯洛</b>（"卢裴罗马"）。</p>
+      <p><b>社会本位论</b>：主张教育目的应以社会需要为出发点，强调教育要为社会的稳定和发展服务。</p>
+      <p style="padding-left:16px">代表人物：<b>涂尔干（迪尔凯姆）、孔德、赫尔巴特、凯兴斯泰纳</b>（"涂孔赫凯"）。</p>
+      <p class="tip" style="margin:8px 0 0"><b>评价：</b>两者都有片面性，我国主张个人发展与社会需要相统一。</p>
+    </div>
+  </div>
+
+  <div class="blue" style="margin-top:16px">
+    <b>💡 简答题万能保底话术（真想不出来时，每道题凑3-5点）</b>
+    <ol style="margin:6px 0 0">
+      <li>"___需要遵循教育规律和学生身心发展特点"——几乎所有教育类题目都能用</li>
+      <li>"___应理论与实践相结合，注重知行统一"——方法/要求类通用</li>
+      <li>"___是教育目标实现的重要保障/关键环节"——功能/意义类通用</li>
+      <li>"___因材施教，考虑学生的个体差异"——教学相关题目通用</li>
+      <li>"___需要学校、家庭、社会多方协同配合"——德育/班级管理/心理健康通用</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ==================== 3. 科二·辨析题 ==================== -->
+<section class="panel" id="panel-k2bian">
+  <div class="blue">
+    <b>科二辨析题 = 4题×8分 = 32分</b>　｜　<b>你的统计：判断"错误"占75%</b>，但<b>不要一律判错</b>！<br>
+    <b>答题三步（30秒构思）：</b>
+    <ol style="margin:6px 0 0">
+      <li><b>判断</b>：此观点正确／错误。（先写这句，直接得分）</li>
+      <li><b>理论依据</b>：①正确的概念是什么 ②为什么题干说错了（对比分析）</li>
+      <li><b>扣题</b>：因此，题干中认为……是错误/正确的。故表述错误/正确。</li>
+    </ol>
+    <b>字数：</b>每题120-180字即可，不需要长篇大论。
+  </div>
+
+  <div class="sec-t">🔥 高频辨析题 18 道（含你文档里的8组易混概念对）</div>
+
+  <div class="q" data-id="k2b01">
+    <div class="q-head"><div class="q-num">1</div><div class="q-body">
+      <div class="q-title">教育具有自身规律，不受社会发展的制约。<span class="tag t-hot">★★★ 你的文档原题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①教育确实具有<b>相对独立性</b>，有自身的发展规律，可能超前或滞后于社会的发展。</p>
+      <p>②但教育的相对独立性是<b>相对的、有条件的</b>——教育受社会生产力、政治经济制度、文化等的制约，社会生产力决定教育的规模与速度，政治经济制度决定教育的性质与领导权。</p>
+      <p>③教育与社会发展是<b>相互制约、相互作用</b>的关系，说"不受制约"就把相对独立性绝对化了。</p>
+      <p>因此，题干中认为教育不受社会发展制约是错误。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b02">
+    <div class="q-head"><div class="q-num">2</div><div class="q-body">
+      <div class="q-title">阿特金森认为，力求成功者旨在获取成就，他们倾向于选择稳操胜券的任务。<span class="tag t-hot">★★★ 你的文档原题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①阿特金森把个体的成就动机分为<b>力求成功</b>和<b>避免失败</b>两种倾向。</p>
+      <p>②力求成功者最可能选择<b>成功概率约为50%（中等难度）</b>的任务——因为这种任务最有挑战性，成功后带来的成就感最大；太容易的任务无法满足其成就动机，太难的任务则成功无望。</p>
+      <p>③倾向于选择"非常容易或非常困难"任务的，恰恰是<b>避免失败者</b>（容易的保证成功，极难的失败了也不丢面子）。</p>
+      <p>因此，题干混淆了两类人的选择倾向。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b03">
+    <div class="q-head"><div class="q-num">3</div><div class="q-body">
+      <div class="q-title">独立型的学生比场依存型的学生更加优秀。<span class="tag t-hot">★★★ 你的文档原题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①场独立型与场依存型是两种不同的<b>认知方式（认知风格）</b>，是个体在信息加工过程中表现出的偏好差异。</p>
+      <p>②认知方式<b>没有优劣、好坏之分</b>，只有差异：场独立型更善于独立分析、结构不良领域的学习；场依存型更善于社会交往、人际理解。</p>
+      <p>③两者各有优势与不足，教师应了解学生的认知风格差异，做到<b>因材施教</b>。</p>
+      <p>因此，题干用"优秀"来比较两种认知方式是不成立的。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b04">
+    <div class="q-head"><div class="q-num">4</div><div class="q-body">
+      <div class="q-title">教育是一种有目的地培养人的社会活动，动物界也存在教育。<span class="tag t-hot">★★★ 教育本质</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>教育是一种有目的地培养人的社会活动</b>，这是教育的本质属性，也是教育区别于其他社会现象的根本特征。</p>
+      <p>②动物界的"教育"（如老猫教小猫捕鼠）是<b>本能行为</b>，是无意识的、先天遗传的，不具备目的性、社会性和意识性。</p>
+      <p>③教育是人类社会特有的现象，<b>只有人类社会才有教育</b>。</p>
+      <p>因此，说动物界也存在教育混淆了教育的社会属性。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b05">
+    <div class="q-head"><div class="q-num">5</div><div class="q-body">
+      <div class="q-title">美育就是艺术教育。<span class="tag t-mid">★★ 高频</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>美育</b>是培养学生正确的审美观，以及感受美、鉴赏美、创造美的能力的教育。</p>
+      <p>②<b>艺术教育</b>（音乐、美术等）只是实施美育的<b>重要途径之一</b>，不是美育的全部。</p>
+      <p>③美育的内容还包括自然美、社会美、科学美、劳动美等，范围远大于艺术教育。把美育等同于艺术教育，<b>窄化了美育的内涵</b>。</p>
+      <p>因此，题干观点错误。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b06">
+    <div class="q-head"><div class="q-num">6</div><div class="q-body">
+      <div class="q-title">全面发展就是平均发展。<span class="tag t-mid">★★ 高频</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>全面发展</b>是指学生在德、智、体、美、劳等方面都得到发展，是<b>全面而有个性</b>的发展。</p>
+      <p>②<b>平均发展</b>是要求每个方面整齐划一、齐头并进，不允许有差异和侧重，这是对全面发展的<b>误解</b>。</p>
+      <p>③全面发展<b>不排斥个性发展</b>，而是让每个学生在全面发展的基础上形成自己的特长和个性。</p>
+      <p>因此，题干把全面发展等同于平均发展。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b07">
+    <div class="q-head"><div class="q-num">7</div><div class="q-body">
+      <div class="q-title">德育过程就是品德发展过程。<span class="tag t-mid">★★ 高频</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>德育过程</b>是教育者按照一定社会的要求，有目的、有计划地对受教育者施加影响的过程——是<b>教育者施教</b>的过程。</p>
+      <p>②<b>品德发展过程</b>是个体在外部影响下，自身知、情、意、行矛盾运动、内化的过程——是<b>学生自我发展</b>的过程。</p>
+      <p>③两者既有联系又有区别：德育过程是促进学生品德发展的<b>重要条件</b>，但不能等同于品德发展过程本身。</p>
+      <p>因此，题干混淆了两个概念。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b08">
+    <div class="q-head"><div class="q-num">8</div><div class="q-body">
+      <div class="q-title">教育目的就是培养目标。<span class="tag t-mid">★★ 高频</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>教育目的</b>是国家对把受教育者培养成为什么样的人的<b>总的要求</b>，是各级各类学校培养人的总质量标准和规格。</p>
+      <p>②<b>培养目标</b>是各级各类学校根据教育目的制定的、符合本校实际的具体培养要求，是教育目的的<b>具体化</b>。</p>
+      <p>③两者的关系是<b>一般与个别、抽象与具体</b>的关系，不能等同。</p>
+      <p>因此，题干混淆了二者的层次关系。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b09">
+    <div class="q-head"><div class="q-num">9</div><div class="q-body">
+      <div class="q-title">顺向迁移就是正迁移。<span class="tag t-hot">★★★ 你的文档原题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>顺向迁移</b>是按迁移的<b>方向</b>划分的，指先前学习对后继学习的影响。</p>
+      <p>②<b>正迁移</b>是按迁移的<b>性质（效果）</b>划分的，指一种学习对另一种学习起促进作用。</p>
+      <p>③两者的<b>划分标准不同</b>，不能等同。先学促进后学，既是顺向迁移又是正迁移；但先学干扰后学，则是顺向迁移中的<b>负迁移</b>。</p>
+      <p>因此，题干混淆了迁移的两种分类维度。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b10">
+    <div class="q-head"><div class="q-num">10</div><div class="q-body">
+      <div class="q-title">学习动机越强，学习效率越高。<span class="tag t-hot">★★★ 高概率</span><br><span class="src">你的文档标注：学习动机↔学习效率 高概率</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>耶克斯-多德森定律</b>表明：动机强度与学习效率呈<b>倒U型曲线</b>关系，<b>中等强度</b>的动机学习效率最高。</p>
+      <p>②动机过强会导致焦虑、紧张，反而干扰注意和思维，降低效率；动机过弱则缺乏动力，同样效率不高。</p>
+      <p>③最佳动机水平还随<b>任务难度</b>变化：简单任务中较高动机效率高，困难任务中较低动机效率高。</p>
+      <p>因此，"越强越好"是线性思维，与实际不符。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b11">
+    <div class="q-head"><div class="q-num">11</div><div class="q-body">
+      <div class="q-title">定势就是功能固着。<span class="tag t-mid">★★ 你的文档原题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>定势</b>是指由先前活动形成的、影响当前问题解决的<b>心理准备状态</b>（用老办法解决新问题）。</p>
+      <p>②<b>功能固着</b>是指个体只看到物体的<b>惯常功能</b>，难以发现其其他可能用途（如只把盒子当容器，想不到当垫脚物）。</p>
+      <p>③两者都是影响问题解决的重要因素，但有区别：定势强调"思维倾向"，功能固着强调"对物体功能的固定看法"。定势可能促进也可能阻碍，功能固着通常起阻碍作用。</p>
+      <p>因此，题干混淆了两个概念。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b12">
+    <div class="q-head"><div class="q-num">12</div><div class="q-body">
+      <div class="q-title">注意是一种独立的心理过程。<span class="tag t-hot">★★★ 高频</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>注意</b>是心理活动对一定对象的<b>指向和集中</b>。</p>
+      <p>②注意<b>不是独立的心理过程</b>，而是各种心理过程的<b>共同特性</b>（一种心理状态）——它总是伴随着感觉、知觉、记忆、思维等心理过程而存在。</p>
+      <p>③我们平常说的"注意看""注意听"，实际上是"注意地看""注意地听"，注意本身不能脱离具体心理过程而独立存在。</p>
+      <p>因此，题干观点错误。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b13">
+    <div class="q-head"><div class="q-num">13</div><div class="q-body">
+      <div class="q-title">学习迁移就是学习的过程。<span class="tag t-low">★ 你的文档原题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>学习</b>是个体在特定情境下，由于练习或反复经验而引起的行为或行为潜能的<b>相对持久的变化</b>。</p>
+      <p>②<b>学习迁移</b>是一种学习对另一种学习的<b>影响</b>（已有的知识经验对新的学习的影响）。</p>
+      <p>③两者的关系是：迁移是学习过程中的一种<b>特殊现象</b>，以学习为基础，但不等于学习本身；学习是迁移的前提，迁移是学习的深化。</p>
+      <p>因此，题干混淆了两个概念的外延。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b14">
+    <div class="q-head"><div class="q-num">14</div><div class="q-body">
+      <div class="q-title">张老师认为学科中心课程已经过时了，应该全部改为活动课程。<span class="tag t-hot">★★★ 你的文档预测题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 张老师的观点错误。</b></p>
+      <p>①<b>学科中心课程论</b>（赫尔巴特）强调系统知识的传授，<b>活动中心课程论</b>（杜威）强调儿童的经验和活动，两者各有优势与不足。</p>
+      <p>②学科课程便于系统、高效地传授知识，但容易脱离学生生活；活动课程贴近学生兴趣，但知识的系统性不足。</p>
+      <p>③课程改革应当<b>取长补短、相互补充</b>，而不是全盘否定一方、走向另一个极端。</p>
+      <p>因此，题干"全部改为活动课程"是片面的。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b15">
+    <div class="q-head"><div class="q-num">15</div><div class="q-body">
+      <div class="q-title">刘副校长认为隐性课程只是一种补充，不是正式课程，因此不需要纳入课程规划。<span class="tag t-hot">★★★ 你的文档预测题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 刘副校长的观点错误。</b></p>
+      <p>①<b>隐性课程（潜在课程）</b>是指学校情境中以<b>间接、内隐</b>的方式呈现的课程，如校风校貌、师生关系、班级文化、教师言行等。</p>
+      <p>②隐性课程虽然是非正式的、无计划的，但它是学校课程的<b>重要组成部分</b>，对学生的态度、价值观、行为习惯有<b>深远而持久</b>的影响，具有"润物细无声"的作用。</p>
+      <p>③学校应当重视并有意识地规划隐性课程，使其与显性课程形成合力。</p>
+      <p>因此，题干认为隐性课程"不需要纳入课程规划"是错误的。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b16">
+    <div class="q-head"><div class="q-num">16</div><div class="q-body">
+      <div class="q-title">新课改强调自主、合作、探究，所以讲授法已经过时，应被探究式学习完全取代。<span class="tag t-hot">★★★ 你的文档预测题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①<b>讲授法</b>是教师通过口头语言系统地向学生传授知识的方法，是使用最广泛、最基础的教学方法，能在短时间内高效地传授大量系统知识。</p>
+      <p>②讲授法与探究式学习<b>各有优势、各有适用范围</b>，不存在谁取代谁的问题。</p>
+      <p>③新课改倡导自主、合作、探究，是要改变"<b>过于强调</b>接受学习、死记硬背"的倾向，<b>不是完全否定讲授法</b>。现代教学中二者应有机结合。</p>
+      <p>因此，题干"完全取代"的说法是片面、绝对的。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b17">
+    <div class="q-head"><div class="q-num">17</div><div class="q-body">
+      <div class="q-title">有学生花大量时间反复抄写笔记但成绩一般，李老师认为"这是因为他们不够用功，只要多花时间就能学好"。<span class="tag t-hot">★★★ 你的文档预测题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 李老师的观点错误。</b></p>
+      <p>①学生花大量时间反复抄写却成绩一般，问题不在于"不够用功"，而在于<b>学习策略不当</b>。</p>
+      <p>②单纯反复抄写属于<b>复述策略</b>（机械重复），缺乏<b>精加工策略</b>（理解、联系、做笔记、编口诀）和<b>组织策略</b>（列提纲、画思维导图），属于低效学习。</p>
+      <p>③同时，学生可能缺乏<b>元认知策略</b>，不会监控和调节自己的学习。教师应指导学生掌握科学的学习策略，提高学习效率，而不是简单归因于"用功不够"。</p>
+      <p>因此，题干把学习方法问题错误归因为努力不足。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="q" data-id="k2b18">
+    <div class="q-head"><div class="q-num">18</div><div class="q-body">
+      <div class="q-title">心理课上王老师说："我们看到的、听到的就是事物的本来样子。"<span class="tag t-hot">★★★ 你的文档预测题</span></div>
+    </div></div>
+    <div class="acts">
+      <button class="btn primary rev" onclick="toggleAns(this)">显示答案</button>
+      <button class="btn mark-btn" data-mk="ok" onclick="mark(this,'ok')">✓ 会了</button>
+      <button class="btn mark-btn" data-mk="un" onclick="mark(this,'unsure')">△ 不熟</button>
+    </div>
+    <div class="ans">
+      <p><b>❌ 此观点错误。</b></p>
+      <p>①人的知觉具有<b>理解性</b>：人总是根据已有的知识经验对感知对象进行理解和解释，"外行看热闹，内行看门道"。</p>
+      <p>②不同的人由于经验不同，对同一事物的知觉和理解也会<b>不同</b>（如同一幅画，不同的人感受不同）。</p>
+      <p>③此外，知觉还受<b>期望、动机、情绪</b>等因素影响。因此"看到的就是本来样子"忽略了知觉的主观性。</p>
+      <p>因此，题干观点错误。故表述错误。</p>
+    </div>
+  </div>
+
+  <div class="warn">
+    <b>⚠️ 考场提醒：</b>辨析题若真判断不出来——你的统计显示"错误"占75%，但剩下25%是"正确"。<br>
+    <b>判"正确"的常见信号：</b>题干是教材原文表述、或明显符合教育规律、或说法温和留有余地（"有助于""有利于"）。<br>
+    <b>判"错误"的常见信号：</b>出现"就是""等于""完全""只要…就…""不受…制约""越…越…"等绝对化表述。
+  </div>
+</section>
+
+<!-- ==================== 4. 科二·材料分析 ==================== -->
+<section class="panel" id="panel-k2cai">
+  <div class="blue">
+    <b>科二材料分析 = 2题×18分 = 36分</b>　｜　<b>这是最容易"套模板拿分"的题型！</b><br>
+    两道题固定套路：<b>Q30 通常考德育/教学原则（62%+31%），Q31 通常考学习心理/心理辅导（69%）</b>
+  </div>
+
+  <div class="big">
+    <h3>🎯 万能答题框架（5步法）——任何材料题都能套</h3>
+    <p><b>第1步 判断/识别理论</b>：明确指出材料体现了哪个（些）原则或理论。</p>
+    <p style="padding-left:16px;color:var(--ink2)">句式："材料中……体现了XXX原则/理论……"</p>
+    <p><b>第2步 理论一句话解释</b>：用一句话解释该理论的核心含义。</p>
+    <p style="padding-left:16px;color:var(--ink2)">句式："XXX是指……其核心要义是……"</p>
+    <p><b>第3步 引用材料原文</b>：<span class="tag t-hot">不引用扣一半分</span></p>
+    <p style="padding-left:16px;color:var(--ink2)">句式："材料中，……（具体描述材料内容）……"</p>
+    <p><b>第4步 理论+材料结合分析</b>：说明理论如何解释了材料中的现象。</p>
+    <p style="padding-left:16px;color:var(--ink2)">句式："这体现了/反映了……因为……"</p>
+    <p><b>第5步 分点给出建议/总结</b>：给出教育建议或启示。</p>
+    <p style="padding-left:16px;color:var(--ink2)">句式："综上所述/因此，教师应该……"</p>
+    <p class="tip" style="margin:10px 0 0"><b>篇幅分配：</b>18分的题写300-400字，一般"原则1+材料1"这样来回写2-3轮。</p>
+  </div>
+
+  <div class="big">
+    <h3>🏆 Q30 德育原则题模板（考频62%）</h3>
+    <p><b>9大德育原则速查表</b>（⚠️ 已修正你文档里的重复项，补上"导向性原则"）：</p>
+    <div class="scroll">
+    <table>
+      <tr><th>原则</th><th>识别关键词（材料里出现这些就选它）</th></tr>
+      <tr><td><b>导向性原则</b></th><td>坚持正确政治方向、理想信念教育、价值观引导</td></tr>
+      <tr><td><b>疏导原则</b></td><td>循循善诱、以理服人、耐心说服、正面引导</td></tr>
+      <tr><td><b>尊重学生与严格要求相结合</b></td><td>既尊重信任又严格要求（"严慈相济"）</td></tr>
+      <tr><td><b>知行统一原则</b></td><td>理论与实践结合、言行一致、身体力行</td></tr>
+      <tr><td><b>正面教育与纪律约束相结合</b></td><td>表扬鼓励为主 + 规章制度约束</td></tr>
+      <tr><td><b>依靠积极因素克服消极因素</b></td><td>发现闪光点、长善救失、用优点克服缺点</td></tr>
+      <tr><td><b>教育影响的一致性与连贯性</b></td><td>家校社协同、前后一贯、形成合力</td></tr>
+      <tr><td><b>因材施教原则</b></td><td>针对不同学生采取不同方法、个性差异</td></tr>
+      <tr><td><b>集体教育与个别教育相结合</b></td><td>通过集体教育个人、通过个人影响集体</td></tr>
+    </table>
+    </div>
+    <p class="tip" style="margin:8px 0 0"><b>答题写法：</b>"材料中X老师的做法体现了<b>疏导原则</b>。疏导原则是指进行德育要循循善诱、以理服人……材料中，X老师面对学生的问题没有批评，而是耐心谈话……这体现了疏导原则的要求。综上所述，教师应……"</p>
+  </div>
+
+  <div class="big">
+    <h3>🏆 Q30 教学原则题模板（考频31%）</h3>
+    <p><b>8大教学原则速查表：</b></p>
+    <div class="scroll">
+    <table>
+      <tr><th>原则</th><th>识别关键词</th></tr>
+      <tr><td><b>直观性原则</b></td><td>实物/模型/图片演示、生动语言描述</td></tr>
+      <tr><td><b>启发性原则</b></td><td>提问引导、让学生思考、不直接给答案</td></tr>
+      <tr><td><b>循序渐进原则</b></td><td>由浅入深、由易到难、按顺序教学</td></tr>
+      <tr><td><b>巩固性原则</b></td><td>复习、练习、及时巩固</td></tr>
+      <tr><td><b>量力性原则</b></td><td>难度适合学生水平、可接受性</td></tr>
+      <tr><td><b>思想性与科学性统一</b></td><td>知识传授 + 价值引导结合</td></tr>
+      <tr><td><b>理论联系实际</b></td><td>联系生活实际、学以致用</td></tr>
+      <tr><td><b>因材施教原则</b></td><td>针对不同学生不同教法</td></tr>
+    </table>
+    </div>
+  </div>
+
+  <div class="big">
+    <h3>🏆 Q31 学习心理题模板（考频69%）</h3>
+    <p><b>常见理论答题要点（背这张表就够）：</b></p>
+    <p><b>学习动机</b>：耶克斯-多德森定律（倒U形，中等动机最佳）→ 分析材料中动机过强/过弱 → 建议调节动机水平</p>
+    <p><b>归因理论</b>：韦纳三维归因（能力/努力/任务难度/运气）→ 分析归因方式 → 引导正确归因（<b>努力归因</b>）</p>
+    <p><b>自我效能感</b>：班杜拉（直接经验/替代经验/言语说服/情绪唤起）→ 分析效能感来源 → 提高效能感建议</p>
+    <p><b>学习迁移</b>：共同要素说/经验类化说/关系转换说 → 分析迁移类型 → 促进迁移的教学建议</p>
+    <p><b>操作条件反射</b>：正强化/负强化/惩罚/消退 → 分析教师做法 → 正确使用强化策略</p>
+    <p><b>建构主义</b>：主动建构/情境性/社会互动 → 分析教学是否符合建构观 → 改进建议</p>
+    <p><b>认知过程</b>：注意/记忆/思维/问题解决 → 分析认知问题 → 改善策略</p>
+    <p class="warn" style="margin:9px 0 0"><b>高频陷阱：</b>材料里老师总夸某个学生"你真聪明"→ 这是引导<b>能力归因</b>（不可控），应该引导"努力归因"。这是最常见的一个采分点。</p>
+  </div>
+
+  <div class="big">
+    <h3>🆕 Q31 心理辅导题模板（新兴考点）</h3>
+    <p><b>答题框架：</b>识别心理问题（名称+表现）→ 分析成因（学校/家庭/个人/社会）→ 给出辅导方法（至少2-3种）</p>
+    <p><b>常见心理问题：</b>考试焦虑、学习倦怠、人际交往障碍、网络成瘾、自卑心理、厌学</p>
+    <p><b>常用辅导方法：</b>肌肉放松训练、系统脱敏法、<b>合理情绪疗法（ABC理论）</b>、强化法、来访者中心疗法（真诚、共情、无条件积极关注）</p>
+    <p class="tip" style="margin:8px 0 0"><b>ABC理论速记：</b>A=诱发事件，B=不合理信念，C=情绪结果。关键在改变B，而不是改变A。</p>
+  </div>
+
+  <div class="big">
+    <h3>🔑 高频采分动词（每题必用）</h3>
+    <p><b>贯彻了／体现了</b>——指出教师遵循的原则、反映的理论</p>
+    <p><b>材料中</b>——必须引用材料原文内容（<b>不引用扣一半分</b>）</p>
+    <p><b>有利于／促进了</b>——说明积极效果</p>
+    <p><b>应该／应当</b>——提建议时的规范用语</p>
+    <p><b>综上所述</b>——收尾总结的标记词</p>
+    <p><b>首先／其次／再次／最后</b>——分层作答标记（结构分）</p>
+  </div>
+
+  <div class="blue">
+    <b>🆘 保底句型（真的不会做时直接用）</b>
+    <ol style="margin:6px 0 0">
+      <li>教师在教育教学中应该以学生为本，关注学生的个体差异，因材施教。</li>
+      <li>教学中应该注重理论联系实际，让学生在做中学、在用中学。</li>
+      <li>教师应该创设良好的教育环境，激发学生的学习兴趣和主动性。</li>
+      <li>对于学生的问题行为，教师应该以正面教育为主，辅以适当的纪律约束。</li>
+      <li>家校合作、形成教育合力是解决学生问题的有效途径。</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ==================== 5. 科二·选择速览 ==================== -->
+<section class="panel" id="panel-k2xuan">
+  <div class="blue">
+    <b>科二选择题 = 21题×2分 = 42分</b>　｜　选择题<b>不要花超过25分钟</b>，留时间给108分主观题。<br>
+    这一页是<b>考前扫读用</b>——不背，只眼熟。看到能认出来就行。
+  </div>
+
+  <div class="big">
+    <h3>📌 模块一：教育基础（必考4-6题）</h3>
+    <p><b>教育起源三说（每年必考）：</b></p>
+    <p>• <b>生物起源说</b>——利托尔诺（法）、沛西·能（英）→ 认为教育起源于动物本能 ❌（否认目的性、社会性）</p>
+    <p>• <b>心理起源说</b>——孟禄（美）→ 认为教育起源于儿童对成人的无意识模仿 ❌（同样否认目的性）</p>
+    <p>• <b>劳动起源说</b>——米丁斯基、凯洛夫（苏）→ <b>唯一正确的</b>，教育起源于人类特有的生产劳动 ✅</p>
+    <p style="margin-top:10px"><b>教育发展历程：</b>原始（无阶级、融合于生活）→ 古代（有阶级、学校教育产生、个别教学）→ 近现代（班级授课制、义务教育）→ 20世纪后（终身化、全民化、民主化、多元化、现代化）</p>
+    <p><b>20世纪后教育特征速记：</b>终身化、全民化、民主化、多元化、现代化（<b>"终全民多现"</b>）</p>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块二：教育学人物（必考3-5题）</h3>
+    <div class="scroll">
+    <table>
+      <tr><th>人物</th><th>地位/别称</th><th>代表作 & 核心观点</th></tr>
+      <tr><td><b>夸美纽斯</b></td><td><b>教育学之父</b></td><td>《大教学论》1632——<b>近代第一本教育学著作</b>；首次系统论述<b>班级授课制</b>；提出"泛智教育"</td></tr>
+      <tr><td><b>赫尔巴特</b></td><td><b>现代教育学之父</b>／科学教育学奠基人／传统教育代表</td><td>《普通教育学》1806——<b>第一本现代教育学著作</b>；提出"<b>教师中心、教材中心、课堂中心</b>"（旧三中心）；四段教学法</td></tr>
+      <tr><td><b>杜威</b></td><td>实用主义教育学／<b>现代教育派</b>代表</td><td>《民主主义与教育》；"<b>儿童中心、经验中心、活动中心</b>"（新三中心）；"教育即生活、学校即社会、从做中学"</td></tr>
+      <tr><td><b>洛克</b></td><td>—</td><td>《教育漫话》；<b>白板说</b>；绅士教育</td></tr>
+      <tr><td><b>卢梭</b></td><td>—</td><td>《爱弥儿》；<b>自然教育</b>；个人本位论代表</td></tr>
+      <tr><td><b>裴斯泰洛齐</b></td><td>—</td><td>首次提出"<b>教育心理学化</b>"；要素教育论</td></tr>
+      <tr><td><b>康德</b></td><td>—</td><td><b>最早在大学讲授教育学</b>的人</td></tr>
+      <tr><td><b>布鲁纳</b></td><td>—</td><td><b>结构主义</b>教学论；发现学习；学科基本结构</td></tr>
+      <tr><td><b>布卢姆</b></td><td>—</td><td><b>掌握学习</b>理论；教育目标分类学（认知/情感/动作技能）</td></tr>
+      <tr><td><b>赞科夫</b></td><td>—</td><td>发展性教学理论（高难度、高速度）</td></tr>
+      <tr><td><b>陶行知</b></td><td>—</td><td>"<b>生活即教育、社会即学校、教学做合一</b>"；晓庄师范</td></tr>
+      <tr><td><b>蔡元培</b></td><td>—</td><td>"<b>五育并举</b>"（军国民、实利主义、公民道德、世界观、美育）；北大校长</td></tr>
+      <tr><td><b>黄炎培</b></td><td>—</td><td><b>职业教育</b>先驱</td></tr>
+      <tr><td><b>晏阳初</b></td><td>—</td><td><b>平民教育</b></td></tr>
+      <tr><td><b>梁漱溟</b></td><td>—</td><td><b>乡村教育</b></td></tr>
+    </table>
+    </div>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块三：学制（必考1-2题）</h3>
+    <p>• <b>壬寅学制</b>（1902）——<b>第一个颁布</b>但未实施</p>
+    <p>• <b>癸卯学制</b>（1904）——<b>第一个实施</b>的学制，反映"中学为体，西学为用"</p>
+    <p>• <b>壬子癸丑学制</b>（1912-1913）——<b>第一个具有资本主义性质</b>的学制，规定男女同校</p>
+    <p>• <b>壬戌学制</b>（1922）——又称"<b>六三三学制</b>"／新学制，以美国学制为蓝本</p>
+    <p class="tip" style="margin:8px 0 0"><b>速记：</b>壬寅颁布、癸卯实施、壬子癸丑资本主义、壬戌六三三</p>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块四：教育目的与制度</h3>
+    <p><b>个人本位论</b>：卢梭、裴斯泰洛齐、福禄贝尔、康德、马斯洛 → 从人的<b>本能、天性</b>出发确定教育目的</p>
+    <p><b>社会本位论</b>：孔德、涂尔干、凯兴斯泰纳、赫尔巴特 → 从<b>社会需要</b>出发确定教育目的</p>
+    <p><b>义务教育特点：</b>强制性、免费性、普及性（<b>"强免普"</b>）</p>
+    <p><b>课程三层次：</b>课程计划（宏观，国家制定）→ 课程标准（中观，学科）→ 教材（微观）</p>
+    <p><b>课程标准是教材编写、教学、评估和考试命题的依据</b>——这是高频陷阱题（不是课程计划！）</p>
+    <p><b>新课改六项具体目标：</b>课程功能、课程结构、课程内容、课程实施、课程评价、课程管理</p>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块五：教学（必考4-6题）</h3>
+    <p><b>教学过程四条规律：</b>①间接经验与直接经验统一 ②掌握知识与发展能力统一 ③教师主导与学生主体统一 ④知识传授与思想教育统一</p>
+    <p><b>教学组织形式：</b>班级授课制（<b>夸美纽斯系统论述</b>，我国始于1862年京师同文馆）、个别教学、分组教学、<b>特朗普制</b>（大班上课+小班研讨+个人独立学习）、<b>贝尔-兰卡斯特制</b>（导生制）</p>
+    <p><b>教学评价分类：</b></p>
+    <p>• 按作用：<b>诊断性</b>（事前摸底）／<b>形成性</b>（过程中）／<b>总结性</b>（事后）</p>
+    <p>• 按标准：<b>相对评价</b>（和别人比）／<b>绝对评价</b>（和标准比）／<b>个体内差异评价</b>（和自己比）</p>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块六：学习心理（必考5-7题）</h3>
+    <p><b>四大学习理论：</b></p>
+    <p>• <b>行为主义</b>：巴甫洛夫（经典条件反射-狗）、桑代克（试误说-猫、效果律）、斯金纳（操作条件反射-白鼠、强化理论）、班杜拉（社会学习/观察学习-波波玩偶）</p>
+    <p>• <b>认知主义</b>：布鲁纳（发现学习）、奥苏贝尔（<b>有意义接受学习</b>）、加涅（信息加工）</p>
+    <p>• <b>建构主义</b>：知识是主动建构的、情境性、社会互动性</p>
+    <p>• <b>人本主义</b>：罗杰斯（<b>学生中心</b>、非指导性教学）</p>
+    <p style="margin-top:10px"><b>艾宾浩斯遗忘曲线：</b>遗忘<b>先快后慢</b>，呈负加速 → 启示是<b>及时复习</b></p>
+    <p><b>记忆分类：</b>瞬时（0.25-1秒）／短时（1分钟以内）／长时（1分钟以上）</p>
+    <p><b>注意分类：</b>无意注意（无目的、不需意志努力）／有意注意（有目的、需努力）／有意后注意（有目的、不需努力——最高级）</p>
+    <p><b>迁移分类：</b>正/负迁移（性质）、顺向/逆向迁移（方向）、水平/垂直迁移（抽象概括水平）、一般/具体迁移</p>
+    <p><b>认知风格：</b>场独立型 vs 场依存型；<b>冲动型 vs 沉思型</b></p>
+    <p><b>加德纳多元智能理论：</b>语言、逻辑-数学、空间、音乐、身体-运动、人际、内省、自然观察（8种）</p>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块七：发展心理（必考3-4题）</h3>
+    <p><b>皮亚杰认知发展四阶段：</b></p>
+    <p>• 感知运动阶段（0-2岁）——获得<b>客体永久性</b></p>
+    <p>• 前运算阶段（2-7岁）——自我中心、思维不可逆、<b>不守恒</b>、泛灵论</p>
+    <p>• 具体运算阶段（7-11岁）——<b>获得守恒</b>、思维可逆、需具体事物支持</p>
+    <p>• 形式运算阶段（11-16岁）——<b>抽象逻辑思维</b>、假设演绎推理</p>
+    <p style="margin-top:10px"><b>埃里克森人格发展八阶段</b>——中学生对应<b>"自我同一性对角色混乱"</b>（12-18岁）</p>
+    <p><b>维果茨基：</b>最近发展区（现有水平与潜在水平之间的差距）→ 教学应走在发展前面</p>
+    <p><b>中学生情绪特点：</b>两极性（强烈与温和并存）、半成熟半幼稚、内隐性与外显性并存</p>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块八：德育 · 班级管理 · 心理辅导</h3>
+    <p><b>德育方法：</b>说服教育法（摆事实讲道理）、榜样示范法、实际锻炼法、情感陶冶法、品德评价法（表扬/批评）</p>
+    <p><b>德育模式：</b>认知模式（皮亚杰、科尔伯格）／体谅模式（麦克费尔）／社会模仿模式（班杜拉）／价值澄清模式（拉斯）</p>
+    <p><b>课堂纪律分类：</b>教师促成的、集体促成的、任务促成的、<b>自我促成的</b>（最高阶段）</p>
+    <p><b>心理健康标准：</b>智力正常、情绪健康、意志健全、人格完整、自我评价正确、人际关系和谐、社会适应良好</p>
+  </div>
+
+  <div class="warn">
+    <b>⚠️ 你文档里两条统计结论有冲突，这里说明一下怎么处理：</b><br>
+    你说"选非题蒙B或D，避开A"，但另一处统计又说"选非题中 D 仅占19%，A 占30%最多，排除D后三选一"。<br>
+    <b>以样本更大的那条为准：</b>选非题（"下列<u>不属于</u>/<u>不正确</u>"）→ <b>D 明显偏少，A 偏多</b>，所以优先在 <b>A、B、C</b> 里排除后选，<b>不要优先蒙D</b>。<br>
+    但<b>前提是你能排除掉一个选项</b>——完全不会的题，四个选项概率其实一样，别为了"手感"硬选。
+  </div>
+</section>
+
+<!-- ==================== 6. 科一·材料分析 ==================== -->
+<section class="panel" id="panel-k1cai">
+  <div class="big">
+    <h3>⚡ 开考前最先背的就是这一页</h3>
+    <p><b>科一材料分析 = 3题×14分 = 42分</b>，其中<b>职业理念（三观）1题 + 职业道德1题 + 阅读理解1题</b>，前两题是<b>纯模板题</b>——背下来就能拿分。</p>
+  </div>
+
+  <div class="blue">
+    <b>🔑 万能答题总框架（所有材料分析题通用）</b>
+    <ol>
+      <li><b>总述（表态）</b>：材料中 X 老师的教育行为是<b>正确的/错误的</b>，符合/违背了……（点明是哪个观/哪条规范）。</li>
+      <li><b>分点论述</b>：每点按「<b>理论点 + 一句话解释 + 材料原文引用 + 分析</b>」四件套写。</li>
+      <li><b>总结（升华）</b>：综上所述，作为一名教师，应该树立……的理念，做到……。</li>
+    </ol>
+    <b>篇幅：</b>14分写200-300字，<b>一定要分点（① ② ③）</b>，阅卷老师按点给分。<br>
+    <b>铁律：</b>不引用材料原文 = 至少扣一半分。
+  </div>
+
+  <div class="big">
+    <h3>🏆 模板一：教育观（素质教育观）</h3>
+    <p><b>记忆口诀：提素个性创两全</b></p>
+    <p><b>① 素质教育是提高国民素质的教育</b>——面向全体国民，不只是升学。</p>
+    <p><b>② 素质教育是促进学生个性发展的教育</b>——尊重差异，发展特长。</p>
+    <p><b>③ 素质教育是以培养创新精神和实践能力为重点的教育</b>——这是素质教育的<b>时代特征</b>，是核心。</p>
+    <p><b>④ 素质教育是面向全体学生的教育</b>——平等对待每一个学生，不放弃任何一个。</p>
+    <p><b>⑤ 素质教育是促进学生全面发展的教育</b>——德智体美劳五育并举。</p>
+    <p class="tip" style="margin:8px 0 0"><b>材料里怎么找：</b>老师没有只盯着分数／组织了实践活动／鼓励学生动手做／让所有学生都参与／尊重学生特长——都是教育观。</p>
+  </div>
+
+  <div class="big">
+    <h3>🏆 模板二：学生观（"以人为本"的学生观）</h3>
+    <p><b>记忆口诀：两独一发</b>（<b>独</b>立意义的人、<b>独</b>特的人、<b>发</b>展的人）</p>
+    <p><b>① 学生是发展中的人</b>——</p>
+    <p style="padding-left:16px">• 学生的身心发展具有<b>规律性</b>（顺序性、阶段性、不平衡性、互补性、个别差异性）</p>
+    <p style="padding-left:16px">• 学生具有<b>巨大的发展潜能</b>——用发展的眼光看学生，不贴标签</p>
+    <p style="padding-left:16px">• 学生是<b>处于发展过程中的人</b>——允许犯错，要引导而不是斥责</p>
+    <p><b>② 学生是独特的人</b>——</p>
+    <p style="padding-left:16px">• 学生是<b>完整的人</b>，不是学习的机器</p>
+    <p style="padding-left:16px">• 每个学生都有自身的<b>独特性</b>——因材施教</p>
+    <p style="padding-left:16px">• 学生与成人之间存在<b>巨大差异</b>——不能用成人标准要求</p>
+    <p><b>③ 学生是具有独立意义的人</b>——</p>
+    <p style="padding-left:16px">• 学生是<b>独立于教师头脑之外</b>的客观存在，不以教师意志为转移</p>
+    <p style="padding-left:16px">• 学生是<b>学习的主体</b>——教师不能代替学生思考</p>
+    <p style="padding-left:16px">• 学生是<b>责权的主体</b>——享有受教育权等法定权利</p>
+    <p class="tip" style="margin:8px 0 0"><b>材料里怎么找：</b>老师不放弃后进生／用发展眼光看待学生／承认差异因材施教／尊重学生想法／让学生自己做主——都是学生观。</p>
+  </div>
+
+  <div class="big">
+    <h3>🏆 模板三：教师观</h3>
+    <p><b>（一）教师角色的转变——"促进学社"</b></p>
+    <p>① 从知识传授者转变为学生学习的<b>促进</b>者（从"教"到"导"）</p>
+    <p>② 从课程的忠实执行者转变为课程的<b>建设者和开发者</b></p>
+    <p>③ 从"教书匠"转变为教育<b>教学的研究者</b>（研究型教师）</p>
+    <p>④ 从学校教育者转变为<b>社区型开放教师</b>（家校社协同）</p>
+    <p><b>（二）教师行为的转变——"尊帮反合"</b></p>
+    <p>① 在对待师生关系上，强调<b>尊重、赞赏</b>学生</p>
+    <p>② 在对待教学上，强调<b>帮助、引导</b></p>
+    <p>③ 在对待自我上，强调<b>反思</b></p>
+    <p>④ 在对待与其他教育者的关系上，强调<b>合作</b></p>
+    <p class="tip" style="margin:8px 0 0"><b>速记：</b>角色转变「促进学社」，行为转变「尊帮反合」</p>
+  </div>
+
+  <div class="big">
+    <h3>🏆 模板四：教师职业道德（"三爱两人一终身"）</h3>
+    <p><b>① 爱国守法</b>——热爱祖国，遵守教育法律法规，依法履行教师职责。（不得有违背党和国家方针政策的言行）</p>
+    <p><b>② 爱岗敬业</b>——忠诚于人民教育事业，勤恳敬业，甘为人梯，乐于奉献。对工作高度负责，认真备课上课、批改作业、辅导学生。<b>不得敷衍塞责。</b></p>
+    <p><b>③ 关爱学生</b>——关心爱护全体学生，尊重学生人格，平等公正对待学生。对学生严慈相济，做学生的良师益友。保护学生安全，关心学生健康，维护学生权益。<b>不讽刺、挖苦、歧视学生，不体罚或变相体罚学生。</b></p>
+    <p><b>④ 教书育人</b>——遵循教育规律，实施素质教育。循循善诱，诲人不倦，因材施教。培养学生良好品行，激发学生创新精神，促进学生全面发展。<b>不以分数作为评价学生的唯一标准。</b></p>
+    <p><b>⑤ 为人师表</b>——坚守高尚情操，知荣明耻，严于律己，以身作则。衣着得体，语言规范，举止文明。关心集体，团结协作，尊重同事，尊重家长。作风正派，廉洁奉公。<b>自觉抵制有偿家教，不利用职务之便谋取私利。</b></p>
+    <p><b>⑥ 终身学习</b>——崇尚科学精神，树立终身学习理念，拓宽知识视野，更新知识结构。潜心钻研业务，勇于探索创新，不断提高专业素养和教育教学水平。</p>
+    <p class="warn" style="margin:9px 0 0"><b>⚠️ 最容易漏的两个采分点：</b>「<b>关爱学生</b>」里必须写到"<b>尊重学生人格，不体罚/不讽刺挖苦</b>"；「<b>教书育人</b>」里必须写到"<b>不以分数作为评价学生的唯一标准</b>"。这两句是阅卷关键词。</p>
+  </div>
+
+  <div class="big">
+    <h3>🏆 模板五：材料分析第3题——阅读理解</h3>
+    <p><b>题型：</b>给一篇短文，问"文中'XXX'是什么意思"、"请结合文本谈谈你的理解"。</p>
+    <p><b>答题要点：</b></p>
+    <p>① <b>回到原文定位</b>——找到关键词出现的段落，<b>用原文词句作答</b>。</p>
+    <p>② <b>分点作答</b>——通常问"含义"就要写2-3层意思。</p>
+    <p>③ <b>结合文本</b>——每一层都要引用文章内容佐证。</p>
+    <p>④ <b>适当延伸</b>——最后一问"谈谈你的看法"要联系教育、人生，写2-3句。</p>
+    <p class="tip" style="margin:8px 0 0"><b>时间控制：</b>这题14分但最好控制在<b>15分钟</b>内，不要过度纠结。</p>
+  </div>
+
+  <div class="blue">
+    <b>🆘 材料分析题保底句型（不会做直接抄）</b>
+    <p>• 材料中，X老师的行为体现了……，值得我们学习／违背了……，需要我们引以为戒。</p>
+    <p>• 材料中"……"（引用原文）正是这一理念的体现。</p>
+    <p>• 作为一名新时代教师，应当树立正确的教育观、学生观和教师观，做到……</p>
+    <p>• 综上所述，X老师的做法符合/违背了……的要求。</p>
+  </div>
+</section>
+
+<!-- ==================== 7. 科一·作文 ==================== -->
+<section class="panel" id="panel-k1zuo">
+  <div class="blue">
+    <b>科一作文 = 50分</b>，占科一总分的 1/3，<b>不低于800字，建议写到1000字</b>。<br>
+    <b>必须留够50分钟</b>——历年最多人挂在"作文没写完"上，没写完直接掉到20分以下。
+  </div>
+
+  <div class="warn">
+    <b>⚠️ 教育类作文的铁律：无论材料讲什么，最后必须落到「教育」上。</b><br>
+    材料讲"坚持"→ 写教师的坚持；讲"创新"→ 写教育创新；讲"合作"→ 写师生合作/家校合作。<br>
+    <b>不落到教育上，直接掉档。</b>
+  </div>
+
+  <div class="big">
+    <h3>🎯 第一步：审题立意（5分钟）</h3>
+    <p><b>三步走：</b></p>
+    <p>① <b>抓关键词</b>——材料里反复出现的词、带引号的词、转折后的词。</p>
+    <p>② <b>找主旨</b>——这则材料在赞美什么/批判什么？（通常赞美某种品质：坚持、创新、尊重、责任、爱）</p>
+    <p>③ <b>转到教育</b>——把主旨翻译成教育语言。<br>
+    <span class="tip">例：材料讲"慢工出细活"→ 立意「教育是慢的艺术，教师要有耐心静待花开」</span></p>
+    <p class="tip" style="margin:8px 0 0"><b>黄金立意公式：</b>【品质】是教育的【什么】/ 【品质】让教育【怎么样】<br>
+    示例：「耐心是教育的底色」「尊重让每个学生绽放」</p>
+  </div>
+
+  <div class="big">
+    <h3>🎯 第二步：万能结构（五段式，最稳）</h3>
+    <p><b>开头段（100-150字）</b>——引材料 + 亮观点</p>
+    <p style="padding-left:16px;color:var(--ink2)">句式："材料中，……（一句话概括）。这启示我们，作为教师，应当……（亮明观点）。"</p>
+    <p><b>分论点一（200字）</b>——是什么 / 为什么</p>
+    <p><b>分论点二（200字）</b>——为什么 / 怎么做</p>
+    <p><b>分论点三（200字）</b>——反面论证 / 更高一层</p>
+    <p style="padding-left:16px;color:var(--ink2)">每段结构：<b>分论点句 + 举例/引用 + 分析回扣教育</b></p>
+    <p><b>结尾段（100字）</b>——总结升华 + 教育展望</p>
+    <p style="padding-left:16px;color:var(--ink2)">句式："总之，……。作为一名未来的教师，我将……，让每一个学生都能……。"</p>
+    <p class="tip" style="margin:8px 0 0"><b>三个分论点的万能角度：</b>①对学生（尊重、关爱、因材施教）②对教学（创新、反思、终身学习）③对社会（责任、使命、家国情怀）</p>
+  </div>
+
+  <div class="big">
+    <h3>🎯 第三步：12个高频主题 + 分论点提纲</h3>
+    <p class="tip" style="margin:0 0 10px"><b>用法：</b>上考场看到材料，先在下面12个主题里对号入座，直接套提纲。</p>
+
+    <p><b>1. 因材施教 / 尊重差异</b><br>
+    → ①每个学生都是独特的人，教育要因材施教 ②尊重差异才能激发潜能 ③反例：一刀切扼杀天性</p>
+
+    <p><b>2. 爱心与责任</b><br>
+    → ①爱是教育的灵魂 ②责任心是教师的基本素养 ③爱与严需结合（严慈相济）</p>
+
+    <p><b>3. 耐心 / 静待花开（教育是慢的艺术）</b><br>
+    → ①成长需要时间，教育不能急功近利 ②耐心是教师的基本功 ③反例：拔苗助长毁掉学生</p>
+
+    <p><b>4. 创新精神 / 培养学生创造力</b><br>
+    → ①创新是素质教育的核心 ②教师要保护学生的好奇心 ③反思：应试教育压抑创新</p>
+
+    <p><b>5. 终身学习 / 教师专业成长</b><br>
+    → ①知识更新快，教师必须终身学习 ②反思是成长的阶梯 ③做研究型教师</p>
+
+    <p><b>6. 赏识教育 / 表扬的力量</b><br>
+    → ①赏识能激发自我效能感 ②表扬要具体、真诚 ③反思：过度批评的伤害</p>
+
+    <p><b>7. 以身作则 / 为人师表</b><br>
+    → ①教师是学生最直观的榜样 ②言行一致才有说服力 ③反思：身教重于言传</p>
+
+    <p><b>8. 教育的公平 / 关爱每个学生</b><br>
+    → ①教育公平是社会公平的基础 ②不放弃任何一个学生 ③反思：区别对待的伤害</p>
+
+    <p><b>9. 阅读 / 学习的力量</b><br>
+    → ①阅读是精神成长的阶梯 ②教师要做读书的引路人 ③反思：碎片化时代更需深度阅读</p>
+
+    <p><b>10. 挫折教育 / 抗挫力</b><br>
+    → ①成长需要经历挫折 ②教师应引导学生正确归因 ③反思：过度保护让孩子脆弱</p>
+
+    <p><b>11. 合作 / 团队精神</b><br>
+    → ①合作是21世纪核心素养 ②师生合作、生生合作、家校合作 ③反思：单打独斗的局限</p>
+
+    <p><b>12. 家国情怀 / 教育使命</b><br>
+    → ①教育关系国家未来 ②教师肩负立德树人使命 ③反思：只教书不育人的危害</p>
+  </div>
+
+  <div class="big">
+    <h3>📚 万能素材库（背这10个就够用）</h3>
+    <div class="scroll">
+    <table>
+      <tr><th>素材</th><th>可用主题</th></tr>
+      <tr><td><b>张桂梅</b>——创办华坪女高，让1800多名女孩走出大山</td><td>爱心、责任、坚持、教育公平、奉献</td></tr>
+      <tr><td><b>陶行知</b>——"捧着一颗心来，不带半根草去"</td><td>奉献、师德、生活教育、以身作则</td></tr>
+      <tr><td><b>于漪</b>——"一辈子做教师，一辈子学做教师"</td><td>终身学习、专业成长、谦虚</td></tr>
+      <tr><td><b>支月英</b>——扎根山区教学点30多年</td><td>坚守、奉献、教育公平</td></tr>
+      <tr><td><b>苏霍姆林斯基</b>——"没有爱就没有教育"</td><td>爱心、尊重学生、教育智慧</td></tr>
+      <tr><td><b>孔子</b>——"有教无类""因材施教""学而不厌，诲人不倦"</td><td>因材施教、教育公平、终身学习</td></tr>
+      <tr><td><b>叶圣陶</b>——"教是为了达到不需要教"</td><td>学生主体、自主学习、教学智慧</td></tr>
+      <tr><td><b>爱因斯坦</b>——"想象力比知识更重要"</td><td>创新、保护好奇心、批判性思维</td></tr>
+      <tr><td><b>爱迪生/贝多芬</b>——经历失败仍坚持</td><td>坚持、抗挫、不怕失败</td></tr>
+      <tr><td><b>《学记》</b>——"亲其师，信其道""道而弗牵，强而弗抑，开而弗达"</td><td>师生关系、启发式教学</td></tr>
+    </table>
+    </div>
+  </div>
+
+  <div class="big">
+    <h3>✍️ 高分金句（每段开头/结尾用一句）</h3>
+    <p>• 教育的本质意味着：一棵树摇动另一棵树，一朵云推动另一朵云，一个灵魂唤醒另一个灵魂。——雅斯贝尔斯</p>
+    <p>• 没有爱就没有教育，没有兴趣就没有学习。——顾明远</p>
+    <p>• 教育的艺术不在于传授本领，而在于激励、唤醒和鼓舞。——第斯多惠</p>
+    <p>• 千教万教教人求真，千学万学学做真人。——陶行知</p>
+    <p>• 每个孩子都是一颗种子，只不过花期不同，有的花一开始就灿烂绽放，有的花需要漫长的等待。</p>
+    <p>• 教育的真谛，不在于装满一桶水，而在于点燃一把火。——叶芝</p>
+    <p>• 教师是太阳底下最光辉的职业。——夸美纽斯</p>
+    <p>• 学高为师，身正为范。</p>
+  </div>
+
+  <div class="warn">
+    <b>⚠️ 作文避坑清单（犯一个扣一档）</b>
+    <p>❌ <b>不写标题</b>——直接扣2-3分，必须写。</p>
+    <p>❌ <b>不落到教育</b>——写成了泛泛的议论文，与教资无关，直接掉档。</p>
+    <p>❌ <b>不足800字</b>——每少50字扣1分，且主观印象大幅拉低。</p>
+    <p>❌ <b>大段抄材料</b>——引用材料控制在1-2句，其余必须自己写。</p>
+    <p>❌ <b>通篇讲道理没例子</b>——每个分论点至少配1个例子。</p>
+    <p>❌ <b>字迹潦草涂改多</b>——卷面分真的存在，写错划一道就行，别涂成黑块。</p>
+  </div>
+</section>
+
+<!-- ==================== 8. 科一·选择速览 ==================== -->
+<section class="panel" id="panel-k1xuan">
+  <div class="blue">
+    <b>科一选择题 = 29题×2分 = 58分</b>（其中法规8题、职业理念4题、文化素养9题、逻辑2题、信息处理2题、阅读理解4题）<br>
+    控制在<b>25分钟以内</b>——文化素养不会就是不会，<b>别纠结，快速过</b>。
+  </div>
+
+  <div class="big">
+    <h3>📌 模块一：教育法律法规（8题，最好拿分）</h3>
+    <p><b>常考数字（务必记牢）：</b></p>
+    <div class="scroll">
+    <table>
+      <tr><th>内容</th><th>数字</th></tr>
+      <tr><td>教师节</td><td><b>9月10日</b></td></tr>
+      <tr><td>义务教育年限</td><td><b>九年</b>（小学6年+初中3年）</td></tr>
+      <tr><td>未成年人指</td><td><b>未满18周岁</b>的公民</td></tr>
+      <tr><td>学生申诉：对学校处理不服，向教育行政部门申诉</td><td><b>15日内</b>提出</td></tr>
+      <tr><td>教育行政部门接到申诉后答复</td><td><b>30日内</b>作出处理</td></tr>
+      <tr><td>禁止招用童工</td><td>未满<b>16周岁</b></td></tr>
+      <tr><td>未成年人不能进入营业性网吧</td><td>任何时间都不行</td></tr>
+      <tr><td>学校不得开除学生</td><td>义务教育阶段<b>不得开除</b></td></tr>
+      <tr><td>教师资格被撤销后</td><td><b>5年内</b>不得重新申请</td></tr>
+      <tr><td>因故意犯罪被判处有期徒刑以上</td><td><b>终身</b>不得取得教师资格</td></tr>
+    </table>
+    </div>
+    <p style="margin-top:10px"><b>常考法律责任：</b></p>
+    <p>• <b>行政责任</b>——罚款、拘留、处分、吊销执照（最常见）</p>
+    <p>• <b>民事责任</b>——赔偿损失、赔礼道歉（涉及人身/财产损害）</p>
+    <p>• <b>刑事责任</b>——犯罪才承担（体罚致伤致残、性侵学生等）</p>
+    <p class="tip" style="margin:8px 0 0"><b>判断口诀：</b>没伤人→行政；伤到人了→民事+行政；伤得很重/犯罪→刑事。</p>
+    <p style="margin-top:10px"><b>常考法律：</b>《教育法》（母法/基本法）、《义务教育法》、《教师法》、《未成年人保护法》、《预防未成年人犯罪法》、《学生伤害事故处理办法》</p>
+    <p><b>未成年人保护四大保护：</b>家庭保护、学校保护、社会保护、<b>网络保护</b>（新修订增加）＋政府保护、司法保护。<b>新修订要点：增设"网络保护""政府保护"专章。</b></p>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块二：职业理念（4题，送分题）</h3>
+    <p>直接考三观的定义，用前面材料分析的模板反过来判断即可。</p>
+    <p><b>考点：</b>素质教育的内涵、学生观（两独一发）、教师观（促进学社/尊帮反合）</p>
+    <p class="tip" style="margin:8px 0 0"><b>做题技巧：</b>凡是"尊重学生""因材施教""面向全体""发展眼光"的选项→<b>对</b>；凡是"唯分数""排名""体罚""挖苦""一刀切"的选项→<b>错</b>。</p>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块三：文化素养（9题，最难，随缘但可捞分）</h3>
+    <p><b>历史常识：</b></p>
+    <p>• 中国四大发明：造纸术（蔡伦改进）、印刷术（毕昇-活字）、火药、指南针</p>
+    <p>• 中国朝代顺序：夏商周秦汉，三国两晋南北朝，隋唐五代宋元明清</p>
+    <p>• 世界四大文明古国：古中国、古印度、古埃及、古巴比伦</p>
+    <p>• 第一次世界大战（1914-1918）、第二次世界大战（1939-1945）</p>
+    <p style="margin-top:10px"><b>文学常识：</b></p>
+    <p>• 《诗经》——我国第一部诗歌总集（风雅颂）</p>
+    <p>• 《史记》——司马迁，我国第一部纪传体通史（"史家之绝唱，无韵之离骚"—鲁迅）</p>
+    <p>• 四大名著作者：罗贯中《三国演义》、施耐庵《水浒传》、吴承恩《西游记》、曹雪芹《红楼梦》</p>
+    <p>• 鲁迅——《呐喊》《彷徨》《朝花夕拾》《阿Q正传》</p>
+    <p>• 老舍《骆驼祥子》《茶馆》；巴金《家》《春》《秋》；茅盾《子夜》；沈从文《边城》</p>
+    <p>• 外国：莎士比亚（英）《哈姆雷特》《罗密欧与朱丽叶》；托尔斯泰（俄）《战争与和平》《安娜·卡列尼娜》；巴尔扎克（法）《人间喜剧》；雨果（法）《巴黎圣母院》《悲惨世界》</p>
+    <p>• 世界三大短篇小说之王：莫泊桑（法）、契诃夫（俄）、欧·亨利（美）</p>
+    <p style="margin-top:10px"><b>艺术常识：</b></p>
+    <p>• 中国十大名画：《清明上河图》（张择端）、《洛神赋图》（顾恺之）、《富春山居图》（黄公望）等</p>
+    <p>• 音乐：贝多芬（德）《命运交响曲》《第九交响曲》；莫扎特（奥）；巴赫（德）</p>
+    <p>• 美术：达·芬奇《蒙娜丽莎》《最后的晚餐》；梵高《向日葵》《星空》；毕加索《格尔尼卡》</p>
+    <p style="margin-top:10px"><b>科学常识：</b></p>
+    <p>• 牛顿——万有引力、三大运动定律</p>
+    <p>• 爱因斯坦——相对论</p>
+    <p>• 居里夫人——发现镭和钋，两获诺贝尔奖</p>
+    <p>• 达尔文——《物种起源》、进化论</p>
+    <p>• 屠呦呦——青蒿素，2015年诺贝尔生理学或医学奖（中国首位获诺奖科学类奖项）</p>
+    <p>• 袁隆平——杂交水稻</p>
+    <p>• 中国航天：神舟系列、嫦娥探月、天问一号火星、空间站"天宫"</p>
+    <p class="tip" style="margin:8px 0 0"><b>捞分策略：</b>文化素养9题，会一半就不亏。<b>每题不超过30秒</b>，不会的直接选，把时间留给后面的主观题。</p>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块四：逻辑与信息处理（4题，技巧性强）</h3>
+    <p><b>逻辑推理常考：</b></p>
+    <p>• <b>充分条件</b>：如果P则Q —— P⇒Q，否Q则否P（逆否等价）</p>
+    <p>• <b>必要条件</b>：只有P才Q —— Q⇒P</p>
+    <p>• <b>矛盾关系</b>：所有S是P ↔ 有些S不是P（必有一真一假）</p>
+    <p>• <b>三段论</b>：所有A是B，所有B是C ⇒ 所有A是C</p>
+    <p>• <b>数字推理</b>：看差分、看倍数、看平方立方</p>
+    <p>• <b>图形推理</b>：看数量（点线面角）、看位置（旋转翻转）、看样式（叠加去同存异）</p>
+    <p style="margin-top:10px"><b>信息处理常考：</b></p>
+    <p>• <b>Excel</b>：求和 =SUM()、平均 =AVERAGE()、条件 =IF()、绝对引用 $A$1</p>
+    <p>• <b>Word</b>：页眉页脚、邮件合并、查找替换</p>
+    <p>• <b>PPT</b>：动画、母版、超链接</p>
+    <p>• <b>快捷键</b>：Ctrl+C 复制、Ctrl+V 粘贴、Ctrl+Z 撤销、Ctrl+S 保存、Ctrl+A 全选</p>
+  </div>
+
+  <div class="big">
+    <h3>📌 模块五：阅读理解（4题，送分）</h3>
+    <p>给一篇短文，问"下列理解正确/不正确的一项"。<b>回到原文逐字比对</b>即可，注意"偷换概念""以偏概全""绝对化"三类陷阱。</p>
+  </div>
+</section>
+
+<!-- ==================== 9. 考前速览 ==================== -->
+
+
+<section class="panel" id="panel-review">
+  <div class="blue">
+    <b>🔁 这一页是你自己攒出来的。</b>
+    在各个板块点「<b>△ 不熟</b>」的题，会自动汇总到这里；<b>点「✓ 会了」就从这一页消失</b>。<br>
+    <b>考前最后 30 分钟，只看这一页。</b>标记只存在你自己的手机上，不会传给任何人。
+  </div>
+  <div class="rvtop">
+    <button class="btn" onclick="buildReview()">🔄 刷新</button>
+    <button class="btn" onclick="clearUnsure()">🧹 清空「不熟」标记</button>
+  </div>
+  <div id="reviewBody"></div>
+</section>
+
+<section class="panel" id="panel-sulan">
+  <div class="blue">
+    <b>⏰ 这一页是考前一小时看的。</b>不背，<b>快速扫读</b>，让大脑把关键词"调出来"。<br>
+    <b>科一进场前看这里的前半段，科二进场前看后半段。</b>
+  </div>
+
+  <div class="big">
+    <h3>🅰️ 科一·进场前 10 分钟速览</h3>
+    <p class="big" style="font-size:16px;line-height:2">
+    <b>【三观】</b><br>
+    • 教育观 = <b>提素个性创两全</b><br>
+    • 学生观 = <b>两独一发</b>（发展的人、独特的人、独立意义的人）<br>
+    • 教师观 = 角色「<b>促进学社</b>」／行为「<b>尊帮反合</b>」<br><br>
+    <b>【职业道德】三爱两人一终身</b><br>
+    爱国守法 · 爱岗敬业 · <b>关爱学生</b>（尊重人格，不体罚讽刺）· <b>教书育人</b>（不以分数为唯一标准）· 为人师表 · 终身学习<br><br>
+    <b>【法规必背数字】</b><br>
+    教师节 9月10日 ｜ 未成年人 = 未满<b>18</b>周岁 ｜ 申诉 <b>15</b>日内提，<b>30</b>日内答复 ｜ 童工 <b>16</b>周岁 ｜ 撤销教师资格 <b>5</b>年 ｜ 故意犯罪获刑 = <b>终身</b>禁入<br><br>
+    <b>【作文】</b><br>
+    必须写标题 ｜ 必须≥800字（建议1000）｜ <b>必须落到教育</b> ｜ 五段式 ｜ 分论点配例子<br>
+    万能句：<i>"教育的本质意味着：一棵树摇动另一棵树，一朵云推动另一朵云。"——雅斯贝尔斯</i>
+    </p>
+  </div>
+
+  <div class="big">
+    <h3>🅱️ 科二·进场前 10 分钟速览</h3>
+    <p class="big" style="font-size:16px;line-height:2">
+    <b>【科二主观题分数结构】</b><br>
+    辨析 4×8=<b>32</b> ｜ 简答 4×10=<b>40</b> ｜ 材料分析 2×18=<b>36</b> ｜ 选择 21×2=<b>42</b><br>
+    <b>→ 主观题108分，是绝对主战场。选择题不会就蒙，别恋战。</b><br><br>
+    <b>【辨析题模板】</b><br>
+    判断（正确/错误）→ ①正确概念 ②对比分析 ③扣题。120-180字。<br>
+    绝对化表述（"就是""等于""完全""只要…就…""越…越…"）→ <b>90%是错误</b><br><br>
+    <b>【简答题口诀】</b><br>
+    • 教学过程4规律 = 间接直接、知识能力、主导主体、传授思想<br>
+    • 启发性原则 = 主动思考 + 民主氛围 + 动手实践（"主民实"）<br>
+    • 新课改六目标 = 功能、结构、内容、实施、评价、管理<br>
+    • 德育9原则 = <b>导疏尊知，正依教因集</b><br>
+    • 教学8原则 = <b>直启循巩量，思理因</b><br>
+    • 皮亚杰4阶段 = 感知运动（客体永久）→ 前运算（自我中心、不守恒）→ 具体运算（守恒）→ 形式运算（抽象）<br>
+    • 学习策略（麦基奇）= 认知策略 + 元认知策略 + 资源管理策略<br><br>
+    <b>【材料分析 5 步法】</b><br>
+    ①点明原则/理论 → ②一句话解释 → ③<u>引用材料原文</u> → ④理论+材料结合分析 → ⑤分点建议/总结<br>
+    <b>不引用材料 = 扣一半分！</b><br><br>
+    <b>【最常考的采分点】</b><br>
+    学生观"两独一发" · 教师观"促进学社" · 素质教育"提素个性创两全" · 德育原则"导疏尊知" · 教学原则"直启循巩"
+    </p>
+  </div>
+
+  <div class="big">
+    <h3>🎲 蒙题策略（完全不会时用）</h3>
+    <p><b>通用原则：</b></p>
+    <p>① <b>绝对化表述的选项大概率错</b>——"一定""完全""所有""必须""绝对不能"。<br>
+    <span style="color:var(--ink2)">（注意：这条用于<b>选项</b>判断，和辨析题题干判断是同一个道理）</span></p>
+    <p>② <b>态度温和的选项大概率对</b>——"有助于""有利于""通常""可能"。</p>
+    <p>③ <b>两个选项意思相反</b>——答案通常在其中一个。</p>
+    <p>④ <b>两个选项表述几乎一样</b>——答案通常在其中一个（换个说法重复出现往往就是考点）。</p>
+    <p>⑤ <b>符合教育正能量的选项大概率对</b>——尊重学生、因材施教、面向全体 → 对；体罚、歧视、唯分数 → 错。</p>
+    <p style="margin-top:12px"><b>"选非题"（下列不属于/不正确的是）：</b></p>
+    <p>• 你统计过：<b>D 明显偏少（约19%），A 偏多（约30%）</b><br>
+    → 所以策略是：<b>先排除 D，然后在 A、B、C 里选</b>（前提是你能排除至少一个）。<br>
+    → ⚠️ 你文档里另一条写"选非题蒙B或D，避开A"，与上面这条冲突。<b>以样本量更大的统计为准：不要优先蒙D。</b></p>
+    <p style="margin-top:12px"><b>长选项 vs 短选项：</b></p>
+    <p>• 表述<b>最长、最具体、最完整</b>的选项，在概念题里命中率略高（因为出题人要写清楚才不出错）。</p>
+    <p>• 但如果是"选非题"，最长选项反而可能是正确答案（因为它写全了）。</p>
+    <p class="warn" style="margin:12px 0 0"><b>⚠️ 最后提醒：</b>蒙题只是最后手段。科二选择题只有42分，<b>别为了纠结一道2分的选择题，丢掉了后面10分的简答题时间</b>。选择题平均40秒一题，到点就走。</p>
+  </div>
+
+  <div class="big">
+    <h3>🚀 开考后 5 分钟：三件事</h3>
+    <p><b>1. 先写作文标题</b>（科一）——想好立意，先把标题写在答题卡上，心里就踏实了。</p>
+    <p><b>2. 先做主观题</b>——科二直接翻到后面的辨析/简答/材料分析，<b>把108分的主观题做完，再回来做选择题</b>。历史教训：很多人选择题纠结太久，简答题没写完。</p>
+    <p><b>3. 每道主观题先分点、再填充</b>——先把①②③的骨架写出来，能写几点写几点，<b>不留空白</b>。阅卷是按点给分，写了一句话有分，空白一定0分。</p>
+  </div>
+
+  <div class="blue">
+    <b>💪 最后一句话</b><br>
+    你手里这份清单，是从<b>十几套真题里筛出来"没考过"的部分</b>——这本身就是最高效的复习路径。<br>
+    现在不需要焦虑"还有多少没背"，只需要把<b>已经标了★★★的过一遍</b>。<br>
+    <b>教资是及格万岁（折算70分即合格），不是择优录取。拿到该拿的分，就够了。</b><br><br>
+    <b>祝考试顺利！🎉</b>
+  </div>
+</section>
+
+</div><!-- /.wrap -->
+
+<script>
+var TABS=[
+  {id:'plan',     name:'⏱ 冲刺时间表'},
+  {id:'k2jian',   name:'科二·简答题'},
+  {id:'k2bian',   name:'科二·辨析题'},
+  {id:'k2cai',    name:'科二·材料分析'},
+  {id:'k2xuan',   name:'科二·选择速览'},
+  {id:'k1cai',    name:'科一·材料分析'},
+  {id:'k1zuo',    name:'科一·作文'},
+  {id:'k1xuan',   name:'科一·选择速览'},
+
+  {id:'review',   name:'🔁 我的不熟'},
+  {id:'sulan',    name:'📖 考前速览'}
+];
+var LS_KEY='jiaozhi_26xia_progress_v1';
+
+function buildTabs(){
+  var box=document.getElementById('tabs');
+  TABS.forEach(function(t,i){
+    var b=document.createElement('button');
+    b.className='tab'+(i===0?' on':'');
+    b.textContent=t.name;
+    b.setAttribute('data-tab',t.id);
+    b.onclick=function(){switchTab(t.id);};
+    box.appendChild(b);
+  });
+}
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-tab')===id);
+  });
+  document.querySelectorAll('.panel').forEach(function(p){
+    p.classList.toggle('on', p.id==='panel-'+id);
+  });
+  /* 顶栏：选完标签后回到「收起」状态，别一直占屏幕 */
+  topPinned=false;
+  document.body.classList.remove('mini');
+  /* 手机上把当前标签滚到中间，免得看不到后面几个 */
+  var cur=document.querySelector('.tab[data-tab="'+id+'"]');
+  var box=document.getElementById('tabs');
+  if(cur&&box&&box.scrollWidth>box.clientWidth+2){
+    var left=cur.offsetLeft-(box.clientWidth-cur.offsetWidth)/2;
+    box.scrollTo({left:left<0?0:left,behavior:'smooth'});
+  }
+  var nm=document.getElementById('miniName');
+  if(nm){var t=TABS.filter(function(x){return x.id===id;})[0]; if(t) nm.textContent=t.name;}
+  if(id==='review') buildReview();
+  tabsFade();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleAns(btn){
+  var a=btn.closest('.q').querySelector('.ans');
+  var open=a.classList.toggle('show');
+  btn.textContent=open?'收起答案':'显示答案';
+}
+function expandAll(){
+  document.querySelectorAll('.panel.on .ans').forEach(function(a){a.classList.add('show');});
+  document.querySelectorAll('.panel.on .btn.rev').forEach(function(b){b.textContent='收起答案';});
+}
+function collapseAll(){
+  document.querySelectorAll('.panel.on .ans').forEach(function(a){a.classList.remove('show');});
+  document.querySelectorAll('.panel.on .btn.rev').forEach(function(b){b.textContent='显示答案';});
+}
+/* ---- 进度标记 ---- */
+function getStore(){
+  try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}');}catch(e){return {};}
+}
+function setStore(o){
+  try{localStorage.setItem(LS_KEY,JSON.stringify(o));}catch(e){}
+}
+function mark(btn,state){
+  var q=btn.closest('.q');
+  var id=q.getAttribute('data-id');
+  if(!id) return;
+  var store=getStore();
+  var cur=store[id];
+  if(cur===state){ delete store[id]; }
+  else { store[id]=state; }
+  setStore(store);
+  applyMark(q,store[id]);
+  updateProgress();
+  var rv=document.getElementById('panel-review');
+  if(rv&&rv.classList.contains('on')) buildReview();
+}
+function applyMark(q,state){
+  q.classList.remove('mark-ok','mark-un');
+  if(state==='ok') q.classList.add('mark-ok');
+  if(state==='unsure') q.classList.add('mark-un');
+  q.querySelectorAll('.mark-btn').forEach(function(b){
+    var t=b.getAttribute('data-mk');
+    b.classList.toggle('primary', (t==='ok'&&state==='ok')||(t==='un'&&state==='unsure'));
+  });
+}
+function updateProgress(){
+  var store=getStore();
+  /* 排除「我的不熟」里的克隆卡，否则进度会被重复计数 */
+  var all=document.querySelectorAll('.q[data-id]:not(.qclone)');
+  var done=0, ok=0, un=0;
+  all.forEach(function(q){
+    var s=store[q.getAttribute('data-id')];
+    applyMark(q,s);
+    if(s){done++;}
+    if(s==='ok')ok++;
+    if(s==='unsure')un++;
+  });
+  var total=all.length;
+  var pct= total? Math.round(ok/total*100):0;
+  var pf=document.getElementById('pfill');
+  var pt=document.getElementById('ptext');
+  if(pf) pf.style.width=pct+'%';
+  if(pt) pt.textContent= ok+' / '+total+(un? '（不熟 '+un+'）':'');
+  var mp=document.getElementById('miniProg');
+  if(mp) mp.textContent= ok+' / '+total+(un? ' · 不熟 '+un : '');
+  /* 标签上直接显示不熟条数 */
+  var tb=document.querySelector('.tab[data-tab="review"]');
+  if(tb){ tb.textContent = '🔁 我的不熟' + (un? '（'+un+'）':''); }
+}
+/* ---- 「我的不熟」自动汇总页 ---- */
+function buildReview(){
+  var box=document.getElementById('reviewBody');
+  if(!box) return;
+  var store=getStore();
+  var ids=Object.keys(store).filter(function(k){return store[k]==='unsure';});
+  box.innerHTML='';
+  if(!ids.length){
+    box.innerHTML='<div class="empty">🎉 还没有标记任何「不熟」的题。<br><br>'
+      +'翻到各个板块，看到不会的题就点一下「<b>不熟</b>」，这里会自动汇总成一张清单，'
+      +'考前最后半小时只看这一页就够了。</div>';
+  } else {
+    var head=document.createElement('div');
+    head.className='rvhead';
+    head.innerHTML='共 <b>'+ids.length+'</b> 题。点「会了」就会从这一页消失 👇';
+    box.appendChild(head);
+    ids.forEach(function(id){
+      var src=null;
+      document.querySelectorAll('.panel:not(#panel-review) .q[data-id]').forEach(function(q){
+        if(!src && q.getAttribute('data-id')===id) src=q;
+      });
+      if(!src) return;
+      var c=src.cloneNode(true);
+      c.classList.add('qclone');
+      c.querySelectorAll('.ans').forEach(function(a){a.classList.remove('show');});
+      c.querySelectorAll('.btn.rev').forEach(function(b){b.textContent='显示答案';});
+      /* 「来自哪个板块」用面板名，不是卡片上的难度标签 */
+      var pid=src.closest('.panel') ? src.closest('.panel').id.replace('panel-','') : '';
+      var t=TABS.filter(function(x){return x.id===pid;})[0];
+      var w=document.createElement('span');
+      w.className='rvfrom';
+      w.textContent='来自：'+(t? t.name : '其它')+' 板块';
+      c.insertBefore(w,c.firstChild);
+      box.appendChild(c);
+      applyMark(c, store[id]);
+    });
+  }
+}
+function clearUnsure(){
+  if(!confirm('把「不熟」标记全部清空？（「会了」的标记不受影响）')) return;
+  var store=getStore();
+  Object.keys(store).forEach(function(k){ if(store[k]==='unsure') delete store[k]; });
+  setStore(store);
+  updateProgress();
+  buildReview();
+}
+/* ---- 顶栏收起 / 展开 ---- */
+var topPinned=false;
+function expandTop(){
+  topPinned=true;
+  document.body.classList.remove('mini');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function onScroll(){
+  var y=window.pageYOffset||document.documentElement.scrollTop||0;
+  if(y<=160){ topPinned=false; document.body.classList.remove('mini'); }
+  else if(!topPinned){ document.body.classList.add('mini'); }
+}
+function tabsFade(){
+  var t=document.getElementById('tabs'), w=document.getElementById('tabswrap');
+  if(!t||!w) return;
+  var atEnd = t.scrollWidth - t.clientWidth - t.scrollLeft < 8;
+  w.classList.toggle('atend', atEnd || t.scrollWidth<=t.clientWidth+2);
+}
+/* ---- 打印 ---- */
+function openModal(id){ var m=document.getElementById(id); if(m) m.classList.add('on'); }
+function closeModal(id){ var m=document.getElementById(id); if(m) m.classList.remove('on'); }
+function isMobile(){
+  var ua=navigator.userAgent||'';
+  if(/Android|iPhone|iPod|iPad|Mobile|HarmonyOS|Windows Phone/i.test(ua)) return true;
+  return (navigator.maxTouchPoints>1 && /Mac|iPad/.test(navigator.platform||''));
+}
+function doPrint(){
+  document.body.classList.remove('mini');
+  expandAll();
+  if(isMobile()){ openModal('printMask'); }   /* 手机直接调 print() 常常没反应，先给路径 */
+  else { setTimeout(function(){ window.print(); }, 60); }
+}
+function tryNativePrint(){
+  closeModal('printMask');
+  setTimeout(function(){ window.print(); }, 150);
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ closeModal('printMask'); }
+});
+function resetAll(){
+  if(!confirm('确定要清空所有「会了/不熟」标记吗？')) return;
+  setStore({});
+  updateProgress();
+}
+function switchTheme(){
+  var b=document.body;
+  b.setAttribute('data-theme', b.getAttribute('data-theme')==='dark'?'light':'dark');
+  try{localStorage.setItem('jiaozhi_theme',b.getAttribute('data-theme'));}catch(e){}
+}
+(function(){
+  try{
+    var t=localStorage.getItem('jiaozhi_theme');
+    if(t) document.body.setAttribute('data-theme',t);
+  }catch(e){}
+  var exam=new Date(2026,8,13); // 2026-09-13
+  var now=new Date();
+  var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  /* 只数「中间完整的天」——今天和考试日本身都不算进倒计时。
+     9/11 → 1 天 ｜ 9/12 → 0（明天就考）｜ 9/13 → -1（今天考试） */
+  var d=Math.round((exam-today)/86400000)-1;
+  var cdBox=document.getElementById('cdBox');
+  if(cdBox){
+    cdBox.innerHTML = d>0  ? '距考试 <b>'+d+'</b> 天'
+                   : d===0 ? '<b>⚡ 明天就考</b>'
+                   : d===-1? '<b>🔥 今天考试</b>'
+                   : '已考完';
+  }
+  buildTabs();
+  updateProgress();
+  tabsFade();
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',tabsFade);
+  var tb=document.getElementById('tabs');
+  if(tb) tb.addEventListener('scroll',tabsFade,{passive:true});
+  /* 从「不熟」跳回原题 */
+  buildReview();
+})();
+</script>
+</body>
+</html>
