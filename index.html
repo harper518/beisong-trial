@@ -13,7 +13,7 @@
      而且不能用透明底（苹果会把透明的地方填成黑色）。现在是草地绿实色底。 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-<title>挖空背诵工具 v187 · 小阮出品</title>
+<title>挖空背诵工具 v188 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1227,7 +1227,18 @@ body.focus-mode #cardText { line-height:2; }
 
 /* 🆕 v183 B1：话术生成器弹窗的样式（原来是塞在 JS 字符串里现注入的，测试要求全文只留一个样式表，搬进来）*/
 
-#pgModal .pg-wrap{background:var(--bg-card);border-radius:var(--radius);width:96%;max-width:480px;max-height:88dvh;display:flex;flex-direction:column;padding:18px 0 0}
+/* 🐞 2026-09-27 v188 修（用户实测：荣耀 X9 Pro 平板「自带浏览器」里，导入话术弹窗**不能上下滑动**，搜狗浏览器正常）
+   根因＝这一行**只写了 `max-height:88dvh`、没有老写法打底**。`dvh` 要 Chrome 108+ 才认，
+   老内核读到这句**不报错、直接把整句丢弃** → 弹窗一点高度限制都没有 →
+   实测长成 **4691px** 的长条、顶部跑到屏幕上方 **-1753**，而外面那层遮罩没开滚动 → **一个像素都划不动**。
+   ✅ 改前**真代码里**共 **55 处** `dvh`（另有 8 行只在注释里提到它），**只有这一处漏了兜底** ——
+   别处都是「先 vh 打底、紧跟一句 dvh」。这条以后由 `_v188_test.js` 全文盯着，不再靠人眼。 */
+#pgModal .pg-wrap{background:var(--bg-card);border-radius:var(--radius);width:96%;max-width:480px;max-height:88vh;max-height:88dvh;display:flex;flex-direction:column;padding:18px 0 0}
+/* 🛡️ 2026-09-27 v188 安全网：万一弹窗因为**任何原因**比屏幕还高，至少还能划得动。
+   高度兜底生效时（弹窗永远不超屏）这两句**一个像素都不改变** —— 手机仍是贴底、平板仍是居中。 */
+#pgModal{overflow-y:auto;-webkit-overflow-scrolling:touch}
+#pgModal .pg-wrap{margin-top:auto}
+@media (min-width:481px){#pgModal .pg-wrap{margin:auto}}   /* ⚠️ 断点必须跟 `.modal-overlay` 自己的那个一致（`:712` 是 481px，不是 768） */
 #pgModal .pg-head{display:flex;align-items:center;justify-content:space-between;padding:0 16px 10px}
 #pgModal .pg-head h3{margin:0;font-size:var(--f17)}
 #pgModal .pg-scroll{overflow-y:auto;overflow-x:hidden;flex:1;min-height:0;padding:0 14px}
@@ -1437,7 +1448,7 @@ function totalCardCount(exceptBankId) {
   });
   return n;
 }
-var APP_VERSION = 187;
+var APP_VERSION = 188;
 
 // ==== 开发者的话（写死在 HTML 里的兜底文案）====
 // 显示优先级：云端(本次启动拉到了) → 本地 authorNote → 这段兜底
@@ -16882,7 +16893,7 @@ function renderSettings() {
         '</div>' +
       '</div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:var(--f12);transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:var(--f13);cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:var(--f12)"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v187</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v188</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
       // 📲 2026-09-18 v166：用户在设置页找不到「怎么把工具存到桌面」的说明 → 关于最后一行加这个入口。
       //    点开走 showInstallGuide()（无延迟弹窗）。以后别的工具要加同一份 → 见 `新建文件夹/安装教程-可复用.md`。
