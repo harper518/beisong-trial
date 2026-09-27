@@ -13,7 +13,7 @@
      而且不能用透明底（苹果会把透明的地方填成黑色）。现在是草地绿实色底。 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-<title>挖空背诵工具 v185 · 小阮出品</title>
+<title>挖空背诵工具 v186 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1437,7 +1437,7 @@ function totalCardCount(exceptBankId) {
   });
   return n;
 }
-var APP_VERSION = 185;
+var APP_VERSION = 186;
 
 // ==== 开发者的话（写死在 HTML 里的兜底文案）====
 // 显示优先级：云端(本次启动拉到了) → 本地 authorNote → 这段兜底
@@ -9453,11 +9453,18 @@ function _pgBuild() {
     L.push('     我标了的一律挖，不要跟我说「如果你想挖XX告诉我」这种话');
     L.push(N() + '我原文这些标记一个都没有 → 一个空都不要挖，也不许自己找关键词来挖');
   } else {
-    L.push(N() + '你自己判断哪些地方该挖 —— 挑最关键的、容易忘的字词挖，别整句挖。');
+    // 🆕 v186（用户 2026-09-27 拍板「乙：也删掉，让 AI 完全自由挖空」）：
+    //    原来这里有 **两条数量/形式限制** ——
+    //      ·「别挖太多，一道题挑最该记的几处就行了」
+    //      ·「别整句整句地挖 —— 只挖那几个关键的字词」
+    //    用户原话：「让 ai 自己挑关键词挖空…就是 ai 根据考点之类的地方，ai 自己挖空，
+    //    **不需要限制它只挖几个之类的限制不需要**，ai 自己会觉得挖出最好的挖空的地方」
+    //    → 两条都删掉，只留「从考点挑」这个方向（她要的就是"按考点挑"，不是"随便挑"）。
+    //    ⚠️ 别再往里加回任何「几处 / 别太多」的说法 —— 那是这次专门删掉的。
+    L.push(N() + '你自己判断哪些地方该挖 —— 从考点、最容易考、最容易忘的地方挑。');
     L.push(N() + '挖的地方用两个 @ 括起来。例：②素质教育以@@培养创新精神@@为重点。');
     L.push('   · 题目里、答案里都可以挖，具体挖哪儿你判断');
-    L.push('   · 别挖太多，一道题挑最该记的几处就行了');
-    L.push('   · 别整句整句地挖 —— 只挖那几个关键的字词');
+    L.push('   · 挖多少处也由你定 —— 觉得哪几处最值得记就挖哪几处，不用凑数、也不用刻意少挖');
   }
   L.push('');
 
@@ -9522,6 +9529,15 @@ function _pgBuild() {
   L.push(N() + '🔴 答案里带 ① ② ③ 这种序号的，【每个序号都要另起一行】，不要连着写下去。');
   L.push(N() + '没序号的地方，一句话也另起一行。');
   L.push(N() + '原文答案里的 ①②③ 这种序号，原样保留，别去掉。');
+  // 🆕 v186（用户 2026-09-27）：「要提示 ai 段落开头都要空二格」
+  //    她选的「甲：每个要点算一段」→ 就是**答案的每一个要点行开头都空两格**（不是只有第一行）。
+  //    ⚠️ 全角空格一律写**转义**写法 \u3000，别写那个真字符 —— 真字符在编辑器里跟普通空格
+  //       长得一模一样（v176 那次我就写错过一次，靠 od -c 才发现）。
+  //    ⚠️ 得写清「只有答案的行要空」—— 题目行/大点行前面一空，$/￥ 就不在行首了。
+  var _IDSP2 = '\u3000\u3000';   // 两个全角空格
+  L.push(N() + '🔴 答案的【每一个要点行开头都要空两格】—— 用两个全角空格（不是半角空格、也不用 Tab）。');
+  L.push('   · 长这样：' + _IDSP2 + '①素质教育是面向全体学生的教育');
+  L.push('   · 只有【答案的行】要空 —— 题目行（开头写 $ 的）和大点行（开头写 ￥ 的）前面**不要空**');
   if (_PGST.prefix === 'drop') {
     L.push(N() + '答案行最前面如果有助记小前缀（比如「民（民主） →」这种，跟口诀对得上的）——');
     L.push('   🔴 把它们去掉，只留答案要点本身，不要那个前缀。');
@@ -10087,7 +10103,17 @@ function doImport() {
 
   cards = cards.map(c => {
     c.question = (c.question || '').trim();
-    c.answer = (c.answer || '').trim();
+    // 🐞 2026-09-27 v186 修（用户原话：「挖空导入的文本有段落空二格子　但是导入后进去段落开头没有空二格」）：
+    //    `c.answer.trim()` 会把**整段答案最前面**那个缩进吃掉（`trim` 连全角空格 \u3000 一起剥）。
+    //    只吃第一行 → 用户看到的就是「第一行顶格、后面几行有缩进」。
+    //    ⚠️ 更狠的是它**连带把挖空位置弄偏**：解析器（parseMarkedText）是**带着缩进**算 @@ 挖空坐标的，
+    //       这里一 trim，正文短了 N 个字、**blanks 的 start/end 却一个没动** → 挖空整体往右偏 N 格。
+    //       （实测：`　　①素质教育以@@培养创新精神@@为重点` 会渲染成「①素质教育以培养[空]点」，
+    //        正确应该是「①素质教育以[空]为重点」。）
+    //    ✅ 改法：**只去尾部空白，前面一个字都不许动** —— 不动前面，坐标天然还对得上。
+    //    ⚠️ 另外几条路（parseMbakText 的竖线 /【】格式、几种老格式）**本来就是 trim 过的**，
+    //       这里改了对它们没有任何影响（它们前面本来就没空白）。
+    c.answer = (c.answer || '').replace(/\s+$/, '');
     const ft = c.question + '\n' + c.answer;
     return { ...c, id: generateId(), fullText: ft,
       wrongCount: c.wrongCount || 0, correctCount: c.correctCount || 0,
@@ -12340,6 +12366,17 @@ function onBankChange(resetFilter = true) {
   if (resetFilter) { categoryFilter = null; sectionFilter = null; } // 切换题库时重置筛选（两组一起清）
   if (!bankId) return;
   sessionStorage.setItem('lastPracticeBank', bankId);
+  // 🐞 2026-09-27 v186 修（用户原话：「做题页　可以选择单题库选择题库　但是没有成功　还是原来的题库」）：
+  //    选完题库**实际是选上了**（做题真的出这个题库的题），可那颗按钮上显示的**还是旧题库名** ——
+  //    因为 `#bankSelectLabel` 全工具**只在 renderPracticeSetup 画页面时写过一次**，
+  //    选题库那条回调只改了隐藏的 value、没管那行字 → 用户一看没变，以为没选上。
+  //    ✅ 在这里统一补上：所有调用方（做题页弹窗 / 别处切题库）都会经过 onBankChange，改一处就全好了。
+  //    ⚠️ 用 textContent 不用 innerHTML —— 题库名里带 < > & 也不会出事。
+  var _bl = document.getElementById('bankSelectLabel');
+  if (_bl) {
+    var _bb = appData.banks[bankId];
+    if (_bb) _bl.textContent = _bb.name + '（' + _bb.cards.length + ' 题）';
+  }
 
   let seqDiv = document.getElementById('seqInfo');
   if (drawMode === 'sequential') {
@@ -16845,7 +16882,7 @@ function renderSettings() {
         '</div>' +
       '</div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:var(--f12);transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:var(--f13);cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:var(--f12)"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v185</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v186</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
       // 📲 2026-09-18 v166：用户在设置页找不到「怎么把工具存到桌面」的说明 → 关于最后一行加这个入口。
       //    点开走 showInstallGuide()（无延迟弹窗）。以后别的工具要加同一份 → 见 `新建文件夹/安装教程-可复用.md`。
