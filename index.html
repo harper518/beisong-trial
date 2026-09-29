@@ -13,7 +13,7 @@
      而且不能用透明底（苹果会把透明的地方填成黑色）。现在是草地绿实色底。 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-<title>挖空背诵工具 v190 · 小阮出品</title>
+<title>挖空背诵工具 v191 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -491,6 +491,30 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 /* ============ Practice Card ============ */
 
 .practice-card{background:var(--bg-card);border-radius:var(--radius);padding:14px 14px;box-shadow:var(--shadow-md);border:1px solid var(--border);min-height:100px;margin-bottom:10px;position:relative}
+/* 🆕 v191：四档自评（🔴忘了 / 🟡模糊 / 🟢会了 / 🔵太简单）
+   —— 用户 2026-09-30 **连调 4 轮**定的样子，别顺手改：
+     「不要太高亮 浅色系一点」→「边框细一点 边框的线太深色了」
+     →「能不能不要边框的线 线的颜色还有点深」→「柔光范围太大了 显得很糊」
+   ✅ 定稿：**整条边框去掉**（`border:none`）；选中靠「**底色深一档 + 一圈柔光**」区分。
+   ⚠️ 柔光必须是**模糊的**（`0 0 3px`）—— 边框没了之后，硬光环（`0 0 0 2px`）
+      会变成「另一条边框」，等于白去掉。
+   ⚠️ 柔光用 `box-shadow` 画 → **不占布局**，四颗不会因为选中而跳动。 */
+.memrate{display:flex;gap:7px;margin-top:16px;padding-top:14px;border-top:1px dashed var(--border)}
+.memrate-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  padding:9px 2px;min-height:58px;border-radius:12px;border:none;background:none;font-family:inherit;
+  cursor:pointer;transition:all .16s cubic-bezier(.4,0,.2,1);-webkit-user-select:none;user-select:none}
+.memrate-btn .e{font-size:var(--f17);line-height:1}
+.memrate-btn .t{font-size:var(--f12);font-weight:700;white-space:nowrap}
+.memrate-btn:active{transform:scale(.94)}
+.memrate-btn[data-tier="a"]{background:#fef2f2;color:#dc2626}
+.memrate-btn[data-tier="b"]{background:#fffbeb;color:#d97706}
+.memrate-btn[data-tier="c"]{background:#ecfdf5;color:#059669}
+.memrate-btn[data-tier="d"]{background:#ecfeff;color:#0e7490}
+.memrate-btn.on[data-tier="a"]{background:#fee2e2;color:#b91c1c;box-shadow:0 0 3px rgba(239,68,68,.18)}
+.memrate-btn.on[data-tier="b"]{background:#fef3c7;color:#b45309;box-shadow:0 0 3px rgba(245,158,11,.18)}
+.memrate-btn.on[data-tier="c"]{background:#d1fae5;color:#047857;box-shadow:0 0 3px rgba(16,185,129,.18)}
+.memrate-btn.on[data-tier="d"]{background:#cffafe;color:#0e7490;box-shadow:0 0 3px rgba(8,145,178,.18)}
+@media (max-width:360px){.memrate{gap:5px}.memrate-btn .t{font-size:var(--f11)}}
 .practice-card .card-text{font-size:var(--font-size-lg);line-height:2.0;word-break:break-word;overflow-wrap:break-word;overflow-x:hidden}
 .practice-card .blank-input{
   display:inline-block;min-width:28px;max-width:400px;
@@ -1448,7 +1472,7 @@ function totalCardCount(exceptBankId) {
   });
   return n;
 }
-var APP_VERSION = 190;
+var APP_VERSION = 191;
 
 // ==== 开发者的话（写死在 HTML 里的兜底文案）====
 // 显示优先级：云端(本次启动拉到了) → 本地 authorNote → 这段兜底
@@ -13202,6 +13226,9 @@ function renderPracticeCard() {
   const hasKj = !!card.koujue;
   const kjState = st.koujueExpanded[card.id] || 0;
   const hasVoice = appData.settings.voiceEnabled;
+  // 🆕 v191：四档自评那一排（位置＝**挖空区下面、底部翻页按钮上面**，用户 2026-09-30 定的）
+  //   条件：全能版 + 记忆复习开着 → 显示；题库没参加**照显示**（点了弹提示）。
+  const _rdRow = memRateRowHtml((st._srPick || {})[st.index] || null, 'practice');
   c.innerHTML = `<div>
     <!-- 顶部导航 -->
     <div class="flex justify-between items-center mb-8">
@@ -13237,6 +13264,9 @@ function renderPracticeCard() {
       <div class="kj-full${kjState > 1 ? ' show' : ''}" onclick="collapseKoujue()" style="cursor:pointer">${renderKjFull(card.koujue)}</div>
       <div class="kj-tap-hint">${kjState === 0 ? '' : kjState === 1 ? '👆 点关键字查看完整含义' : ''}</div>
     </div>` : ''}
+
+    <!-- 🆕 v191：四档自评（挖空区下面、翻页按钮上面） -->
+    ${_rdRow}
 
     <!-- 底部导航 -->
     <div class="flex gap-8" style="margin-top:20px">
@@ -13612,6 +13642,12 @@ function applyCheckToInputs(card) {
   const bank = appData.banks[recBankId];
   const bankCard = bank ? bank.cards.find(c => c.id === card.id) : null;
   if (bankCard && memActive(recBankId)) {
+    // 🆕 v191：判分也走**同一套「快照 + 重算」**（详见 memSrSnapshot 上面那段说明）。
+    //   这两行就是修那个「双倍晋级」bug 的关键 —— 不加的话：
+    //     按回车 → 判分（1→2）→ 紧跟的 activeEl.blur() 又触发一次 → **又晋级（2→3）**
+    //     （实测 `C:/tmp/_v191_bug_probe.js`：按一次回车 1→**3**、连点 4 次失焦 1→**5**）
+    memSrSnapshot(practiceState, bankCard);
+    memSrRollback(practiceState, bankCard);
     memApplyAnswer(bankCard, hasWrong);
     saveData(appData);
   }
@@ -14126,6 +14162,14 @@ function showPracticeResult() {
         (_rdOpen ? '全部收起 ▴' : '全部展开 ▾') + '</button>' +
     '</div>' +
     '<div id="rdList"></div>' +
+    // 🆕 v191（用户 2026-09-30）：明细**最后**再放一遍那两颗按钮 ——
+    //   明细很长，翻到底不用再滚回顶上找按钮。**功能跟上面那两颗一模一样**（同一个函数）。
+    //   ⚠️ 只放「再来一轮 / 重新设置」这两颗；「💾 复制备份码保存」**只在上面那一处**
+    //      （用户原话就是"这俩按钮"）。
+    '<div class="flex gap-8 flex-wrap justify-center" style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--border)">' +
+      '<button class="btn btn-primary btn-sm" onclick="retrySameSettings()">▶ 再来一轮</button>' +
+      '<button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()">🔄 重新设置</button>' +
+    '</div>' +
   '</div>';
 
   rc.innerHTML = `<div class="card" style="text-align:center;padding:24px 20px">
@@ -14150,7 +14194,6 @@ function showPracticeResult() {
         <div style="font-size:var(--f11);color:var(--primary)">正确率</div>
       </div>
     </div>
-    ${rdHtml}
     ${newlyMastered > 0 ? '<div class="text-sm" style="margin-top:10px;color:var(--success);font-weight:600">🎉 本次新掌握 <b>' + newlyMastered + '</b> 题（之前错过的现在对了！）</div>' : ''}
     ${sprintExtra}
     ${memExtra}
@@ -14164,6 +14207,11 @@ function showPracticeResult() {
     <div class="text-center mt-12">
       <span style="font-size:var(--f12);color:var(--text-tertiary);cursor:pointer;text-decoration:underline" onclick="copyBackup()">💾 复制备份码保存</span>
     </div>
+    <!-- 🆕 v191（用户 2026-09-30 拍板）：明细**挪到最下面** ——
+         上面「小结 ＋ 结语 ＋ 时间 ＋ 两颗按钮 ＋ 备份码」是**这一轮的总结**，先给用户看；
+         逐题明细是"要细看才翻"的东西，放最后。
+         ⚠️ v189/v190 时它是在"四个数字格子"下面的，这次是**整段搬下来**，内容一个字没改。 -->
+    ${rdHtml}
   </div>`;
   renderRdList();   // 🆕 v189：明细区是「默认展开」的，所以画完结果页立刻填上内容
 }
@@ -14555,6 +14603,31 @@ var _MANUAL = {"quick":"<div style=\"margin-bottom:18px\"><h4 style=\"font-size:
 //      只有「内容从哪来」要单独接一下（见下面 `showManualMenu` 里那个 `tip` 分支）。
 var _MANUAL_TABS = [{"id":"tip","ico":"📌","name":"小提示"},{"id":"quick","ico":"⚡","name":"速览"},{"id":"btns","ico":"🔘","name":"按钮功能"},{"id":"feat","ico":"🧩","name":"功能介绍"},{"id":"full","ico":"📋","name":"详细"},{"id":"author","ico":"💬","name":"开发者的话"}];
 
+// 🆕 v191：四档自评那一节（用户 2026-09-30 拍板「要写说明书」＋「详细一点」「不要出现术语」）
+//   ⚠️ **故意不塞进 `_MANUAL` 那个大对象里** —— 那个是脚本生成的历史内容，混进去以后不好找
+//      （跟 v190 的 `_MANUAL_TIP` 一个道理）。它拼在「🧩 功能介绍」那一页的**最前面**。
+//   ⚠️ 用户点名**必须写**的三条：
+//      ① 四颗各是干嘛的 ②「系统判的 和 你自己评的，以你自己评的为准」
+//      ③ **那个例外也要写**（用户原话「例外写进说明书」）
+//   ⚠️ 用户点名**必须删掉**的那句：「做题的时候，如果你不想打字，可以在心里把答案想一遍，然后点开答案对一下。」
+//      （用户原话：「这句话不用说 用户自己知道的」——所以这里**没有**这句，别顺手加回去）
+var _MANUAL_RATE =
+  '<div style="line-height:1.9;font-size:var(--f13);margin-bottom:18px">' +
+    '<h4 style="font-size:var(--f16);margin:0 0 10px;color:var(--primary)">🧠 四档自评 —— 懒得打字也能记</h4>' +
+    '题目下面有四颗按钮，点一个就行：<br>' +
+    '&nbsp;&nbsp;<b>🔴 忘了</b> —— 完全没想起来。<b>明天</b>就再给你一次。<br>' +
+    '&nbsp;&nbsp;<b>🟡 模糊</b> —— 想到了，但记不全。下次比原来<b>早一点</b>来。<br>' +
+    '&nbsp;&nbsp;<b>🟢 会了</b> —— 想对了。下次比原来<b>晚一点</b>来。<br>' +
+    '&nbsp;&nbsp;<b>🔵 太简单</b> —— 太熟了，不用老练。直接排到<b>最久才来一次</b>（按你自己设的节奏里最长的那一档）。<br><br>' +
+    '点完<b>答案会自动打开</b>，你可以顺便核一下自己评得对不对。评错了没关系，<b>再点另一个就改过来了</b>，翻走再翻回来也能改。<br><br>' +
+    '<b>系统判的 和 你自己评的，以你自己评的为准。</b><br>' +
+    '比如你打了一半交上去、系统说你错了，但你觉得你其实会 —— 你点「🟢 会了」就行，按你说的算。<br><br>' +
+    '<b>有一种情况例外：</b>你评完之后，要是又点 ✨ 把答案收起来、<b>重新打了一遍字</b>，那这次就<b>以你打字的结果为准</b> —— 因为这次是你认认真真写了一遍。<br><br>' +
+    '💡 <b>一句提醒：</b>自己评是为了省事。但「看到答案觉得会了」和「真的能写出来」是两回事。所以<b>想让一道题彻底不再排给你（标成「已掌握」），还是要打一次字做对</b>。<br><br>' +
+    '<b>这套按钮「做题」页和「浏览」页都有</b>，两边效果一模一样。<br>' +
+    '<b>不想用就在设置里关掉：</b>设置 → 做题设置 → 四档自评（关掉的话两边一起消失）。' +
+  '</div>';
+
 // 🆕 v190：「📌 小提示」那一页的内容（用户 2026-09-29 选的是我润色的「长版」，一字未改）。
 //   ⚠️ **故意不塞进 `_MANUAL` 那个大对象里** —— 那个是脚本生成的历史内容，混进去以后不好找。
 //   ⚠️ 文案规矩：不出现专有名词、说人话（用户 2026-09-29 那段原话就是给买家看的）。
@@ -14583,10 +14656,16 @@ function showManualMenu() {
   var panes = '';
   for (var j = 0; j < _MANUAL_TABS.length; j++) {
     var tj = _MANUAL_TABS[j];
-    panes += '<div id="manualTab_' + tj.id + '" class="manual-pane" style="' + (j === 0 ? '' : 'display:none;') + '">' +
-      // 'author' 的内容是**进来时现取**的（设置页改过留言要跟着变，见 switchManualTab）
-      // 'tip' 是 v190 新加的，内容在 `_MANUAL_TIP` 里，不在 `_MANUAL` 那个大对象里
-      (tj.id === 'author' ? '' : (tj.id === 'tip' ? _MANUAL_TIP : _MANUAL[tj.id])) + '</div>';
+    // 哪一页装什么（v191 改成 if 链 —— 原来是三元套三元，再加一页就没法看了）
+    //   'author' 的内容是**进来时现取**的（设置页改过留言要跟着变，见 switchManualTab）
+    //   'tip'  v190 新加，内容在 `_MANUAL_TIP` 里
+    //   'feat' v191 在原有的功能介绍**前面**拼上四档自评那一节（`_MANUAL_RATE`）
+    var paneBody;
+    if (tj.id === 'author') paneBody = '';
+    else if (tj.id === 'tip') paneBody = _MANUAL_TIP;
+    else if (tj.id === 'feat') paneBody = _MANUAL_RATE + _MANUAL[tj.id];
+    else paneBody = _MANUAL[tj.id];
+    panes += '<div id="manualTab_' + tj.id + '" class="manual-pane" style="' + (j === 0 ? '' : 'display:none;') + '">' + paneBody + '</div>';
   }
   ov.innerHTML =
     // 弹窗自带一小段样式：按钮条隐藏滚动条 + 内容区可上下滚
@@ -14631,7 +14710,10 @@ function retrySameSettings() {
   // 🆕 v189：`_rd`（逐题明细）必须跟着一起清 —— 这行是 `{ ...practiceState }` 展开，
   //   不显式清掉的话，「▶ 再来一轮」会把**上一轮的对错明细**带进新一轮，
   //   结果页一打开就显示上一轮的错题（而且跟本轮的计数器对不上）。
-  practiceState = { ...practiceState, cards: selected, index: 0, answers: {}, revealed: new Set(), questionHidden: qh, koujueExpanded: {}, total: selected.length, answersHidden: false, _streak: 0, _roundCorrect: 0, _roundWrong: 0, _newlyMastered: [], _rd: {} };
+  // ⚠️ 这里是**展开语法**：不显式清掉的话，上一轮的 `_srSnap`（记忆复习快照）和
+  //    `_srPick`（四档选了哪颗）会**原样带进新的一轮** —— 那样新轮第一次表态会被
+  //    "还原成上一轮的快照"，档位直接错。`_rd` 当年加的时候也是同一个道理。
+  practiceState = { ...practiceState, cards: selected, index: 0, answers: {}, revealed: new Set(), questionHidden: qh, koujueExpanded: {}, total: selected.length, answersHidden: false, _streak: 0, _roundCorrect: 0, _roundWrong: 0, _newlyMastered: [], _rd: {}, _srSnap: {}, _srPick: {} };
   // 每轮独立计时
   practiceStartTime = Date.now();
   practiceElapsed = 0;
@@ -15175,6 +15257,8 @@ function renderBrowseDetail() {
   const wbDetail = getWrongBook(st.bankId);
   const isWrong = card.id in wbDetail;
   const wrongDetail = wbDetail[card.id] || null;
+  // 🆕 v191：四档自评那一排（浏览页）
+  const browseRdRow = memRateRowHtml((st._srPick || {})[st.index] || null, 'browse');
 
     const ansHidden = st.answersHidden;
   // v168：答案区画哪种 —— 💐隐藏 > 只读挖空（开关开）> 错题交互卡 > 普通答案
@@ -15206,6 +15290,11 @@ function renderBrowseDetail() {
       <div style="margin-bottom:12px;font-weight:500">${escNl(card.question)}</div>
       ${answerHtml}
     </div>
+    <!-- 🆕 v191：浏览页也挂同样的四档（用户 2026-09-30 拍板「挂」）——
+         那页**压根没有输入框**，是真正的「不打字通道」。
+         ⚠️ 浏览页答案是**默认直接显示**的（像看讲义）；想「先想再对答案」得自己点 💐 藏起来
+            —— 用户选了不改默认行为，所以这里照旧。 -->
+    ${browseRdRow}
     ${isWrong ? `<div class="text-center mt-10"><button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeFromWrongBook('${card.id}')">🗑 移出复习清单</button></div>` : ''}
     <div class="flex gap-8 mt-16">
       <button class="btn btn-ghost flex-1" onclick="browsePrev()"${st.index === 0 ? ' disabled style="opacity:.4"' : ''}>← 上一题</button>
@@ -15387,6 +15476,11 @@ function memS(k) {
 }
 function memSave(k, v) { appData.settings[k] = v; saveData(appData); }
 function memCanUse() { return hasFeature('fullSr'); }
+// 🆕 v191：四档自评总开关。**默认开**（老用户数据里没有这个字段 → undefined → 开）。
+//   ⚠️ 判据必须是 `!== false`，**不能写 `!appData.settings.memRate`** ——
+//      那样老用户会默认变成"关"，等于把新功能对他们藏起来了
+//      （跟 v189 的 `tapFlip` 是同一个坑，那次也是栽在这三个字上）。
+function memRateOn() { return appData.settings.memRate !== false; }
 function memLadder() {
   var p = memS('memPace');
   if (p === 'custom') {
@@ -15460,6 +15554,154 @@ function memApplyAnswer(card, hasWrong) {
     card.srLastOk = true;
   }
 }
+// ══════════════════════════════════════════════════════════════════════════
+// 🆕 v191：四档自评（用户 2026-09-30 拍板「懒得打字也能进记忆复习」）
+//   四档：🔴忘了 / 🟡模糊 / 🟢会了 / 🔵太简单
+// ══════════════════════════════════════════════════════════════════════════
+var MEM_RATE_TIERS = [
+  { k: 'a', e: '🔴', n: '忘了' },
+  { k: 'b', e: '🟡', n: '模糊' },
+  { k: 'c', e: '🟢', n: '会了' },
+  { k: 'd', e: '🔵', n: '太简单' }
+];
+// 🔑 **以「最后一次表态」为准（快照 + 重算）** —— 这一版的核心机制。
+//   为什么必须这么做：老写法是**动作式**的（每调一次 memApplyAnswer 就改一次档位），
+//   于是「点 3 次 🟢 就晋级 3 次」。现在改成**结果式**：
+//     ① 第一次碰这张卡时先拍一张快照（记下它进这一轮时的档位）
+//     ② 每次表态 → **先把档位还原成快照，再按这次的表态算一遍**
+//     ③ 所以点 100 次，最终只跟「最后一次点的」有关
+//   ⚠️ 快照按 **card.id** 存（不是题号下标）—— 「随机可重复」里同一张卡会出现两次，
+//      按 id 存两边共用一张快照，「最后一次表态」的口径才唯一。
+//   🐞 这套机制**顺手修掉一个实测确认过的老 bug**（`C:/tmp/_v191_bug_probe.js` 跑出来的）：
+//      `autoCheckIfDone()` 挂在输入框的**每一次失焦**上、没有「这题已经判过了」的防护，
+//      而按回车那条路 `checkMyAnswers()` 之后紧跟着一句 `activeEl.blur()` → **又判一次**。
+//      实测：按一次回车 srStage 1→**3**、连点 4 次失焦 1→**5**（都该只到 2）。
+//      改成结果式之后，重复判分只会**覆盖**、不会累加。
+//   ⚠️ 快照**存在哪儿要由调用方传进来**（`store`）—— 做题页快照存 `practiceState`、
+//      浏览页存 `browseState`，两页各有一套。我第一版写成"永远存 practiceState"，
+//      结果浏览页上 `practiceState` 可能是 null 或有上一轮的残值 → 快照存不下来、
+//      重算就失效了（＝浏览页那边退化成老行为）。当场改成显式传 store。
+function memSrSnapshot(store, card) {
+  if (!store || !card || !card.id) return;
+  if (!store._srSnap) store._srSnap = {};
+  if (!(card.id in store._srSnap)) {
+    store._srSnap[card.id] = {
+      stage: (card.srStage === undefined ? null : card.srStage),
+      next: (card.srNextReview === undefined ? null : card.srNextReview),
+      mastered: !!card.srMastered,
+      ok: (card.srLastOk === undefined ? null : card.srLastOk)
+    };
+  }
+}
+// 还原到快照。返回 false ＝ 没有快照（调用方照旧往下走，等于老行为）。
+function memSrRollback(store, card) {
+  if (!store || !card || !card.id || !store._srSnap) return false;
+  var s = store._srSnap[card.id];
+  if (!s) return false;
+  card.srStage = s.stage;
+  card.srNextReview = s.next;
+  card.srMastered = s.mastered;
+  card.srLastOk = s.ok;
+  return true;
+}
+// 档位效果（用户 2026-09-30 拍板）：
+//   🔴 忘了     → **完全走「答错」那套**（⚙️ 里选的是退回第 1 天 / 只退一档 / 档位不动，跟着走）
+//   🟡 模糊     → 退一档（最少退到第 1 档）
+//   🟢 会了     → 进一档
+//   🔵 太简单   → 跳到最后一档（＝用户设的**最长**那个天数，不是写死 30 天）
+// 🔒 一道闸：🟢/🔵 **最多送到最后一档**，永远差「已掌握」那一步 ——
+//    「已掌握」必须靠**打字打出来**。好处：万一自评虚高，最长间隔之后还会再来一次兜底；
+//    也不会出现「全点 🔵 → 复习计划直接空了」。
+function memApplyRating(card, tier) {
+  if (!card) return;
+  var ladder = memLadder();
+  var last = ladder.length;
+  if (tier === 'a') { memApplyAnswer(card, true); return; }
+  if (tier === 'b') {
+    var sb = Math.max(1, (card.srStage || 1) - 1);
+    card.srStage = sb;
+    card.srMastered = false;
+    card.srLastOk = false;
+    card.srNextReview = Date.now() + ladder[sb - 1] * MEM_DAY;
+    return;
+  }
+  if (tier !== 'c' && tier !== 'd') return;
+  if (card.srMastered) return;   // 已掌握的不再动（跟 memApplyAnswer 的答对分支一致）
+  var sc = (tier === 'd') ? last : Math.min((card.srStage || 0) + 1, last);
+  card.srStage = sc;
+  card.srMastered = false;
+  card.srLastOk = true;
+  card.srNextReview = Date.now() + ladder[sc - 1] * MEM_DAY;
+}
+// ── 四档那一排的 HTML（做题页 / 浏览页共用）────────────────────
+//   ⚠️ 只在「**全能版 + 记忆复习开着**」时显示。
+//   ⚠️ 「这个题库没参加记忆复习」**照显示** —— 用户 2026-09-30 拍板：
+//      点了弹提示「这个题库没参加记忆复习，去 记忆复习 ⚙️ 里勾上」，**不是藏起来**。
+//   ⚠️ 四颗上面**不加任何小字**（用户选「不要这行字，直接放四颗按钮」）。
+function memRateRowHtml(picked, ctx) {
+  // 三个条件全满足才显示：全能版 + 记忆复习开着 + 设置里那颗总开关开着
+  if (!memCanUse() || !memS('memOn') || !memRateOn()) return '';
+  // ⚠️ 上下文（做题页 / 浏览页）**写进 onclick 里传**，不用全局变量记 ——
+  //    全局变量那种写法取决于"谁先渲染"，太脆（我第一版就写成了那样，当场改掉）。
+  var c = (ctx === 'browse') ? 'browse' : 'practice';
+  return '<div class="memrate">' + MEM_RATE_TIERS.map(function (t) {
+    return '<button class="memrate-btn' + (picked === t.k ? ' on' : '') + '" data-tier="' + t.k +
+      '" onclick="pickMemRating(\'' + t.k + '\',\'' + c + '\')">' +
+      '<span class="e">' + t.e + '</span><span class="t">' + t.n + '</span></button>';
+  }).join('') + '</div>';
+}
+// 一件事：这道题到底属于哪个题库（混合练习时 st.bankId 只是「主」题库）
+function memRateBankId() {
+  if (!practiceState) return '';
+  var m = practiceState._cardBankMap && practiceState._cardBankMap[practiceState.index];
+  return (m && m.bankId) || practiceState.bankId;
+}
+// 🆕 v191：点四档（做题页 / 浏览页都走这一个；`ctx` 由 onclick 带过来）
+function pickMemRating(tier, ctx) {
+  if (!memCanUse() || !memS('memOn') || !memRateOn()) return;
+  var card = null, bankId = '', isBrowse = (ctx === 'browse');
+  if (isBrowse) {
+    if (!browseState) return;
+    var list = browseState._filteredCards || browseState.cards;
+    card = list[browseState.index];
+    bankId = browseState.bankId;
+  } else {
+    if (!practiceState) return;
+    card = practiceState.cards[practiceState.index];
+    bankId = memRateBankId();
+  }
+  if (!card) return;
+  // ③ 题库没参加 → 照显示，点了弹提示（用户 2026-09-30 拍板）
+  if (!memBankOn(bankId)) { showToast('这个题库没参加记忆复习，去 记忆复习 ⚙️ 里勾上'); return; }
+  var bank = appData.banks[bankId];
+  var bankCard = bank ? bank.cards.find(function (c) { return c.id === card.id; }) : null;
+  if (!bankCard) return;
+  if (isBrowse) {
+    browseState._srPick = browseState._srPick || {};
+    browseState._srPick[browseState.index] = tier;
+  } else {
+    // ① 答案自动展开（用户拍板：点了就打开）—— 本来就开着就**保持开着**，不弹回去
+    if (!practiceState.answersHidden && !practiceState.revealed.has(card.id)) {
+      saveCurrentAnswers();
+      practiceState.revealed.add(card.id);
+    }
+    practiceState._srPick = practiceState._srPick || {};
+    practiceState._srPick[practiceState.index] = tier;
+  }
+  // ② 记档 —— 快照 + 重算（点几次都只跟最后一次有关）
+  var store = isBrowse ? browseState : practiceState;
+  memSrSnapshot(store, bankCard);
+  memSrRollback(store, bankCard);
+  memApplyRating(bankCard, tier);
+  // 🆕 v191：用户拍板「**只点四档没打字，也算"做过"**」（清单第 13 条）→ 把「上次做的时间」记上。
+  //   为什么非得在这儿写：`lastPracticed` 原来**只在 `showPracticeResult()` 里写**（一轮结算时），
+  //   中途退出就不会记 → 复习列表里那行「上次 9-25 ✅」会是空的。
+  //   ⚠️ 副作用（已跟用户说）：周报里「本周做的题数」也会把这种算进去 —— 这是"算做过"的必然结果。
+  bankCard.lastPracticed = Date.now();
+  saveData(appData);
+  if (isBrowse) renderBrowseDetail(); else renderPracticeCard();
+}
+
 function memFindCard(bankId, cardId) {
   var bank = appData.banks[bankId];
   if (!bank) return null;
@@ -15531,6 +15773,14 @@ function memItemHtml(x, withSetBtns) {
     btns = '<div style="display:flex;gap:6px;margin-top:9px">' +
       '<button class="mem-mini" style="flex:1" data-bank="' + x.bankId + '" data-card="' + c.id + '" onclick="memMasterNow(this.dataset.bank,this.dataset.card)">✅ 我记住了</button>' +
       '<button class="mem-mini" style="flex:1;color:var(--text-secondary)" data-bank="' + x.bankId + '" data-card="' + c.id + '" onclick="memTomorrow(this.dataset.bank,this.dataset.card)">⏰ 明天再练</button>' +
+      '</div>' +
+      // 🆕 v191（用户 2026-09-30：「这俩按钮需要介绍一下是什么意思」）：
+      //   这两颗一直是**点完之后**才弹提示 —— 点之前用户不知道会怎样。
+      //   做法＝每颗按钮**下面各一行最淡的小灰字**，字很短、不抢眼。
+      //   ⚠️ 灰字用 `--text-tertiary` ＋ `--f11`（用户定的「最淡的灰色」）。
+      '<div style="display:flex;gap:6px;margin-top:4px">' +
+        '<div style="flex:1;text-align:center;font-size:var(--f11);color:var(--text-tertiary);line-height:1.5">不再排给你</div>' +
+        '<div style="flex:1;text-align:center;font-size:var(--f11);color:var(--text-tertiary);line-height:1.5">明天早上再来</div>' +
       '</div>';
   }
   return '<div class="card" style="margin-bottom:10px;padding:12px 14px">' +
@@ -17025,7 +17275,7 @@ function renderSettings() {
       '<div style="font-size:var(--f11);color:var(--text-tertiary);margin-bottom:8px">' + upgradeHint + ' · <a href="javascript:void(0)" onclick="showTierCompare()" style="color:var(--primary);text-decoration:underline">查看版本对比 →</a></div>' +
       // ⚠️⚠️ 下面这两层收尾**一个字都不能删** —— 它们闭合的是
       //    `<div class="section">` 和 `<div class="section-body" id="body_activation">`。
-      //    2026-09-16 续修第 7 轮补回来的：少了它俩，后面「挖空设置 / 语音 / 外观 / 学习计划 /
+      //    2026-09-16 续修第 7 轮补回来的：少了它俩，后面「做题设置 / 语音 / 外观 / 学习计划 /
       //    每日洞见 / 今日学习摘要 / 关于」这 7 块**全被套进「激活与版本」里面** ——
       //    点一下收起就把 7 块一起吞掉（用户报的原话：「设置那边 激活与版本收起会把全部都收起来」）。
       //    探针实测过：`body_blanks` 等 5 个 `body_*` 都是 `body_activation` 的后代。
@@ -17033,7 +17283,10 @@ function renderSettings() {
       return html;
     })() +
 
-    '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'blanks\')"><span>挖空设置</span><span class="section-arrow" id="arrow_blanks">▲</span></div>' +
+    // 🆕 v191：这一块改名叫「做题设置」（用户 2026-09-30 拍板）——
+    //   它本来装的就是「做题时的行为」（挖空密度 / 浏览页显示挖空 / 点两边翻页 / 椭圆挖空 / 自适应难度），
+    //   四档自评也放这儿。⚠️ 只改了**显示名**，`toggleSection('blanks')` 和 `body_blanks` 一个字没动。
+    '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'blanks\')"><span>做题设置</span><span class="section-arrow" id="arrow_blanks">▲</span></div>' +
       '<div class="section-body" id="body_blanks"><div class="setting-item"><div><div class="setting-label">默认挖空密度</div><div class="setting-desc">每道题的挖空数量，做题时随时可调</div></div>' +
         '<div class="segmented" id="settingsDensity">' +
           '<button class="seg' + (density === 'low' ? ' active' : '') + '" data-v="low" onclick="updateDensitySetting(\'low\', this)">低</button>' +
@@ -17064,6 +17317,16 @@ function renderSettings() {
         if (!hasFeature('adaptiveDifficulty')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">自适应难度</div><div class="setting-desc">需升级基础版解锁</div></div></div>';
         return '<div class="setting-item" style="margin-top:4px"><div><div class="setting-label">🧠 自适应难度</div><div class="setting-desc">连续答对3次自动提高挖空密度，连续答错2次自动降低</div></div>' +
           '<label class="toggle"><input type="checkbox" id="adaptiveToggle"' + (s.adaptiveDensity ? ' checked' : '') + ' onchange="saveSetting(\'adaptiveDensity\', this.checked)"><span class="slider"></span></label></div>';
+      })() +
+      // 🆕 v191：四档自评总开关（用户 2026-09-30 拍板：放底部设置页、**一个开关管两边**）
+      //   ⚠️ **默认值三处要写对**（跟 v189 的 tapFlip 是同一个坑，缺一处老用户就变"关"）：
+      //      ① 这里显示用 `s.memRate !== false`（**不能写 `s.memRate`** —— undefined 会显示成没勾）
+      //      ② 判据走 memRateOn()，里面也是 `!== false`
+      //      ③ **不新增默认值字段** —— 老用户数据里没有 memRate，靠"undefined 视为开"兜
+      (function() {
+        if (!memCanUse()) return '';   // 免费版看不到四档，这个开关也不显示（用户拍板"看不到 不给提示"）
+        return '<div class="setting-item"><div><div class="setting-label">🧠 四档自评</div><div class="setting-desc">做题和浏览时，题目下面出现「忘了 / 模糊 / 会了 / 太简单」四颗按钮，点一下就能记进记忆复习；关掉的话两边一起消失</div></div>' +
+          '<label class="toggle"><input type="checkbox" id="memRateToggle"' + (s.memRate !== false ? ' checked' : '') + ' onchange="saveSetting(\'memRate\', this.checked)"><span class="slider"></span></label></div>';
       })() +
       '</div></div>' +
 
@@ -17317,7 +17580,7 @@ function renderSettings() {
         '</div>' +
       '</div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:var(--f12);transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:var(--f13);cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:var(--f12)"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v190</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v191</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
       // 📲 2026-09-18 v166：用户在设置页找不到「怎么把工具存到桌面」的说明 → 关于最后一行加这个入口。
       //    点开走 showInstallGuide()（无延迟弹窗）。以后别的工具要加同一份 → 见 `新建文件夹/安装教程-可复用.md`。
