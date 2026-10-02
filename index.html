@@ -9561,11 +9561,14 @@ async function handleWordImport(el) {
       //   原来**只有 jsdelivr 一个源**，而它国内常被墙 → 国内用户导不了 Word。
       //   d3 早在 9-18 就改成多源依次兜底了，这里跟上。
       await new Promise((resolve, reject) => {
+        // 🆕 v193（2026-10-03 用户说「改」）：**按实测重排** ——
+        //   `npm.elemecdn.com` 已经 **403 死了**（删掉）；
+        //   `lib.baomitu.com` 实测 **0.18 秒**（jsdelivr 是 1.69 秒）→ 放第一位 ✓
         var srcs = [
-          'https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js',
-          'https://fastly.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js',
+          'https://lib.baomitu.com/mammoth/1.8.0/mammoth.browser.min.js',
           'https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js',
-          'https://npm.elemecdn.com/mammoth@1.8.0/mammoth.browser.min.js'
+          'https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js',
+          'https://fastly.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js'
         ];
         var tryNext = function(i) {
           if (i >= srcs.length) { reject(new Error('CDN load failed')); return; }
@@ -9604,11 +9607,17 @@ async function handlePdfImport(el) {
       // 🐞 2026-09-19 v179：同 mammoth —— 单源改多源（见上面那段注释）。
       //   ⚠️ worker 的地址要跟**加载成功的那一个源**配套，所以多带一份 worker 模板。
       await new Promise(function(resolve, reject) {
+        // 🆕 v193（2026-10-03 用户说「改」）：**按实测重排** ——
+        //   `npm.elemecdn.com` 已经 **403 死了**（删掉）；
+        //   `cdnjs.cloudflare.com` 实测 1.28 秒（主）／ 2.81 秒（worker）→ 放第一位 ✓
+        //   ⚠️ **worker 必须跟主文件配套**（下面 `bases[i] + 'pdf.worker.min.js'`）——
+        //      cdnjs 那边**没有 `/build/`** 这一段，所以这个 base 写到版本号就停
+        //      （两个地址都实测过 200 了，别手贱给它补 `/build/`）
         var bases = [
-          'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/',
-          'https://fastly.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/',
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/',
           'https://unpkg.com/pdfjs-dist@3.11.174/build/',
-          'https://npm.elemecdn.com/pdfjs-dist@3.11.174/build/'
+          'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/',
+          'https://fastly.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/'
         ];
         var tryNext = function(i) {
           if (i >= bases.length) { reject(new Error('PDF.js CDN 加载失败')); return; }
