@@ -13,7 +13,7 @@
      而且不能用透明底（苹果会把透明的地方填成黑色）。现在是草地绿实色底。 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-<title>挖空背诵工具 v191 · 小阮出品</title>
+<title>挖空背诵工具 v193 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -516,14 +516,18 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .memrate-btn.on[data-tier="d"]{background:#cffafe;color:#0e7490;box-shadow:0 0 3px rgba(8,145,178,.18)}
 @media (max-width:360px){.memrate{gap:5px}.memrate-btn .t{font-size:var(--f11)}}
 .practice-card .card-text{font-size:var(--font-size-lg);line-height:2.0;word-break:break-word;overflow-wrap:break-word;overflow-x:hidden}
-.practice-card .blank-input{
-  display:inline-block;min-width:28px;max-width:400px;
-  padding:2px 4px;border:none;border-bottom:2px dashed var(--blank-border);
-  background:var(--blank-bg);border-radius:4px 4px 0 0;
-  font-size:var(--font-size-lg);font-weight:500;line-height:1.5;
-  text-align:center;color:var(--text);
-  transition:all var(--transition);margin:0 2px;vertical-align:baseline;
-}
+  .practice-card .blank-input{
+    display:inline-block;min-width:28px;max-width:400px;
+    /* 🆕 v192 丁：上下内边距 2px→0（整行不被撑高） */
+    /* 🆕 v193：左右内边距 4px→0.25em —— 用 em 才**跟着字号走**，宽度公式里那个 +0.6em
+       才对得上（字号拉到 24px 时 4px 就不够看了）。改这里必须一起改 ovalBlankWidth。 */
+    padding:0 .25em;border:none;border-bottom:2px dashed var(--blank-border);
+    background:var(--blank-bg);border-radius:3px 3px 0 0;
+    /* 🆕 v192 丁：字号从「比正文大一号」降成正文；行高 1.5→1.35 */
+    font-size:var(--font-size);font-weight:500;line-height:1.35;
+    text-align:center;color:var(--text);
+    transition:all var(--transition);margin:0 2px;vertical-align:baseline;
+  }
 .practice-card .blank-input:focus{
   outline:none;border-bottom-color:var(--primary);
   background:var(--primary-light);box-shadow:0 1px 4px rgba(8,145,178,.08);
@@ -602,7 +606,39 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 }
 .practice-card .blank-input.oval.correct{border-color:var(--success)}
 .practice-card .blank-input.oval.wrong{border-color:var(--danger)}
-.practice-card .revealed-text{color:var(--blank-revealed-text);font-weight:700;padding:1px 3px;border-radius:3px;background:var(--blank-revealed-bg)}
+  /* 🆕 v192（用户拍板「乙+丁」）：展开这块以前只是个普通文字块，
+     盒子尺寸跟输入框差一大截（字号小、没下划线、没内边距）→ 一展开整行就重排。
+     现在把它的**盒子**调成跟 .blank-input 一模一样，只保留颜色差异。
+     ⚠️ 改 .blank-input 那条时，这条要**跟着一起改**，否则又会对不上。 */
+  /* 🆕 v192（用户拍板「乙+丁」）：展开这块以前只是个普通文字块，
+     盒子尺寸跟输入框差一大截（字号小、没下划线、没内边距）→ 一展开整行就重排。
+     现在把它的**盒子**调成跟 .blank-input 一模一样，只保留颜色差异。
+     ⚠️ 改 .blank-input 那条时，这条要**跟着一起改**，否则又会对不上。 */
+  /* 🆕 v193：浏览页那个挖空**没有内边距**、也没有最小宽 —— 它要跟「关掉挖空后的纯文字」
+     逐像素对齐（用户报「空白的挖空更长」就是它）。别把这条删了。 */
+  .practice-card .blank-input.bw-flat{padding:0;min-width:0}
+  /* 🆕 v193：椭圆挖空时，输入框的 min-width 是 1.5em（见上面 .blank-input.oval），
+     显示答案那块原来还是 28px → **短答案上又会差几个像素**。这里对齐。 */
+  .practice-card .revealed-text.oval{min-width:1.5em;border:2px solid var(--blank-revealed-text);border-radius:50%;max-width:none}
+  .practice-card .revealed-text{
+    display:inline-block;min-width:28px;
+    /* 🆕 v193：内边距要对齐 .blank-input（0.25em），高度那边 v192 已经对齐过了 */
+    padding:0 .25em;border-bottom:2px solid var(--blank-revealed-text);border-radius:3px 3px 0 0;
+    font-size:var(--font-size);font-weight:700;line-height:1.35;
+    text-align:center;vertical-align:baseline;margin:0 2px;
+    color:var(--blank-revealed-text);background:var(--blank-revealed-bg);
+  }
+
+/* 🆕 v193（用户 2026-10-03 报「矩阵超出屏幕了 截断了 看不见了」）：
+   引擎画出来的公式（矩阵那种特别宽的）给它一个**能横向滑的容器** ——
+   手机上可以左右滑着把整条公式看全 ✓ 不缩、不截、字还是原来那么大。
+   ⚠️ `display:inline-block` 必须有 —— inline 元素上的 overflow 不生效。
+   ⚠️ 打印纸上没法滑，所以 @media print 里改成「缩到一页宽」（见下面那条）。 */
+mjx-container[jax="SVG"]{display:inline-block;max-width:100%;overflow-x:auto;overflow-y:hidden;vertical-align:middle}
+@media print{
+  mjx-container[jax="SVG"]{overflow:visible}
+  mjx-container[jax="SVG"] > svg{max-width:100%;height:auto}
+}
 
 /* ============ Browse ============ */
 .browse-dir-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg-card);border-bottom:1px solid var(--border);cursor:pointer;transition:background var(--transition)}
@@ -1272,6 +1308,19 @@ body.focus-mode #cardText { line-height:2; }
 #pgModal .pg-n{display:inline-block;background:var(--primary);color:#fff;border-radius:50%;width:19px;height:19px;line-height:19px;text-align:center;font-size:var(--f11);margin-right:6px}
 #pgModal .pg-qsub{font-size:var(--f115);color:var(--text-tertiary);margin:0 0 8px;line-height:1.6}
 #pgModal .pg-opt{display:flex;align-items:flex-start;gap:8px;padding:8px 9px;border-radius:8px;border:2px solid var(--border);margin-bottom:6px;cursor:pointer}
+#pgModal .pg-own{border:2px dashed var(--primary);border-radius:10px;padding:10px 11px;margin-bottom:10px;background:var(--primary-light)}
+#pgModal .pg-ownlb{font-size:var(--f13);font-weight:700;color:var(--primary);margin-bottom:7px}
+#pgModal .pg-own input{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:var(--f13);font-family:inherit}
+#pgModal .pg-ownhint{font-size:var(--f11);color:var(--text-secondary);margin-top:6px;line-height:1.6}
+#pgModal .pg-more{border:2px solid var(--border);border-radius:10px;overflow:hidden;margin-top:6px}
+#pgModal .pg-morebtn{padding:10px 11px;font-size:var(--f13);font-weight:700;color:var(--primary);cursor:pointer;background:var(--bg-input)}
+#pgModal .pg-morebody{display:none;max-height:340px;overflow-y:auto;padding:8px 10px 12px;background:var(--bg-card)}
+#pgModal .pg-morebody.pg-open{display:block}
+#pgModal .pg-grp{font-size:var(--f12);font-weight:800;color:var(--primary);margin:11px 0 6px;padding-left:8px;border-left:3px solid var(--primary)}
+#pgModal .pg-grp:first-child{margin-top:2px}
+#pgModal .pg-optsm{display:flex;align-items:flex-start;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:var(--f13);line-height:1.5}
+#pgModal .pg-optsm.pg-on{background:var(--primary-light);color:var(--primary);font-weight:600}
+#pgModal .pg-optsm .pg-box{width:17px;height:17px;font-size:var(--f11);line-height:15px}
 #pgModal .pg-opt:last-child{margin-bottom:0}
 #pgModal .pg-opt.pg-on{border-color:var(--primary);background:var(--primary-light, #ecfeff)}
 #pgModal .pg-box{width:19px;height:19px;flex-shrink:0;margin-top:1px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:var(--f12);color:#fff;background:var(--bg-card)}
@@ -1472,7 +1521,7 @@ function totalCardCount(exceptBankId) {
   });
   return n;
 }
-var APP_VERSION = 191;
+var APP_VERSION = 193;
 
 // ==== 开发者的话（写死在 HTML 里的兜底文案）====
 // 显示优先级：云端(本次启动拉到了) → 本地 authorNote → 这段兜底
@@ -2320,18 +2369,18 @@ const STORAGE_KEY = 'memorize_v2_trial_7666';
 
 function getPresetData_7666() {
   const fanliCards = [
-    { id:'f1', question:"简述 20 世纪以后教育的特点。（三级）", answer:"（1）教育的终身化。它包括各个年龄阶段的各种方式的教育。\n（2）教育的全民化。教育必须面向所有的人，即人人都有接受教育的权利。\n（3）教育的民主化。一方面让所有的人接受同样的教育，另一方面追求教育的自由化。\n（4）教育的多元化。具体表现为培养目标的多元化、办学形式的多元化等。\n（5）教育的现代化。教育的现代化是指现代科学技术在教育上的运用，并由此引起教\n育思想、教育观念的变化。", koujue:"全（全民化）民（民主化）多（多元化）现（现代化）身（终身化）", chapter:'教育学' },
-    { id:'f2', question:"简述生产力对教育的制约作用。（三级）", answer:"生产力对教育的制约作用——生产力水平决定教育发展水平。\n①生产力水平决定教育的规模和速度。\n②生产力制约人才培养的规格和教育结构。\n③生产力制约教学内容、方法、组织形式与手段。", koujue:"龟（规模）速（速度）够（结构）防（方法）守（手段）", chapter:'教育学' },
-    { id:'f3', question:"简述政治经济制度对教育的制约。（一级）", answer:"(1)政治经济制度决定教育的性质\n(2)政治经济制度决定教育的宗旨与目的\n(3)政治经济制度决定教育的领导权\n(4)政治经济制度决定受教育权\n(5)政治经济制度决定教育内容和教育管理体制", koujue:"慕（宗旨与目的）容（教育内容和教育管理体制）姓（性质）两权（领导权和受教育权）", chapter:'教育学' },
-    { id:'f4', question:"简述教育的政治功能。（一级）（2018 下考过）", answer:"（1）教育培养出政治经济制度所需要的人才\n（2）教育促进政治民主化\n（3）教育通过宣传统治阶级的思想意识，创造一定的社会舆论环境来为政治服务\n（4）教育通过传播一定的社会政治意识形态，完成年轻一代的政治社会化", koujue:"人（人才）鱼（社会舆论）公主（民主）促政治（政治社会化）", chapter:'教育学' },
-    { id:'f5', question:"简述教育的人口功能（二级）", answer:"（1）教育可减少人口数量，是控制人口增长的重要手段\n（2）教育是提高人口素质的重要手段\n（3）教育能够改善人口结构，调整人才构成和流动合理化", koujue:"质（素质）数（数量）够（人口结构）流动（流动合理化）", chapter:'教育学' },
-    { id:'f6', question:"简述个体身心发展的一般规律。（二级）", answer:"（1）个体身心发展具有顺序性。它是一个由低级到高级、由简单到复杂的连续不断的\n发展过程。\n（2）个体身心发展具有阶段性。不同的年龄阶段面临着不同的发展任务。\n（3）个体身心发展具有不平衡性。个体的发展并不总是按相同的速度直线前进的。\n（4）个体身心发展具有互补性。这种互补既体现在身体机能和身体机能之间，也体现\n在身体机能和心理机能之间。\n（5）个体身心发展具有个别差异性。这种差异体现在群体和群体之间以及个体和个体\n之间。", koujue:"不（不平衡性）断（阶段性）补（互补性）顺（顺序性）差（个别差异性）", chapter:'教育学' },
-    { id:'f7', question:"简述影响人身心发展的因素。（一级）", answer:"（1）遗传。指人从上代继承下来的生理解剖上的特点，如机体的结构、形态、感官和\n神经系统等的特点。它是人发展的生理前提，为人的发展提供可能性。\n（2）环境。泛指个体生活中影响个体身心发展的一切外部因素，包括自然环境和社会\n环境，它使遗传提供的发展可能性变成现实。\n（3）学校教育。它在人的发展中起主导作用。\n（4）个体的主观能动性。指人的主观意识对客观世界的反映和能动作用，是人的身心\n发展的内在动力。", koujue:"遗传+环境+学校教育+主观能动性", chapter:'教育学' },
-    { id:'f8', question:"简述学校教育在人的身心发展中起主导作用的表现。（二级）", answer:"（1）学校教育按社会对个体的基本要求对个体发展方向做出社会性规范。\n（2）学校教育具有加速个体发展的特殊功能。\n（3）学校教育，尤其是基础教育对个体发展的影响具有即时和延时的价值。\n（4）学校教育具有开发个体特殊才能和发展个性的功能。", koujue:"严（延时价值）规范（社会性规范），塑（加速）个性（发展个性）", chapter:'教育学' },
-    { id:'f9', question:"简述教育制度确立的依据。（一级） （2015 上考过）", answer:"（1）社会依据\n①生产力发展水平和科学技术发展状况；②社会政治经济制度；③文化传统；④人口。\n（2）人的依据\n学生身心发展规律和年龄特征。\n（3）学制本身的依据\n本国学制的历史发展和外国学制的影响。", koujue:"学制（学制本身的依据）是社会（社会依据）人（人的依据）", chapter:'教育学' },
-    { id:'f10', question:"简述现代教育制度的发展趋势。（三级）", answer:"（1）义务教育年限的延长。\n（2）普通教育与职业教育的综合化。\n（3）高等教育的大众化。\n（4）终身教育体系的建构。", koujue:"义延长，普职综，高大众，构终身", chapter:'教育学' },
-    { id:'f11', question:"简述教育目的的层次结构。（二级）", answer:"（1）国家的教育目的。\n（2）各级各类学校的培养目标。\n（3）课程目标。\n（4）教师的教学目标。", koujue:"国（国家的教育目的）小（学校的培养目标）可（课程目标）视（教师的教学目标。）", chapter:'教育学' }
-  ];
+      { id:"f1", question:"简述 20 世纪以后教育的特点。（三级）", answer:"（1）教育的终身化。它包括各个年龄阶段的各种方式的教育。\n（2）教育的全民化。教育必须面向所有的人，即人人都有接受教育的权利。\n（3）教育的民主化。一方面让所有的人接受同样的教育，另一方面追求教育的自由化。\n（4）教育的多元化。具体表现为培养目标的多元化、办学形式的多元化等。\n（5）教育的现代化。教育的现代化是指现代科学技术在教育上的运用，并由此引起教\n育思想、教育观念的变化。", blanks:[{start:27,end:30,text:"终身化",isAnswer:true},{start:56,end:59,text:"全民化",isAnswer:true},{start:91,end:94,text:"民主化",isAnswer:true},{start:131,end:134,text:"多元化",isAnswer:true},{start:166,end:169,text:"现代化",isAnswer:true}], fullText:"简述 20 世纪以后教育的特点。（三级）\n（1）教育的终身化。它包括各个年龄阶段的各种方式的教育。\n（2）教育的全民化。教育必须面向所有的人，即人人都有接受教育的权利。\n（3）教育的民主化。一方面让所有的人接受同样的教育，另一方面追求教育的自由化。\n（4）教育的多元化。具体表现为培养目标的多元化、办学形式的多元化等。\n（5）教育的现代化。教育的现代化是指现代科学技术在教育上的运用，并由此引起教\n育思想、教育观念的变化。", chapter:"教育学", koujue:"全（全民化）民（民主化）多（多元化）现（现代化）身（终身化）", _manualBlanks:true },
+      { id:"f2", question:"简述生产力对教育的制约作用。（三级）", answer:"生产力对教育的制约作用——生产力水平决定教育发展水平。\n①生产力水平决定教育的规模和速度。\n②生产力制约人才培养的规格和教育结构。\n③生产力制约教学内容、方法、组织形式与手段。", blanks:[{start:58,end:63,text:"规模和速度",isAnswer:true},{start:71,end:83,text:"人才培养的规格和教育结构",isAnswer:true},{start:91,end:106,text:"教学内容、方法、组织形式与手段",isAnswer:true}], fullText:"简述生产力对教育的制约作用。（三级）\n生产力对教育的制约作用——生产力水平决定教育发展水平。\n①生产力水平决定教育的规模和速度。\n②生产力制约人才培养的规格和教育结构。\n③生产力制约教学内容、方法、组织形式与手段。", chapter:"教育学", koujue:"龟（规模）速（速度）够（结构）防（方法）守（手段）", _manualBlanks:true },
+      { id:"f3", question:"简述政治经济制度对教育的制约。（一级）", answer:"(1)政治经济制度决定教育的性质\n(2)政治经济制度决定教育的宗旨与目的\n(3)政治经济制度决定教育的领导权\n(4)政治经济制度决定受教育权\n(5)政治经济制度决定教育内容和教育管理体制", blanks:[{start:34,end:36,text:"性质",isAnswer:true},{start:51,end:56,text:"宗旨与目的",isAnswer:true},{start:71,end:74,text:"领导权",isAnswer:true},{start:86,end:90,text:"受教育权",isAnswer:true},{start:102,end:113,text:"教育内容和教育管理体制",isAnswer:true}], fullText:"简述政治经济制度对教育的制约。（一级）\n(1)政治经济制度决定教育的性质\n(2)政治经济制度决定教育的宗旨与目的\n(3)政治经济制度决定教育的领导权\n(4)政治经济制度决定受教育权\n(5)政治经济制度决定教育内容和教育管理体制", chapter:"教育学", koujue:"慕（宗旨与目的）容（教育内容和教育管理体制）姓（性质）两权（领导权和受教育权）", _manualBlanks:true },
+      { id:"f4", question:"简述教育的政治功能。（一级）（2018 下考过）", answer:"（1）教育培养出政治经济制度所需要的人才\n（2）教育促进政治民主化\n（3）教育通过宣传统治阶级的思想意识，创造一定的社会舆论环境来为政治服务\n（4）教育通过传播一定的社会政治意识形态，完成年轻一代的政治社会化", blanks:[{start:43,end:45,text:"人才",isAnswer:true},{start:53,end:58,text:"政治民主化",isAnswer:true},{start:83,end:89,text:"社会舆论环境",isAnswer:true},{start:124,end:129,text:"政治社会化",isAnswer:true}], fullText:"简述教育的政治功能。（一级）（2018 下考过）\n（1）教育培养出政治经济制度所需要的人才\n（2）教育促进政治民主化\n（3）教育通过宣传统治阶级的思想意识，创造一定的社会舆论环境来为政治服务\n（4）教育通过传播一定的社会政治意识形态，完成年轻一代的政治社会化", chapter:"教育学", koujue:"人（人才）鱼（社会舆论）公主（民主）促政治（政治社会化）", _manualBlanks:true },
+      { id:"f5", question:"简述教育的人口功能（二级）", answer:"（1）教育可减少人口数量，是控制人口增长的重要手段\n（2）教育是提高人口素质的重要手段\n（3）教育能够改善人口结构，调整人才构成和流动合理化", blanks:[{start:20,end:26,text:"减少人口数量",isAnswer:true},{start:46,end:52,text:"提高人口素质",isAnswer:true},{start:65,end:71,text:"改善人口结构",isAnswer:true}], fullText:"简述教育的人口功能（二级）\n（1）教育可减少人口数量，是控制人口增长的重要手段\n（2）教育是提高人口素质的重要手段\n（3）教育能够改善人口结构，调整人才构成和流动合理化", chapter:"教育学", koujue:"质（素质）数（数量）够（人口结构）流动（流动合理化）", _manualBlanks:true },
+      { id:"f6", question:"简述个体身心发展的一般规律。（二级）", answer:"（1）个体身心发展具有顺序性。它是一个由低级到高级、由简单到复杂的连续不断的\n发展过程。\n（2）个体身心发展具有阶段性。不同的年龄阶段面临着不同的发展任务。\n（3）个体身心发展具有不平衡性。个体的发展并不总是按相同的速度直线前进的。\n（4）个体身心发展具有互补性。这种互补既体现在身体机能和身体机能之间，也体现\n在身体机能和心理机能之间。\n（5）个体身心发展具有个别差异性。这种差异体现在群体和群体之间以及个体和个体\n之间。", blanks:[{start:30,end:33,text:"顺序性",isAnswer:true},{start:75,end:78,text:"阶段性",isAnswer:true},{start:109,end:113,text:"不平衡性",isAnswer:true},{start:147,end:150,text:"互补性",isAnswer:true},{start:200,end:205,text:"个别差异性",isAnswer:true}], fullText:"简述个体身心发展的一般规律。（二级）\n（1）个体身心发展具有顺序性。它是一个由低级到高级、由简单到复杂的连续不断的\n发展过程。\n（2）个体身心发展具有阶段性。不同的年龄阶段面临着不同的发展任务。\n（3）个体身心发展具有不平衡性。个体的发展并不总是按相同的速度直线前进的。\n（4）个体身心发展具有互补性。这种互补既体现在身体机能和身体机能之间，也体现\n在身体机能和心理机能之间。\n（5）个体身心发展具有个别差异性。这种差异体现在群体和群体之间以及个体和个体\n之间。", chapter:"教育学", koujue:"不（不平衡性）断（阶段性）补（互补性）顺（顺序性）差（个别差异性）", _manualBlanks:true },
+      { id:"f7", question:"简述影响人身心发展的因素。（一级）", answer:"（1）遗传。指人从上代继承下来的生理解剖上的特点，如机体的结构、形态、感官和\n神经系统等的特点。它是人发展的生理前提，为人的发展提供可能性。\n（2）环境。泛指个体生活中影响个体身心发展的一切外部因素，包括自然环境和社会\n环境，它使遗传提供的发展可能性变成现实。\n（3）学校教育。它在人的发展中起主导作用。\n（4）个体的主观能动性。指人的主观意识对客观世界的反映和能动作用，是人的身心\n发展的内在动力。", blanks:[{start:21,end:23,text:"遗传",isAnswer:true},{start:72,end:76,text:"生理前提",isAnswer:true},{start:92,end:94,text:"环境",isAnswer:true},{start:145,end:147,text:"现实",isAnswer:true},{start:152,end:156,text:"学校教育",isAnswer:true},{start:165,end:169,text:"主导作用",isAnswer:true},{start:177,end:182,text:"主观能动性",isAnswer:true},{start:213,end:217,text:"内在动力",isAnswer:true}], fullText:"简述影响人身心发展的因素。（一级）\n（1）遗传。指人从上代继承下来的生理解剖上的特点，如机体的结构、形态、感官和\n神经系统等的特点。它是人发展的生理前提，为人的发展提供可能性。\n（2）环境。泛指个体生活中影响个体身心发展的一切外部因素，包括自然环境和社会\n环境，它使遗传提供的发展可能性变成现实。\n（3）学校教育。它在人的发展中起主导作用。\n（4）个体的主观能动性。指人的主观意识对客观世界的反映和能动作用，是人的身心\n发展的内在动力。", chapter:"教育学", koujue:"遗传+环境+学校教育+主观能动性", _manualBlanks:true },
+      { id:"f8", question:"简述学校教育在人的身心发展中起主导作用的表现。（二级）", answer:"（1）学校教育按社会对个体的基本要求对个体发展方向做出社会性规范。\n（2）学校教育具有加速个体发展的特殊功能。\n（3）学校教育，尤其是基础教育对个体发展的影响具有即时和延时的价值。\n（4）学校教育具有开发个体特殊才能和发展个性的功能。", blanks:[{start:55,end:60,text:"社会性规范",isAnswer:true},{start:71,end:77,text:"加速个体发展",isAnswer:true},{start:109,end:117,text:"即时和延时的价值",isAnswer:true},{start:128,end:141,text:"开发个体特殊才能和发展个性",isAnswer:true}], fullText:"简述学校教育在人的身心发展中起主导作用的表现。（二级）\n（1）学校教育按社会对个体的基本要求对个体发展方向做出社会性规范。\n（2）学校教育具有加速个体发展的特殊功能。\n（3）学校教育，尤其是基础教育对个体发展的影响具有即时和延时的价值。\n（4）学校教育具有开发个体特殊才能和发展个性的功能。", chapter:"教育学", koujue:"严（延时价值）规范（社会性规范），塑（加速）个性（发展个性）", _manualBlanks:true },
+      { id:"f9", question:"简述教育制度确立的依据。（一级） （2015 上考过）", answer:"（1）社会依据\n①生产力发展水平和科学技术发展状况；②社会政治经济制度；③文化传统；④人口。\n（2）人的依据\n学生身心发展规律和年龄特征。\n（3）学制本身的依据\n本国学制的历史发展和外国学制的影响。", blanks:[{start:31,end:35,text:"社会依据",isAnswer:true},{start:78,end:82,text:"人的依据",isAnswer:true},{start:101,end:108,text:"学制本身的依据",isAnswer:true}], fullText:"简述教育制度确立的依据。（一级） （2015 上考过）\n（1）社会依据\n①生产力发展水平和科学技术发展状况；②社会政治经济制度；③文化传统；④人口。\n（2）人的依据\n学生身心发展规律和年龄特征。\n（3）学制本身的依据\n本国学制的历史发展和外国学制的影响。", chapter:"教育学", koujue:"学制（学制本身的依据）是社会（社会依据）人（人的依据）", _manualBlanks:true },
+      { id:"f10", question:"简述现代教育制度的发展趋势。（三级）", answer:"（1）义务教育年限的延长。\n（2）普通教育与职业教育的综合化。\n（3）高等教育的大众化。\n（4）终身教育体系的建构。", blanks:[{start:29,end:31,text:"延长",isAnswer:true},{start:46,end:49,text:"综合化",isAnswer:true},{start:59,end:62,text:"大众化",isAnswer:true},{start:67,end:73,text:"终身教育体系",isAnswer:true}], fullText:"简述现代教育制度的发展趋势。（三级）\n（1）义务教育年限的延长。\n（2）普通教育与职业教育的综合化。\n（3）高等教育的大众化。\n（4）终身教育体系的建构。", chapter:"教育学", koujue:"义延长，普职综，高大众，构终身", _manualBlanks:true },
+      { id:"f11", question:"简述教育目的的层次结构。（二级）", answer:"（1）国家的教育目的。\n（2）各级各类学校的培养目标。\n（3）课程目标。\n（4）教师的教学目标。", blanks:[{start:20,end:27,text:"国家的教育目的",isAnswer:true},{start:39,end:43,text:"培养目标",isAnswer:true},{start:48,end:52,text:"课程目标",isAnswer:true},{start:60,end:64,text:"教学目标",isAnswer:true}], fullText:"简述教育目的的层次结构。（二级）\n（1）国家的教育目的。\n（2）各级各类学校的培养目标。\n（3）课程目标。\n（4）教师的教学目标。", chapter:"教育学", koujue:"国（国家的教育目的）小（学校的培养目标）可（课程目标）视（教师的教学目标。）", _manualBlanks:true }
+    ];
 
   return {
     banks: {
@@ -2374,6 +2423,13 @@ function loadData() {
         b.cards = b.cards.filter(function(c) { return c && typeof c === 'object'; });
       }
     }
+    // 🆕 v193：这里**曾经**有一段「老数据迁移」（把老用户那份没有预制挖空的范例补上新版）。
+    //   ⚠️ **2026-10-02 用户拍板整个拆掉了**（原话：「那不要迁移呢　用户可以删除题库
+    //      然后重新恢复预置题库就可以了」）—— 改成靠工具本来就有的 `restorePresetBanks()`
+    //      （题库页空状态那个「🔄 恢复预设题库」按钮，**只补「没有的」题库、不覆盖已存在的**）。
+    //      理由：迁移哪怕判据再紧，也是在**偷偷动用户的数据**；宁可让他自己点一下。
+    //   ⚠️ **别再把它加回来**（迁移函数已经跟着一起删干净了 —— 一个函数名都不剩，
+    //      所以这里**故意不写它的名字**：注释里引一个已经不在的名字，会让下一个来查的人白找一场）。
     return Object.assign({ banks:{}, settings:{}, seqProgress:{}, favorites:{}, wrongBooks:{} }, d);
   }
   catch(e) {
@@ -7136,11 +7192,24 @@ function isOvalBlank() { return !!(appData && appData.settings && appData.settin
 // ⚠️ 改这个数必须**连 CSS 一起改**（.practice-card .blank-input.oval 的
 //    min-width / padding / line-height 是同一档的参数），两处对不上一眼就看得出来。
 // ⚠️ 这个数改这里一处就行，测试是**从这行代码里现读**的，不写死，以后再调不用动测试。
-function ovalBlankWidth(t) {
+// 🆕 v193 修（用户报「空白的挖空 和 显示字的挖空 长度不一样 空白更长」）——
+//   根因：**空着的宽是算出来的，显示字的时候压根没宽度**（那段是 inline-block 自然宽），
+//   两边必然对不上 → 一显示答案整行就重排。
+//   现在把「字的宽度」抽成**唯一一份**（_blankTextEm），再按两个场景各给一个口径：
+//     · ovalBlankWidth      → 做题页。0.6em 是**盒子的内边距**（左右各 0.25em + 0.1em 余量），
+//                             让框**装得下**里面的字。CSS 的 padding 改了就一起改这里。
+//     · browsePlainBlankWidth → 浏览页。那个框**没有内边距**（要跟「关掉挖空后的纯文字」
+//                             逐像素对齐），所以宽度就是字本身。
+//   ⚠️ 显示答案那块（.revealed-text）现在会拿到**跟挖空框一模一样的 inline width** ——
+//      这两种状态就永远一样长了，别再让它自己撑。
+function _blankTextEm(t) {
   var s = String(t == null ? '' : t), w = 0;
   for (var i = 0; i < s.length; i++) w += (s.charCodeAt(i) > 0xFF) ? 1 : 0.6;
-  if (w < 1) w = 1;                        // 至少算 1 个字，免得空挖空变成一条竖线
-  return (w + 0.22).toFixed(2) + 'em';
+  if (w < 1) w = 1;
+  return w;
+}
+function ovalBlankWidth(t) {
+  return (_blankTextEm(t) + 0.6).toFixed(2) + 'em';
 }
 function shuffle(a) { const arr = [...a]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 function fmtDate(ts) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -7214,11 +7283,24 @@ function showTrialExportBlocked() {
 //      而「靠字体排版」那类方案，字体没加载好印出来就错位 —— 用户明确要求「PDF 也要正常显示」。
 //   ⚠️ 第一次遇到公式时必须联网（已告知用户）；下过一次进 sw 缓存，之后离线也能用。
 //   ⚠️ 不考数学的人 → **一个字节都不多花**（这条是选甲的理由）。
+// 🆕 v193（2026-10-03 用户点头）：**按实测重排** ——
+//   实测（本机，各下一遍 2.1MB 的 tex-svg.js）：
+//     lib.baomitu.com        **1.4 秒** ← 国内最快 ✓
+//     unpkg.com              5.1 秒
+//     cdn.jsdelivr.net       6.4 秒
+//     cdn.staticfile.org     9.8 秒
+//     cdn.bootcdn.net        13 秒没下完
+//     fastly.jsdelivr.net    **18 秒都没下完** → 挪到最后
+//     npm.elemecdn.com       🔴 **403，这个源已经死了** → 删掉
+//   ⚠️ 顺序很重要：`loadMathJax()` 是**一个个往下试**的，慢的排前面 = 每次都要先等它。
+//   ⚠️ 这条跟 CLAUDE.md 里「Chart.js CDN 必须多源加载：jsdelivr 被墙，优先国内源」是**同一件事** ——
+//      那边早就改过了，**公式引擎这边一直漏着**（2026-10-03 用户点头补上）。
 var MATH_SRCS = [
-  'https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js',
-  'https://fastly.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js',
+  'https://lib.baomitu.com/mathjax/3.2.2/es5/tex-svg.js',
   'https://unpkg.com/mathjax@3.2.2/es5/tex-svg.js',
-  'https://npm.elemecdn.com/mathjax@3.2.2/es5/tex-svg.js'
+  'https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js',
+  'https://cdn.staticfile.org/mathjax/3.2.2/es5/tex-svg.js',
+  'https://fastly.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js'
 ];
 var _mathLoading = null;      // 正在加载的 Promise（避免并发重复加载）
 var _mathAsked = false;       // 这次会话问过没有（问过就不再烦用户）
@@ -7226,14 +7308,70 @@ var _mathWanted = false;      // 用户答过「要」
 var _mathQueue = [];          // 加载完之后要重排的元素
 
 // 内容里有没有公式？（认常见的 LaTeX 写法 —— 只用来「决定要不要提示下载」，不用来改内容）
+// 🆕 v193：「像不像 LaTeX 命令」的唯一判据（几个地方都用它，别再各写各的）
+var _TEX_UPPER_OK = /^(Omega|Sigma|Gamma|Delta|Theta|Lambda|Phi|Psi|Xi|Pi|Epsilon|Upsilon|Alpha|Beta|Chi|Eta|Iota|Kappa|Mu|Nu|Rho|Tau|Zeta|Rightarrow|Leftarrow|Leftrightarrow|Longrightarrow|Longleftarrow|Longleftrightarrow|Pr|Re|Im)$/;
+function _looksLikeTexCmd(name) {
+  if (!name) return false;
+  // 大写开头的**只认真有的那些**（希腊大写、\Rightarrow 那一族、\Pr \Re \Im）——
+  // 这样「C:\Users」这种路径不会被误当成公式（U 既不是希腊大写、也不是已知命令）。
+  if (_TEX_UPPER_OK.test(name)) return true;
+  // 小写命令（\frac \alpha \ce \oiint \lg …）一律认。
+  // ⚠️ 要 2 个字母以上 —— 一个字母的是 \n \t \r 这种转义残留，不是公式。
+  return /^[a-z]{2,}$/.test(name);
+}
+// 🆕 v193：MathJax 3 **不认**的命令 —— \oiint \oiiint 属于 esint 扩展，这版没带。
+//   实测：本地那份 tex-svg-full 里搜 "oiint" **0 处**，而 \iiint \oint \varphi 都有。
+//   硬画就是红字源码 → 换成同形的 Unicode 字符（∯ ∰）。
+//   ⚠️ **只改屏幕上显示的**，用户题库里存的原文一个字都不动。
+var _TEX_ALIAS = [['\\oiint', '\u222F'], ['\\oiiint', '\u2230']];
+function _fixTexCmds(root) {
+  if (!root) return 0;
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n, k = 0;
+  while ((n = w.nextNode())) {
+    var t = n.nodeValue, o = t;
+    for (var i = 0; i < _TEX_ALIAS.length; i++) o = o.split(_TEX_ALIAS[i][0]).join(_TEX_ALIAS[i][1]);
+    if (o !== t) { n.nodeValue = o; k++; }
+  }
+  return k;
+}
+// 🆕 v193：这一小段「值不值得当公式包起来」，以及「它自己站不站得住」
+function _looksLikeMathSeg(seg) {
+  if (!seg || seg.length < 3) return false;
+  if (/[\^_]\{/.test(seg)) return true;
+  var m, re = /\\([A-Za-z]+)/g;
+  while ((m = re.exec(seg))) { if (_looksLikeTexCmd(m[1])) return true; }
+  return false;
+}
+function _segIsSelfContained(seg) {
+  if (!seg || seg.length < 3) return false;
+  if (seg.indexOf('\\(') >= 0 || seg.indexOf('\\)') >= 0) return false;   // 已经包过了
+  // 花括号 / \left\right / \begin\end 三样都要配平 ——
+  // 半截公式（`\lg\frac{[` 这种）硬包起来引擎会报错，**连旁边的一起变红字源码**。
+  if ((seg.match(/\{/g) || []).length !== (seg.match(/\}/g) || []).length) return false;
+  if ((seg.match(/\\left(?![a-zA-Z])/g) || []).length !== (seg.match(/\\right(?![a-zA-Z])/g) || []).length) return false;
+  if ((seg.match(/\\begin\{/g) || []).length !== (seg.match(/\\end\{/g) || []).length) return false;
+  return _looksLikeMathSeg(seg);
+}
+
 function hasFormulaText(s) {
-  if (!s || s.indexOf('\\') < 0) return false;
-  // 认三种：① 已知的 LaTeX 命令 ② \( … \) 这种包起来的写法 ③ ^{ } / _{ } 上下标
+  // ⚠️ 别只认反斜杠 —— `p^{2},2pq,q^{2}` 这种**上下标公式一个反斜杠都没有**，
+  //   只认 `\\` 的话它会被判成「没公式」→ 后面一整条链（扫描 / 补包 / 渲染）全都不动 ✗
+  //   （2026-10-03 用户报「①雌性基因型频率：p^{2},2pq,q^{2} 这个还是错的」就是这么来的）
+  if (!s) return false;
+  if (s.indexOf('\\') < 0 && s.indexOf('^{') < 0 && s.indexOf('_{') < 0) return false;
+  // 认三种：① 像 LaTeX 的命令（**按名字判，大小写都认**）② \( … \) 这种包起来的写法 ③ ^{ } / _{ } 上下标
   // ⚠️ 结尾**不能用词边界**（\b）—— 「下划线」在正则里算**词字符**，而 \int_0^1 / \iiint_\Omega
   //    这类写法里，宏名后面**紧跟的就是下划线** → 用 \b 就「没有边界」→ 认不出来。
   //    （我第一版就是 \b，被 _math_detect.js 抓出来的：\int 和 \iiint 两条报错。）
   //    改用 (?![a-zA-Z])：只要求后面不是字母，下划线和 ^ 都放行。
-  return /\\(frac|sqrt|sum|int|iint|iiint|oint|begin|pi|theta|varphi|phi|alpha|beta|gamma|lambda|mu|sigma|omega|times|cdot|div|pm|mp|le|ge|ne|approx|equiv|rightarrow|leftarrow|partial|nabla|infty|lim|log|ln|sin|cos|tan|exp|ce|vec|hat|bar|overline)(?![a-zA-Z])|\^\{|_\{|\\\(|\\\[/.test(s);
+  // 🆕 v193 修（用户报「导入进去生成不了完整的公式 有的是源码」）——
+  //   原来这张清单**全是小写** → `\Omega` `\Sigma` `\Phi` `\Delta` 这些**一个都不认** ✗
+  //   → 整张卡被判成「没有公式」→ 既不加载公式引擎、也不自动补包 → 原样显示源码。
+  //   现在改成**按名字判**，不再靠一张抄出来的清单（LaTeX 命令上千个，抄一份永远抄不全，
+  //   而漏一个的代价就是"整块显示源码"）。判据见 _looksLikeTexCmd。
+  var _hm, _hre = /\\([A-Za-z]+)/g;
+  while ((_hm = _hre.exec(s))) { if (_looksLikeTexCmd(_hm[1])) return true; }
+  return /\^\{|_\{|\\\(|\\\[/.test(s);
 }
 // 🔍 公式体检（2026-09-25 用户选的「甲」）—— **不渲染**的前提下抓坏公式 ✓
 // 为什么要有它：AI（豆包）给的 LaTeX 少个括号、\begin 不配对时，**看源码是看不出来的** ✗
@@ -7241,7 +7379,7 @@ function hasFormulaText(s) {
 // 检查三样（每样都能一眼指出"哪儿错"）：
 //   ① 花括号配不配平            —— 最常见（`\frac{a}{b` 少一个 `}`）
 //   ② `\begin{x}` / `\end{x}` 配不配 —— 用户手机截图里那个红字 Missing \end{cases} 就是这种
-//   ③ 有 LaTeX 特征、却一个 `\(` 都没有 —— 说明 AI **没照话术做**（公式没包起来）
+//   ③ ~~有 LaTeX 特征、却一个 `\(` 都没有~~ —— 🗑️ 2026-10-02 删了（假报警，见下面第 ③ 条的注释）
 // ⚠️ 它**不是渲染**：一个字都不改，只是"看一眼"——所以源码照样看得见 ✓
 function formulaHealthCheck(text) {
   if (!text || !hasFormulaText(text)) return [];
@@ -7261,10 +7399,12 @@ function formulaHealthCheck(text) {
       if (begins[i] !== ends[i]) { bad.push('\\begin{' + begins[i] + '} 对的是 \\end{' + ends[i] + '}，名字不一样'); break; }
     }
   }
-  // ③ 公式没拿 \( \) 包起来
-  if (text.indexOf('\\(') < 0 && text.indexOf('\\[') < 0) {
-    bad.push('公式没用 \\( \\) 包起来（AI 没照话术做）');
-  }
+  // ③ 🗑️ 2026-10-02 用户拍板「甲」：**这一条删掉了**
+  //    它原来报「公式没用 \( \) 包起来（AI 没照话术做）」—— 实测是**假报警**：
+  //    渲染时 `_autoWrapMathIn()` 会自动把它包起来（实测：只要 hasFormulaText 认得出，
+  //    就**一定**包得上，补不上的情况 0 例）→ 导入时吓用户一跳，其实做题时画得出来。
+  //    ⚠️ **别加回来**。上面两条（花括号配平 / \begin-\end 配对）是**真问题**，
+  //       autoWrap 救不了，照旧报 ✓
   return bad;
 }
 
@@ -7274,7 +7414,13 @@ function _mathScan(txt) {
   // ⚠️ 2026-09-25 修：这里原来写的是 `.browse-card` —— **那个类名工具里根本不存在** ✗
   //    （只在选择器里 + 注释里出现过，是当初"猜"的）→ 浏览页**一次都没被扫到**过。
   //    改成浏览页**真正**用的两个：`.browse-dir-item`（列表条目）/ `.browse-detail-body`（详情正文，这次新加的类）。
-  var els = document.querySelectorAll('.preview-answer, .card-text, #printSheet, .browse-dir-item, .browse-detail-body, .mem-card');
+  // 🆕 v193：加上逐题明细区（`.rd-q` 题目行 / `.rd-full` 完整原文）——
+  //   用户 2026-10-03：「做完题目的这一轮的逐题明细 我希望也渲染」
+  // 🆕 v193：`.preview-answer` 是**逐字选择区**（每个字一个 span）——
+  //   引擎在那儿画不出来，而且**很危险**：`_autoWrapMathIn` 是在文本流上找公式的，
+  //   跨 span 也能把 `\frac` 拼出来 → 会往字符 span 里插 `\(` `\)`、把选字功能搞乱 ✗
+  //   → 换成 `.edit-mp`（挖空编辑器里那条**只读的公式效果**，见 editMathPreviewHtml）
+  var els = document.querySelectorAll('.edit-mp, .card-text, #printSheet, .browse-dir-item, .browse-detail-body, .mem-card, .rd-q, .rd-full');
   for (var i = 0; i < els.length; i++) if (hasFormulaText(els[i].textContent)) out.push(els[i]);
   if (!out.length && hasFormulaText(txt)) out.push(document.body);
   return out;
@@ -7323,43 +7469,117 @@ function typesetMathIn(el) {
 //      整行包会把中文和第二个公式一起吞进去，渲染成一团糟（第一版就是这么错的，测试抓出来的）。
 function _autoWrapMathIn(host) {
   if (!host || !hasFormulaText(host.textContent)) return false;
-  if (host.textContent.indexOf('\\(') >= 0) return false;   // AI 已经按话术包好了，别添乱
-  // 「像公式」的字符：拉丁字母、数字、反斜杠、各种括号、运算符、空格。碰到中文 / 中文标点就断开。
-  var CH_MATH = /[A-Za-z0-9\\^_{}\[\]()+\-*/=<>.,|! ]/;
-  var walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, null);
-  var nodes = [], n;
-  while ((n = walker.nextNode())) nodes.push(n);
-  var changed = false;
-  for (var k = 0; k < nodes.length; k++) {
-    var node = nodes[k];
-    var txt = node.nodeValue;
-    if (!txt || !/[\\^_]/.test(txt)) continue;
-    var lines = txt.split('\n');
-    var out = [];
-    for (var li = 0; li < lines.length; li++) {
-      var line = lines[li];
-      if (line.indexOf('\\(') >= 0) { out.push(line); continue; }
-      var res = '', i = 0;
-      while (i < line.length) {
-        if (!CH_MATH.test(line.charAt(i))) { res += line.charAt(i); i++; continue; }
-        var j = i;
-        while (j < line.length && CH_MATH.test(line.charAt(j))) j++;
-        var seg = line.slice(i, j);
-        var trimmed = seg.replace(/\s+$/, '');
-        var trail = seg.slice(trimmed.length);
-        // 这一段要不要当公式：得有真 LaTeX 命令，或者有 ^{ } / _{ } 这种上下标
-        var looksMath = /[\\][a-zA-Z][a-zA-Z]+/.test(trimmed) || /[\^_]\{/.test(trimmed);
-        if (looksMath && trimmed.length >= 3) {
-          res += '\\(' + trimmed + '\\)' + trail;
-          changed = true;
-        } else { res += seg; }
-        i = j;
-      }
-      out.push(res);
+  // 🆕 v193 ①：先把引擎不认的命令换掉（\oiint → ∯）—— 必须在找公式**之前**做，
+  //   否则包起来之后 MathJax 拿到 \oiint 直接报错，整段变红字源码。
+  _fixTexCmds(host);
+  // 🆕 v193 ②：**拼成一条文本流**。老版本是一个文本节点一个节点地看 ——
+  //   公式一被挖空切开就完蛋（左边那半被单独包成 \(\lg\frac{[\) ，花括号都不配平）。
+  //   · 文字节点            → 整段进流
+  //   · <input>/<textarea>（挖空框）→ 内容**不在 textContent 里**，流里补个占位、并打「洞」标记
+  //   · <span class="revealed-text">（显示答案那块）→ 里面是普通文字，天然进流，
+  //     而且整段标成「透明」—— 它里面的中文**不许把公式切断**（`\lg\frac{[氧化态]}{...}` 这种）
+  // 像公式的字符：拉丁字母、数字、反斜杠、各种括号、运算符、空格。碰到中文 / 中文标点就断开。
+  //   末尾那一段 \u2190-\u22FF 是给「换过之后的数学符号」留的（∯ ∰ ∫ ∮ ∑ 都在这一区）。
+  var CH_MATH = /[A-Za-z0-9\\^_{}\[\]()+\-*/=<>.,|! &'\u2190-\u22FF]/;
+  var walker = document.createTreeWalker(host, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, null);
+  var parts = [], full = '', holes = [], soft = [], nd;
+  while ((nd = walker.nextNode())) {
+    if (nd.nodeType === 3) {
+      var tv = nd.nodeValue;
+      if (!tv) continue;
+      var isRev = !!(nd.parentNode && nd.parentNode.closest && nd.parentNode.closest('.revealed-text'));
+      parts.push({ node: nd, s: full.length, e: full.length + tv.length, text: true });
+      for (var h1 = 0; h1 < tv.length; h1++) { holes.push(false); soft.push(isRev); }
+      full += tv;
+    } else if (nd.nodeName === 'INPUT' || nd.nodeName === 'TEXTAREA') {
+      var vv = String(nd.value == null ? '' : nd.value);
+      var len = vv.length || 1;
+      parts.push({ node: nd, s: full.length, e: full.length + len, text: false });
+      for (var h2 = 0; h2 < len; h2++) { holes.push(true); soft.push(false); }
+      full += vv || ' ';
     }
-    if (changed) node.nodeValue = out.join('\n');
   }
-  return changed;
+  // ⚠️ 别只认反斜杠 —— `p^{2},2pq,q^{2}` 这种**上下标公式一个反斜杠都没有**，
+  //   只认 `\\` 的话整段压根不会被包 → 用户看到的还是 `p^{2},2pq,q^{2}` 原文 ✗
+  //   （2026-10-03 用户报「这个还是错的」就是这么来的）
+  if (full.indexOf('\\') < 0 && full.indexOf('^{') < 0 && full.indexOf('_{') < 0) return false;
+  // 🆕 v193 ③：在这条流上找「像公式」的连续段。
+  //   · 段**必须从一个数学字符开始**（所以「闭曲面\Sigma」不会整段被当成公式）
+  //   · 但可以**穿过透明区**继续走下去 ✓
+  // 🆕 v193「丁」配套：**已经把公式包好的那一段（\( … \)）也算透明区**。
+  //   为什么：丁画出来的公式里夹着中文（\underline{\phantom{氧化态}}），
+  //   不标透明的话扫描会在中文处断开 → 后面那半截**被再包一遍** → 嵌套、画出来一团糟
+  //   （实测数出 3 个 \( 而不是 1 个，被 _v193_ding_test 当场抓到）。
+  var _dep = 0;
+  for (var _p = 0; _p < full.length; _p++) {
+    var _c0 = full.charAt(_p), _c1 = full.charAt(_p + 1);
+    if (_c0 === '\\' && _c1 === '(') { _dep++; soft[_p] = true; soft[_p + 1] = true; _p++; }
+    else if (_c0 === '\\' && _c1 === ')') { if (_dep > 0) _dep--; soft[_p] = true; soft[_p + 1] = true; _p++; }
+    else if (_dep > 0) { soft[_p] = true; }
+  }
+  var segs = [], i = 0;
+  while (i < full.length) {
+    if (!CH_MATH.test(full.charAt(i))) { i++; continue; }
+    var j = i;
+    while (j < full.length) {
+      var _cj = full.charAt(j);
+      if (CH_MATH.test(_cj) || soft[j]) { j++; continue; }
+      // 🆕 换行不切断「还没关上的数学结构」（同 _blankFormulaSegs）
+      // 🆕 同 _blankFormulaSegs：没关上时什么都跨
+      // ⚠️ 同 _blankFormulaSegs：上限 400 字，别把正文吞进来
+      if (_mathOpen(full.slice(i, j)) && (j - i) < 400) { j++; continue; }
+      break;
+    }
+    segs.push({ s: i, e: j });
+    i = j;
+  }
+  if (!segs.length) return false;
+  // 🆕 v193 ④（用户 2026-10-02 拍板「丙」）：公式**被挖空切开**时怎么办 ——
+  //   · 显示答案时挖空是 <span>，里面的字是**真文字** → 整段连着，一次包完 ✓ 画得出来
+  //   · 挖空状态时挖空是 <input>，它的字**不在文本流里** → 流上是个「洞」。
+  //     这时候**在洞的位置把这一段切成几小截，只包「自己站得住」的那几截**：
+  //       站得住 = 花括号配平 + \left/\right 配平 + \begin/\end 配平
+  //     → 挖空状态看起来就是「能画的画出来 ＋ 中间一个普通挖空框」，不再满屏源码 ✓
+  //   ⚠️ **绝不能把半截公式硬包起来** —— 引擎会报错，那一段连旁边的都一起变红字源码。
+  var ins = [];
+  for (var k = 0; k < segs.length; k++) {
+    var sg = segs[k], runs = [], rs = sg.s, p;
+    for (p = sg.s; p < sg.e; p++) { if (holes[p]) { if (p > rs) runs.push([rs, p]); rs = p + 1; } }
+    if (rs < sg.e) runs.push([rs, sg.e]);
+    for (var r2 = 0; r2 < runs.length; r2++) {
+      var a = runs[r2][0], b = runs[r2][1];
+      if (_segIsSelfContained(full.slice(a, b))) {
+        ins.push({ at: a, str: '\\(' });
+        ins.push({ at: b, str: '\\)' });
+      }
+    }
+  }
+  if (!ins.length) return false;
+  // 🆕 v193 ⑤：**从后往前插**（先插前面的会把后面所有位置带偏）
+  ins.sort(function (x, y) { return y.at - x.at; });
+  var done = 0;
+  for (var q = 0; q < ins.length; q++) { if (_insertInStream(parts, ins[q].at, ins[q].str)) done++; }
+  return done > 0;
+}
+// 🆕 v193：在「文本流」的某个位置上插一小段字（回到具体那个文字节点去 splitText）
+function _insertInStream(parts, at, str) {
+  var hit = -1;
+  for (var i = 0; i < parts.length; i++) {
+    var p = parts[i];
+    if (!p.text) continue;
+    if (at >= p.s && at <= p.e) { hit = i; break; }
+  }
+  if (hit < 0) {
+    // 落在最后一个文字节点之外（整块以挖空框收尾那种）→ 退回「最后一个文字节点的末尾」
+    for (var j = parts.length - 1; j >= 0; j--) { if (parts[j].text && parts[j].e <= at) { hit = j; at = parts[j].e; break; } }
+  }
+  if (hit < 0) return false;
+  var pp = parts[hit], after;
+  try { after = pp.node.splitText(at - pp.s); } catch (e) { return false; }
+  after.nodeValue = str + after.nodeValue;
+  for (var m = hit + 1; m < parts.length; m++) { parts[m].s += str.length; parts[m].e += str.length; }
+  pp.e += str.length;
+  return true;
 }
 // 渲染完调它：有公式就去（按需）加载 + 排版；没装过就问一次
 function mathAfterRender(txt) {
@@ -7509,10 +7729,34 @@ function printBankPdf(btn) {
   var _doPrint = function () {
     try { window.print(); } catch (e) { showToast('当前浏览器不支持打印，请用「复制文字」'); cleanup(); }
   };
-  if (window.MathJax && window.MathJax.typesetPromise && appData && appData.settings && appData.settings.showMath !== false) {
-    showToast('⏳ 正在排版公式…');
-    window.MathJax.typesetPromise([sheet]).then(_doPrint).catch(_doPrint);
-  } else { _doPrint(); }
+  // 🆕 v192 修（用户报「导出 PDF 的时候 公式没渲染」）：
+  //    以前只有两种情况 —— 「MathJax 已加载」就排版，否则**直接印**。
+  //    可 MathJax 是**按需加载**的：这次打开还没在屏幕上见过公式 → window.MathJax 是 undefined
+  //    → 走 else 直接印 → **纸上是一堆 LaTeX 源码** ✗
+  //    现在分三种：纸上没公式 → 直接印；已加载 → 排完再印；
+  //    **有公式但还没加载 → 先加载、再排版、最后才印** ✓
+  // 🆕 v193 修（用户报「导出 PDF 还是源码」）—— 上一版只补了「加载引擎」，**「包公式」那一步漏了**：
+  //   打印纸上的公式是**光秃秃的文本**（AI 没拿 \( \) 包，工具又没给它补）→
+  //   typesetPromise 扫一遍**找不到任何 \( \)** → 什么都没排 → 印出来还是源码 ✗
+  //   正确顺序：**先补包 → 再排版 → 最后印**。补包跟做题页共用同一个函数（以后改一处就够）。
+  var _wantMath = !!(appData && appData.settings && appData.settings.showMath !== false);
+  var _sheetHasMath = _wantMath && hasFormulaText(sheet.textContent);
+  if (!_sheetHasMath) {
+    _doPrint();
+  } else {
+    try { _autoWrapMathIn(sheet); } catch (e) { console.warn('[公式] 打印纸补包失败：', e); }
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      showToast('⏳ 正在排版公式…');
+      window.MathJax.typesetPromise([sheet]).then(_doPrint).catch(_doPrint);
+    } else {
+      showToast('⏳ 正在加载公式…');
+      var _afterLoad = function () {
+        if (window.MathJax && window.MathJax.typesetPromise) return window.MathJax.typesetPromise([sheet]);
+      };
+      try { loadMathJax().then(_afterLoad).then(_doPrint).catch(_doPrint); }
+      catch (e) { _doPrint(); }
+    }
+  }
 }
 function copyExportContent(btn) {
   var ov = btn.closest('.modal-overlay');
@@ -9547,19 +9791,13 @@ var _PGQ = [
       { v: 'list', d: '资料是一串编号（1. 2. 3. 4.），但那不是题目',
         eg: '<span style="color:var(--text-tertiary)">素质教育的内涵</span><br>1. 素质教育是面向全体学生的教育<br>2. 素质教育是促进学生全面发展的教育<br><span style="color:var(--text-tertiary)">→ 这是【一道题】，答案两行；不是【两道题】，别拆</span>' }
     ] },
-  { id: 'split', sec: '③ 题目', type: 'check', title: '资料里，哪些写法算「一道新题的开始」？',
-    q: '🔴 勾了哪个，那个写法下面的内容就【单独算一道题】。只勾你资料里真的用到的 —— 勾错会拆乱。',
-    opts: [
-      { v: 'p1', d: '（1）（2）（3）—— 全角括号加数字', eg: '（1）简述美育的概念<br>美育是引导学生…<br>（2）简述美育的内容' },
-      { v: 'p2', d: '(1) (2) (3) —— 半角括号', eg: '(1) 简述美育的概念<br>(2) 简述美育的内容' },
-      { v: 'au', d: 'a. b. c. —— 小写字母', eg: 'a.简述体育的基本任务<br>①使学生掌握运动锻炼的知识与技能。<br>b.简述劳动教育的基本任务' },
-      { v: 'AU', d: 'A. B. C. —— 大写字母', eg: 'A. 简述体育的基本任务<br>B. 简述劳动教育的基本任务' },
-      { v: 'w', d: '第一问 / 第二问', eg: '第一问：简述美育的概念<br>第二问：简述美育的内容' },
-      { v: 'd', d: '第一，第二，', eg: '第一，简述美育的概念。<br>第二，简述美育的内容。' },
-      { v: 'par', d: '1) 2) 3) —— 数字加右括号', eg: '1) 简述美育的概念<br>2) 简述美育的内容' },
-      { v: 'br', d: '【1】【2】—— 方括号加数字', eg: '【1】简述美育的概念<br>【2】简述美育的内容' },
-      { v: 'qs', d: '问题1 / 问题2', eg: '问题1：简述美育的概念<br>问题2：简述美育的内容' }
-    ] },
+  // 🆕 v192（2026-10-02 用户拍板）：9 个写死选项 → 63 条分 11 组 + 「自己写」输入框
+  //   用户原话：「那九个太多了…保留俩个常用的　第三个输入框可以列出尽可能多的
+  //             也可以让用户自己填空」「用户打字可能打不清楚　所以要把所有可能的都写上去
+  //             又能自己填」「「还有别的？我自己写」输入框　放第一个」
+  //   → 选项数据在 _PGSPLIT_ALL，走 type:'split' 专门渲染
+  { id: 'split', sec: '③ 题目', type: 'split', title: '资料里，哪些写法算「一道新题的开始」？',
+    q: '🔴 勾了哪个，那个写法下面的内容就【单独算一道题】。只勾你资料里真的用到的 —— 勾错会拆乱。' },
   { id: 'bigpoint', sec: '④ 内容细节', type: 'radio', title: '资料里有「一、二、三」这种大分类吗？',
     q: '🔴 有大分类的话，标成 ￥ —— 到了工具里它们就是「章节」，能在「📊 章节掌握度」里按章看你哪儿弱（这是工具本来就有、但以前导进来用不上的功能）',
     opts: [
@@ -9604,17 +9842,102 @@ var _PGQ = [
 
 var _PGD = {
   src: 'text', mode: 'work', marks: [], noMark: true, title: ['auto'],
-  split: ['p1'], bigpoint: 'yes', prefix: 'drop', aside: 'keep',
+  split: ['s_num'], splitOwn: '', bigpoint: 'yes', prefix: 'drop', aside: 'keep',
   split10: 'keep', aikj: 'no', extra: ['formula'], batch: 'all'
 };
 var _PGST = null;
 var _PGLS = 'beishu_prompt_gen_v1';
-var _PGSPLIT_LABEL = {
-  p1: '（1）（2）（3）这种全角括号加数字', p2: '(1) (2) (3) 这种半角括号',
-  au: 'a. b. c. 这种小写字母', AU: 'A. B. C. 这种大写字母',
-  w: '「第一问」「第二问」', d: '「第一，」「第二，」',
-  par: '1) 2) 3) 这种数字加右括号', br: '【1】【2】这种方括号加数字', qs: '「问题1」「问题2」'
-};
+var _PGSPLIT_ALL = [
+  { g: '数字编号', items: [
+    { k: 's_num',   d: '数字编号', s: '1. ／ 1、／ 1）／（1）／ １． —— 标点、全角半角都不限；1.1、1-1 也算', common: 1 },
+    { k: 's_dot',   d: '数字加点', s: '1. ／ 2. ／ 3.（全角 １． 也算）' },
+    { k: 's_dun',   d: '数字加顿号', s: '1、／ 2、／ 3、' },
+    { k: 's_par',   d: '数字加右括号', s: '1）／ 2）／ 3）' },
+    { k: 's_brk',   d: '数字包在括号里', s: '（1）（2）／ (1)(2) ／ ⑴⑵' },
+    { k: 's_col',   d: '数字加冒号、或数字后只空一格', s: '1: ／ 1 空格' },
+    { k: 's_pad',   d: '前面补零', s: '01. ／ 02.（公众号排版常见）' },
+    { k: 's_sub',   d: '一层层点下去、或数字加短横', s: '1.1 ／ 1.1.1 ／ 1-1' },
+    { k: 's_inline',d: '一行里连着写好几题', s: '「1、… 2、… 3、…」挤在同一行' }
+  ] },
+  { g: '中文数字', items: [
+    { k: 's_cn',    d: '中文数字编号', s: '一、／ 一）／（一）／ 壹、—— 中英文括号、圈号 ㈠ 也算', common: 1 },
+    { k: 's_cndun', d: '中文数字加顿号', s: '一、／ 二、／ 三、' },
+    { k: 's_cnbrk', d: '中文数字包在括号里', s: '（一）（二）／（壹）' },
+    { k: 's_cnpar', d: '中文数字加右括号', s: '一）／ 二）' },
+    { k: 's_cncomma', d: '第一，／ 第二，（中文数字加逗号）', s: '' },
+    { k: 's_cnbig', d: '大写中文数字', s: '壹、／ 贰、' },
+    { k: 's_roman', d: '罗马数字', s: 'Ⅰ ／ Ⅱ ／ Ⅲ' }
+  ] },
+  { g: '字母编号', items: [
+    { k: 's_aup',   d: '大写字母', s: 'A. ／ B. ／ C.' },
+    { k: 's_alow',  d: '小写字母', s: 'a. ／ b. ／ c.' },
+    { k: 's_apar',  d: '字母加右括号', s: 'A）／ a）' }
+  ] },
+  { g: '题号类', items: [
+    { k: 's_tihao', d: '第1题 / 第一题 / 第1小题', s: '' },
+    { k: 's_ti',    d: '题1 / 题目1 / 题一', s: '' },
+    { k: 's_ask',   d: '问题1 / 问题2 / 问题一', s: '' },
+    { k: 's_wen',   d: '第一问 / 第二问 / 第(1)问', s: '' },
+    { k: 's_q',     d: 'Q1 / Question 1 / A1', s: '' },
+    { k: 's_no',    d: 'No.1 ／ §1', s: '' }
+  ] },
+  { g: '考点 / 知识点', items: [
+    { k: 's_kd1',   d: '考点1 / 考点一', s: '' },
+    { k: 's_kd2',   d: '知识点1 / 知识点一', s: '' },
+    { k: 's_kd3',   d: '命题点1 / 考查点1', s: '' },
+    { k: 's_kd4',   d: '高频考点 / 必背 / 重点 / 易错', s: '这种字眼打头' }
+  ] },
+  { g: '题型名（单独一行）', items: [
+    { k: 's_tx1',   d: '简答题 / 名词解释 / 论述题 / 辨析题', s: '' },
+    { k: 's_tx2',   d: '选择题 / 判断题 / 填空题 / 材料分析题', s: '' },
+    { k: 's_tx3',   d: '教学设计题 / 案例分析题 / 写作题', s: '' },
+    { k: 's_tx4',   d: '语文：看拼音写词语 / 组词 / 改写句子 / 习作', s: '' },
+    { k: 's_tx5',   d: '数学：口算 / 竖式计算 / 解方程 / 应用题 / 证明题', s: '' },
+    { k: 's_tx6',   d: '英语：完形填空 / 阅读理解 / 翻译 / 书面表达', s: '' },
+    { k: 's_tx7',   d: '「本大题共X小题，共X分」这种说明', s: '' }
+  ] },
+  { g: '章节 / 单元 / 课时', items: [
+    { k: 's_ch1',   d: '第一章 ／ 第一节 ／ 第一课', s: '' },
+    { k: 's_ch2',   d: '第一单元 ／ 第一课时', s: '' },
+    { k: 's_ch3',   d: '专题一 ／ 模块一 ／ 项目一 ／ 主题一', s: '' },
+    { k: 's_ch4',   d: '第一讲 ／ 第一编 ／ 上编', s: '' },
+    { k: 's_ch5',   d: 'Part 1 ／ Section A ／ Unit 1 ／ Lesson 1', s: '' }
+  ] },
+  { g: '教材栏目名', items: [
+    { k: 's_lm1',   d: '做一做 / 想一想 / 练一练 / 议一议', s: '' },
+    { k: 's_lm2',   d: '读一读 / 背一背 / 填一填 / 选一选 / 连一连 / 画一画', s: '' },
+    { k: 's_lm3',   d: '思考 / 探究 / 归纳 / 讨论', s: '数学课本那种小标签' },
+    { k: 's_lm4',   d: '探究与分享 / 阅读感悟 / 拓展空间 / 材料研读', s: '道法、历史' },
+    { k: 's_lm5',   d: '思考探究 / 积累拓展', s: '语文课后' },
+    { k: 's_lm7',   d: '练习 ／ 习题 ／ 课后练习 ／ 复习参考题', s: '' }
+  ] },
+  { g: '方括号标签', items: [
+    { k: 's_bk1',   d: '【基础训练】【能力提升】【拓展延伸】', s: '板块名' },
+    { k: 's_bk2',   d: '【例1】【例题1】【典例】', s: '' },
+    { k: 's_bk3',   d: '【真题】【模拟题】【预测题】【押题】', s: '' },
+    { k: 's_bk4',   d: '【1】【2】／［1］［2］／〔1〕', s: '方括号包数字' },
+    { k: 's_bk5',   d: '【必背】【口诀】【易混】【总结】【注意】', s: '' }
+  ] },
+  { g: '排版信号', items: [
+    { k: 's_pf1',   d: '题目之间空了一行', s: '' },
+    { k: 's_pf2',   d: '分隔线：--- ／ === ／ *** ／ ————', s: '' },
+    { k: 's_pf3',   d: '加粗的、或比正文大一号的小标题', s: '' },
+    { k: 's_pf4',   d: 'Markdown 的 # ／ ## ／ ###', s: '' },
+    { k: 's_pf5',   d: '★ ／ ● ／ ◆ ／ ▶ ／ ※ 等符号打头', s: '' },
+    { k: 's_pf6',   d: '题号后面跟着分值，比如「（10分）」', s: '' },
+    { k: 's_pf7',   d: '题号前面标了难度，比如「★★☆」', s: '' }
+  ] },
+  { g: '真题出处 / 其它', items: [
+    { k: 's_zt1',   d: '题干前括号里写卷别和年份：（2021·全国甲卷）', s: '' },
+    { k: 's_zt2',   d: '括号里写「（改编）」「（模拟）」', s: '' },
+    { k: 's_zt3',   d: '每句话末尾是问号「…？」打头', s: '' },
+    { k: 's_zt4',   d: '「简述」「试述」「论述」「分析」打头', s: '' },
+    { k: 's_zt5',   d: '判断题的空括号（　）打头', s: '' },
+    { k: 's_zt6',   d: '填空题的下划线 ____ 打头', s: '' }
+  ] }
+];
+var _PGSPLIT_LABEL = {};
+_PGSPLIT_ALL.forEach(function (g) { g.items.forEach(function (it) { _PGSPLIT_LABEL[it.k] = it.d + (it.s ? '（' + it.s + '）' : ''); }); });
 
 function _pgSave() { try { localStorage.setItem(_PGLS, JSON.stringify(_PGST)); } catch (e) { } }
 function _pgLoad() {
@@ -9654,6 +9977,24 @@ function _pgBuild() {
   L.push('   · 不包的话，工具就不知道从哪个字到哪个字是公式，画不出来（只能看到一串源码）');
   L.push('   · ⚠️ 千万别用「$」包公式 —— $ 在工具里是「题目」的记号，一用整篇就乱。');
   L.push('   · 资料里一个公式都没有 → 这条不用管。');
+  // 🆕 v193（用户 2026-10-03 拍板，来回明确了四遍）——公式里怎么挖空：
+  //   「挖空什么地方看 AI —— 可以挖空公式，也可以挖空中文。
+  //     但是挖空公式有要求：**只能整个公式挖空 或者 不挖空公式**，不能只挖空公式的一部分」
+  //   ＋「**公式里面的中文词也不能挖**」→ 所以最后只剩两种：①整个公式挖 ②一个字都不挖
+  //   为什么放这儿：上面那条公式规则**永远都在**（不勾公式也出现）—— 这条跟着它走，同一个道理。
+  //   ⚠️ 工具那边**一个字都不用改**：就算 AI 不听话真挖了公式里的一部分，
+  //      也是兜底成「整个公式算一个空」，不会画乱 ✓
+  L.push(N() + '🔴【公式里怎么挖空】—— 只有两种，别的一律不许：');
+  L.push('   · 要么【整个公式一起挖空】（把它整条用一对 @@ 括起来）');
+  L.push('     例：②高斯公式：@@\\oiint_{\\Sigma} P dydz = \\iiint_{\\Omega} \\frac{\\partial P}{\\partial x} dV@@');
+  L.push('   · 要么【一个字都不挖】（**很复杂的公式推荐这样**）');
+  L.push('     例：②298K电极电势公式：\\(\\varphi = \\varphi^{\\ominus} + \\frac{0.0592}{n}\\lg Q\\)');
+  L.push('   · 🔴【不许只挖公式的一部分】—— 两种都不行：');
+  L.push('       · 只挖公式里一半的字母 / 符号 / 分数线  ✗');
+  L.push('       · 只挖公式里面的中文字（比如把「氧化态」挖掉、公式其余留着）✗');
+  L.push('     为什么：公式是**一整块**，少一块就画不出来了。');
+  L.push('   · 要挖就挖公式**外面**的话，尤其是中文的词，那样最清楚。');
+  L.push('     例：③符号说明：\\(\\Sigma\\) 取 @@外侧@@ 为正方向');
   L.push('');
 
   L.push('【挖空怎么标】');
@@ -9680,10 +10021,12 @@ function _pgBuild() {
     //    **不需要限制它只挖几个之类的限制不需要**，ai 自己会觉得挖出最好的挖空的地方」
     //    → 两条都删掉，只留「从考点挑」这个方向（她要的就是"按考点挑"，不是"随便挑"）。
     //    ⚠️ 别再往里加回任何「几处 / 别太多」的说法 —— 那是这次专门删掉的。
-    L.push(N() + '你自己判断哪些地方该挖 —— 从考点、最容易考、最容易忘的地方挑。');
+    L.push(N() + '🔴【这次我不标，由你自己挑】—— 你按考点、按该背的地方判断，觉得哪里该挖就挖哪里。');
     L.push(N() + '挖的地方用两个 @ 括起来。例：②素质教育以@@培养创新精神@@为重点。');
-    L.push('   · 题目里、答案里都可以挖，具体挖哪儿你判断');
-    L.push('   · 挖多少处也由你定 —— 觉得哪几处最值得记就挖哪几处，不用凑数、也不用刻意少挖');
+    L.push('   · 题目里、答案里、序号后面、句子中间 —— 哪儿都行，没有位置限制');
+    L.push('   · 挖多少处也由你定 —— 没有数量限制，不用凑数，也不用刻意少挖。');
+    L.push('   · 该挖的是「要背的字眼」：关键名词、得分点、容易记混的地方。');
+    L.push('   · 「因此」「综上」这种纯过渡、没信息量的字，就不用挖。');
   }
   L.push('');
 
@@ -9697,9 +10040,12 @@ function _pgBuild() {
     L.push(N() + '连大标题都没有 → 用「知识点 N」。例：$知识点 1');
     L.push(N() + '上面都不合适 → 取这一条的第一句（超过 20 字就只取前 20 字，后面加「…」）');
   }
-  if (sp.length) {
+  // 🆕 v192：加「自己写」那一栏 —— 而且**只有自己写、没勾任何选项时也要说**
+  var _ownSp = (_PGST.splitOwn || '').trim();
+  if (sp.length || _ownSp) {
     L.push('· 资料里用下面这些写法分段的 ——');
     sp.forEach(function (k) { L.push('   · ' + (_PGSPLIT_LABEL[k] || k)); });
+    if (_ownSp) L.push('   · 🔴【我资料里实际用的就是这个写法】：' + _ownSp + ' —— 照它分段，一个都别漏');
     L.push('  🔴【每一个都单独算一道题】，不要全塞到上面那个大标题下面：');
     L.push('   · 题目 = 那个小标题的文字，原样搬（一个字不改、不加问号）');
     L.push('   · 答案 = 从它下面开始，一直写到下一个同类标记为止');
@@ -9806,8 +10152,8 @@ function _pgBuild() {
     //   给光秃秃的 \frac{a}{b} → 工具检测得出、**但 MathJax 认不出边界 → 画不了**。
     //   用户 2026-09-24 原话：「你给我的可以呀 但是豆包的不行」。**别搬回来。**
     L.push('   🔴【要 LaTeX 源码，不要用 ∭ Σ √ 这种 Unicode 符号去凑】：');
-    L.push('      · 分数要写 \frac{上面}{下面}（不要写成 0.0592 / n 那种斜杠）');
-    L.push('      · 求和 \sum 、三重积分 \iiint 、根号 \sqrt 、上下标 ^{} _{} 都要用 LaTeX');
+    L.push('      · 分数要写 \\frac{上面}{下面}（不要写成 0.0592 / n 那种斜杠）');
+    L.push('      · 求和 \\sum 、三重积分 \\iiint 、根号 \\sqrt 、上下标 ^{} _{} 都要用 LaTeX');
     L.push('      · Unicode 那种（∭Σ√）虽然也能看，但**做不出真正的分数线、也排不整齐**');
     L.push('   写法参考：');
     L.push('   分数 \\frac{分子}{分母} ／ 上下标 x^{2} a_{1} ／ 根号 \\sqrt{2}');
@@ -9869,6 +10215,11 @@ function _pgBuild() {
   }
   L.push('- 输出完自己从头到尾对一遍：段数、行数要和原文一一对上');
   L.push('');
+  L.push('🔴🔴 最后再说一遍（这条我每次都碰到）：');
+  L.push('- 开头【不要】写「好的」「我来帮你整理」「以下是我整理的内容」这类话');
+  L.push('- 结尾【不要】写「以上就是」「如果还需要…请告诉我」「希望对你有帮助」这类话');
+  L.push('- 🔴【一个字的废话都不要】—— 你输出的第一个字符，就该是 ￥ 或 $ 或答案本身。');
+  L.push('');
   L.push('下面是要整理的资料：');
   L.push((_PGST.src === 'file' || _PGST.src === 'photo') ? '【把资料粘贴在这里 / 或直接把文件发给我】' : '【把资料粘贴在这里】');
 
@@ -9886,6 +10237,44 @@ function _pgOptHtml(q, o) {
     '<span class="pg-box">' + (on ? '✓' : '') + '</span>' +
     '<span class="pg-lbl">' + o.d + (o.eg ? '<span class="pg-eg">' + o.eg + '</span>' : '') + (o.s ? '<span class="pg-sub">' + o.s + '</span>' : '') + '</span></div>';
 }
+
+// 🆕 v192：分隔写法那一题专门渲染 —— 自己写（第一个）→ 常用两个 → 「更多」里 63 条分 11 组
+function _pgSplitHtml() {
+  var own = _PGST.splitOwn || '';
+  var sel = _PGST.split || [];
+  var h = '';
+  // ① 自己写（用户拍板：放第一个）
+  h += '<div class="pg-own"><div class="pg-ownlb">✏️ 还有别的？我自己写</div>' +
+    '<input id="pgSplitOwn" type="text" placeholder="比如：第1讲 ／ ※重点 ／ ▍小节名 ／ 我的资料是「【板块一】」" value="' + escapeHtml(own) + '">' +
+    '<div class="pg-ownhint">上面这些我都没列到？把你资料里那个写法打进来就行，我原样告诉 AI。（多个用「、」隔开）</div></div>';
+  // ② 常用两个（直接勾）
+  var commonN = 0, total = 0;
+  _PGSPLIT_ALL.forEach(function (g) {
+    g.items.forEach(function (it) {
+      total++;
+      if (!it.common) return;
+      commonN++;
+      var on = sel.indexOf(it.k) >= 0;
+      h += '<div class="pg-opt' + (on ? ' pg-on' : '') + '" data-q="split" data-v="' + it.k + '">' +
+        '<span class="pg-box">' + (on ? '✓' : '') + '</span><span class="pg-lbl">' + it.d +
+        (it.s ? '<span class="pg-sub">' + it.s + '</span>' : '') + '</span></div>';
+    });
+  });
+  // ③ 更多（全部 63 条，分组）
+  h += '<div class="pg-more"><div class="pg-morebtn" id="pgMoreBtn">▾ 还有 ' + (total - commonN) + ' 种写法 —— 点开看全部</div>' +
+    '<div class="pg-morebody" id="pgMoreBody">';
+  _PGSPLIT_ALL.forEach(function (g) {
+    h += '<div class="pg-grp">' + g.g + '</div>';
+    g.items.forEach(function (it) {
+      var on = sel.indexOf(it.k) >= 0;
+      h += '<div class="pg-optsm' + (on ? ' pg-on' : '') + '" data-q="split" data-v="' + it.k + '">' +
+        '<span class="pg-box">' + (on ? '✓' : '') + '</span><span>' + it.d +
+        (it.s ? '<span class="pg-sub">' + it.s + '</span>' : '') + '</span></div>';
+    });
+  });
+  h += '</div></div>';
+  return h;
+}
 function _pgRender() {
   var hasMarks = (!_PGST.noMark && _PGST.marks.length);
   var markUnusable = (_PGST.src === 'text' || _PGST.mode === 'normal');
@@ -9899,8 +10288,7 @@ function _pgRender() {
         : '你选的是普通模式 —— <b>它可能读不到文档里的加粗 / 高亮 / 下划线</b>') +
         '。<br>下面还是照常让你勾 —— <b>你自己决定要不要按这些标记挖空</b>。</div>';
     }
-    q.opts.forEach(function (o) { h += _pgOptHtml(q, o); });
-    if (q.none) h += _pgOptHtml(q, { v: '_none_', d: q.none.d, s: q.none.s });
+    if (q.type === 'split') { h += _pgSplitHtml(); } else {q.opts.forEach(function (o) { h += _pgOptHtml(q, o); }); if (q.none) h += _pgOptHtml(q, { v: '_none_', d: q.none.d, s: q.none.s }); }
     if (q.id === 'mode' && _PGST.mode === 'normal') h += '<div class="pg-tip" style="margin-top:9px">⚠️ 普通模式读不到文档里的加粗/高亮/下划线 —— 想按格式挖空的话，改成「工作模式」。</div>';
     h += '</div>';
   });
@@ -9913,6 +10301,14 @@ function _pgRender() {
   if (len) len.textContent = t.length + ' 字';
 }
 function _pgPick(qid, v) {
+  // 🆕 v192：分隔写法 —— 勾选走数组；自己写的文字单独存
+  if (qid === 'split') {
+    _PGST.split = _PGST.split || [];
+    var si = _PGST.split.indexOf(v);
+    if (si >= 0) _PGST.split.splice(si, 1); else _PGST.split.push(v);
+    _pgSave(); _pgRender();
+    return;
+  }
   var q = null; _PGQ.forEach(function (x) { if (x.id === qid) q = x; });
   if (qid === 'marks') {
     if (v === '_none_') { _PGST.noMark = !_PGST.noMark; if (_PGST.noMark) _PGST.marks = []; else _PGST.marks = ['加粗']; }
@@ -9946,12 +10342,12 @@ function showPromptChooser() {
     '<button class="btn btn-ghost btn-sm" id="pgClose" style="min-width:38px">✕</button></div>' +
     '<div class="pg-scroll" id="pgQs">' +
       // 🆕 v183 D1 补（2026-09-24 用户：「LaTeX 就行　这个在复制话术的时候 你就要说明」）
-      //   用户看不懂「LaTeX」是啥，得用大白话告诉她：就是 rac 那种写法，豆包会。
+      //   用户看不懂「LaTeX」是啥，得用大白话告诉她：就是 \\frac 那种写法，豆包会。
       '<div style="background:var(--warning-light);border-left:4px solid var(--warning);border-radius:8px;padding:10px 12px;margin:0 0 10px;font-size:var(--f12);line-height:1.75">' +
         '<b>📐 题里有数学 / 化学公式的话，先说一句：</b><br>' +
         '这份话术里已经写了「公式要用 LaTeX」—— 你不用懂它是什么，<b>照着复制给豆包就行</b>。<br>' +
-        '它长这样：<code style="background:#fff;padding:1px 4px;border-radius:3px">rac{上面}{下面}</code>、' +
-        '<code style="background:#fff;padding:1px 4px;border-radius:3px">sum_{n=0}^{infty}</code>。' +
+        '它长这样：<code style="background:#fff;padding:1px 4px;border-radius:3px">\\frac{上面}{下面}</code>、' +
+        '<code style="background:#fff;padding:1px 4px;border-radius:3px">\\sum_{n=0}^{\\infty}</code>。' +
         '<b>豆包自己会给这种写法</b>，你只管要「能渲染的版本」，别要「能在微信显示的版本」。' +
       '</div>' +
     '</div>' +
@@ -9966,6 +10362,19 @@ function showPromptChooser() {
   ov.querySelector('#pgOld').onclick = function () { copyTextSafe(_PROMPT_OLD, '📋 已复制「旧格式话术」，去粘贴给 AI 吧'); };
   ov.querySelector('#pgCopy').onclick = function () { _pgCopy(); };
   // 选项点击：用事件委托（选项是 innerHTML 生成的，不能挂 onclick 属性 + 全局函数）
+  // 🆕 v192：① 点「更多」展开/收起  ② 自己写那个输入框（用 input 事件，只更新预览、不重渲染以免丢焦点）
+  ov.querySelector('#pgQs').addEventListener('click', function (e) {
+    var mb = e.target && e.target.closest ? e.target.closest('#pgMoreBtn') : null;
+    if (mb) { var mbd = document.getElementById('pgMoreBody'); if (mbd) mbd.classList.toggle('pg-open'); e.stopPropagation(); return; }
+  }, true);
+  ov.querySelector('#pgQs').addEventListener('input', function (e) {
+    if (!e.target || e.target.id !== 'pgSplitOwn') return;
+    _PGST.splitOwn = e.target.value;
+    _pgSave();
+    var t = _pgBuild();
+    var pv = document.getElementById('pgPv'); if (pv) pv.textContent = t;
+    var len = document.getElementById('pgLen'); if (len) len.textContent = t.length + ' 字';
+  });
   ov.querySelector('#pgQs').addEventListener('click', function (e) {
     var el = e.target;
     while (el && el !== ov && !(el.getAttribute && el.getAttribute('data-q'))) el = el.parentNode;
@@ -10604,6 +11013,11 @@ function renderPreviewCards() {
       '</div>' : '');
 
     if (mode === 'manual') {
+      // 🆕 v193：上面那条**只读**的公式效果（有公式才出现）——
+      //   ⚠️ 必须在 `.preview-answer` **外面**（那里面是逐字 span，不能被公式扫描碰到）
+      var _mp = editMathPreviewHtml(card);
+      if (_mp) html += '<div class="edit-mp" style="margin:0 0 8px;padding:8px 10px;background:var(--bg-input);border:1px dashed var(--border);border-radius:8px;font-size:var(--f13);line-height:2.0;word-break:break-word;overflow-wrap:break-word">' +
+        '<div style="font-size:var(--f11);color:var(--text-tertiary);margin-bottom:4px;font-weight:600">📐 公式效果（只读，帮你看着选字）</div>' + _mp + '</div>';
       html += '<div style="position:relative"><div class="preview-answer" id="pv-answer-' + i + '">' + renderAnswerChars(card, i) + '</div><button class="btn btn-sm" onclick="saveCardSelection(' + i + ')" style="position:absolute;left:-8px;top:50%;transform:translate(-100%,-50%);opacity:.35;font-size:var(--f18);padding:4px 6px;min-height:auto;background:transparent;border:none;cursor:pointer;line-height:1" title="保存选中（回车）">💾</button></div>' +
         '<div style="margin-top:6px" id="pv-info-' + i + '">' + renderSavedInfo(card, i) + '</div>' +
         '<div class="flex gap-6 mt-6">' +
@@ -13361,6 +13775,105 @@ function fmtAnswerSegLast(seg) {
   return escNl(result);
 }
 
+// 🆕 v193「丁」（用户 2026-10-02 拍板）：公式里夹着挖空 → **公式照样画出来**，要挖的地方留白。
+//   · `_mathSegs(text)`      —— 把一段文字切成「像公式的连续段」（跟 _autoWrapMathIn 同一套字符表）
+//   · `_blankFormulaSegs()`  —— 挑出**严格包住某个挖空**的那些段（段比空大才算法；空比段大不算）
+//   · `_segMathHtml()`       —— 把**整段**公式做成 \(…\)（里面一个空都不挖，见下面那段说明）
+//     （\phantom 的宽度**正好等于**藏起来那几个字，所以画出来跟真公式一样宽）
+// 跟 _autoWrapMathIn 里那张字符表**一模一样**（那边是函数内局部变量，这里提到外面给两个函数共用）
+var CH_MATH_RE = /[A-Za-z0-9\\^_{}\[\]()+\-*/=<>.,|! &'←-⋿]/;
+function _mathSegs(text) {
+  var s = String(text == null ? '' : text), out = [], i = 0;
+  while (i < s.length) {
+    if (!CH_MATH_RE.test(s.charAt(i))) { i++; continue; }
+    var j = i;
+    while (j < s.length && CH_MATH_RE.test(s.charAt(j))) j++;
+    out.push({ s: i, e: j });
+    i = j;
+  }
+  return out;
+}
+// 🆕 v193：这一段里有没有「**还没关上的**数学结构」——
+//   AI 给的公式经常是**跨行**的（`\begin{vmatrix}` 一行、矩阵体好几行、`\end{vmatrix}` 一行）。
+//   段扫描碰到换行时，只要这里返回 true 就**允许跨过去继续**，不然矩阵会被切成好几块、每块都不成形。
+//   ⚠️ 只认 `\begin` 和 `\left` 这两种**结构明确**的；
+//      **不敢认裸的 `{`** —— 那会把下一行的中文也吞进公式里（宁可少救，不可吞字）。
+function _mathOpen(seg) {
+  if ((seg.match(/\\begin\{/g) || []).length > (seg.match(/\\end\{/g) || []).length) return true;
+  if ((seg.match(/\\left(?![a-zA-Z])/g) || []).length > (seg.match(/\\right(?![a-zA-Z])/g) || []).length) return true;
+  // 🆕 裸的 { 没配平也算 —— `\text{速率}` `\begin{cases} 中文 \end{cases}` 这类**公式里带中文**的，
+  //    光看 \begin/\left 还不够，必须在 { 没关上时也能跨过中文，否则公式会在中文处被切断 → 出源码
+  if ((seg.match(/\{/g) || []).length > (seg.match(/\}/g) || []).length) return true;
+  return false;
+}
+function _blankFormulaSegs(text, blanks) {
+  var s = String(text == null ? '' : text);
+  if (!blanks || !blanks.length) return [];
+  // ⚠️ 挖空**自己的字**要算「透明」—— 它里面是中文也不许把公式切断：
+  //    `\lg\frac{[氧化态]}{[还原态]}` 里「氧化态」是中文，不透明的话段就断在 `\lg\frac{[` 为止，
+  //    挖空就落在段**外面**了 → 丁压根不触发（第一版就是这么错的，被 _v193_ding_test 当场抓到）。
+  //    —— 跟 _autoWrapMathIn 里「显示答案那块算透明」是同一个办法。
+  var soft = [];
+  for (var z = 0; z < s.length; z++) soft.push(false);
+  for (var bi = 0; bi < blanks.length; bi++) {
+    var bb0 = blanks[bi];
+    for (var k = Math.max(0, bb0.start); k < Math.min(s.length, bb0.end); k++) soft[k] = true;
+  }
+  var out = [], i2 = 0;
+  while (i2 < s.length) {
+    if (!CH_MATH_RE.test(s.charAt(i2))) { i2++; continue; }
+    var j = i2;
+    while (j < s.length) {
+      var _c2 = s.charAt(j);
+      if (CH_MATH_RE.test(_c2) || soft[j]) { j++; continue; }
+      // 🆕 换行不切断「还没关上的数学结构」（跨行的矩阵就是靠这条救回来的）
+      // 🆕 只要还在「没关上」的状态里，**什么字符都跨**（中文也算）——
+      //    正文里的中文不受影响：没有未闭合结构时，下面那行 break 照旧把段断在这儿
+      // ⚠️ 但加一道**长度上限**：真没关上的 `{`（AI 少写一个括号）不能把后面整篇正文都吞进公式
+      if (_mathOpen(s.slice(i2, j)) && (j - i2) < 400) { j++; continue; }
+      break;
+    }
+    var bs = null;
+    for (var m = 0; m < blanks.length; m++) {
+      var bb = blanks[m];
+      // ⚠️ 必须**严格**包住：`@@闭曲面\Sigma@@`（公式在空**里面**）不会中 —— 那种空照旧是能打字的输入框
+      if (bb.start > i2 && bb.end < j) { if (!bs) bs = []; bs.push(bb); }
+    }
+    if (bs && _looksLikeMathSeg(s.slice(i2, j))) out.push({ s: i2, e: j, bs: bs });
+    i2 = j;
+  }
+  return out;
+}
+function _segHolding(segs, b) {
+  for (var i = 0; i < segs.length; i++) { if (b.start > segs[i].s && b.end < segs[i].e) return segs[i]; }
+  return null;
+}
+function _segMathHtml(text, seg) {
+  // 🆕 v193（用户 2026-10-02 再次明确：「不管显示不显示答案　都要完整　不要出现源码」）
+  //   这一段**整段**做成 \( … \) 交给引擎画 —— 里面的挖空**一概不挖**。
+  //   所以挖空状态和显示答案**画出来一模一样** ✓ 永远不会出现源码 ✓ 行也不会重排 ✓
+  //   ⚠️ 别在这里加 \phantom / \underline 之类的东西 —— 上一版（丁）就是那么做的，
+  //      用户看完说"还是源码"（其实是我描述得不好 + 那套更脆）。现在这条最简单也最稳。
+  var out = text.slice(seg.s, seg.e);
+  // MathJax 读的是 textContent —— 所以**只转义 & < >**，反斜杠一个都不许动
+  out = out.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return '\\(' + out + '\\)';
+}
+// 🆕 v193（用户 2026-10-02 最终选定「整个公式算一个空」）：
+//   挖空状态下，一个夹着挖空的公式段 = **一个空**（不是每个词一个空）。
+//   · 宽度按**整段公式**估（很长 → 会被 max-width:100% 收住，不会撑出屏幕）
+//   · `data-ans` 是**整段公式原文** —— 想练的话可以把整条默写出来
+//   · 点了「显示答案」→ 走 _segMathHtml，整段公式画出来 ✓
+//   ⚠️ 别在挖空状态里把这几个字的原文露出来 —— 露了就等于没挖。
+function _segBlankHtml(card, txt, bidx, val) {
+  return '<input type="text" class="blank-input seg-blank' + (isOvalBlank() ? ' oval' : '') + '"'
+    + ' style="width:' + ovalBlankWidth(txt) + ';max-width:100%"'
+    + ' data-cid="' + card.id + '" data-bidx="' + bidx + '"'
+    + ' data-ans="' + escapeHtml(txt).replace(/\n/g, ' ') + '"'
+    + ' value="' + escapeHtml(val) + '"'
+    + ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"'
+    + ' enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
+}
 function renderCardWithBlanks(card, revealed, hideQ) {
   const q = card.question || '';
   let a = (card.answer || '').trim();
@@ -13392,14 +13905,30 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     // 题目有挖空 → 渲染填空框
     const qBlanks = resolveBlanksSub(qBlanksRaw, round);
     var qh = '', qle = 0;
+    // 🆕 v193：**两种状态都走**这条（用户要的就是「不管显示不显示答案　都完整」）——
+    //   所以挖空状态和显示答案画出来一模一样，既不出源码、行也不重排。
+    var qSegs = _blankFormulaSegs(text, qBlanks);
     for (var qi = 0; qi < qBlanks.length; qi++) {
       var bq = qBlanks[qi];
+      var _qs = _segHolding(qSegs, bq);
+      if (_qs) {
+        if (_qs._used) continue;                       // 同一段里的第 2、3 个空：整段已经画过了
+        _qs._used = true;
+        var _qtxt = text.slice(_qs.s, _qs.e);
+        var _qsVal = (practiceState.answers[card.id] || {})['q' + qi] || '';
+        qh += fmtAnswerSeg(text.substring(qle, _qs.s), qle === 0);
+        qh += revealed
+          ? _segMathHtml(text, _qs)                       // 显示答案 → 整段公式画出来
+          : _segBlankHtml(card, _qtxt, 'q' + qi, _qsVal); // 挖空状态 → **整段算一个空**（一个大空框）
+        qle = _qs.e;
+        continue;
+      }
       var sq = (practiceState.answers[card.id] || {})['q' + qi] || '';
       qh += fmtAnswerSeg(text.substring(qle, bq.start), qle === 0);
       if (revealed) {
-        qh += '<span class="revealed-text">' + escNl(bq.text) + '</span>';
+        qh += '<span class="revealed-text' + (isOvalBlank() ? ' oval' : '') + '" style="width:' + ovalBlankWidth(bq.text) + '">' + escNl(bq.text) + '</span>';
       } else {
-        qh += '<input type="text" class="blank-input' + (isOvalBlank() ? ' oval' : '') + '" size="' + Math.max(bq.text.length + 3, 5) + '"' + (isOvalBlank() ? ' style="width:' + ovalBlankWidth(bq.text) + '"' : '') + ' data-cid="' + card.id + '" data-bidx="q' + qi + '" data-ans="' + escapeHtml(bq.text).replace(/\n/g, ' ') + '" value="' + escapeHtml(sq) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
+        qh += '<input type="text" class="blank-input' + (isOvalBlank() ? ' oval' : '') + '" style="width:' + ovalBlankWidth(bq.text) + '"' + ' data-cid="' + card.id + '" data-bidx="q' + qi + '" data-ans="' + escapeHtml(bq.text).replace(/\n/g, ' ') + '" value="' + escapeHtml(sq) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
       }
       qle = bq.end;
     }
@@ -13434,14 +13963,28 @@ function renderCardWithBlanks(card, revealed, hideQ) {
   // 渲染答案，带挖空
   const aBlanks = resolveBlanksSub(aBlanksRaw, round);
   var ah = '', le = answerStart;
+  var aSegs = _blankFormulaSegs(text, aBlanks);   // 🆕 v193：两种状态都走（见上面题目区那段说明）
   for (var ai = 0; ai < aBlanks.length; ai++) {
     var ba = aBlanks[ai];
+    var _as = _segHolding(aSegs, ba);
+    if (_as) {
+      if (_as._used) continue;
+      _as._used = true;
+      var _atxt = text.slice(_as.s, _as.e);
+      var _asVal = (practiceState.answers[card.id] || {})[ai] || '';
+      ah += fmtAnswerSeg(text.substring(le, _as.s), ai === 0);
+      ah += revealed
+        ? _segMathHtml(text, _as)                        // 显示答案 → 整段公式画出来
+        : _segBlankHtml(card, _atxt, ai, _asVal);        // 挖空状态 → 整段算一个空
+      le = _as.e;
+      continue;
+    }
     var sa = (practiceState.answers[card.id] || {})[ai] || '';
     ah += fmtAnswerSeg(text.substring(le, ba.start), ai === 0);
     if (revealed) {
-      ah += '<span class="revealed-text">' + escNl(ba.text) + '</span>';
+      ah += '<span class="revealed-text' + (isOvalBlank() ? ' oval' : '') + '" style="width:' + ovalBlankWidth(ba.text) + '">' + escNl(ba.text) + '</span>';
     } else {
-      ah += '<input type="text" class="blank-input' + (isOvalBlank() ? ' oval' : '') + '" size="' + Math.max(ba.text.length + 3, 5) + '"' + (isOvalBlank() ? ' style="width:' + ovalBlankWidth(ba.text) + '"' : '') + ' data-cid="' + card.id + '" data-bidx="' + ai + '" data-ans="' + escapeHtml(ba.text).replace(/\n/g, ' ') + '" value="' + escapeHtml(sa) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
+      ah += '<input type="text" class="blank-input' + (isOvalBlank() ? ' oval' : '') + '" style="width:' + ovalBlankWidth(ba.text) + '"' + ' data-cid="' + card.id + '" data-bidx="' + ai + '" data-ans="' + escapeHtml(ba.text).replace(/\n/g, ' ') + '" value="' + escapeHtml(sa) + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()">';
     }
     le = ba.end;
   }
@@ -14245,10 +14788,25 @@ function rdFullHtml(r) {
   for (var i = 0; i < bs.length; i++) pairs.push({ b: bs[i], ok: marks[i] === true });
   pairs.sort(function (x, y) { return x.b.start - y.b.start; });
   if (!pairs.length) return escNl(text);
+  // 🆕 v193（用户 2026-10-03：「做完题目的这一轮的逐题明细 我希望也渲染」）：
+  //   公式**夹着**挖空的那几段 —— 跟做题页**同一套**（`_blankFormulaSegs` + `_segMathHtml`）——
+  //   **整段画成公式** ✓ 不然明细里那几行会是一串 LaTeX 源码。
+  //   ⚠️ 代价：那一段里的空**不再逐个上红绿**（整段是一个公式）—— 对错看那行开头的 ✅/❌ 就行。
+  var _rdSegs = _blankFormulaSegs(text, pairs.map(function (p) { return p.b; }));
   var h = '', le = 0;
   for (var k = 0; k < pairs.length; k++) {
     var bk = pairs[k].b;
     if (bk.start < le) continue;   // 防御：空重叠就不画（正常不会走到）
+    var _rdSg = _segHolding(_rdSegs, bk);
+    if (_rdSg) {
+      if (_rdSg._used) continue;
+      _rdSg._used = true;
+      if (_rdSg.s < le || _rdSg.e > text.length) continue;
+      h += escNl(text.substring(le, _rdSg.s));
+      h += _segMathHtml(text, _rdSg);
+      le = _rdSg.e;
+      continue;
+    }
     h += escNl(text.substring(le, bk.start));
     h += '<span style="padding:1px 4px;border-radius:3px;font-weight:600;color:' + (pairs[k].ok ? 'var(--success)' : 'var(--danger)') +
       ';background:' + (pairs[k].ok ? 'var(--success-light)' : 'var(--danger-light)') +
@@ -14260,6 +14818,32 @@ function rdFullHtml(r) {
   return h;
 }
 // 单条展开 / 收起（只动 DOM，不改全局设置 —— 全局那个由「全部展开」按钮管）
+// 🆕 v193（用户 2026-10-03）：「编辑挖空」那个界面上也要能看到公式画出来的样子。
+//   为什么不能直接在那个界面里渲染：它是**逐字选择**的（每个字一个 span），引擎画不出来。
+//   所以这里做一条**只读的预览条**，放在逐字区**上面** —— 你一边选字，一边能看到公式长什么样 ✓
+//   ⚠️ 直接复用 `rdFullHtml`（它已经会「公式段整段画出来」＋「逐空上红绿」）—— 别另写一套。
+//   ⚠️ 位置**必须在** `.preview-answer` **外面**，否则又被当成逐字区去扫描 ✗
+function editMathPreviewHtml(card) {
+  try {
+    var q = card.question || '', a = card.answer || '';
+    var txt = q + '\n' + a;
+    if (!hasFormulaText(txt)) return '';                       // 没公式就不显示这一条，别占地方
+    // 把「已保存的字」按题目区/答案区各自的偏移，拼成全文里的挖空区间
+    var qLen = q.length + 1, all = {}, k;
+    var sq = card._savedCharsQ || {}, sa = card._savedChars || {};
+    for (k in sq) { if (sq[k]) all[+k] = true; }
+    for (k in sa) { if (sa[k]) all[qLen + (+k)] = true; }
+    var keys = Object.keys(all).map(Number).sort(function (x, y) { return x - y; });
+    var blanks = [], run = null;
+    for (var i = 0; i < keys.length; i++) {
+      if (run && keys[i] === run.end) { run.end = keys[i] + 1; }
+      else { if (run) blanks.push(run); run = { start: keys[i], end: keys[i] + 1 }; }
+    }
+    if (run) blanks.push(run);
+    for (var j = 0; j < blanks.length; j++) blanks[j].text = txt.slice(blanks[j].start, blanks[j].end);
+    return rdFullHtml({ text: txt, blanks: blanks, marks: blanks.map(function () { return true; }) });
+  } catch (e) { return ''; }
+}
 function rdToggleRow(el) {
   var full = el.nextElementSibling;
   if (!full) return;
@@ -14306,7 +14890,7 @@ function renderRdList() {
     // 🆕 v190：题面**不截断**了（用户原话「改成不截断（长的自动换行）—— 对」）—— 长的自动换行
     var q = String(r.q).replace(/^[\d\.\、\s]+/, '');
     h += '<div style="padding:9px 11px;border-radius:8px;margin-bottom:6px;' + bg + '">' +
-      '<div style="font-size:var(--f13);line-height:1.6;word-break:break-word;color:var(--text)">' +
+      '<div class="rd-q" style="font-size:var(--f13);line-height:1.6;word-break:break-word;color:var(--text)">' +
         tag + ' 第 ' + (r.i + 1) + ' 题 ' + escapeHtml(q) +
         (isNone ? ' <span style="color:var(--text-tertiary);font-size:var(--f12)">（没作答）</span>' : '') +
       '</div>';
@@ -14328,6 +14912,9 @@ function renderRdList() {
     h += '</div>';
   }
   box.innerHTML = h;
+  // 🆕 v193：画完立刻去排公式（跟做题页/浏览页同一个钩子）——
+  //   明细默认是**收起**的，但 MathJax 对隐藏元素照样能排 ✓ 展开时就是画好的 ✓
+  try { mathAfterRender(); } catch (e) { console.warn('[公式] 明细渲染失败：', e); }
 }
 
 function switchManualTab(tab) {
@@ -14638,6 +15225,14 @@ var _MANUAL_TIP =
     '「导出备份文件」存的是<b>题库、题目、错题、学习进度、设置</b>这些，<b>资料页里的笔记和图片不在里面</b>。<br><br>' +
     '所以换手机、或者清了浏览器数据之后，用备份恢复：<b>题库都会回来，笔记和图片不会。</b><br><br>' +
     '👉 想留住图片很简单：<b>点开图片 → 长按 → 保存到相册</b>，存一份在自己手机里最稳。' +
+    '<div style="height:14px"></div>' +
+    '<b>📐 公式里怎么挖空？只有两种做法</b><br><br>' +
+    '· 要么<b>整条公式一起挖</b> —— 挖完之后它整条一起藏起来<br>' +
+    '· 要么<b>一个字都不挖</b><br>' +
+    '　（<b>特别复杂的公式建议这样</b>：一眼看过去一堆分数线、根号、大括号那种，挖了反而看不明白）<br><br>' +
+    '<span style="color:var(--danger);font-weight:600">公式是「一整块」—— 千万别只挖它的一部分</span>：<br>' +
+    '不管是只挖一半的符号，还是只挖公式里面的中文词，都会让公式显示不出来。<br><br>' +
+    '👉 要挖就挖公式<b>外面</b>的话，尤其是<b>中文的词</b>。' +
   '</div>';
 
 // 页签按钮的样式：选中 = 主色底白字；未选中 = 透明
@@ -15211,10 +15806,17 @@ function openBrowseDetail(idx) {
 // · 错题卡：**挖空开着**时也走这套只读；**关着**时保持原来的可作答
 //   （用户 2026-09-19 拍板「关着时保持现在的样子」—— 别把已经在用的用法弄没了）。
 function browseBlankOn() { return !!(appData && appData.settings && appData.settings.browseBlank); }
-// 横线版挖空的宽度：模仿做题页 <input size="N">（N 个字符 ≈ 0.5em 宽）
-function browsePlainBlankWidth(t) {
-  var n = String(t == null ? '' : t).length;
-  return (Math.max(n + 3, 5) * 0.5 + 0.5).toFixed(2) + 'em';
+// 🆕 v192 修（用户 2026-10-02 报「空白挖空比有字的挖空长太多了」）：
+//   这里原来是**另抄一套** —— 注释写着「模仿做题页 <input size="N">」。
+//   可做题页 v192 已经换成「按字符精确算」了 → 两边分家：
+//     同一个 2 字答案，做题页 2.22em、这里 3.00em
+//     → **浏览页的挖空比它显示文字时宽一大截** ✗
+//   → 改成**直接调同一个函数**，三处永远一致。**别再各抄一套。**
+function browsePlainBlankWidth(t, oval) {
+  // 🆕 v193：浏览页这个框**没有内边距**（下面会给它挂 .bw-flat），
+  //   宽度就该**等于字本身** → 跟「关掉挖空后的那行纯文字」一样长 ✓
+  //   椭圆挖空多留 0.3em：它有一圈 2px 的实线边（左右各 2px ≈ 0.25em）。
+  return (_blankTextEm(t) + (oval ? 0.3 : 0.04)).toFixed(2) + 'em';
 }
 function renderBrowseAnswerBlanks(card) {
   var ans = card.answer || '';
@@ -15225,14 +15827,30 @@ function renderBrowseAnswerBlanks(card) {
                                .sort(function(a, b) { return a.start - b.start; });
   if (!abs.length) return '<div style="color:var(--text-secondary)">' + escNl(ans) + '</div>';
   var oval = isOvalBlank();
+  // 🆕 v193：公式**夹着**挖空的那几段 —— **整段画成公式、里面一概不挖**（跟做题页同一套）
+  var _rel = abs.map(function (b) { return { start: b.start - answerStart, end: b.end - answerStart }; });
+  var _segs = _blankFormulaSegs(ans, _rel);
   var h = '', le = 0;
   for (var i = 0; i < abs.length; i++) {
     var b = abs[i], s = b.start - answerStart, e = b.end - answerStart;
+    var _sg = _segHolding(_segs, { start: s, end: e });
+    if (_sg) {
+      if (_sg._used) continue;
+      _sg._used = true;
+      if (_sg.s < le || _sg.e > ans.length) continue;      // 同一条越界保护
+      h += escNl(ans.substring(le, _sg.s));
+      // 🆕 v193：浏览页这里本来就是**只读的空白框**（没有显示答案那回事）→
+      //   直接给一个覆盖整段公式的空白框，宽度按整段估、max-width:100% 免得撑出屏幕
+      h += '<span class="blank-input bw-flat' + (oval ? ' oval' : '') + '" style="width:' +
+           browsePlainBlankWidth(ans.slice(_sg.s, _sg.e), oval) + ';max-width:100%"></span>';
+      le = _sg.e;
+      continue;
+    }
     // 越界 / 空挖空 / 跟上一处重叠 → 跳过。宁可少画一个圈，也不能把答案切乱
     if (s < le || s >= e || e > ans.length) continue;
     h += escNl(ans.substring(le, s));
-    h += '<span class="blank-input' + (oval ? ' oval' : '') + '" style="width:' +
-         (oval ? ovalBlankWidth(b.text) : browsePlainBlankWidth(b.text)) + '"></span>';
+    h += '<span class="blank-input bw-flat' + (oval ? ' oval' : '') + '" style="width:' +
+         browsePlainBlankWidth(b.text, oval) + '"></span>';
     le = e;
   }
   h += escNl(ans.substring(le));
@@ -17580,7 +18198,7 @@ function renderSettings() {
         '</div>' +
       '</div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:var(--f12);transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:var(--f13);cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:var(--f12)"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v191</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v193</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
       // 📲 2026-09-18 v166：用户在设置页找不到「怎么把工具存到桌面」的说明 → 关于最后一行加这个入口。
       //    点开走 showInstallGuide()（无延迟弹窗）。以后别的工具要加同一份 → 见 `新建文件夹/安装教程-可复用.md`。
