@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>教资《教育知识与能力》历年真题科学分析 v1.12</title>
+<title>教资《教育知识与能力》历年真题科学分析 v1.13</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -275,24 +275,24 @@ function switchTheme(t, el) {
 
 <div class="header">
   <h1>📊 教资《教育知识与能力》历年真题科学分析</h1>
-  <p>2019下～2026上 | 13套真题 · 273道选择题 | 8大知识模块 | 回溯验证6/8精确命中 | v1.12</p>
+  <p>2019下～2026下 | 14套真题 · 294道选择题 | 8大知识模块 | 回溯验证8/8在±1内·2/8精确 | v1.13</p>
 </div>
 
 <div class="container">
 
 <!-- KPI Row -->
 <div class="kpi-row">
-  <div class="kpi-card"><div class="value">13</div><div class="label">历年真题套数</div></div>
-  <div class="kpi-card"><div class="value">273</div><div class="label">选择题总数</div></div>
-  <div class="kpi-card success"><div class="value">6/8</div><div class="label">回溯验证精确命中</div></div>
-  <div class="kpi-card warn"><div class="value">8/8</div><div class="label">±1题范围内命中</div></div>
+  <div class="kpi-card"><div class="value">14</div><div class="label">历年真题套数</div></div>
+  <div class="kpi-card"><div class="value">294</div><div class="label">选择题总数</div></div>
+  <div class="kpi-card warn"><div class="value">2/8</div><div class="label">回溯验证精确命中</div></div>
+  <div class="kpi-card success"><div class="value">8/8</div><div class="label">±1题范围内命中</div></div>
   <div class="kpi-card"><div class="value">B最优</div><div class="label">蒙题最优策略</div></div>
 </div>
 
 <!-- Tabs -->
 <div class="tab-nav">
   <button class="tab-btn active" onclick="switchTab('dashboard')">📊 总览仪表盘</button>
-  <button class="tab-btn" onclick="switchTab('prediction')">🎯 2026下预测</button>
+  <button class="tab-btn" onclick="switchTab('prediction')">🎯 2027上预测</button>
   <button class="tab-btn" onclick="switchTab('backtest')">🔬 回溯验证</button>
   <button class="tab-btn" onclick="switchTab('trend')">📈 趋势分析</button>
   <button class="tab-btn" onclick="switchTab('hotspot')">🔥 热点追踪</button>
@@ -309,15 +309,15 @@ function switchTheme(t, el) {
   <!-- Module Pie Chart + Answer Distribution -->
   <div class="chart-row">
     <div class="section" style="margin-bottom:0;">
-      <h2>📊 八大模块出题占比 (273题总览)</h2>
+      <h2>📊 八大模块出题占比 (294题总览)</h2>
       <div class="chart-box"><canvas id="modulePieChart"></canvas></div>
     </div>
     <div class="section" style="margin-bottom:0;">
-      <h2>🎯 答案分布规律 (273题)</h2>
+      <h2>🎯 答案分布规律 (294题)</h2>
       <div class="chart-box"><canvas id="answerBarChart"></canvas></div>
       <div class="strategy-box" style="margin-top:12px;">
         <h3>💡 蒙题策略</h3>
-        <p><span class="highlight">B (26.7%)</span> > A (26.0%) > C (25.6%) > D (21.6%)</p>
+        <p><span class="highlight">B (26.9%)</span> > A (25.9%) > C (25.5%) > D (21.8%)</p>
         <p style="font-size:0.85rem;color:var(--text2);">不会的题<strong>优先选B</strong>，其次A或C，<strong>慎选D</strong>（D是显著最少的正确答案）</p>
       </div>
     </div>
@@ -325,7 +325,7 @@ function switchTheme(t, el) {
 
   <!-- Module Trend Heat Map -->
   <div class="section">
-    <h2>🔥 模块出题密度趋势 (13次考试)</h2>
+    <h2>🔥 模块出题密度趋势 (14次考试)</h2>
     <div class="chart-box" style="height:380px;"><canvas id="heatMapChart"></canvas></div>
   </div>
 
@@ -342,8 +342,8 @@ function switchTheme(t, el) {
 <!-- Tab: Prediction -->
 <div id="tab-prediction" class="tab-panel">
   <div class="section">
-    <h2>🎯 2026年9月(下半年) 选择题模块预测</h2>
-    <p style="color:var(--text2);margin-bottom:16px;">基于13套真题的频次分析+近期趋势+交替规律，<span class="highlight">经官方考纲68%/32%分组验证</span>，预测2026下21道选择题的模块分布</p>
+    <h2>🎯 2027年(上半年) 选择题模块预测</h2>
+    <p style="color:var(--text2);margin-bottom:16px;">基于14套真题（2019下~2026下）的频次+趋势分析，<span class="highlight">经官方考纲68%/32%分组验证</span>，预测2027上21道选择题的模块分布</p>
     <div class="chart-row">
       <div class="chart-box"><canvas id="predModuleChart"></canvas></div>
       <div id="predTable"></div>
@@ -351,14 +351,14 @@ function switchTheme(t, el) {
   </div>
 
   <div class="section">
-    <h2>🔮 2026下 高概率出题方向 (逐题预测)</h2>
+    <h2>🔮 2027上 高概率出题方向 (逐题预测)</h2>
     <p style="color:var(--text2);margin-bottom:12px;">以下为各模块最可能出现的具体考点，按出题概率排序</p>
     <div class="pred-grid" id="predDetailCards"></div>
   </div>
 
   <div class="section">
-    <h2>⚠️ 2026上已考过 → 2026下大概率不重复的考点</h2>
-    <p style="color:var(--text2);margin-bottom:8px;">上半年刚考过的具体知识点，下半年重复概率极低(<15%)</p>
+    <h2>⚠️ 2026下 刚考过的考点（原题不重现 · 同族换角度连考）</h2>
+    <p style="color:var(--text2);margin-bottom:8px;">刚考过的点原题几乎不重现；但⚠️同族换角度/换题型不降权——26下 实测：长善救失、绝对化表述、建构主义 都是连考进场的。看这份表时请对着「族」看：大点考过了，它的兄弟点往往就是下一次的题。</p>
     <div id="recentlyTested"></div>
   </div>
 </div>
@@ -366,15 +366,15 @@ function switchTheme(t, el) {
 <!-- Tab: Backtest -->
 <div id="tab-backtest" class="tab-panel">
   <div class="section">
-    <h2>🔬 回溯验证：用2019下～2025下数据预测2026上</h2>
+    <h2>🔬 回溯验证：用2019下～2026上数据预测2026下</h2>
     <p style="color:var(--text2);margin-bottom:16px;">
-      这是检验预测模型准确性的关键一步。我们用前12套数据训练模型，预测第13套(2026上)，然后和真实考题对比。
+      这是检验预测模型准确性的关键一步。我们用前13套数据训练模型，预测第14套(2026下)，然后和真实考题对比。
     </p>
     <div class="chart-row">
       <div class="chart-box"><canvas id="backtestChart"></canvas></div>
       <div>
         <div class="kpi-card success" style="margin-bottom:12px;">
-          <div class="value">6/8</div>
+          <div class="value">2/8</div>
           <div class="label">精确命中(模块题数完全一致)</div>
         </div>
         <div class="kpi-card success">
@@ -382,7 +382,7 @@ function switchTheme(t, el) {
           <div class="label">±1题范围内命中(所有模块)</div>
         </div>
         <p style="margin-top:12px;font-size:0.9rem;color:var(--text2);">
-          仅<span class="highlight">模块3(教学)</span>和<span class="highlight">模块5(发展心理)</span>各差1题，模型整体可靠。
+          8个模块全部在±1题内；精确命中2个（模块5 发展心理、模块7 德育）。⚠️ 26下 打破了「三连复读」模式（M1 升至7题、M3/M6 归零），分布回归长期结构——这也是模块层「±1即合格」口径下仍算过关的原因。
         </p>
       </div>
     </div>
@@ -426,7 +426,7 @@ function switchTheme(t, el) {
           <td><strong>劳动教育</strong> (大中小学劳动教育指导纲要)</td>
           <td>2020年7月</td>
           <td>2024下 (4年后!)</td>
-          <td>2024下、2025上、2025下<br><span class="badge badge-warn">连续3次</span></td>
+          <td>2024下、2025上、2025下<br><span class="badge badge-warn">连续3次 → 26上、26下 未出</span></td>
           <td><span class="badge" style="background:#f87171;color:#fff;">模块1</span></td>
           <td style="font-size:0.85rem;">"中学劳动教育课每周不少于X课时"<br>"中学每周课外劳动不少于X小时"</td>
         </tr>
@@ -458,7 +458,7 @@ function switchTheme(t, el) {
           <td><strong>心理健康教育行动计划</strong> (17部门联合)</td>
           <td>2023年4月</td>
           <td>2023下</td>
-          <td>2023下~2026上<br><span class="badge badge-new">持续</span></td>
+          <td>2023下~2026上（26下 未出）<br><span class="badge badge-warn">已间断</span></td>
           <td><span class="badge" style="background:#a78bfa;color:#fff;">模块6</span></td>
           <td style="font-size:0.85rem;">心理辅导方法/原则、学生心理问题识别</td>
         </tr>
@@ -478,20 +478,28 @@ function switchTheme(t, el) {
           <td><span class="badge" style="background:#fbbf24;color:var(--bg);">模块3</span></td>
           <td style="font-size:0.85rem;">可能融入教学方法/教学手段现代化相关题目</td>
         </tr>
+        <tr>
+          <td><strong>教育强国建设规划纲要(2024-2035)</strong></td>
+          <td>2025年1月印发</td>
+          <td>2026下 (约1年半!)</td>
+          <td>26下 首次<br><span class="badge badge-new">已进场</span></td>
+          <td><span class="badge" style="background:#f87171;color:#fff;">模块1</span></td>
+          <td style="font-size:0.85rem;">"财政性教育经费占GDP高于4%"（政策数字题）</td>
+        </tr>
       </tbody>
     </table>
     </div>
     <div class="strategy-box" style="margin-top:16px;border-color:var(--yellow);">
       <h3 style="color:var(--yellow);">⚠️ 参考发现：热点入题的"滞后"现象（非精确规律）</h3>
       <p style="font-size:0.9rem;">
-        劳动教育<span class="highlight">2020年发布→2024年才进选择题</span>，间隔约4年。但<span class="highlight">不同热点的滞后时间不同</span>：心理健康教育(2023政策→2023下即出现，仅数月)；新课标(2022发布→2023上出现，约1年)。因此"滞后4年"<span class="highlight">不能视为精确规律</span>，仅供参考。<br><br>
-        <strong>→ 2026下的热点题更可能来自2021-2023年已发布/实施且已经在考试中出现过的政策主题。2023年后的极新热点(如教育家精神/AI教育)入题概率仍然偏低，但不能排除。</strong>
+        劳动教育<span class="highlight">2020年发布→2024年才进选择题</span>，间隔约4年。但<span class="highlight">不同热点的滞后时间不同</span>：心理健康教育(2023政策→2023下即出现，仅数月)；新课标(2022发布→2023上出现，约1年)；<span class="highlight">教育强国纲要(2025年1月印发→26下 即考4%，约1年半)</span>。因此「滞后」没有固定年限——<span class="highlight">新文件的关键数字/提法最容易提前入题</span>。<br><br>
+        <strong>→ 27上 的热点题更可能来自：已在真题出现过的主题（心理健康/新课标/劳动教育）＋ 新一轮政策文件的关键数字/提法（教育强国纲要/双减/教育评价改革）。</strong>
       </p>
     </div>
   </div>
 
   <div class="section">
-    <h2>🎯 2026下最可能出现的"热点外衣"题目</h2>
+    <h2>🎯 2027上 最可能的"热点外衣"方向</h2>
     <p style="color:var(--text2);margin-bottom:12px;">以下是热度最高、最可能被命题人选中的方向——但记住，外壳是热点，核心还是8大模块的固定知识点</p>
 
     <div class="pred-grid">
@@ -499,7 +507,7 @@ function switchTheme(t, el) {
         <span class="mod-tag" style="background:#a78bfa;color:#fff;">模块6</span>
         <div class="q-title"><strong>🥇 心理健康教育</strong></div>
         <div style="font-size:0.85rem;color:var(--text2);margin:6px 0;">
-          2023年17部门行动计划2025年收官，2026年进入评估深化阶段。连续在2023下~2026上出现，<span class="highlight">2026下极大概率继续出题</span>。
+          17部门行动计划2025年收官、2026-2027进入总结评估期；<span class="highlight">26下 单选未出（模块6归零）→ 按「每年1题」节奏，27上 回归概率高</span>。
         </div>
         <div style="font-size:0.82rem;color:var(--text3);">
           可能考法：中学生常见心理问题识别(强迫/焦虑/抑郁)、心理辅导方法辨析(理性情绪/系统脱敏/代币法)、心理辅导原则(发展性/主体性)
@@ -511,7 +519,7 @@ function switchTheme(t, el) {
         <span class="mod-tag" style="background:#f87171;color:#fff;">模块1</span>
         <div class="q-title"><strong>🥈 劳动教育（可能休息一轮）</strong></div>
         <div style="font-size:0.85rem;color:var(--text2);margin:6px 0;">
-          连续3次出现(2024下、2025上、2025下)，2026上<span class="highlight">未出现</span>。按规律，连续3次后可能休息1次也可能继续。
+          2024下~2025下 连考3次后，2026上、<span class="highlight">26下 连续两场未出</span>；若回归，考点仍是地位/作用/途径（不再考具体数字）。
         </div>
         <div style="font-size:0.82rem;color:var(--text3);">
           可能考法(若出现)：劳动教育的地位/作用、与其他教育的关系、实施途径。不太可能再考具体课时数字。
@@ -523,7 +531,7 @@ function switchTheme(t, el) {
         <span class="mod-tag" style="background:#fbbf24;color:var(--bg);">模块2/3</span>
         <div class="q-title"><strong>🥉 新课标(2022版)持续渗透</strong></div>
         <div style="font-size:0.85rem;color:var(--text2);margin:6px 0;">
-          2022版义教新课标影响深远，命题人已习惯用新课标框架出题。<span class="highlight">核心素养导向</span>是高频考点。
+          2022版义教新课标影响深远，命题人已习惯用新课标框架出题（26下 课程题仍在出：内容组织/隐性课程）。<span class="highlight">核心素养导向</span>是高频考点。
         </div>
         <div style="font-size:0.82rem;color:var(--text3);">
           可能考法：课程类型辨析(综合课程/跨学科主题学习)、教学方式变革(探究式/项目式)、课程评价改革
@@ -535,7 +543,7 @@ function switchTheme(t, el) {
         <span class="mod-tag" style="background:#94a3b8;color:#fff;">模块8</span>
         <div class="q-title"><strong>教育家精神（新面孔）</strong></div>
         <div style="font-size:0.85rem;color:var(--text2);margin:6px 0;">
-          2023年9月习近平提出，热度持续上升，但教资考试有滞后。可能在<span class="highlight">2026下首次试探性出题</span>。
+          2023年9月习近平提出，热度持续上升；截至26下 <span class="highlight">仍未直接出题</span>，窗口仍在（若出，多借教师角色/师德素材）。
         </div>
         <div style="font-size:0.82rem;color:var(--text3);">
           可能考法：教育家精神的内涵(信念/道德/智慧/仁爱等)、与教师职业道德的关系
@@ -547,7 +555,7 @@ function switchTheme(t, el) {
         <span class="mod-tag" style="background:#fbbf24;color:var(--bg);">模块3</span>
         <div class="q-title"><strong>AI+教育 / 教育数字化</strong></div>
         <div style="font-size:0.85rem;color:var(--text2);margin:6px 0;">
-          2025-2026年最热话题，但教资考试出题<span class="highlight">滞后4年</span>。直接出题概率低，可能间接融入。
+          2025-2026年最热话题；「滞后4年」已被 纲要 案例证伪，可能借「教育数字化/教学手段现代化」间接融入。
         </div>
         <div style="font-size:0.82rem;color:var(--text3);">
           可能考法：教学手段现代化(属于固有的教学方法考点)、信息技术与课程整合
@@ -569,6 +577,7 @@ function switchTheme(t, el) {
         <tr><td>"新课标强调核心素养..."</td><td>→ 课程改革/课程类型</td><td>模块2: 新课改目标/综合课程</td></tr>
         <tr><td>"教师要弘扬教育家精神..."</td><td>→ 教师职业素养</td><td>模块8: 教师心理/角色/职业道德</td></tr>
         <tr><td>"家校共育/家庭教育..."</td><td>→ 德育途径一致性</td><td>模块7: 德育原则/教育影响一致性</td></tr>
+        <tr><td>"《教育强国纲要》要求教育经费占GDP高于4%..."</td><td>→ 教育投入/教育方针</td><td>模块1: 我国的教育方针与教育目的</td></tr>
       </tbody>
     </table>
     <p style="margin-top:12px;font-size:0.85rem;color:var(--text2);">
@@ -588,7 +597,7 @@ function switchTheme(t, el) {
     <div class="strategy-box" style="border-color:var(--green);">
       <h3 style="color:var(--green);">✅ 验证结论：题目分类与官方考纲高度一致</h3>
       <p style="font-size:0.9rem;">
-        273道题的8模块分类<span class="highlight">完全对应官方考纲的8大模块</span>。官方考纲将8大模块分为两组：<br>
+        294道题的8模块分类<span class="highlight">完全对应官方考纲的8大模块</span>。官方考纲将8大模块分为两组：<br>
         <strong>第一组（68%）</strong>：教育基础+中学教学+中学生学习心理+中学德育 → 选择题+辨析题+材料分析题<br>
         <strong>第二组（32%）</strong>：中学课程+中学生发展心理+中学生心理辅导+中学班级管理与教师心理 → 选择题+简答题+材料分析题
       </p>
@@ -602,24 +611,24 @@ function switchTheme(t, el) {
       <div class="chart-box"><canvas id="syllabusSplitChart"></canvas></div>
       <div>
         <table>
-          <thead><tr><th>分组</th><th>官方比例</th><th>实际273题比例</th><th>近3次考试稳定模式</th></tr></thead>
+          <thead><tr><th>分组</th><th>官方比例</th><th>实际294题比例</th><th>近3次考试稳定模式</th></tr></thead>
           <tbody>
             <tr>
               <td><span class="badge" style="background:var(--accent);">68%组</span> M1+M3+M4+M7</td>
               <td class="num highlight">68%</td>
-              <td class="num">70.3% (192/273)</td>
-              <td class="num text-green">14题/21</td>
+              <td class="num">70.4% (207/294)</td>
+              <td class="num text-green">14·14·15题</td>
             </tr>
             <tr>
               <td><span class="badge" style="background:var(--purple);">32%组</span> M2+M5+M6+M8</td>
               <td class="num highlight">32%</td>
-              <td class="num">29.7% (81/273)</td>
-              <td class="num text-green">7题/21</td>
+              <td class="num">29.6% (87/294)</td>
+              <td class="num text-green">7·7·6题</td>
             </tr>
           </tbody>
         </table>
         <p style="margin-top:12px;font-size:0.85rem;color:var(--text2);">
-          实际分布<span class="text-green">非常接近</span>官方68/32比例！68%组略多(70.3%)是因为选择题侧重基础知识的考查。
+          实际分布<span class="text-green">非常接近</span>官方68/32比例！68%组略多(70.4%)是因为选择题侧重基础知识的考查。
         </p>
       </div>
     </div>
@@ -629,7 +638,7 @@ function switchTheme(t, el) {
   <div class="section">
     <h2>🔍 考纲知识考点覆盖检查</h2>
     <p style="color:var(--text2);margin-bottom:12px;">
-      以下按官方考纲逐条对照，检查273道真题是否覆盖了考纲要求的所有核心知识点。
+      以下按官方考纲逐条对照，检查294道真题是否覆盖了考纲要求的所有核心知识点。
       <span class="badge badge-new">已覆盖</span> = 真题中出现过 |
       <span class="badge badge-warn">未覆盖</span> = 考纲要求但从未考过选择题 |
       <span class="badge badge-hot">高频</span> = 出现≥5次
@@ -683,9 +692,9 @@ function switchTheme(t, el) {
   <div class="strategy-box" style="border-color:var(--accent);">
     <h3 style="color:var(--accent);">🎯 考纲对照核心结论</h3>
     <ol style="margin-left:20px;line-height:2;font-size:0.95rem;">
-      <li><strong>分类准确：</strong>273道题的8模块分类与官方考纲<span class="highlight">100%对应</span>，无偏差</li>
-      <li><strong>68/32分组：</strong>官方权重与选择题实际分布<span class="highlight">高度一致</span>（70%/30%），验证了预测模型的基础假设</li>
-      <li><strong>覆盖检查：</strong>考纲要求的核心知识点大部分已考过，少数"空白考点"是2026下的<span class="text-green">高概率出题方向</span></li>
+      <li><strong>分类准确：</strong>294道题的8模块分类与官方考纲<span class="highlight">100%对应</span>，无偏差</li>
+      <li><strong>68/32分组：</strong>官方权重与选择题实际分布<span class="highlight">高度一致</span>（70.4%/29.6%），验证了预测模型的基础假设</li>
+      <li><strong>覆盖检查：</strong>考纲要求的核心知识点大部分已考过，少数"空白考点"是 27上 的<span class="text-green">高概率出题方向</span></li>
       <li><strong>命题底层逻辑：</strong>考试标准三级指标体系保证每道题都能追溯到具体能力要求，<span class="highlight">"热点只是外衣，考点永不变"</span></li>
       <li><strong>策略建议：</strong>复习时以考纲模块为纲，不追热点、不押偏题，<span class="highlight">68%组的4个模块(M1+M3+M4+M7)投入70%复习时间</span></li>
     </ol>
@@ -726,6 +735,20 @@ function switchTheme(t, el) {
     </p>
 
     <div class="changelog-entry open">
+      <div class="changelog-header" onclick="this.parentElement.classList.toggle('open')">
+        <h3><span class="badge badge-new">v1.13</span> 2026年10月5日 — 26下真题入库 + 27上预测全面翻新</h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="changelog-body"><ul>
+        <li><span class="add">新增</span> 26下真题（第14套·294道选择题）：模块分布/答案分布/子考点频次/考纲覆盖 全面并入</li>
+        <li><span class="add">新增</span> 27上逐题预测31条：按26下复盘升级——族内列全、跨题型提示、空白考点加权、政策文件数字通道（含2条⚠️大纲外保险名额）</li>
+        <li><span class="opt">更新</span> 回溯验证改为「用前13套预测26下」：8/8在±1题内（2个精确）——26下 打破三连复读模式</li>
+        <li><span class="opt">更新</span> 热点页新增「教育强国纲要」对照行（印发→入题约1年半）；策略/报告/统计全面换到14套·294题</li>
+        <li><span class="fix">校正</span> 26下 单选第6题按卷面选项与解析记为 B；版本号统一（标题 v1.12/页脚 v1.11 → v1.13）</li>
+      </ul></div>
+    </div>
+
+    <div class="changelog-entry">
       <div class="changelog-header" onclick="this.parentElement.classList.toggle('open')">
         <h3><span class="badge badge-new">v1.11</span> 2026年8月11日 — 白天主题色+删除暗色主题</h3>
         <span class="toggle-icon">▼</span>
@@ -884,12 +907,12 @@ function switchTheme(t, el) {
 <!-- Tab: Strategy -->
 <div id="tab-strategy" class="tab-panel">
   <div class="section">
-    <h2>💡 2026年9月12日 考前冲刺策略</h2>
+    <h2>💡 2027上 考前冲刺策略</h2>
 
     <div class="strategy-box">
       <h3>🥇 第一优先级：模块1 教育基础知识 (预计6题，占比最高)</h3>
       <p>重点复习：教育学发展史(教育家+著作对应)、教育与人的发展(规律+因素)、教育目的(个人本位vs社会本位)、教育制度(学制沿革、义务教育)</p>
-      <p style="font-size:0.85rem;color:var(--text2);margin-top:4px;">⚠️ 近3次考试已连续考察6题，占选择题近30%</p>
+      <p style="font-size:0.85rem;color:var(--text2);margin-top:4px;">⚠️ 近4次考了 6/6/6/7 题（26下 7题）；长期均值约6题/场</p>
     </div>
 
     <div class="strategy-box">
@@ -916,11 +939,11 @@ function switchTheme(t, el) {
     </div>
 
     <div class="strategy-box" style="border-color: var(--green);">
-      <h3 style="color: var(--green);">✅ 蒙题口诀 (基于273题统计数据)</h3>
+      <h3 style="color: var(--green);">✅ 蒙题口诀 (基于294题统计数据)</h3>
       <p style="font-size:1.1rem;">
         <strong>"不会就选B，其次选A或C，D是坑别选它"</strong><br>
         <span style="font-size:0.85rem;color:var(--text2);">
-          B=26.7% &gt; A=26.0% &gt; C=25.6% &gt; D=21.6%<br>
+          B=26.9% &gt; A=25.9% &gt; C=25.5% &gt; D=21.8%<br>
           如果已排除两个选项，优先选B或A；连续3题同一答案的概率极低(&lt;2%)，可反向排除
         </span>
       </p>
@@ -967,8 +990,8 @@ function switchTheme(t, el) {
 </div><!-- /container -->
 
 <div class="footer">
-  <p>🤖 基于科学频次分析+趋势预测+回溯验证 | 数据来源：2019下～2026上 13套真题</p>
-  <p>预测模型仅供参考，最终以实际考试为准 | v1.11 | 2026年8月 | 新增：刷题库选项可点击作答(即时判断对错) | 原有：刷题库(589题)←粉笔6套模考+精选题 | 知识点精讲(30个考点+真题解析)+预测升级知识点级</p>
+  <p>🤖 基于科学频次分析+趋势预测+回溯验证 | 数据来源：2019下～2026下 14套真题</p>
+  <p>预测模型仅供参考，最终以实际考试为准 | v1.13 | 2026年10月 | 新增：26下真题入库(第14套/294题)+27上预测翻新+回溯验证更新 | 原有：刷题库选项可点击作答(即时判断对错) | 原有：刷题库(589题)←粉笔6套模考+精选题 | 知识点精讲(30个考点+真题解析)+预测升级知识点级</p>
 </div>
 
 <script>
@@ -995,32 +1018,33 @@ const DATA = {
     '2024下':{1:6,2:1,3:2,4:6,5:1,6:1,7:3,8:1},
     '2025上':{1:6,2:1,3:1,4:5,5:3,6:1,7:2,8:2},
     '2025下':{1:6,2:1,3:1,4:5,5:3,6:1,7:2,8:2},
-    '2026上':{1:6,2:1,3:1,4:5,5:3,6:1,7:2,8:2}
+    '2026上':{1:6,2:1,3:1,4:5,5:3,6:1,7:2,8:2},
+    '2026下':{1:7,2:2,3:0,4:6,5:3,6:0,7:2,8:1}
   },
   // Module overall freq
-  moduleFreq: {1:77,2:16,3:25,4:59,5:31,6:11,7:31,8:23},
+  moduleFreq: {1:84,2:18,3:25,4:65,5:34,6:11,7:33,8:24},
   // Answer distribution
-  ansDist: {A:71,B:73,C:70,D:59},
+  ansDist: {A:76,B:79,C:75,D:64},
   // Module predictions
-  pred2026下: [{module:1,predicted:6},{module:2,predicted:1},{module:3,predicted:1},{module:4,predicted:5},{module:5,predicted:3},{module:6,predicted:1},{module:7,predicted:2},{module:8,predicted:2}],
+  pred2027上: [{module:1,predicted:6},{module:2,predicted:1},{module:3,predicted:1},{module:4,predicted:5},{module:5,predicted:3},{module:6,predicted:1},{module:7,predicted:2},{module:8,predicted:2}],
   // Backtest
   backtest: {
-    predicted: [{module:1,predicted:6},{module:2,predicted:1},{module:3,predicted:2},{module:4,predicted:5},{module:5,predicted:2},{module:6,predicted:1},{module:7,predicted:2},{module:8,predicted:2}],
-    actual: {1:6,2:1,3:1,4:5,5:3,6:1,7:2,8:2}
+    predicted: [{module:1,predicted:6},{module:2,predicted:1},{module:3,predicted:1},{module:4,predicted:5},{module:5,predicted:3},{module:6,predicted:1},{module:7,predicted:2},{module:8,predicted:2}],
+    actual: {1:7,2:2,3:0,4:6,5:3,6:0,7:2,8:1}
   },
   // Sub-topic freq
   subTopicFreq: [
-    {st:'4.1',name:'认知过程(感觉/知觉/注意/记忆/思维/想象)',freq:23,m:4,trend:'stable'},
-    {st:'1.2',name:'教育学的产生与发展(教育家/著作)',freq:21,m:1,trend:'stable'},
-    {st:'1.4',name:'教育与人的发展(规律/动因/影响因素)',freq:15,m:1,trend:'stable'},
-    {st:'7.5',name:'德育方法',freq:14,m:7,trend:'stable'},
-    {st:'5.4',name:'人格发展(气质/性格/自我/埃里克森)',freq:14,m:5,trend:'rising'},
-    {st:'4.3',name:'学习动机(理论/分类/激发)',freq:13,m:4,trend:'stable'},
-    {st:'1.6',name:'教育目的(理论/方针/全面发展)',freq:11,m:1,trend:'rising'},
-    {st:'8.4',name:'教师心理(福勒阶段/效能感/角色)',freq:11,m:8,trend:'stable'},
-    {st:'4.2',name:'学习理论(行为/认知/人本/建构)',freq:11,m:4,trend:'stable'},
+    {st:'4.1',name:'认知过程(感觉/知觉/注意/记忆/思维/想象)',freq:26,m:4,trend:'stable'},
+    {st:'1.2',name:'教育学的产生与发展(教育家/著作)',freq:23,m:1,trend:'stable'},
+    {st:'1.4',name:'教育与人的发展(规律/动因/影响因素)',freq:17,m:1,trend:'stable'},
+    {st:'7.5',name:'德育方法',freq:15,m:7,trend:'stable'},
+    {st:'5.4',name:'人格发展(气质/性格/自我/埃里克森)',freq:15,m:5,trend:'rising'},
+    {st:'4.3',name:'学习动机(理论/分类/激发)',freq:14,m:4,trend:'stable'},
+    {st:'1.6',name:'教育目的(理论/方针/全面发展)',freq:12,m:1,trend:'rising'},
+    {st:'8.4',name:'教师心理(福勒阶段/效能感/角色)',freq:12,m:8,trend:'stable'},
+    {st:'4.2',name:'学习理论(行为/认知/人本/建构)',freq:12,m:4,trend:'stable'},
     {st:'7.2',name:'品德发展(皮亚杰/科尔伯格)',freq:10,m:7,trend:'stable'},
-    {st:'1.3',name:'教育与社会发展(生产力/政治/文化/人口)',freq:9,m:1,trend:'declining'},
+    {st:'1.3',name:'教育与社会发展(生产力/政治/文化/人口)',freq:11,m:1,trend:'declining'},
     {st:'1.5',name:'教育制度(学制/义务教育)',freq:8,m:1,trend:'stable'},
     {st:'5.2',name:'情绪情感发展',freq:8,m:5,trend:'stable'},
     {st:'1.1',name:'教育的产生与发展(属性/功能)',freq:8,m:1,trend:'declining'},
@@ -1035,15 +1059,15 @@ const DATA = {
     // Knowledge point coverage check
     coverage: [
       {m:1,st:'1.1',requirement:'教育的涵义/构成要素/起源/基本形态/历史发展脉络/基本功能',covered:true,freq:8,note:'高频'},
-      {m:1,st:'1.2',requirement:'国内外著名教育家的代表著作及主要教育思想',covered:true,freq:21,note:'最高频'},
-      {m:1,st:'1.3',requirement:'教育与社会发展(人口/生产力/政治经济制度/精神文化)',covered:true,freq:9,note:'高频'},
-      {m:1,st:'1.4',requirement:'教育与人的发展(遗传/环境/教育/主观能动性)+青春期生理变化',covered:true,freq:15,note:'高频'},
+      {m:1,st:'1.2',requirement:'国内外著名教育家的代表著作及主要教育思想',covered:true,freq:23,note:'最高频'},
+      {m:1,st:'1.3',requirement:'教育与社会发展(人口/生产力/政治经济制度/精神文化)',covered:true,freq:11,note:'高频'},
+      {m:1,st:'1.4',requirement:'教育与人的发展(遗传/环境/教育/主观能动性)+青春期生理变化',covered:true,freq:17,note:'高频'},
       {m:1,st:'1.5',requirement:'义务教育特点/发达国家学制趋势/我国学制沿革',covered:true,freq:8,note:'高频'},
-      {m:1,st:'1.6',requirement:'教育目的理论/教育方针/全面发展教育(德智体美劳)及相互关系',covered:true,freq:11,note:'高频'},
+      {m:1,st:'1.6',requirement:'教育目的理论/教育方针/全面发展教育(德智体美劳)及相互关系',covered:true,freq:12,note:'高频'},
       {m:1,st:'1.7',requirement:'教育研究基本方法(观察/调查/历史/实验/行动研究)',covered:true,freq:5,note:'已覆盖'},
       {m:2,st:'2.1',requirement:'课程流派(学科中心/活动中心/社会中心)/课程开发影响因素',covered:true,freq:3,note:'低频'},
-      {m:2,st:'2.2',requirement:'课程类型(分科/综合/活动;必修/选修;国家/地方/校本;显性/隐性)',covered:true,freq:6,note:'已覆盖'},
-      {m:2,st:'2.3',requirement:'课程目标/课程内容(计划/标准/教材)/课程评价',covered:true,freq:2,note:'低频'},
+      {m:2,st:'2.2',requirement:'课程类型(分科/综合/活动;必修/选修;国家/地方/校本;显性/隐性)',covered:true,freq:7,note:'已覆盖'},
+      {m:2,st:'2.3',requirement:'课程目标/课程内容(计划/标准/教材)/课程评价',covered:true,freq:3,note:'低频'},
       {m:2,st:'2.4',requirement:'基础教育课程改革理念/目标/实施状况',covered:true,freq:5,note:'已覆盖'},
       {m:3,st:'3.1',requirement:'教学意义/教学过程本质观',covered:true,freq:4,note:'已覆盖'},
       {m:3,st:'3.2',requirement:'教学过程基本规律(4大规律)',covered:true,freq:4,note:'已覆盖'},
@@ -1051,15 +1075,15 @@ const DATA = {
       {m:3,st:'3.4',requirement:'中学常用教学方法辨析',covered:true,freq:6,note:'已覆盖'},
       {m:3,st:'3.5',requirement:'教学组织形式(特朗普制/道尔顿制/设计教学法等)',covered:true,freq:3,note:'低频'},
       {m:3,st:'3.6',requirement:'教学评价(诊断性/形成性/总结性/相对性/绝对性)',covered:true,freq:4,note:'已覆盖'},
-      {m:4,st:'4.1',requirement:'感觉/知觉特性/注意分类与品质/记忆分类与遗忘规律/思维种类/创造性思维',covered:true,freq:23,note:'最高频'},
-      {m:4,st:'4.2',requirement:'行为主义/认知学说/人本主义/建构主义学习理论',covered:true,freq:11,note:'高频'},
-      {m:4,st:'4.3',requirement:'学习动机功能/理论/激发与培养方法',covered:true,freq:13,note:'高频'},
+      {m:4,st:'4.1',requirement:'感觉/知觉特性/注意分类与品质/记忆分类与遗忘规律/思维种类/创造性思维',covered:true,freq:26,note:'最高频'},
+      {m:4,st:'4.2',requirement:'行为主义/认知学说/人本主义/建构主义学习理论',covered:true,freq:12,note:'高频'},
+      {m:4,st:'4.3',requirement:'学习动机功能/理论/激发与培养方法',covered:true,freq:14,note:'高频'},
       {m:4,st:'4.4',requirement:'学习迁移分类/理论(5大理论)/促进迁移措施',covered:true,freq:2,note:'低频'},
-      {m:4,st:'4.5',requirement:'学习策略分类(认知/元认知/资源管理)',covered:true,freq:7,note:'已覆盖'},
-      {m:5,st:'5.1',requirement:'中学生认知发展理论/特点/规律(皮亚杰/维果斯基)',covered:true,freq:5,note:'已覆盖'},
+      {m:4,st:'4.5',requirement:'学习策略分类(认知/元认知/资源管理)',covered:true,freq:8,note:'已覆盖'},
+      {m:5,st:'5.1',requirement:'中学生认知发展理论/特点/规律(皮亚杰/维果斯基)',covered:true,freq:7,note:'已覆盖'},
       {m:5,st:'5.2',requirement:'情绪分类/情绪理论/中学生情绪特点与问题',covered:true,freq:8,note:'高频'},
       {m:5,st:'5.3',requirement:'意志品质(果断性/坚韧性/自制性/自觉性)',covered:true,freq:3,note:'低频'},
-      {m:5,st:'5.4',requirement:'人格特征/结构/弗洛伊德/埃里克森/影响人格发展因素',covered:true,freq:14,note:'高频'},
+      {m:5,st:'5.4',requirement:'人格特征/结构/弗洛伊德/埃里克森/影响人格发展因素',covered:true,freq:15,note:'高频'},
       {m:5,st:'5.5',requirement:'中学生身心发展特点/性心理/异性交往',covered:true,freq:1,note:'低频'},
       {m:6,st:'6.1',requirement:'心理健康标准/中学生常见心理健康问题',covered:true,freq:1,note:'低频'},
       {m:6,st:'6.2',requirement:'抑郁症/恐怖症/焦虑症/强迫症/网络成瘾识别',covered:true,freq:7,note:'已覆盖'},
@@ -1067,43 +1091,50 @@ const DATA = {
       {m:7,st:'7.1',requirement:'品德结构/中学生品德发展特点',covered:true,freq:0,note:'前几套辨析题中有涉及'},
       {m:7,st:'7.2',requirement:'皮亚杰和科尔伯格道德发展理论/影响品德发展因素',covered:true,freq:10,note:'高频'},
       {m:7,st:'7.3',requirement:'德育过程基本规律(知情意行/活动交往/内部矛盾/长期反复)',covered:true,freq:1,note:'低频'},
-      {m:7,st:'7.4',requirement:'德育原则(疏导/尊重/长善救失/教育影响一致性等)',covered:true,freq:4,note:'已覆盖'},
-      {m:7,st:'7.5',requirement:'德育方法(榜样示范/说服教育/情感陶冶/实际锻炼/品德评价)',covered:true,freq:14,note:'高频'},
+      {m:7,st:'7.4',requirement:'德育原则(疏导/尊重/长善救失/教育影响一致性等)',covered:true,freq:5,note:'已覆盖'},
+      {m:7,st:'7.5',requirement:'德育方法(榜样示范/说服教育/情感陶冶/实际锻炼/品德评价)',covered:true,freq:15,note:'高频'},
       {m:7,st:'7.6',requirement:'德育途径/生存教育/生活教育/生命教育/安全教育',covered:true,freq:2,note:'低频'},
       {m:8,st:'8.1',requirement:'班集体发展阶段/班级管理一般方法',covered:true,freq:7,note:'已覆盖'},
       {m:8,st:'8.2',requirement:'课堂管理原则/课堂气氛/课堂纪律/课堂问题行为',covered:true,freq:5,note:'已覆盖'},
       {m:8,st:'8.3',requirement:'班主任工作内容/方法/培养班集体',covered:true,freq:0,note:'主观题考得多'},
-      {m:8,st:'8.4',requirement:'教师角色心理/教师成长心理(福勒阶段)/教师心理健康',covered:true,freq:11,note:'高频'}
+      {m:8,st:'8.4',requirement:'教师角色心理/教师成长心理(福勒阶段)/教师心理健康',covered:true,freq:12,note:'高频'}
     ]
   },
-  // Recently tested sub-topics (last 4 exams: 2025上,2025下,2026上)
-  recentTested: new Set(['1.2','1.4','1.7','1.5','1.6','2.2','3.2','3.3','4.1','4.6','4.2','4.3','4.5','5.1','5.2','5.4','6.2','7.4','7.5','8.1','8.4']),
+  // 最近一场（26下）考过的子考点（数据用）
+  recentTested: new Set(['1.2','1.3','1.4','1.6','2.2','2.3','4.1','4.2','4.3','4.5','5.1','5.4','7.4','7.5','8.4']),
   // 🔮 Knowledge-point level prediction (v1.5 upgraded)
   predKnowledgePoints: [
-    {m:1,st:'1.2',title:'教育家思想与著作辨析',conf:95,reason:'模块1最高频，近3次每次都考，且2026上未直接考《学记》定位'},
-    {m:1,st:'1.4',title:'个体身心发展规律(顺序性/阶段性/不平衡性)',conf:90,reason:'5大规律从未同时出现过，交替出题，2026上考了差异性'},
-    {m:1,st:'1.3',title:'教育与社会的关系(生产力/政治/文化)',conf:85,reason:'2026上考了经济功能，2026下可能考文化或人口'},
-    {m:1,st:'1.6',title:'教育目的理论(个人本位vs社会本位)',conf:85,reason:'必考知识点，2026上未直接出，且2022版课标强化了全面发展教育'},
-    {m:1,st:'1.5',title:'学制类型与义务教育',conf:80,reason:'2026上考了癸卯学制和德国义务教育，可能转考学制类型辨析'},
-    {m:1,st:'1.1',title:'教育本质属性与起源',conf:75,reason:'近4次考试(2023下~2026上)未出现，属于"休息待考"考点'},
-    {m:4,st:'4.1',title:'知觉特性辨析(整体性/选择性/理解性/恒常性)',conf:92,reason:'认知过程在模块4中占比第一，2026上只考了知觉理解性'},
-    {m:4,st:'4.1',title:'注意类型与品质(无意注意/注意分散/注意分配)',conf:90,reason:'注意几乎每2-3次必考，2025下未考、2026上未考'},
-    {m:4,st:'4.3',title:'耶克斯-多德森定律/韦纳归因理论',conf:90,reason:'学习动机是模块4第二大考点，每个考期至少1题'},
-    {m:4,st:'4.1',title:'记忆分类与遗忘规律(艾宾浩斯/前摄抑制/倒摄抑制)',conf:85,reason:'遗忘规律2024下考过后休息，可能2026下回归'},
-    {m:4,st:'4.2',title:'学习理论辨析(行为主义vs认知vs建构)',conf:80,reason:'学习理论每考期必出，2026上已考社会建构，可能转向行为/认知'},
-    {m:7,st:'7.5',title:'德育方法辨析(榜样/说服/陶冶/锻炼/评价)',conf:90,reason:'德育方法是模块7最高频考点，2026上考了榜样示范法'},
-    {m:7,st:'7.2',title:'科尔伯格道德发展阶段理论',conf:85,reason:'2025下未考、2026上未考，属于典型"休息待考"'},
-    {m:5,st:'5.4',title:'气质类型辨析(胆汁质/多血质/黏液质/抑郁质)',conf:90,reason:'气质类型每年必考1题，2026上已考胆汁质，可能换一种'},
-    {m:5,st:'5.4',title:'埃里克森人格发展阶段(青年期自我同一性)',conf:85,reason:'2025上未考、2025下未考、2026上未考，连续3次未出现'},
-    {m:5,st:'5.2',title:'情绪分类(心境/激情/应激)与中学生情绪特点',conf:80,reason:'2025下未考、2026上考了情绪主观性，可能继续出情绪类'},
-    {m:8,st:'8.4',title:'福勒教师关注阶段(生存/情境/学生)',conf:92,reason:'几乎每次必考1题！2026上考了教学监控能力(教学效能感相关)'},
-    {m:8,st:'8.2',title:'课堂气氛类型/课堂纪律类型/课堂问题行为',conf:80,reason:'2026上考了班集体组建阶段，课堂管理已3次未出现'},
-    {m:3,st:'3.3',title:'教学原则辨析(直观性/启发性/循序渐进等)',conf:85,reason:'模块3每期1题，教学原则是最高频子知识点'},
-    {m:3,st:'3.2',title:'教学过程基本规律(4大规律)',conf:80,reason:'2024下考了教学的教育性规律，2025上未考，可能转考其他规律'},
-    {m:6,st:'6.2',title:'中学生常见心理问题识别(强迫/焦虑/抑郁)',conf:85,reason:'2026上考了强迫症，可能换个心理问题继续考'},
-    {m:6,st:'6.3',title:'心理辅导方法(系统脱敏/理性情绪ABC/强化法)',conf:80,reason:'2026上未考具体疗法，2026下可能考'},
-    {m:2,st:'2.2',title:'课程类型辨析(校本/地方/国家/必修/选修)',conf:85,reason:'2026上考了校本课程和学科课程，可能换一种课程类型'},
-    {m:5,st:'5.1',title:'皮亚杰认知发展阶段(中学生=形式运算)',conf:80,reason:'2026上考了形式运算阶段，可能转考皮亚杰vs维果斯基对比'}
+    {m:1,st:'1.2',title:'教育家思想与著作辨析',conf:95,reason:'近5场每场都考（24下《学记》→26下 朱熹、卢梭 连出2题）；族内 夸美纽斯/赫尔巴特/杜威 近14场单选空窗（全期分别5/2/2次）→ 轮换补位概率高。🎯典型问法：「某教育家主张…属于/体现（ ）」'},
+    {m:1,st:'1.4',title:'身心发展规律与影响因素',conf:92,reason:'影响人发展的因素 近14场出现14次（含26下 主观能动性）；规律族交替：25上 差异性→26下 不平衡性，顺序性/阶段性/互补性 尚未轮上；🔁简答/材料常客'},
+    {m:4,st:'4.3',title:'学习动机族（耶克斯-多德森/韦纳归因/自我效能/需要层次）',conf:92,reason:'26下 三处开考：单选 马斯洛＋辨析 表扬/德西效应＋材料 动机分析！族内 耶克斯-多德森（上次2025上）、归因（2023下）、成就动机（2023下）、自我效能（2025上）都在待回归位'},
+    {m:7,st:'7.5',title:'德育方法族（说服/榜样/陶冶/锻炼/评价/自我修养）',conf:92,reason:'26下 两处开考：单选 实际锻炼法＋简答 自我修养法；近5场4场有（24下 榜样、25下 榜样+自我修养、26上 榜样、26下 锻炼+自我修养）；族内 说服教育法 近14场单选0次、陶冶/评价 自2024上后未出'},
+    {m:4,st:'4.1',title:'知觉特性辨析（整体性/选择性/理解性/恒常性）',conf:90,reason:'26上 考了理解性、26下 未出；知觉特性近14场3次（2021下/2024上/2026上）——认知过程族内轮换，多为「情境+辨特性」。🎯典型问法：「学生把…看成…，体现知觉的（ ）」'},
+    {m:5,st:'5.4',title:'自我意识族（自我体验/自我调控/自我认知）＋埃里克森',conf:90,reason:'连考两场（26上 辨析→26下 单选「自我体验强烈」）；埃里克森 自2025上后连续3场未出，是族内最大空白（自我同一性/八阶段是老考法）'},
+    {m:1,st:'1.6',title:'教育目的族（方针/全面发展/个人本位vs社会本位）',conf:88,reason:'26下 双考：单选 教育强国纲要4%＋辨析 教育目的vs教育方针；全面发展教育 近14场10次（26上刚考）；个人本位vs社会本位 待回归；🔁辨析题传统题位'},
+    {m:4,st:'4.2',title:'学习理论族（行为/认知/人本/建构）',conf:88,reason:'26下 三处开考：单选 强化（操作条件反射）＋辨析 有意义学习＋简答 建构主义学习观；族内 布鲁纳（2025下）、学习的实质（2025下）轮换；建构主义已连考两场（26上→26下）'},
+    {m:5,st:'5.4',title:'气质类型辨析（胆汁质/多血质/黏液质/抑郁质）',conf:88,reason:'近14场5次（2021上/2022下/2023下/2025上/2026上），几乎每年1题；26下 未出→ 27上 回归位。🎯典型问法：给描述选气质类型'},
+    {m:7,st:'7.4',title:'德育原则族（疏导/尊重与严格/长善救失/知行统一/一致性）',conf:88,reason:'26下 考了 长善救失（「依靠积极因素」26上、26下 连考两场）；族内 疏导 自2022下、一致性 近14场单选0次 → 轮换空间大；🔁材料题高频家族'},
+    {m:7,st:'7.2',title:'品德发展族（科尔伯格/皮亚杰/品德结构）',conf:88,reason:'科尔伯格 近5场3次（25上/25下/26上，26上还进了简答）；皮亚杰道德发展 上次2024下；品德的心理结构 自2025上后停 → 族热不减'},
+    {m:6,st:'6.2',title:'常见心理问题识别（强迫/焦虑/恐怖/抑郁/网瘾）',conf:88,reason:'26下 模块6单选归零 → 按「常年1题」节奏 27上 回归概率高；族内 强迫（26上）、焦虑（26上 也进材料）、恐怖（25下）轮转；抑郁/网瘾 近14场单选0次'},
+    {m:8,st:'8.4',title:'教师心理族（角色/成长阶段/期望效应/效能感）',conf:88,reason:'模块8单选主力（26下 考了 角色冲突）；福勒成长阶段 自2023下后连续6场未出——族内最大空白；期望效应/专业发展 2025下 刚出；效能感 自2022下停'},
+    {m:3,st:'3.3',title:'教学原则族（直观/启发/循序渐进/理论联系实际…）',conf:88,reason:'26下 材料考了 启发性＋直观性 两原则；单选角度 模块3 近3场 1、1、0题；族内 理论联系实际 自2021下、巩固性/量力性 长期空窗；🔁材料题最高频家族'},
+    {m:1,st:'1.3',title:'教育与社会族（生产力/政治/文化/人口）',conf:85,reason:'26下 连考2题（政治功能＋生产力规模速度）；教育与文化 自2020下、教育人口 2024下 → 族内冷门占位。🎯典型问法：「…体现教育的（ ）功能」'},
+    {m:4,st:'4.1',title:'注意族（分类/品质/分配/转移/稳定）',conf:85,reason:'26下 刚考 注意分配（注意的品质）；族内轮换（26上 注意分类、25下 品质辨析）；转移/稳定性/广度 是老考法；🔁简答偶尔借「注意规律教学」出'},
+    {m:4,st:'4.1',title:'记忆族（遗忘规律/前摄倒摄/复习方法）',conf:85,reason:'26下 考了 分散学习（遗忘角度）；记忆分类 自2023上、记忆过程 2024上 → 艾宾浩斯/前摄抑制/过度学习 待轮；🔁简答名题「如何组织复习」属本族'},
+    {m:4,st:'4.5',title:'学习策略族（认知/元认知/资源管理）',conf:85,reason:'认知策略 连考3场（25下/26上/26下）——本族正热；元认知 26上 进简答；资源管理策略 自2023下后未出（族内空白）。🎯典型问法：「…属于哪种学习策略」'},
+    {m:5,st:'5.1',title:'皮亚杰/维果斯基族（认知发展阶段/最近发展区）',conf:85,reason:'26下 双考（最近发展区＋抽象思维占主导）；皮亚杰阶段论 上次2026上；「皮亚杰vs维果斯基对比」是经典变式；🔁中学生思维发展特点 也在简答范围'},
+    {m:5,st:'5.2',title:'情绪情感族（分类/特点/调节/理论）',conf:85,reason:'26下 简答考了 情绪调节策略；单选角度 情绪分类 自2021下、情感分类 2025下、情绪理论 长期空窗；中学生情绪特点 上次2024下；🔁「两极性/特点」是老考法'},
+    {m:2,st:'2.2',title:'课程类型族（分科/综合/活动/必修选修/国家地方校本/显隐）',conf:85,reason:'隐性课程 近4场3次（25上/25下/26下）；26下 还考了 活动课程（简答）、26上 校本课程；族内 分科与综合 2024下、必修选修 2024上。🎯典型问法：「…属于哪类课程」'},
+    {m:3,st:'3.2',title:'教学过程规律族（4大规律）',conf:82,reason:'26下 辨析考了「知识vs智力」（掌握知识与发展能力）；族内轮换：26上 传授知识与思想教育、2024下 教师主导学生主体、直接经验间接经验 自2022上停。🎯典型问法：材料+「遵循了哪条规律」'},
+    {m:6,st:'6.3',title:'心理辅导方法族（系统脱敏/理性情绪/强化/来访者中心）',conf:82,reason:'理性-情绪疗法 上次2025上；系统脱敏法 近14场单选0次——族内最大空白；强化法 自2022上。🎯典型问法：「治疗师…这一方法属于（ ）」'},
+    {m:8,st:'8.2',title:'课堂管理族（气氛/纪律/问题行为）',conf:80,reason:'近5场只出1次（25上 问题行为简答）；课堂气氛 上次2024上、纪律类型 2023上、管理功能 近14场0次 → 族冷但属模块8的「管理线」（26上 出过班集体组建）'},
+    {m:3,st:'3.4',title:'教学方法族（讲授/谈话/讨论/演示/实验等辨析）',conf:80,reason:'演示法 近14场4次（2021下→2025下）；26下 未出；族内 谈话法 2024下、讨论/实验 偏冷。🎯典型问法：「老师…这属于哪种教学方法」；🔁简答「…的要求」常客'},
+    {m:1,st:'1.6',title:'⚠️ 大纲外 · 新政策文件数字/提法',conf:80,reason:'26下 已考《教育强国建设规划纲要(2024-2035)》「4%」——新文件从印发到入题仅约1年半，「滞后4年」已被证伪。待观察：两个只增不减、纲要三步走年份、双减/教育评价改革提法。保险名额·性价比最高'},
+    {m:1,st:'1.5',title:'学制与义务教育族（沿革/义务教育特点/国外趋势）',conf:78,reason:'26上 连考2题（癸卯学制、德国最早义务教育）后 26下 休整；学制沿革 24上/25上/26上 连着三个上半年都考；壬寅癸卯/1922新学制 是老考法'},
+    {m:1,st:'1.1',title:'教育本质属性与起源',conf:75,reason:'「休息待考」候选：社会属性 上次2023上、概念构成要素 2023下、起源学说 2023上；本质属性/起源 是单选传统题位'},
+    {m:5,st:'5.3',title:'意志品质（自觉/果断/自制/坚韧）',conf:75,reason:'自2025下后未出；简答角度「如何培养意志品质」是老问法；本族全部4次都在近14场里，属常规轮换点。🔁简答可直接问'},
+    {m:7,st:'7.3',title:'德育过程的基本规律（知情意行/活动交往/内部矛盾/长期反复）',conf:75,reason:'自2023下后连续6场未出——模块7最大空白（全期9次里辨析5/简答1，多走主观题）。🔁复查重点：4条规律的表述与判断'},
+    {m:4,st:'4.1',title:'⚠️ 大纲外 · 想象族（再造/创造/无意想象）',conf:70,reason:'26下 考了「再造想象」（单选Q13）；教材有·大纲未列，属单选偶发「编外点」；作为保险名额顺手备（再造/创造/无意/幻想 的区分）'}
   ],
   // High-probability untested sub-topics
   untestedCandidates: [
@@ -1121,29 +1152,29 @@ const DATA = {
     {st:'5.5',name:'身心发展特点(青春期)',freq:1,confidence:'低'},
     {st:'6.1',name:'心理健康概述(标准/原则)',freq:1,confidence:'低'}
   ],
-  // 2026上 specific tested topics (unlikely to repeat)
+  // 2026下 刚考过的考点（原题重现概率低；族内换角度仍会考）
   recentlyTestedTopics: [
-    '毛泽东《体育之研究》德智体三育',
-    '教育的经济功能(劳动生产率)',
-    '个体差异性(统一要求)',
-    '癸卯学制(第一个实施)',
-    '德国(最早义务教育)',
-    '调查法(问卷)',
-    '校本课程(唱山歌)',
-    '教育性规律(教书育人统一)',
-    '榜样示范法',
+    '朱熹(小学大学之分)',
+    '卢梭《爱弥儿》(归于自然)',
+    '个体主观能动性',
+    '身心发展不平衡性(关键期)',
+    '教育的政治功能',
+    '教育强国纲要4%(政策数字)',
+    '生产力→教育规模速度',
+    '课程内容组织·顺序性',
+    '隐性课程(师生关系/氛围)',
+    '实际锻炼法',
     '长善救失原则',
-    '班集体组建阶段',
-    '知觉理解性',
-    '陈述性知识',
-    '外部动机',
-    '精加工策略(谐音)',
-    '社会建构理论',
-    '形式运算阶段',
-    '情绪主观性',
-    '胆汁质',
-    '教学监控能力',
-    '强迫症'
+    '注意分配',
+    '再造想象',
+    '认知策略(加涅)',
+    '分散学习',
+    '维果斯基最近发展区',
+    '自我体验强烈',
+    '归属与爱的需要(马斯洛)',
+    '抽象思维占主导',
+    '强化理论(斯金纳)',
+    '教师角色冲突'
   ],
   // Knowledge Points Database (~34 core topics)
   knowledgePoints: [
@@ -1221,7 +1252,7 @@ new Chart(document.getElementById('modulePieChart'), {
     maintainAspectRatio: true,
     plugins: {
       legend: { position: 'right', labels: { padding: 12, usePointStyle: true, font: { size: 11 } } },
-      tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}题 (${(ctx.raw/273*100).toFixed(1)}%)` } }
+      tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}题 (${(ctx.raw/294*100).toFixed(1)}%)` } }
     }
   }
 });
@@ -1279,11 +1310,11 @@ new Chart(document.getElementById('heatMapChart'), {
 new Chart(document.getElementById('predModuleChart'), {
   type: 'bar',
   data: {
-    labels: DATA.pred2026下.map(p => '模块'+p.module),
+    labels: DATA.pred2027上.map(p => '模块'+p.module),
     datasets: [{
       label: '预测题数',
-      data: DATA.pred2026下.map(p => p.predicted),
-      backgroundColor: DATA.pred2026下.map(p => mColors[p.module-1]),
+      data: DATA.pred2027上.map(p => p.predicted),
+      backgroundColor: DATA.pred2027上.map(p => mColors[p.module-1]),
       borderRadius: 6
     }]
   },
@@ -1347,7 +1378,7 @@ document.getElementById('topSubTopics').innerHTML = DATA.subTopicFreq.map((s,i) 
     <td><span class="badge" style="background:${mColors[s.m-1]};color:var(--bg);">模块${s.m}</span></td>
     <td>${s.name}</td>
     <td class="num highlight">${s.freq}次</td>
-    <td class="num">${(s.freq/273*100).toFixed(1)}%</td>
+    <td class="num">${(s.freq/294*100).toFixed(1)}%</td>
     <td>${s.trend==='rising'?'<span class="badge badge-new">上升</span>':s.trend==='declining'?'<span class="badge badge-warn">下降</span>':'<span style="color:var(--text2);">稳定</span>'}</td>
   </tr>
 `).join('');
@@ -1368,7 +1399,7 @@ document.getElementById('predDetailCards').innerHTML = DATA.predKnowledgePoints.
 document.getElementById('predTable').innerHTML = `
   <table>
     <thead><tr><th>模块</th><th>预测题数</th><th>占选择题比</th><th>可信度</th></tr></thead>
-    <tbody>${DATA.pred2026下.map(p => `
+    <tbody>${DATA.pred2027上.map(p => `
       <tr>
         <td><span class="badge" style="background:${mColors[p.module-1]};color:var(--bg);">M${p.module}</span> ${DATA.moduleNames[p.module]}</td>
         <td class="num highlight">${p.predicted}</td>
@@ -1418,7 +1449,7 @@ document.getElementById('alternationAnalysis').innerHTML = `
     </tbody>
   </table>
   <p style="margin-top:12px;font-size:0.85rem;color:var(--text2);">
-    ⚠️ 样本量有限(n=13)，交替规律仅供参考，不作为主要预测依据。
+    ⚠️ 样本量有限(n=14)，交替规律仅供参考，不作为主要预测依据。
   </p>
 `;
 
@@ -1427,28 +1458,28 @@ document.getElementById('detailedReport').innerHTML = `
   <h2>📝 详细分析报告</h2>
 
   <h3>1. 考试基本信息</h3>
-  <p>国家教师资格考试(中学)《教育知识与能力》选择题部分，每套试卷<span class="highlight">21道单项选择题</span>，每题2分，共42分。占总分150分的28%。本分析基于2019下半年至2026上半年共<span class="highlight">13套真题、273道选择题</span>。</p>
+  <p>国家教师资格考试(中学)《教育知识与能力》选择题部分，每套试卷<span class="highlight">21道单项选择题</span>，每题2分，共42分。占总分150分的28%。本分析基于2019下半年至2026下半年共<span class="highlight">14套真题、294道选择题</span>。</p>
 
   <h3>2. 模块出题规律</h3>
-  <p><strong>重要发现：最近3次考试(2025上、2025下、2026上)的模块分布完全一致！</strong>但注意——<span class="highlight">3次相同并不能确定为永久规律</span>（2024上vs2024下的分布就有明显差异），建议将其视为"暂定模式"而非铁律。经与官方考试大纲对照验证，该模式与大纲规定的68%/32%模块分组基本吻合：</p>
+  <p><strong>重要更新：2025上~2026上 曾连续3次完全一致，但 26下 已打破</strong>——<span class="highlight">M1 升至7题、M3/M6 归零</span>，再次说明不存在永久模板。27上 按「长期均值40%＋近4场60%」推定：M1 6题、M4 5题、M5 3题、M7 2题、M8 2题、M2/M3/M6 各1题（与官方68%/32%分组吻合）：</p>
   <ul style="color:var(--text2);margin-left:20px;line-height:2;">
     <li>模块1(教育基础): <span class="highlight">6题</span> — 占比最大，涵盖教育家、教育与社会/人的关系、教育制度、教育目的等</li>
     <li>模块4(学习心理): <span class="highlight">5题</span> — 第二大模块，聚焦认知过程、学习理论、学习动机、学习策略</li>
-    <li>模块5(发展心理): <span class="highlight">3题</span> — 皮亚杰、埃里克森、气质、情绪几乎是必考点</li>
+    <li>模块5(发展心理): <span class="highlight">3题</span> — 皮亚杰/维果斯基、气质、情绪、自我意识 轮转出题</li>
     <li>模块7(德育): <span class="highlight">2题</span> — 德育方法和品德发展理论各占约1题</li>
-    <li>模块8(班级+教师): <span class="highlight">2题</span> — 福勒教师阶段几乎每次必考</li>
-    <li>模块3(教学): <span class="highlight">1题</span> — 2024年起从2-3题降至1题</li>
+    <li>模块8(班级+教师): <span class="highlight">2题</span> — 教师心理族是主力（26下 考了角色冲突）</li>
+    <li>模块3(教学): <span class="highlight">1题</span> — 2024年起 1~2题（26下 单选归零，重心在主观题）</li>
     <li>模块2(课程): <span class="highlight">1题</span> — 稳定1题</li>
-    <li>模块6(心理辅导): <span class="highlight">1题</span> — 稳定1题</li>
+    <li>模块6(心理辅导): <span class="highlight">1题</span> — 0~1题（26下 未出；常年1题节奏）</li>
   </ul>
 
   <h3>3. 预测模型的科学依据</h3>
-  <p>采用<span class="highlight">加权评分模型</span>：历史频次(35%) + 近期趋势(30%) + 交替规律(20%) + 空白潜力(15%)。</p>
-  <p>经回溯验证：用前12套数据预测第13套(2026上)，<span class="text-green">6/8模块精确命中，8/8在±1题范围内</span>，证明模型具有实际预测能力。</p>
-  <p><strong>官方验证：</strong>经与教育部教育考试院发布的《教育知识与能力》考试大纲和《教师资格考试标准》对照，模型的8模块分类与官方考纲100%对应，68%/32%模块分组与实际出题分布(70%/30%)高度一致。详见"📋 考纲对照"标签页。</p>
+  <p>采用<span class="highlight">加权评分模型</span>：模块层＝长期频次(40%)＋近4场趋势(60%)，并配平至21题；知识点层叠加「空白考点加权、政策文件通道、延续/冷却修正」（对照 26下 复盘结论）。</p>
+  <p>经回溯验证：用前13套数据预测第14套(2026下)，<span class="text-green">8/8模块在±1题范围内（2个精确命中）</span>——26下 打破「三连复读」后仍全部压线，模块层模型稳健。</p>
+  <p><strong>官方验证：</strong>经与教育部教育考试院发布的《教育知识与能力》考试大纲和《教师资格考试标准》对照，模型的8模块分类与官方考纲100%对应，68%/32%模块分组与实际出题分布(70.4%/29.6%)高度一致。详见"📋 考纲对照"标签页。</p>
 
-  <h3>4. 2026下预测核心要点</h3>
-  <p>由于2025上、2025下、2026上的模块分布完全相同，<span class="highlight">2026下有极大概率(约85%)维持此模式</span>。这意味着你的复习时间应按此比例分配：</p>
+  <h3>4. 2027上预测核心要点</h3>
+  <p>26下 已打破「三连复读」（M1升至7题、M3/M6 归零）；<span class="highlight">27上 按「长期均值40%＋近4场60%」推定维持 6/5/3/2/2/1/1/1</span>。复习时间按此比例分配：</p>
   <ul style="color:var(--text2);margin-left:20px;line-height:2;">
     <li>模块1: 分配约30%复习时间</li>
     <li>模块4: 分配约25%复习时间</li>
@@ -1458,11 +1489,11 @@ document.getElementById('detailedReport').innerHTML = `
   </ul>
 
   <h3>5. 答案分布规律</h3>
-  <p>273题统计：<span class="highlight">B(73次,26.7%) > A(71次,26.0%) > C(70次,25.6%) > D(59次,21.6%)</span></p>
-  <p>D显著偏少(比B少14次)，说明出题人倾向于让D做干扰项。连续3题同一答案的概率极低，可用来反向验证。</p>
+  <p>294题统计：<span class="highlight">B(79次,26.9%) > A(76次,25.9%) > C(75次,25.5%) > D(64次,21.8%)</span></p>
+  <p>D显著偏少(比B少15次)，说明出题人倾向于让D做干扰项。连续3题同一答案的概率极低，可用来反向验证。</p>
 
   <h3>6. 风险提示</h3>
-  <p>考试大纲可能在2026年有微调，特别是<b>劳动教育、心理健康教育</b>等近年政策热点可能在选择题中增加比重。建议关注2025-2026年教育部新发布的教育政策文件。</p>
+  <p>考试大纲可能在2027年有微调，特别是<b>劳动教育、心理健康教育</b>等近年政策热点可能在选择题中增加比重。建议关注2025-2027年教育部新发布的政策文件——<b>26下 已经考了《教育强国建设规划纲要》的4%，新文件数字会提前进题</b>。</p>
 
   <p style="margin-top:16px;color:var(--text2);font-size:0.85rem;">📝 查看完整版本更新历史，请切换到 <a href="javascript:void(0)" onclick="switchTab('changelog')" style="color:var(--accent);">更新日志</a> 标签页。</p>
 `;
@@ -1486,7 +1517,7 @@ new Chart(document.getElementById('syllabusSplitChart'), {
     maintainAspectRatio: true,
     plugins: {
       legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, font: { size: 11 } } },
-      tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}题 (${(ctx.raw/273*100).toFixed(1)}%)` } }
+      tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}题 (${(ctx.raw/294*100).toFixed(1)}%)` } }
     }
   }
 });
@@ -1520,7 +1551,7 @@ const moduleDetailHTML = [1,2,3,4,5,6,7,8].map(m => {
   const totalFreq = items.reduce((sum, c) => sum + c.freq, 0);
   const coveredCount = items.filter(c => c.covered).length;
   const totalCount = items.length;
-  const freqPct = (totalFreq / 273 * 100).toFixed(1);
+  const freqPct = (totalFreq / 294 * 100).toFixed(1);
   const officialGroup = [1,3,4,7].includes(m) ? '68%组' : '32%组';
   return `
     <div style="margin-bottom:16px;padding:14px;background:var(--bg2);border-radius:8px;border-left:4px solid ${mColors[m-1]};">
