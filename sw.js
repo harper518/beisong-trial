@@ -20,7 +20,9 @@
 //   · 所以 sw.js 自己没改的那些版本（v180 ~ v182 都是），这个名字**本来就该停在 v179**。
 //   ⚠️ **只在 sw.js 自己的逻辑改了内容时**，才要换这个名字 —— 换名字会让下面的 CDN 资源重新下一遍。
 //     只改注释、不动逻辑 → **不用换**。
-var CACHE_NAME = 'beisong-trial-v183';
+var CACHE_NAME = 'beisong-trial-v198';
+// 🔧 v198（2026-10-07 用户拍板「现在修」）：**sw.js 自己的逻辑改了**（加了「下到一半断掉」防护，
+//   见下面两个页面类分支）→ 按上面 v183 那条规矩，这个名字跟着换 ✓（换名字会让 CDN 资源重新下一遍）。
 
 // CDN 静态资源（缓存优先）
 var CDN_URLS = [
@@ -128,11 +130,17 @@ self.addEventListener('fetch', function(e) {
   if (/chongci|yuanban|冲刺背诵清单/.test(plainUrl)) {
     e.respondWith(
       fetch(req).then(function(response) {
-        if (response && response.status === 200) {
-          var cloned = response.clone();
-          caches.open(CACHE_NAME).then(function(c) { c.put(req, cloned); });
-        }
-        return response;
+        // 🔧 v198：和下面「自有文件」同款防护（这几页也是页面类请求，下到一半绝不交半页）
+        if (!response || response.status !== 200) return response;
+        return response.arrayBuffer().then(function(buf) {
+          var headers = new Headers(response.headers);
+          headers.delete('content-encoding');
+          headers.delete('content-length');
+          headers.delete('transfer-encoding');
+          var full = new Response(buf, { status: response.status, statusText: response.statusText, headers: headers });
+          caches.open(CACHE_NAME).then(function(c) { c.put(req, full.clone()); });
+          return full;
+        });
       }).catch(function() {
         return caches.match(req).then(function(r) { return r || offlineFallback(isNav); });
       })
@@ -145,11 +153,25 @@ self.addEventListener('fetch', function(e) {
     caches.match(req).then(function(cached) {
       if (cached) return cached;
       return fetch(req).then(function(response) {
-        if (response && response.status === 200) {
-          var cloned = response.clone();
-          caches.open(CACHE_NAME).then(function(c) { c.put(req, cloned); });
-        }
-        return response;
+        // 🔧 v198（2026-10-07 用户拍板「现在修」）：和测试站 v195t 同一套「下到一半断掉」防护 ——
+        //   改之前把这个 fetch 的**流直接**交给页面：连接在**中途断掉**时 promise 早已 resolve、
+        //   下面 catch 不触发 → 页面拿到**半截 HTML**（壳子出来、点哪都没反应）。
+        //   小窗口＝「刚装好 / 清过缓存后第一次打开、缓存还是空的」，正是新用户撞见它的时刻。
+        //   现在：**先把整份读进内存**（arrayBuffer），读完整了才交给页面；
+        //   读不完整 → reject → 落到下面 catch → 用缓存里那份**完整的旧版 / 首页**兜底
+        //   （顶多看到旧版，绝不会是「点不动的半页」）。
+        //   ⚠️ 重建 Response 必须剥这三个头：body 到 SW 这一层已经解压过了，
+        //      原样带 content-encoding / content-length 会触发**二次解码**（老坑）。
+        if (!response || response.status !== 200) return response;   // 非 200 直通，不碰
+        return response.arrayBuffer().then(function(buf) {
+          var headers = new Headers(response.headers);
+          headers.delete('content-encoding');
+          headers.delete('content-length');
+          headers.delete('transfer-encoding');
+          var full = new Response(buf, { status: response.status, statusText: response.statusText, headers: headers });
+          caches.open(CACHE_NAME).then(function(c) { c.put(req, full.clone()); });
+          return full;
+        });
       }).catch(function() {
         // 🐞 v179：兜底从 `Response.error()` 改成「**回退到缓存的首页**」。
         //   原来那个对「打开页面」这种请求 = 交白卷 = 白屏。
