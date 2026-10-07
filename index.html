@@ -13,7 +13,7 @@
      而且不能用透明底（苹果会把透明的地方填成黑色）。现在是草地绿实色底。 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-<title>挖空背诵工具 v196 · 小阮出品</title>
+<title>挖空背诵工具 v197 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -170,13 +170,6 @@
   --primary:#1e3a5f; --primary-hover:#162d4a; --primary-light:#f0f4f8; --primary-soft:#e0e8f2;
   --border:#d0dae8;
 }
-/* 珊瑚橘 */
-[data-color="coral"] {
-  --bg:#fef5f2; --bg-card:#fff; --bg-input:#fef5f2;
-  --text:#4a1e1a; --text-secondary:#9e5c4a;
-  --primary:#f0755a; --primary-hover:#e06048; --primary-light:#fef5f2; --primary-soft:#fde8e2;
-  --border:#f0d0c8;
-}
 /* 蜜桃 */
 [data-color="peach"] {
   --bg:#fef8f5; --bg-card:#fff; --bg-input:#fef8f5;
@@ -268,13 +261,6 @@
   --primary:#d4a030; --primary-hover:#c09020; --primary-light:#fefaf2; --primary-soft:#fdf0d8;
   --border:#e8d8b0;
 }
-/* 松石 */
-[data-color="turquoise"] {
-  --bg:#f2faf8; --bg-card:#fff; --bg-input:#f2faf8;
-  --text:#1a3a30; --text-secondary:#5a8b7a;
-  --primary:#2eb8a0; --primary-hover:#20a090; --primary-light:#f2faf8; --primary-soft:#d8f4ec;
-  --border:#c0e8d8;
-}
 /* 海松 */
 [data-color="seapine"] {
   --bg:#f2f6f4; --bg-card:#fff; --bg-input:#f2f6f4;
@@ -317,35 +303,6 @@
   --primary:#b6668f; --primary-hover:#a05078; --primary-light:#faf4f6; --primary-soft:#f6e8ec;
   --border:#e8d0d8;
 }
-/* 樱天 */
-[data-color="sakura-sky"] {
-  --bg:#fef9fb; --bg-card:#fff; --bg-input:#fef9fb;
-  --text:#3a2028; --text-secondary:#8b6878;
-  --primary:#6db8d8; --primary-hover:#509cb8; --primary-light:#fef9fb; --primary-soft:#e4f0f8;
-  --border:#e8d8e4;
-}
-/* 紫青 */
-[data-color="purple-green"] {
-  --bg:#f8f6fc; --bg-card:#fff; --bg-input:#f8f6fc;
-  --text:#2a1e3a; --text-secondary:#6b5e7a;
-  --primary:#34b85a; --primary-hover:#289e48; --primary-light:#f8f6fc; --primary-soft:#dcfce7;
-  --border:#e0d8ec;
-}
-/* 紫金 */
-[data-color="purple-gold"] {
-  --bg:#f9f6fc; --bg-card:#fff; --bg-input:#f9f6fc;
-  --text:#2a1e2a; --text-secondary:#6b5e6b;
-  --primary:#d4952a; --primary-hover:#b87a1a; --primary-light:#f9f6fc; --primary-soft:#fef3e0;
-  --border:#e0d8e8;
-}
-/* 藏橙 */
-[data-color="navy-orange"] {
-  --bg:#f2f4f8; --bg-card:#fff; --bg-input:#f2f4f8;
-  --text:#1a2838; --text-secondary:#5a6878;
-  --primary:#e08050; --primary-hover:#c87040; --primary-light:#f2f4f8; --primary-soft:#fef0e8;
-  --border:#d0d8e4;
-}
-
 [data-theme="dark"] {
   --bg:#042f2e; --bg-card:#134e4a; --bg-input:#11554e; --bg-overlay:rgba(0,0,0,.7);
   --text:#ccfbf1; --text-secondary:#99b8b6; --text-tertiary:#5f8b89;
@@ -1434,7 +1391,11 @@ body.focus-mode #cardText { line-height:2; }
 //      「选第几张表」的逻辑**全删了**。
 //    怎么判档（唯一定义在下面的 tierHasFeature）：
 //      · 全能版 = 全部，恒真 —— 不查表。所以以后新加的门**自动就是全能版专属**，不用回来改表。
-//      · 基础版 / 免费版 各查自己那一份清单。
+//      · 免费版查下面那份 free 清单。
+//    🆕 2026-10-07 v197（用户拍板「删基础版，只留免费版＋全能版」）：**只剩两档**。
+//      原来那 14 个「基础版专属」的名字（朗读模式/语速音调、周报、徽章、题库分组/改名排序、
+//      随机两种、复习优先、自选起始题号、专注模式、自适应难度、分享备份）现在**自动归全能版**
+//      （tierHasFeature 里「非免费 = 全部」）。老基础版买家激活时自动按全能版算（getTier 里的迁移）。
 var TIER_FEATURES = {
   // 🆓 免费版 —— 2026-09-16 用户定稿。**没写在这的名字，免费版一律拿不到。**
   free: [
@@ -1450,66 +1411,29 @@ var TIER_FEATURES = {
                           //      用户原话：「搜索全部题目 在题库页 改成免费版本就可以用」。
                           //    ⚠️ 搜索框在题库页是**免费版也渲染**（原来免费版只看到一条虚线提示条）。
   ],
-  // 🚀 基础版 —— 2026-09-16 用户定稿。这里**只列「基础版专属」的**，
-  //    免费版那份会自动叠加上来（见 tierHasFeature 里的并集），不用抄一遍。
-  //    **全能版 = 全部，不查这张表**。
-  basic: [
-    // 朗读
-    'readModeSelect',     // 🎛️ 朗读模式选择（念题 / 念答案 / 都念）
-    'voiceRatePitch',     // ⏩ 朗读语速 · 🎼 朗读音调
-    // 学习数据
-                          // ⚠️ 'heatmap'（🔥 学习热力图）**已经搬到免费版**（2026-09-16 用户拍板
-                          //    「整个热力图（含格子）开放给免费版」）—— 别看着这儿没有又加回来。
-                          //    区分清楚：搬走的是**设置页那个 12 周格子热力图**；
-                          //    「📊 章节掌握度热力图」是 'chapterHeatmap'，仍然只有全能版有。
-    'weeklyReport',       // 📊 学习周报
-    'achievements',       // 🏆 成就徽章 + 连击彩蛋
-    // 题库管理
-    'bankGroup',          // 📁 题库分组 / 改分组
-    'bankEdit',           // ✏️ 题库重命名 / 排序
-                          // ⚠️「编辑」**不在这** —— 2026-09-16 用户拍板：
-                          //   清单里的「编辑」指**编辑挖空**（editBank），那个归**免费版**，
-                          //   所以 editBank 上**一道门都没加**（见 :6977）。别看着这行去锁它。
-    // ⚠️ 'globalSearch'（🔍 全局搜索）**已经搬到免费版**（2026-09-16 续修第 7 轮，
-    //    用户原话「搜索全部题目 在题库页 改成免费版本就可以用」）—— 别看着这儿没有又加回来。
-    // 出题
-    'randomMode',         // 🔀 出题方式：随机
-    'randomNorepeat',     // 🚫 出题方式：随机不重复
-    'wrongFirst',         // ⭐ 复习优先（上次错的先出）
-    'startFrom',          // ⏭️ 顺序模式：自选从第几题开始
-    // 练习手感
-    'focusMode',          // 🧘 专注模式
-    'adaptiveDifficulty', // 🧠 自适应难度
-    // 备份（**只管备份三件事**：复制备份码 / 分享备份 / 从备份恢复）
-    'shareFile'
-    // ⚠️ 导出 PDF / 打印题库 / 浏览页导出**不在**这里 —— 那是 'exportFile'，全能版专属。
-  ],
+  // 🚀 基础版 —— **2026-10-07 v197 已删**（用户拍板：只留免费版＋全能版）。
+  //    原来那条 basic 数组（14 个名字）整条删了 —— 那 14 个功能现在自动归全能版
+  //    （见 tierHasFeature：非免费 = 全部）。老基础版买家 → getTier() 里迁移成全能版。
   // 👑 全能版 = 全部，**恒真，永远不会读这个数组**。
   //    故意留空：省得以后有人以为往这儿加名字能生效（加不加都一样）。
   //    所以**以后新加的门自动就是全能版专属**，不用回来改这张表。
   pro: []
 };
-var TIER_NAMES = { free: '免费版', basic: '基础版', pro: '全能版' };
-var TIER_EMOJI = { free: '🆓', basic: '🚀', pro: '👑' };
-var TIER_PRICES = { basic: '', pro: '' };
-var TIER_COLORS = { free: '#64748b', basic: '#f59e0b', pro: '#7C3AED' };
-// ==== 容量上限（2026-09-16 用户三档定稿）====
-//   用户原话：
-//     「免费版：只能 2 库 / 每库 15 题」
-//     「基础版：题库 8 个、题目数量总的1000题」
-//     「全能版：题库数和题数都不限」
-//   ⚠️ 免费版是**每个题库单独**算；基础版是**所有题库加起来**算（「总的」）—— 两者算法不一样。
+// 🆕 v197：只剩两档。老数据里可能还存着 'basic' → 在 getTier() 里统一迁移成 'pro'（见下）。
+var TIER_NAMES = { free: '免费版', pro: '全能版' };
+var TIER_EMOJI = { free: '🆓', pro: '👑' };
+var TIER_PRICES = { pro: '' };
+var TIER_COLORS = { free: '#64748b', pro: '#7C3AED' };
+// ==== 容量上限（v197 起只有两档）====
+//   免费版：2 库 / 每库 15 题（2026-09-15 用户定稿）；全能版：题库数和题数都不限。
 //   ⚠️ 已经超限的老用户（用户拍板「丙案」）：**数据保留、能继续用、只是不许再新增**，
 //      而且**弹窗讲清楚「不会动你的题」**（见 confirmImport 里的 _over 分支）。
 var FREE_MAX_BANKS = 2;
 var FREE_MAX_CARDS_PER_BANK = 15;   // 2026-09-15：60 → 15
-var BASIC_MAX_BANKS = 8;            // 2026-09-16 新增
-var BASIC_MAX_TOTAL_CARDS = 1000;   // 2026-09-16 新增：**全库合计**（不是每库）
 // 当前档位的容量上限：0 = 不限
 function capacityLimits() {
   var t = getTier();
   if (t === 'pro') return { banks: 0, perBank: 0, total: 0 };
-  if (t === 'basic') return { banks: BASIC_MAX_BANKS, perBank: 0, total: BASIC_MAX_TOTAL_CARDS };
   return { banks: FREE_MAX_BANKS, perBank: FREE_MAX_CARDS_PER_BANK, total: 0 };
 }
 // 全部题库目前的题目总数（跳过的那个库由调用方自己算，传 null 就全算）
@@ -1521,7 +1445,7 @@ function totalCardCount(exceptBankId) {
   });
   return n;
 }
-var APP_VERSION = 196;
+var APP_VERSION = 197;
 
 // ==== 开发者的话（写死在 HTML 里的兜底文案）====
 // 显示优先级：云端(本次启动拉到了) → 本地 authorNote → 这段兜底
@@ -1593,12 +1517,12 @@ function apiPut(path, data) {
   });
 }
 var FREE_COLORS = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream'];
-var BASIC_COLORS = FREE_COLORS.concat(['sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral']);
+// v197：原 BASIC_COLORS（基础版多 8 色）已删 —— 免费 8 色 / 全能版全部 40 色
 
 // 管理码 SHA-256 哈希
 var ADMIN_HASHES = {
   '37b2a028d82dff82803c72d83d1d0c23fc710109bf0979ab59af10ee9d1b7763': 'free',
-  '9ce88faaa380776fd6821afa56f14e48ace5be183e7690fd894c50212c1c810c': 'basic',
+  '9ce88faaa380776fd6821afa56f14e48ace5be183e7690fd894c50212c1c810c': 'pro',   // v197：原「基础版管理码」→ 基础版已删，按全能版算
   '05c97e9b99cbcdecb0bb896a5d1837110c9f10ca3ae20f6fed77dbadad62a625': 'pro'
 };
 
@@ -1615,22 +1539,22 @@ function getTier() {
   //       塞副作用进去会把数据写坏。结束试用的活儿归 endTrial()，
   //       由「页面加载 / 定时器 / 回到前台」三处触发（见 startTrialTimers）。
   if (act._isTrial && act._trialExpires && Date.now() >= act._trialExpires) {
-    return act._trialReturnTier || 'free';
+    var r = act._trialReturnTier || 'free';
+    return r === 'basic' ? 'pro' : r;   // 🆕 v197：老数据里可能存着 'basic'（已删）→ 按全能版
   }
-  return act.tier || 'free';
+  var t0 = act.tier || 'free';
+  // 🆕 v197（用户 2026-10-07 拍板删基础版）：本地存着旧 'basic' 的激活（老买家）
+  //   **一律按全能版算** —— 认码那边后端也会把 basic 直接返成 pro，两头兜住。
+  return t0 === 'basic' ? 'pro' : t0;
 }
-// 指定档位有没有某个功能 —— **全工具唯一的档位判断**（2026-09-16 统一成这一处）
+// 指定档位有没有某个功能 —— **全工具唯一的档位判断**
 // · 👑 全能版 = 全部，恒真。以后新加的门自动归全能版，不用回来改表。
-// · 🚀 基础版 ⊇ 🆓 免费版 —— 基础版**包含免费版的全部**，再加上自己的那 15 个。
-//    ⚠️ 2026-09-16 补的坑：原来这里对基础版**只查 basic 那张表**，
-//       而那张表按上面的注释只列了「基础版专属」的名字 —— 于是基础版用户
-//       **反而比免费版少功能**：dailySummary 在 free 表里、basic 表里没有，
-//       结果「今日学习摘要 / 学习计划 / 今日学习统计条 / 连续学习天数」对基础版变成
-//       「需升级**基础版**解锁」—— 对着基础版买家喊「快升级到基础版」。
-//       现在改成**并集**：以后往 free 表加东西，基础版自动跟着有，不用回来补一遍。
+// · 🆓 免费版查 free 清单。
+//   （历史：2026-09-16~2026-10-06 有三档，那时这里修过「基础版 ∪ 免费版」的并集坑；
+//    2026-10-07 v197 基础版整体删除 → 只剩「非免费 = 全部」这一条，并集逻辑随之删掉。）
 function tierHasFeature(name, tier) {
-  if (tier === 'pro') return true;
-  if (tier === 'basic') return TIER_FEATURES.basic.indexOf(name) >= 0 || TIER_FEATURES.free.indexOf(name) >= 0;
+  // 🆕 v197：只有两档 —— 非免费（全能版）＝ 全部；免费版查 free 清单。
+  if (tier !== 'free') return true;
   return TIER_FEATURES.free.indexOf(name) >= 0;
 }
 function hasFeature(name) { return tierHasFeature(name, getTier()); }
@@ -1688,72 +1612,70 @@ function showTierCompare() {
   ov.innerHTML = '<div style="background:var(--bg-card);border-radius:16px;padding:20px;max-width:720px;width:100%;max-height:90vh;max-height:90dvh;overflow-y:auto;font-size:var(--f13);line-height:1.6">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="margin:0;font-size:var(--f17)">📊 版本功能对比</h3><button style="background:var(--border);border:none;border-radius:8px;padding:6px 12px;font-size:var(--f14);cursor:pointer;min-height:36px" onclick="this.closest(&#39;div&#39;).parentElement.parentElement.remove()">✕</button></div>' +
     '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:center;font-size:var(--f12)">' +
-    '<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px">功能</th><th style="padding:8px;background:' + (tier==='free'?'var(--primary-soft)':'') + '">🆓 免费版</th><th style="padding:8px;background:' + (tier==='basic'?'var(--primary-soft)':'') + '">🚀 基础版</th><th style="padding:8px;background:' + (tier==='pro'?'var(--primary-soft)':'') + '">👑 全能版</th></tr></thead>' +
+    '<thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:8px">功能</th><th style="padding:8px;background:' + (tier==='free'?'var(--primary-soft)':'') + '">🆓 免费版</th><th style="padding:8px;background:' + (tier==='pro'?'var(--primary-soft)':'') + '">👑 全能版</th></tr></thead>' +
     '<tbody>' +
-    // 2026-09-16 修：基础版这格原来写「无限制」，可 v162 起代码里已经给了上限
-    //   （BASIC_MAX_BANKS = 8 / BASIC_MAX_TOTAL_CARDS = 1000，见 :1080-1081），
-    //   表里还写「无限制」= 买家按表用、超了被拦 → 直接吵起来。这里改成跟常量联动，不再写死。
-    '<tr><td style="text-align:left;padding:6px">题库数 / 题数</td><td>' + FREE_MAX_BANKS + '库×' + FREE_MAX_CARDS_PER_BANK + '题</td><td>' + BASIC_MAX_BANKS + '库 / 合计' + BASIC_MAX_TOTAL_CARDS + '题</td><td>无限制</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">手动挖空</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">椭圆挖空（圈式挖空）</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">顺序出题</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">随机重复</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">顺序模式自选起始题号</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">随机不重复</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">每题限时 / 总时间</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">隐藏题目</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">导入（粘贴/TXT/DOCX/PDF）</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">题库分组</td><td>❌</td><td>✅</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">题库重命名 / 排序</td><td>❌</td><td>✅</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">全局搜索</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">题库合并</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">混合多题库刷题</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">导出 PDF / 打印 / 题库文件</td><td>❌</td><td>❌</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">分享备份 / 备份码</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">语音朗读</td><td>仅一遍</td><td>全部模式</td><td>全部模式</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">朗读声音选择</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">朗读模式选择</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">做完题自动朗读答案</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">语速/音调调节</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">主题颜色</td><td>8种</td><td>16种</td><td>全部40种</td></tr>' +
+    // 🆕 v197（用户 2026-10-07 拍板）：基础版那一列**已删**，只剩免费版 / 全能版两列。
+    //    原来的「基础版」格内容分两种：基础版 ✅ 的行 = 现在并进全能版 ✅；基础版 ❌ 的行 = 照旧 ❌。
+    '<tr><td style="text-align:left;padding:6px">题库数 / 题数</td><td>' + FREE_MAX_BANKS + '库×' + FREE_MAX_CARDS_PER_BANK + '题</td><td>无限制</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">手动挖空</td><td>✅</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">椭圆挖空（圈式挖空）</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">顺序出题</td><td>✅</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">随机重复</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">顺序模式自选起始题号</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">随机不重复</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">每题限时 / 总时间</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">隐藏题目</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">导入（粘贴/TXT/DOCX/PDF）</td><td>✅</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">题库分组</td><td>❌</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">题库重命名 / 排序</td><td>❌</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">全局搜索</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">题库合并</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">混合多题库刷题</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">导出 PDF / 打印 / 题库文件</td><td>❌</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">分享备份 / 备份码</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">语音朗读</td><td>仅一遍</td><td>全部模式</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">朗读声音选择</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">朗读模式选择</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">做完题自动朗读答案</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">语速/音调调节</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">主题颜色</td><td>8种</td><td>全部34种</td></tr>' +
     // 🧠 2026-09-18 v164：这一行原来写「免费 1/2天 · 基础 1/2/4/7天 · 全能 1/2/4/7天」——
-    //    **两处都在骗买家**：① 间隔重复（门名 fullSr）2026-09-16 起就是**全能版专属**，
-    //    免费/基础压根没有；② 档位早改成六档了。照着代码改成 ❌ / ❌ / 六档。
-    '<tr><td style="text-align:left;padding:6px">记忆复习（间隔重复）</td><td>❌</td><td>❌</td><td>1→2→4→7→15→30 天</td></tr>' +
+    //    **两处都在骗买家**：① 间隔重复（门名 fullSr）2026-09-16 起就是**全能版专属**；
+    //    ② 档位早改成六档了。照着代码改成 ❌ / 六档。
+    '<tr><td style="text-align:left;padding:6px">记忆复习（间隔重复）</td><td>❌</td><td>1→2→4→7→15→30 天</td></tr>' +
     // 2026-09-16：这一行原来免费版是 ❌ —— 用户拍板「整个热力图（含格子）开放给免费版」，改成 ✅。
     //             ⚠️ 紧跟着下面那行「章节掌握度热力图」是**另一个东西**，仍然只有全能版有，别一起改。
-    '<tr><td style="text-align:left;padding:6px">热力图（近12周）</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">今日学习摘要</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">学习周报</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">复习优先</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">自适应难度</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">速刷/考前冲刺</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">番茄钟模式</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">专注模式</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">每日洞见</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">章节掌握度热力图</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">分类筛选</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">成就徽章+连击彩蛋</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">口诀系统</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">头像上传</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    // 2026-09-16 修：免费版这一格原来写 ✅ —— 可备份整体早在 v158 就归付费功能了
-    //   （导出要基础版、导入也要基础版，见 tierBlockRestore() :1469），表里写 ✅ = 骗买家。
-    '<tr><td style="text-align:left;padding:6px">备份/恢复</td><td>❌</td><td>✅</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">PWA离线安装</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
-    '<tr style="border-top:2px solid var(--border)"><td colspan="4" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">🧠 资料笔记区</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">思维导图</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr style="border-top:2px solid var(--border)"><td colspan="4" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">💬 社区互动</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">社区留言板</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">反馈区</td><td>✅</td><td>✅</td><td>✅</td></tr>' +
-    '<tr style="border-top:2px solid var(--border)"><td colspan="4" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">🍅 番茄乐园（v98）</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">番茄钟</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">番茄商店</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">主题色解锁(番茄兑换)</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">道具卡(双倍🍅/跳过)</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">游戏时间购买</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">心愿单</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">兑换码</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">消费记录</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">置顶消息(社区)</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr style="border-top:2px solid var(--border)"><td colspan="4" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">🎮 小游戏中心（v98）</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">舒尔特方格</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">翻牌记忆</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">2048</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">弹球打砖块</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
-    '<tr><td style="text-align:left;padding:6px">扫雷·跳跃鸟·打地鼠</td><td>❌</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">热力图（近12周）</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">今日学习摘要</td><td>✅</td><td>✅</td></tr><tr><td style="text-align:left;padding:6px">学习周报</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">复习优先</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">自适应难度</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">速刷/考前冲刺</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">番茄钟模式</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">专注模式</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">每日洞见</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">章节掌握度热力图</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">分类筛选</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">成就徽章+连击彩蛋</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">口诀系统</td><td>✅</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">头像上传</td><td>❌</td><td>✅</td></tr>' +
+    // 2026-09-16 修：免费版这一格原来写 ✅ —— 可备份整体早在 v158 就归付费功能了，表里写 ✅ = 骗买家。
+    '<tr><td style="text-align:left;padding:6px">备份/恢复</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">PWA离线安装</td><td>✅</td><td>✅</td></tr>' +
+    '<tr style="border-top:2px solid var(--border)"><td colspan="3" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">🧠 资料笔记区</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">思维导图</td><td>❌</td><td>✅</td></tr>' +
+    '<tr style="border-top:2px solid var(--border)"><td colspan="3" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">💬 社区互动</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">社区留言板</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">反馈区</td><td>✅</td><td>✅</td></tr>' +
+    '<tr style="border-top:2px solid var(--border)"><td colspan="3" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">🍅 番茄乐园（v98）</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">番茄钟</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">番茄商店</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">主题色解锁(番茄兑换)</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">道具卡(双倍🍅/跳过)</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">游戏时间购买</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">心愿单</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">兑换码</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">消费记录</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">置顶消息(社区)</td><td>❌</td><td>✅</td></tr>' +
+    '<tr style="border-top:2px solid var(--border)"><td colspan="3" style="text-align:left;padding:6px 6px 2px;font-weight:700;color:var(--primary)">🎮 小游戏中心（v98）</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">舒尔特方格</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">翻牌记忆</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">2048</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">弹球打砖块</td><td>❌</td><td>✅</td></tr>' +
+    '<tr><td style="text-align:left;padding:6px">扫雷·跳跃鸟·打地鼠</td><td>❌</td><td>✅</td></tr>' +
     '</tbody></table></div></div>';
   document.body.appendChild(ov);
 }
@@ -1803,7 +1725,8 @@ function activateCode(input) {
         saveData(appData);
         if (window._trialExpiryTimer) { clearInterval(window._trialExpiryTimer); window._trialExpiryTimer = null; }
         if (window._trialCountdownTimer) { clearInterval(window._trialCountdownTimer); window._trialCountdownTimer = null; }
-        showActivationSuccess(TIER_NAMES[appData.activation.tier], appData.activation.expires, ar.remaining, ar.maxUses);
+        // v197：后端重部署前的过渡窗口里，旧 basic 码会返 'basic' → 兜底显示成「全能版」
+        showActivationSuccess(TIER_NAMES[appData.activation.tier] || '全能版', appData.activation.expires, ar.remaining, ar.maxUses);
       })
       .catch(function() { showToast('❌ 验证服务暂时不可用，请确保网络连接正常'); });
   });
@@ -1833,7 +1756,9 @@ var TRIAL_MS = 20 * 60 * 1000;   // 试用时长：20 分钟（2026-09-15 用户
 // 用户的试用记录带着当时的批次号，跟这个数字对不上 = 视为没试用过。
 // 可以反复改，改一次所有人的试用机会就恢复一次。
 // 2026-09-15 1→2：试用规则改了（10→20 分钟、题数改成不限），让老用户重新获得一次试用机会。
-var TRIAL_BATCH = 2;
+// 🆕 v197（2026-10-07 用户：「试用变成谁都可以再试用一次」）——批次号 2 → 3：
+//   判据是 `act._trialBatch === TRIAL_BATCH`，跟着旧批次走过的人都对不上 → **又拿回一次全能版试用机会**。
+var TRIAL_BATCH = 3;
 var TRIAL_SNAP_KEY = 'current';
 
 // 🎁 试用期间的导入限额
@@ -1852,7 +1777,9 @@ var TRIAL_MAX_NOTES = 2;
 // ⚠️ 只管题库页顶部那个「🔀 合并」（executeMerge），章节管理里的「📦 合并」不算。
 var TRIAL_MAX_MERGES = 1;
 
-function trialKeyOf(tier) { return tier === 'pro' ? '_trialUsedPro' : '_trialUsedBasic'; }
+// 🆕 v197：只剩「全能版试用」一种（基础版试用已删）→ 这个 key 恒为 _trialUsedPro。
+//   老数据里的 _trialUsedBasic 弃用、不读（字段留着不碍事）。
+function trialKeyOf(tier) { return '_trialUsedPro'; }
 // 这一档的试用机会用掉了没（按当前批次号算）
 function trialUsed(tier) {
   var act = appData.activation || {};
@@ -1925,14 +1852,14 @@ function trialBlockRestore() {
 }
 
 // 免费版不能导入备份（v158 用户要求：「免费版本是不能导入的」→ 澄清是**导入备份文件**，不是导入题库）
-// 原因：**导出早就要基础版了，导入却没拦** —— 免费版只要拿到别人的备份码，
+// 原因：**导出早就要付费档了，导入却没拦** —— 免费版只要拿到别人的备份码，
 //       一粘就把整个题库灌进来，绕过「2 个题库 / 每库 15 题」的上限。等于门锁了、窗户开着。
-// 所以备份整体算付费功能：导出要基础版，导入也要基础版。**导入题库不受影响**（照旧 2 库 / 每库 15 题）。
+// 所以备份整体算付费功能：导出要全能版，导入也要全能版。**导入题库不受影响**（照旧 2 库 / 每库 15 题）。
 // 三个入口都要拦：①展开恢复区 ②粘贴备份码 ③上传 JSON 备份文件（跟 trialBlockRestore 同一套路）。
 // ⚠️ 检查顺序：trialBlockRestore 在前（试用期间给的是「等试用结束」那个更贴切的提示），这个是兜底。
 function tierBlockRestore() {
   if (hasFeature('shareFile')) return false;
-  showToast('导入备份需要基础版及以上，请升级版本');
+  showToast('导入备份需要全能版，请升级版本');   // v197：基础版已删，原「基础版及以上」改全能版
   return true;
 }
 
@@ -2217,8 +2144,8 @@ function startTrial(tier) {
   var cur = act.tier || 'free';
   if (act._isTrial) { showToast('试用已在进行中'); return; }
   if (tier === 'pro' && cur === 'pro') { showToast('您已是全能版，无需试用'); return; }
-  if (tier === 'basic' && cur !== 'free') { showToast('基础版试用仅限免费版用户'); return; }
-  if (trialUsed(tier)) { showToast('该版本已试用过，每版本仅可试用一次'); return; }
+  // 🆕 v197：只剩「全能版试用」一种（原基础版试用已删）
+  if (trialUsed(tier)) { showToast('试用已经用过了，仅可试用一次'); return; }
   if (window._track) window._track('trialClick');
   var now = Date.now();
   // 先拍快照，拍成功才真正开启试用 —— 保证一定回得去
@@ -2468,10 +2395,10 @@ var themeBgColors = {
   teal:'#f0fdfa', purple:'#faf5ff', blue:'#f0f7ff', pink:'#fdf2f8',
   green:'#f0fdf4', yellow:'#fefce8', bw:'#f5f5f5', cream:'#fffaf3', sage:'#f4faf0',
   ink:'#f5f5f5', moss:'#f2f7f2', zen:'#faf7f4', bamboo:'#f4f8f2', wood:'#fdf8f4',
-  ocean:'#f0f4f8', coral:'#fef5f2', peach:'#fef8f5', lavender:'#f8f6fb', mist:'#f5f8fa',
+  ocean:'#f0f4f8', peach:'#fef8f5', lavender:'#f8f6fb', mist:'#f5f8fa',
   snow:'#fafafa', amber:'#fffbf5', sakura:'#fef8fa', sky:'#f5fafd', oat:'#fdfaf6',
   sage2:'#f4f6f4', dusk:'#f6f4f8', wisteria:'#f6f4fa', indigo:'#f2f4fd', mustard:'#fefaf2',
-  turquoise:'#f2faf8', seapine:'#f2f6f4', mint:'#f4faf6', butter:'#fefcf6', periwinkle:'#f6f8fc', iris:'#f4f4fa', mauve:'#faf4f6', 'sakura-sky':'#fef9fb', 'purple-green':'#f8f6fc', 'purple-gold':'#f9f6fc', 'navy-orange':'#f2f4f8'
+  seapine:'#f2f6f4', mint:'#f4faf6', butter:'#fefcf6', periwinkle:'#f6f8fc', iris:'#f4f4fa', mauve:'#faf4f6'
 };
 function updateThemeColorMeta(color) {
   var meta = document.getElementById('themeColorMeta');
@@ -4103,7 +4030,7 @@ function renderZiliao() {
   if (!container) return;
 
   // 检查 Pro 权限
-  // 🧠 2026-09-18（用户要求）：免费版/基础版**不再只给一堵墙** ——
+  // 🧠 2026-09-18（用户要求）：免费版（当年连基础版）**不再只给一堵墙** ——
   //    改成「展示一份**示范导图**（只能看、不能点）」+ 一条升级提示。
   //    用户原话：「我希望 免费版本和基础版本的 展示页面是 示范导图的 导图页 这一页
   //             再加上某个地方可以显示提示要升级 就是展示这一页 但是这一页不能点击 主要是展示思维导图」
@@ -6327,7 +6254,7 @@ function checkAchievements() {
   // 🏆 成就徽章 + 连击彩蛋 → 基础版起（2026-09-16 用户清单）。
   //    拦在这儿就够：成就**只有解锁时会弹提示**，没有单独的展示页
   //    （settings.achievements 只是存解锁时间，全工具没有第二处读它）。
-  //    ⚠️ 底下照旧把解锁记录写进数据里，升级到基础版后已解锁的徽章还在。
+  //    ⚠️ 底下照旧把解锁记录写进数据里，升级到全能版后已解锁的徽章还在。
   if (!hasFeature('achievements')) return;
   if (!appData.settings.achievements) appData.settings.achievements = {};
   var newlyUnlocked = [];
@@ -7186,9 +7113,9 @@ function escNl(s) {
 // ==================== 椭圆挖空（v157 用户要求） ====================
 // 当前是不是「椭圆挖空」模式（设置页可开关，默认关 = 老样子的横线版）
 // ⭕ 椭圆挖空 → 全能版专属（2026-09-16 用户清单）。
-//    ⚠️ 这里也判一次档位：开关本身在免费版/基础版整行被换成「需升级」提示行，本来就点不到，
+//    ⚠️ 这里也判一次档位：开关本身在免费版整行被换成「需升级」提示行，本来就点不到，
 //       但老用户的数据里可能已经存着 ovalBlank:true —— 不判档位的话他们会一直是椭圆。
-//       判了之后免费版/基础版自动退回原来的横线（跟用户清单一致）。
+//       判了之后免费版自动退回原来的横线（跟用户清单一致）。
 function isOvalBlank() { return !!(appData && appData.settings && appData.settings.ovalBlank) && hasFeature('ovalBlank'); }
 // 圈的长度 = 挖空原文的宽度。中文/全角算 1em，数字、字母、空格算 0.6em，
 // 再左右各留 0.22em 当圈里面的空白 —— 这样「圈长跟字数对应」，一眼能看出该填几个字。
@@ -7244,7 +7171,7 @@ function showExportModal(title, content, pdfData, ansInline) {
 }
 // 试用期间点了「导出 PDF」时弹的提示（按钮本身是彩色的，点了才拦）
 // 试用期间能不能把内容带走？
-// 「能带走」= 他本来就付费的档位自带导出能力（例如基础版用户试用全能版）→ 照常放行；
+// 「能带走」= 他本来就付费的档位自带导出能力（例如付费用户试用全能版）→ 照常放行；
 // 免费版用户试用期间则一律拦，PDF / 复制文字 / 备份码都一样（2026-09-13 修）
 function trialBlocksExport() {
   if (!isTrialActive()) return false;
@@ -7252,11 +7179,11 @@ function trialBlocksExport() {
   return !tierHasFeature('exportFile', ret);
 }
 // 🧩 2026-09-16 拆出来的：备份和导出**不在同一档**了 ——
-//    备份三件事（复制备份码 / 分享备份 / 从备份恢复）= shareFile = 基础版起；
+//    备份这几件（分享备份码 / 导出备份文件 / 从备份恢复；🔧 v197 删了「复制备份码」那颗按钮）= shareFile = 全能版起；
 //    导出（导出 PDF / 打印题库 / 浏览页导出）= exportFile = 全能版专属。
 //    所以「试用结束会掉到哪一档、那一档还给不给带走」得分开判，不能共用一个。
 //    ⚠️ 调用点归属：trialBlocksExport 只剩 showExportModal / printBankPdf；
-//       备份那四个（shareBackupCode / shareBackupFile / makeBackupCode / copyBackup）走下面这个。
+//       备份那几个（shareBackupCode / shareBackupFile / makeBackupCode；v197 删了 copyBackup）走下面这个。
 function trialBlocksBackup() {
   if (!isTrialActive()) return false;
   var ret = (appData.activation && appData.activation._trialReturnTier) || 'free';
@@ -8150,7 +8077,7 @@ function initApp() {
     var bad = (drawMode === 'random-norepeat' && !hasFeature('randomNorepeat'))
            || (drawMode === 'random-repeat' && !hasFeature('randomMode'));
     if (bad) drawMode = 'sequential';
-    // 复习优先同理（基础版功能）：用不了就退回按顺序出
+    // 复习优先同理（原基础版功能、v197 起归全能版）：用不了就退回按顺序出
     if (wrongFirst && !hasFeature('wrongFirst')) wrongFirst = false;
     // 计时（每题限时 / 总时间）→ 全能版专属：用不了就整个关掉
     if (timerMode !== 'off' && !hasFeature('perQuestionTimer')) timerMode = 'off';
@@ -8247,14 +8174,20 @@ function initApp() {
   document.addEventListener('dblclick', function(e) {
     var inp = e.target.closest('.blank-input');
     if (!inp || inp.classList.contains('revealed')) return;
+    // 🆕 v197：长空拆两截的 —— 双击任意一截，两截一起显示/一起收起
+    var _pair = null;
+    if (inp.dataset.foldA && inp.nextElementSibling && inp.nextElementSibling.dataset && inp.nextElementSibling.dataset.foldB) _pair = inp.nextElementSibling;
+    else if (inp.dataset.foldB && inp.previousElementSibling && inp.previousElementSibling.dataset && inp.previousElementSibling.dataset.foldA) _pair = inp.previousElementSibling;
     if (inp.classList.contains('peeked')) {
       inp.value = '';
       inp.classList.remove('peeked');
       inp.setAttribute('size', Math.max((inp.dataset.ans || '').length, 2));
+      if (_pair) { _pair.value = ''; _pair.classList.remove('peeked'); _pair.setAttribute('size', Math.max((_pair.dataset.ans || '').length, 2)); }
     } else {
       inp.value = inp.dataset.ans || '';
       inp.setAttribute('size', Math.max((inp.dataset.ans || '').length + 3, 6));
       inp.classList.add('peeked');
+      if (_pair) { _pair.value = _pair.dataset.ans || ''; _pair.classList.add('peeked'); _pair.setAttribute('size', Math.max((_pair.dataset.ans || '').length + 3, 6)); }
     }
   });
 
@@ -8480,6 +8413,9 @@ init();
 
 function applySettings() {
   const s = appData.settings;
+  // 🆕 v197：用户删了 6 个主题色（珊瑚橘/松石/樱天/紫青/紫金/藏橙）——
+  //   正在用它们的人自动回到默认「青绿」，界面上不会再出现选不中的怪状态
+  if (['coral', 'turquoise', 'sakura-sky', 'purple-green', 'purple-gold', 'navy-orange'].indexOf(s.color) >= 0) s.color = 'teal';
   document.documentElement.setAttribute('data-theme', s.darkMode ? 'dark' : 'light');
   document.documentElement.setAttribute('data-color', s.color || 'teal');
   document.documentElement.style.setProperty('--font-size', s.fontSize + 'px');
@@ -8492,7 +8428,7 @@ function applySettings() {
 function saveThemeColor(color) {
   var tier = getTier();
   if (tier === 'free' && FREE_COLORS.indexOf(color) === -1) { showToast('免费版仅支持8种颜色，请升级解锁更多'); return; }
-  if (tier === 'basic' && BASIC_COLORS.indexOf(color) === -1 && FREE_COLORS.indexOf(color) === -1) { showToast('基础版仅支持16种颜色，请升级全能版解锁全部40种'); return; }
+  // v197：原「基础版 16 种颜色」那道门已删（基础版不存在了）
   saveSetting('color', color);
   applySettings();
   updateThemeColorMeta(color);
@@ -8695,7 +8631,7 @@ function renderBanks() {
   var _mergedTop = examBannerHtml + dailyStatsHtml;
   var searchHtml = (_mergedTop ? '<div class="stat-merged">' + _mergedTop + '<div class="stat-merged-sep"></div>' : '') + (hasFeature('globalSearch')
     ? '<div style="margin-bottom:14px"><input type="search" id="globalSearchInput" placeholder="🔍 搜索全部 ' + totalCards + ' 道题..." style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14)" oninput="doGlobalSearch()" onfocus="doGlobalSearch()"></div><div id="globalSearchResults" style="display:none"></div>'
-    : '<div style="margin-bottom:14px;padding:11px 14px;border:2px dashed var(--border);border-radius:10px;background:var(--bg-input);color:var(--text-tertiary);font-size:var(--f14);text-align:center">搜索全部 ' + totalCards + ' 道题 · 需升级基础版解锁</div>')
+    : '<div style="margin-bottom:14px;padding:11px 14px;border:2px dashed var(--border);border-radius:10px;background:var(--bg-input);color:var(--text-tertiary);font-size:var(--f14);text-align:center">搜索全部 ' + totalCards + ' 道题 · 需升级全能版解锁</div>')
     + (_mergedTop ? '</div>' : '')
     + '<div id="banksListContainer">';
   c.innerHTML = searchHtml;
@@ -8711,7 +8647,7 @@ function renderBanks() {
     : banks.slice();
   var listHtml = '';
   if (!_grpOn) {
-    listHtml += '<div style="padding:9px 14px;margin:0 0 8px;border:2px dashed var(--border);border-radius:10px;background:var(--bg-input);color:var(--text-tertiary);font-size:var(--f13);text-align:center">题库分组 · 需升级基础版解锁</div>';
+    listHtml += '<div style="padding:9px 14px;margin:0 0 8px;border:2px dashed var(--border);border-radius:10px;background:var(--bg-input);color:var(--text-tertiary);font-size:var(--f13);text-align:center">题库分组 · 需升级全能版解锁</div>';
   }
   if (gs.length) {
     listHtml += '<div style="font-size:var(--f12);color:var(--text-tertiary);margin:2px 2px 6px">🏷 分组</div>';
@@ -8814,7 +8750,7 @@ function bankRowHtml(b, isFirst, isLast, gid) {
   }
   return `<div class="bank-item">
       <div class="info" onclick="startPracticeSetup('${b.id}')" style="flex:1;min-width:0;cursor:pointer">
-        <div class="name" onclick="event.stopPropagation();renameBankPrompt(this, '${b.id}')" title="${hasFeature('bankEdit') ? '点击修改名称' : '重命名题库是基础版功能'}" style="cursor:pointer">${escapeHtml(b.name)}</div>
+        <div class="name" onclick="event.stopPropagation();renameBankPrompt(this, '${b.id}')" title="${hasFeature('bankEdit') ? '点击修改名称' : '重命名题库是全能版功能'}" style="cursor:pointer">${escapeHtml(b.name)}</div>
         <div class="meta">
           ${b.cards.length} 题${wc > 0 ? " | 错题 " + wc : ""} | ${fmtDate(b.createdAt)}
           ${hasFeature('bankEdit') ? `<span style="margin-left:8px;display:inline-flex;gap:2px">
@@ -8834,7 +8770,7 @@ function bankRowHtml(b, isFirst, isLast, gid) {
 // ── 新建 / 编辑分组（同一个弹窗，列出所有题库供勾选）──
 function showGroupEditor(gid) {
   // 📁 题库分组 → 基础版起（2026-09-16 用户清单）。
-  if (!hasFeature('bankGroup')) { showToastLines(['题库分组是基础版功能', '升级到基础版就能给题库建分组、按组收纳了'], 5000); return; }
+  if (!hasFeature('bankGroup')) { showToastLines(['题库分组是全能版功能', '升级到全能版就能给题库建分组、按组收纳了'], 5000); return; }
   var groups = getGroups();
   var g = gid ? groups[gid] : null;
   var banks = Object.values(appData.banks || {}).sort(function(a, b) {
@@ -8914,7 +8850,7 @@ function deleteGroupConfirm(gid) {
   // 📁 删分组 → 基础版起（2026-09-16 用户清单）。
   //    ⚠️ 这个也拦：免费版界面上看不到分组，但万一旧分组还躺在数据里，
   //       不能让人从残留的 DOM 把它删掉（分组本身是用户数据，删了找不回来）。
-  if (!hasFeature('bankGroup')) { showToastLines(['题库分组是基础版功能', '升级到基础版就能给题库建分组、按组收纳了'], 5000); return; }
+  if (!hasFeature('bankGroup')) { showToastLines(['题库分组是全能版功能', '升级到全能版就能给题库建分组、按组收纳了'], 5000); return; }
   var g = getGroups()[gid];
   if (!g) return;
   var n = groupBankIds(g).length;
@@ -9014,7 +8950,7 @@ function showBankMenu(bid, gid) {
 // 单个题库改「属于哪些分组」
 function showBankGroupPicker(bid) {
   // 📁 改分组 → 基础版起（2026-09-16 用户清单）。
-  if (!hasFeature('bankGroup')) { showToastLines(['题库分组是基础版功能', '升级到基础版就能给题库建分组、按组收纳了'], 5000); return; }
+  if (!hasFeature('bankGroup')) { showToastLines(['题库分组是全能版功能', '升级到全能版就能给题库建分组、按组收纳了'], 5000); return; }
   var old = document.getElementById('_bankGroupPicker'); if (old) old.remove();
   var b = appData.banks[bid];
   if (!b) return;
@@ -9110,7 +9046,7 @@ function renameBankPrompt(el, id) {
   //    但用户当天单独拍板：那个「编辑」指**编辑挖空**、归**免费版** —— 所以这里只管重命名/排序）。
   //    ⚠️ 清单里那个「编辑」**还没定**（是指改题库信息，还是改题目内容 editBank）——
   //       改题目内容是核心功能，先不动，等用户回答。
-  if (!hasFeature('bankEdit')) { showToastLines(['重命名题库是基础版功能', '升级到基础版就能改题库名字、调顺序'], 5000); return; }
+  if (!hasFeature('bankEdit')) { showToastLines(['重命名题库是全能版功能', '升级到全能版就能改题库名字、调顺序'], 5000); return; }
 	  const bank = appData.banks[id];
 	  if (!bank) return;
 	  const oldName = bank.name;
@@ -10083,7 +10019,9 @@ var _PGQ = [
       { v: '加粗', d: '加粗的字', eg: '素质教育以<span style="font-weight:800">提高国民素质</span>为根本宗旨' },
       { v: '高亮', d: '有颜色的字（荧光笔那种）', eg: '素质教育以<span style="background:#fde68a;border-radius:3px">提高国民素质</span>为根本宗旨' },
       { v: '下划线', d: '字下面有一条横线', eg: '素质教育以<span style="text-decoration:underline;text-underline-offset:3px">提高国民素质</span>为根本宗旨' },
-      { v: '括号', d: '用括号圈起来的', eg: '素质教育以<span style="color:var(--primary);font-weight:700">（提高国民素质）</span>为根本宗旨' }
+      { v: '括号', d: '用括号圈起来的', eg: '素质教育以<span style="color:var(--primary);font-weight:700">（提高国民素质）</span>为根本宗旨' },
+      // 🆕 v197（2026-10-07 用户）：用笔在书上圈起来的字 —— 拍照片发给 AI，圈里的字就是要挖的
+      { v: '圈起来', d: '用笔圈起来的字', s: '拿笔在书上、卷子上圈住的字 —— 拍照片发给它', eg: '素质教育以<span style="border:2px solid #e11d48;border-radius:50%;padding:1px 9px">提高国民素质</span>为根本宗旨' }
     ],
     none: { d: '都没标 —— 让 AI 自己挑关键词挖', s: '你资料上干干净净，让 AI 看着办' } },
   { id: 'title', sec: '③ 题目', type: 'check', title: '「题目」怎么办？（可以多选）',
@@ -10136,18 +10074,15 @@ var _PGQ = [
       { v: 'formula', d: '数学 / 化学 / 物理公式', s: '要让工具画成书本那样' },
       { v: 'table', d: '表格', s: '⚠️ 表格别直接拖进工具，会被丢掉 —— 一定要走 AI 这条路' },
       { v: 'koujue', d: '原文里本来就有口诀', s: '那种"提速创屎体面的歌星"的记忆口诀' }
-    ] },
-  { id: 'batch', sec: '⑤ 怎么发给它', type: 'radio', title: '资料有多少？', q: '',
-    opts: [
-      { v: 'all', d: '不太长，一次全给它' },
-      { v: 'part', d: '挺长的，我要分批发', s: '那我会加一条：这次只做我发的这部分，别说「还有内容没发」' }
     ] }
+  // 🆕 v197：（原第 12 题「资料有多少？」—— 一次全给 / 分批发 —— 用户 2026-10-07 拍板删掉整题；
+  //   原来只有勾「分批发」才出现的那两句，改成每份话术都有的固定兜底一句，见 _pgBuild 的【输出要求】。）
 ];
 
 var _PGD = {
   src: 'text', mode: 'work', marks: [], noMark: true, title: ['auto'],
   split: ['s_num'], splitOwn: '', bigpoint: 'yes', prefix: 'drop', aside: 'keep',
-  split10: 'keep', aikj: 'no', extra: ['formula'], batch: 'all'
+  split10: 'keep', aikj: 'no', extra: ['formula']
 };
 var _PGST = null;
 var _PGLS = 'beishu_prompt_gen_v1';
@@ -10312,25 +10247,30 @@ function _pgBuild() {
       L.push('   · 括号括起来的：把括号去掉，只把里面的内容用两个 @ 括起来');
       L.push('     （我原文里正常的标点括号，比如「（一）导向功能」，不算，别动它）');
     }
+    // 🆕 v197：用笔圈的（书上手画圈）—— 这两句专门防它跟「照片上手写的字不识别」打架
+    //   （圈是手画的，很容易被那条规矩连圈带字一起忽略）
+    if (_PGST.marks.indexOf('圈起来') >= 0) {
+      L.push('   · 用笔圈起来的：圈住的那几个字就是要挖的 —— 只挖圈里的字。');
+      L.push('   · 圈是我用笔在书上画的记号，不是内容 —— 圈本身不要写进结果。');
+    }
     L.push('   · 【标题里标了的也要挖】—— 只要我标了就是要挖，不分是不是标题');
     L.push('   · 【不要问我、不要自己判断哪该挖哪不该挖、不要在结尾加说明】');
     L.push('     我标了的一律挖，不要跟我说「如果你想挖XX告诉我」这种话');
     L.push(N() + '我原文这些标记一个都没有 → 一个空都不要挖，也不许自己找关键词来挖');
   } else {
     // 🆕 v186（用户 2026-09-27 拍板「乙：也删掉，让 AI 完全自由挖空」）：
-    //    原来这里有 **两条数量/形式限制** ——
-    //      ·「别挖太多，一道题挑最该记的几处就行了」
-    //      ·「别整句整句地挖 —— 只挖那几个关键的字词」
-    //    用户原话：「让 ai 自己挑关键词挖空…就是 ai 根据考点之类的地方，ai 自己挖空，
-    //    **不需要限制它只挖几个之类的限制不需要**，ai 自己会觉得挖出最好的挖空的地方」
-    //    → 两条都删掉，只留「从考点挑」这个方向（她要的就是"按考点挑"，不是"随便挑"）。
-    //    ⚠️ 别再往里加回任何「几处 / 别太多」的说法 —— 那是这次专门删掉的。
-    L.push(N() + '🔴【这次我不标，由你自己挑】—— 你按考点、按该背的地方判断，觉得哪里该挖就挖哪里。');
+    //    （历史）原来这里是两条数量/形式限制（「别挖太多」「别整句整句挖」），那次删掉了 —— 别加回来。
+    // 🆕 v197（用户 2026-10-07 拍板「版本甲：最简洁」，原话「最简洁的话 就是 你帮我挖空 其他不需要说明」）：
+    //    删三句解释（「你按考点…判断」「要背的字眼…」「因此/综上…」）。
+    // 🔧 v197 续修（2026-10-07 当天，用户看过终版后）——「挖空多一点」：
+    //    ① 两条「没限制」小点**加回来**（AI 挖得偏少）；② 新加一条「稍微多挖一点没关系 —— 该挖的都挖上，别省着」
+    //    （用户原话「还要稍微多挖空一点」，两个写法她挑了①）。
+    //    ⚠️ 当年「宁可多挖」那种施压话她否过 —— 别写成那个调子。别删这三条（她专门加回来的）。
+    L.push(N() + '🔴【这次我不标，由你自己挑】—— 你帮我挖空。');
     L.push(N() + '挖的地方用两个 @ 括起来。例：②素质教育以@@培养创新精神@@为重点。');
     L.push('   · 题目里、答案里、序号后面、句子中间 —— 哪儿都行，没有位置限制');
     L.push('   · 挖多少处也由你定 —— 没有数量限制，不用凑数，也不用刻意少挖。');
-    L.push('   · 该挖的是「要背的字眼」：关键名词、得分点、容易记混的地方。');
-    L.push('   · 「因此」「综上」这种纯过渡、没信息量的字，就不用挖。');
+    L.push('   · 稍微多挖一点没关系 —— 该挖的都挖上，别省着');
   }
   L.push('');
 
@@ -10345,10 +10285,15 @@ function _pgBuild() {
     L.push(N() + '上面都不合适 → 取这一条的第一句（超过 20 字就只取前 20 字，后面加「…」）');
   }
   // 🆕 v192：加「自己写」那一栏 —— 而且**只有自己写、没勾任何选项时也要说**
+  // 🆕 v197：「让 AI 自己看着办」（s_ai 也存在 sp 数组里，跟写法互斥）—— 勾它时只说这一句、不列写法
+  var _aiSplit = sp.indexOf('s_ai') >= 0;
+  var _spMk = sp.filter(function (k) { return k !== 's_ai'; });
   var _ownSp = (_PGST.splitOwn || '').trim();
-  if (sp.length || _ownSp) {
+  if (_aiSplit) {
+    L.push('· 哪算「一道新题」、从哪儿开始到哪儿结束 —— 你自己看着办。');
+  } else if (_spMk.length || _ownSp) {
     L.push('· 资料里用下面这些写法分段的 ——');
-    sp.forEach(function (k) { L.push('   · ' + (_PGSPLIT_LABEL[k] || k)); });
+    _spMk.forEach(function (k) { L.push('   · ' + (_PGSPLIT_LABEL[k] || k)); });
     if (_ownSp) L.push('   · 🔴【我资料里实际用的就是这个写法】：' + _ownSp + ' —— 照它分段，一个都别漏');
     L.push('  🔴【每一个都单独算一道题】，不要全塞到上面那个大标题下面：');
     L.push('   · 题目 = 那个小标题的文字，原样搬（一个字不改、不加问号）');
@@ -10513,10 +10458,9 @@ function _pgBuild() {
   L.push('- 原文有几段就写几段、有几行就写几行 —— 一段都不许少、一句都不许少、一个字都不许少');
   L.push('- 尤其别漏【没有序号、自己单独占一行】的那种小段落');
   L.push('- 不许合并要点、不许跳过看着重复的内容、不许自己缩略');
-  if (_PGST.batch === 'part') {
-    L.push('- 我每次只发一部分资料 —— 你只整理我这次发的这部分就行，');
-    L.push('  不要说「还有内容没发」「请发完整的」，也不要去猜前面或后面还有什么');
-  }
+  // 🆕 v197（2026-10-07 用户：「那都默认用户一次性发 留个兜底话术吧」）：
+  //   「资料有多少？」整题删掉了 —— 原来的两句（只有勾「分批发」才出现）改成这一句，**每份话术里都在**。
+  L.push('- 你直接整理我这次发给你的内容就行 —— 不要说「还有内容没发」「请发完整的」，也不用去猜前面或后面还有什么');
   L.push('- 输出完自己从头到尾对一遍：段数、行数要和原文一一对上');
   L.push('');
   L.push('🔴🔴 最后再说一遍（这条我每次都碰到）：');
@@ -10547,7 +10491,16 @@ function _pgSplitHtml() {
   var own = _PGST.splitOwn || '';
   var sel = _PGST.split || [];
   var h = '';
-  // ① 自己写（用户拍板：放第一个）
+  // 🆕 v197（2026-10-07 用户拍板「甲案：放最顶上」＋「要互斥」）：
+  //   「🤖 让 AI 自己看着办」—— 不告诉 AI 写法，它自己判断哪儿算一道新题。
+  //   互斥规则（在 _pgPick 和输入框 input 事件里实现）：勾它 → 其它写法勾选全取消、「自己写」的字也清掉；
+  //   反过来，勾任何写法、或在「自己写」里打字 → 它自动取消。
+  //   ⚠️ 它**不在** `_PGSPLIT_ALL` 里（那 65 条是具体写法）—— 所以「还有 N 种写法」的数目不受影响。
+  var aiOn = sel.indexOf('s_ai') >= 0;
+  h += '<div class="pg-opt' + (aiOn ? ' pg-on' : '') + '" data-q="split" data-v="s_ai">' +
+    '<span class="pg-box">' + (aiOn ? '✓' : '') + '</span><span class="pg-lbl">🤖 让 AI 自己看着办' +
+    '<span class="pg-sub">不用挑写法 —— 它自己判断哪儿算一道新题</span></span></div>';
+  // ① 自己写（v192 用户拍板把它放第一个；v197 起「让 AI 自己看着办」排在它上面）
   h += '<div class="pg-own"><div class="pg-ownlb">✏️ 还有别的？我自己写</div>' +
     '<input id="pgSplitOwn" type="text" placeholder="比如：第1讲 ／ ※重点 ／ ▍小节名 ／ 我的资料是「【板块一】」" value="' + escapeHtml(own) + '">' +
     '<div class="pg-ownhint">上面这些我都没列到？把你资料里那个写法打进来就行，我原样告诉 AI。（多个用「、」隔开）</div></div>';
@@ -10608,8 +10561,18 @@ function _pgPick(qid, v) {
   // 🆕 v192：分隔写法 —— 勾选走数组；自己写的文字单独存
   if (qid === 'split') {
     _PGST.split = _PGST.split || [];
-    var si = _PGST.split.indexOf(v);
-    if (si >= 0) _PGST.split.splice(si, 1); else _PGST.split.push(v);
+    if (v === 's_ai') {
+      // 🆕 v197：互斥 —— 勾它 = 清空其它写法 + 清掉「自己写」的字；再点一下 = 全取消
+      var hadAI = _PGST.split.indexOf('s_ai') >= 0;
+      _PGST.split = hadAI ? [] : ['s_ai'];
+      if (!hadAI) _PGST.splitOwn = '';
+    } else {
+      // 🆕 v197：勾任何写法 → 先取消「让 AI 自己看着办」
+      var aiIdx = _PGST.split.indexOf('s_ai');
+      if (aiIdx >= 0) _PGST.split.splice(aiIdx, 1);
+      var si = _PGST.split.indexOf(v);
+      if (si >= 0) _PGST.split.splice(si, 1); else _PGST.split.push(v);
+    }
     _pgSave(); _pgRender();
     return;
   }
@@ -10674,6 +10637,13 @@ function showPromptChooser() {
   ov.querySelector('#pgQs').addEventListener('input', function (e) {
     if (!e.target || e.target.id !== 'pgSplitOwn') return;
     _PGST.splitOwn = e.target.value;
+    // 🆕 v197：互斥 —— 在「自己写」里打字 → 「让 AI 自己看着办」自动取消。
+    //   ⚠️ 只改那一行的 DOM（不整页重渲染），免得输入框丢焦点（v192 就是这么设计的）。
+    if ((_PGST.split || []).indexOf('s_ai') >= 0) {
+      _PGST.split.splice(_PGST.split.indexOf('s_ai'), 1);
+      var aiRow = ov.querySelector('.pg-opt[data-v="s_ai"]');
+      if (aiRow) { aiRow.classList.remove('pg-on'); var aux = aiRow.querySelector('.pg-box'); if (aux) aux.textContent = ''; }
+    }
     _pgSave();
     var t = _pgBuild();
     var pv = document.getElementById('pgPv'); if (pv) pv.textContent = t;
@@ -12220,7 +12190,7 @@ function saveEditPreviewCard(idx) {
 
 function confirmImport() {
   // 🎁 试用期间限额：**只剩「题库数」一个了**
-  // 放在最前面 —— 试用基础版时 tier 是 basic、试用全能版时 tier 是 pro，
+  // 放在最前面 —— 试用全能版时 tier 是 pro（v197 起只剩这一种试用），
   // 两种都会跳过下面的「免费版上限」，所以试用限额必须单独判一次。
   // 📌 原来这里还有一整段「题数配额」（2026-09-13 定：最多 5 题、超出只收前几道）。
   //    2026-09-15 用户改成「试用的时候 题库里面的题目都是没有限制」→ **整段删掉**。
@@ -12302,7 +12272,7 @@ function confirmImport() {
         ], 6000);
       }
     }
-    // ③ 免费版额外还有「每个题库单独」的上限（基础版没有，它只看总数）
+    // ③ 免费版额外还有「每个题库单独」的上限（全能版没有这道）
     if (_cap.perBank) {
       if (previewData.editBankId) {
         // 🐞 2026-09-19 v170 修（**用户报的「只能导入 4 题」就是这里**）：同 ②，编辑 ≠ 重新导入。
@@ -12602,7 +12572,7 @@ function renderPracticeSetup() {
     </div>`;
   }
 
-  // 起始题号（仅顺序模式，basic版起可用）
+  // 起始题号（仅顺序模式，全能版可用）
   let startFromHtml = '';
   if (drawMode === 'sequential') {
     const locked = isTierLocked('startFrom');
@@ -12825,7 +12795,7 @@ function updatePomodoroDisplay() {
 //    这两处会清掉它。用户看不到它，只是因为**那颗显示药丸只长在做题页上**而已。
 //    → 所以这版按用户选的甲案补上：**做题页不显示就暂停**。
 //
-// ② 用户报的第二件：降级回免费版 / 基础版之后，番茄钟**照样在跑、还关不掉**。
+// ② 用户报的第二件：降级回免费版之后，番茄钟**照样在跑、还关不掉**。
 //    根因：档位判断只写在设置页那个占位符上（就是那个「需升级全能版解锁」的 div，全工具唯一一处档位占位符），**运行时一次都没查过** ——
 //    启动那儿只读 getSetting('pomodoro')。而降级之后设置页那个开关已经被替换成
 //    「需升级全能版解锁」的占位符，**没有开关可关** → 用户被架住了。
@@ -13718,7 +13688,7 @@ function startPractice() {
   //    **两条都是用户报的 bug**：① 里面那个 `pomoCountdown` 是**函数表达式**，
   //    名字只在它自己体内有效 —— 想从外面"继续"它根本够不着，只能整段重写一遍；
   //    ② 原来这儿**只读 getSetting('pomodoro')、没查档位**，所以降级回免费版 /
-  //    基础版的老买家番茄钟照样在跑（设置页那个开关还已经变成占位符、关不掉）。
+  //    付费的老买家（当时那批基础版）番茄钟照样在跑（设置页那个开关还已经变成占位符、关不掉）。
   startPomodoro();
   applyFocusMode();
   // 冲刺模式：使用冲刺题目池
@@ -13917,7 +13887,7 @@ function startPractice() {
   // 间隔重复 & 错题优先排序（可通过开关关闭）
   // 📅 「到期复习优先」那半 → 全能版专属（2026-09-16 用户清单：间隔重复 = 全能版）。
   //    ⚠️ 它跟「复习优先」本来是同一段代码，这里就地拆成两半：
-  //       基础版：只把错题排前面；全能版：再加一层「到点该复习的题顶到最前」。
+  //       低档（原基础版）：只把错题排前面；全能版：再加一层「到点该复习的题顶到最前」。
   //    ⚠️ 底下写 srNextReview 的记录**照旧一直跑**（见 applyCheckToInputs() 里那段「记忆复习」）——
   //       那是纯数据、用户看不见，留着以后升级到全能版能接上进度；被拦的只有这里的排序和提醒。
   var _srOn = hasFeature('fullSr');
@@ -13971,7 +13941,7 @@ function startPractice() {
   }
 
   // 间隔重复提醒（dueCount 只有全能版才可能 > 0，所以第一支天然被拦住；
-  // 下面那支是「错题优先」的提醒，基础版起都能看到）
+  // 下面那支是「错题优先」的提醒，全能版能看到）
   if (wrongFirst && dueCount > 0) {
     setTimeout(function() {
       showToast('📅 今日待复习 ' + dueCount + ' 题，已优先排在前面' + (wrongCount > dueCount ? '，还有 ' + (wrongCount - dueCount) + ' 道错题' : ''));
@@ -14133,6 +14103,9 @@ function renderPracticeCard() {
   // 更新专注模式收藏按钮图标
   var fsb = document.getElementById('focusStarBtn');
   if (fsb) fsb.textContent = card.starred ? '⭐' : '☆';
+
+  // 🆕 v197：长挖空随行折开（必须在渲染完之后量宽度，所以放这儿）
+  try { foldLongBlanks(); } catch (e) { console.warn('[折行] 失败：', e); }
 
   // 🆕 v183 D1：渲染完顺手看一眼有没有数学公式（有就按需下载公式引擎 + 排版）
   //   ⚠️ 别包 try{}catch(e){} 吞掉 —— 我第一版就是那么写的，结果出错了一点提示都没有，
@@ -14378,6 +14351,128 @@ function renderCardWithBlanks(card, revealed, hideQ) {
   return h;
 }
 
+// ════════════════════════════════════════════════════════════════════
+// 🆕 v197（2026-10-07 用户拍板「方案甲」）：做题页**长挖空随行折开**
+//   用户原话：「不要一整句话都移一行　可以一句话的一半挖空另一半下一行接着挖空」
+//   ＋「不要一个空拆2框……字不够自动移动」→ 拆出来的两截**看起来是一整条**：
+//   打字打满第一截会自动流到第二截；退格在第二截开头会自动接回第一截。
+//   怎么折：把每个空临时换成一个「跟输入框同款字体/内边距」的隐形测量 span ——
+//     · 只占一行 → 原样放回 input（短空、放得下的空：一个像素都不变）
+//     · 跨行   → 按第一行能放下的字数拆成 前半截（data-fold-a）＋ 后半截（data-fold-b）
+//   ⚠️ 两截**共用同一个 data-bidx**；存盘只在前半截上存「两截拼起来」；
+//      判对 / 结果页逐题明细 / 错题本都**把一个空当一个**（后半截一律跳过）。
+//   ⚠️ 公式整段的空（.seg-blank）不折 —— 那是整段公式一个空，拆了 LaTeX 就断了。
+//   ⚠️ 显示答案态（span.revealed-text）也折：长答案改成能折行的「流动」样式。
+// ════════════════════════════════════════════════════════════════════
+function _blankCharEm(c) { return c.charCodeAt(0) > 0xFF ? 1 : 0.6; }
+
+function foldLongBlanks() {
+  var box = document.getElementById('cardText');
+  if (!box) return;
+  // ① 作答态：长空拆两截
+  Array.prototype.slice.call(box.querySelectorAll('input.blank-input:not(.seg-blank)')).forEach(function (inp) {
+    var ans = inp.dataset.ans || '';
+    if (ans.length < 2 || !inp.parentNode) return;
+    var parent = inp.parentNode;
+    var fs = parseFloat(getComputedStyle(inp).fontSize) || 16;
+    // 隐形测量 span：字体/内边距/外边距跟输入框对齐，量出来的折点才准
+    var span = document.createElement('span');
+    span.style.cssText = 'font-size:' + fs + 'px;font-weight:500;padding:0 .25em;margin:0 2px;border-bottom:2px solid transparent;white-space:normal;word-break:break-word;';
+    span.textContent = ans;
+    parent.replaceChild(span, inp);
+    var rects = Array.prototype.slice.call(span.getClientRects()).filter(function (r) { return r.width > 1; });
+    if (rects.length <= 1) { parent.replaceChild(inp, span); return; }   // 没跨行 → 原样放回
+    var availEm = Math.max(1, (rects[0].width - (fs * 0.5 + 4)) / fs - 0.5);   // 减左右 padding(.25em×2)+margin(4px)，再留 0.5em 安全边
+    var w = 0, k = 0;
+    while (k < ans.length && w + _blankCharEm(ans[k]) <= availEm) { w += _blankCharEm(ans[k]); k++; }
+    if (k < 1) k = 1;
+    if (k >= ans.length) { parent.replaceChild(inp, span); return; }     // 保险：不该折的情况原样放回
+    var v = inp.value || '';
+    function mk(sliceAns, sliceVal) {
+      var el = document.createElement('input');
+      el.type = 'text';
+      el.className = 'blank-input' + (inp.classList.contains('oval') ? ' oval' : '');
+      el.setAttribute('style', 'width:' + ovalBlankWidth(sliceAns) + ';max-width:none');
+      el.dataset.cid = inp.dataset.cid;
+      el.dataset.bidx = inp.dataset.bidx;      // ⚠️ 两截同一个 bidx（存盘时拼回一个空）
+      el.dataset.ans = sliceAns;
+      el.value = sliceVal || '';
+      el.setAttribute('autocomplete', 'off');
+      el.setAttribute('autocorrect', 'off');
+      el.setAttribute('autocapitalize', 'off');
+      el.setAttribute('spellcheck', 'false');
+      el.setAttribute('enterkeyhint', 'next');
+      el.setAttribute('oncontextmenu', 'return false');
+      el.setAttribute('onblur', 'autoCheckIfDone()');
+      return el;
+    }
+    var in1 = mk(ans.slice(0, k), v.slice(0, k));
+    var in2 = mk(ans.slice(k), v.slice(k));
+    in1.setAttribute('data-fold-a', '1');
+    in2.setAttribute('data-fold-b', '1');
+    // 打字自动流：前半截打满 → 多出来的字自动接到后半截（用户原话「字不够自动移动」）
+    var flow = function () {
+      if (in1.value.length > k) {
+        in2.value = in1.value.slice(k) + in2.value;
+        in1.value = in1.value.slice(0, k);
+        try { in2.focus(); in2.setSelectionRange(0, 0); } catch (e) {}
+      }
+    };
+    in1.addEventListener('input', function (e) { if (!e.isComposing) flow(); });
+    in1.addEventListener('compositionend', flow);
+    // 后半截开头退格 → 自动接回前半截末尾
+    in2.addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && in2.selectionStart === 0 && in2.selectionEnd === 0 && in1.value) {
+        e.preventDefault(); in1.focus();
+        try { in1.setSelectionRange(in1.value.length, in1.value.length); } catch (e2) {}
+      }
+    });
+    parent.replaceChild(in1, span);
+    parent.insertBefore(in2, in1.nextSibling);
+  });
+  // ② 显示答案态：长答案也**照挖空态的同一套口径拆两截**（用户 2026-10-07：「和正常的挖空一样，
+  //   显示挖空和隐藏挖空那个空不会跳」）—— 两态的每一截宽度都用 ovalBlankWidth(同一份切片) 算、
+  //   内边距/外边距也一模一样 → 「挖空 ⇄ 显示原文」来回切**一个字都不跳**（跟短空同款：宽度同公式）。
+  Array.prototype.slice.call(box.querySelectorAll('span.revealed-text')).forEach(function (sp) {
+    var txt = sp.textContent || '';
+    if (txt.length < 2) return;
+    var parent = sp.parentNode; if (!parent) return;
+    var fs = parseFloat(getComputedStyle(sp).fontSize) || 16;
+    // 用跟输入框同款的探针量折点（跟上面 ① 完全同一口径，保证两个状态折点一致）
+    var probe = document.createElement('span');
+    probe.style.cssText = 'font-size:' + fs + 'px;font-weight:500;padding:0 .25em;margin:0 2px;border-bottom:2px solid transparent;white-space:normal;word-break:break-word;';
+    probe.textContent = txt;
+    parent.replaceChild(probe, sp);
+    var rects = Array.prototype.slice.call(probe.getClientRects()).filter(function (r) { return r.width > 1; });
+    if (rects.length <= 1) { parent.replaceChild(sp, probe); return; }
+    var availEm = Math.max(1, (rects[0].width - (fs * 0.5 + 4)) / fs - 0.5);
+    var w = 0, k = 0;
+    while (k < txt.length && w + _blankCharEm(txt[k]) <= availEm) { w += _blankCharEm(txt[k]); k++; }
+    if (k < 1) k = 1;
+    if (k >= txt.length) { parent.replaceChild(sp, probe); return; }
+    function mkRev(sliceTxt) {
+      var el = document.createElement('span');
+      el.className = 'revealed-text' + (sp.classList.contains('oval') ? ' oval' : '');
+      el.setAttribute('style', 'width:' + ovalBlankWidth(sliceTxt) + '');
+      el.textContent = sliceTxt;
+      return el;
+    }
+    var r1 = mkRev(txt.slice(0, k)), r2 = mkRev(txt.slice(k));
+    parent.replaceChild(r1, probe);
+    parent.insertBefore(r2, r1.nextSibling);
+  });
+}
+
+// 🆕 v197：转屏 / 改窗口宽度 → 折点要跟着新宽度重算（重渲染一遍，答过的字自动带回来）
+var _foldResizeTimer = null;
+window.addEventListener('resize', function () {
+  if (!document.getElementById('cardText')) return;
+  clearTimeout(_foldResizeTimer);
+  _foldResizeTimer = setTimeout(function () {
+    try { saveCurrentAnswers(); renderPracticeCard(); } catch (e) {}
+  }, 250);
+});
+
 // 空白分组解析（不含 _combined），用于指定区域的空白
 function resolveBlanksSub(blanks, round) {
   if (!blanks || !blanks.length) return [];
@@ -14398,10 +14493,13 @@ function resolveBlanksSub(blanks, round) {
 }
 
 function saveCurrentAnswers() {
+  if (!practiceState) return;   // 🆕 v197 防御：折行会程序化移焦点，blur 可能打到「题还没开」的时机
   if (practiceState.answersHidden) return; // 隐藏状态下不保存，避免空值覆盖已有答案
   const inputs = document.querySelectorAll('#cardText .blank-input');
   const ans = {};
   inputs.forEach(inp => {
+    // 🆕 v197：长空拆出来的后半截 —— 不单独存，跟着前半截一起存（拼回一个空）
+    if (inp.dataset.foldB) return;
     // 🐞 2026-09-19 v170 连带 bug（用户 Q1）：题目区的空在 HTML 里是 **"q0" 这种字符串键**
     //    （答案区是 "0" 这种数字键，见 renderCardWithBlanks）。这里原来一律 parseInt →
     //    `parseInt('q0')` = **NaN** → 填的字被写进 `ans[cid][NaN]` 这个垃圾键，
@@ -14410,8 +14508,13 @@ function saveCurrentAnswers() {
     //    否则 `answers[card.id][ai]` 那条数字索引的读法会对不上）。
     const cid = inp.dataset.cid, _rawIdx = inp.dataset.bidx;
     const bidx = /^q\d+$/.test(_rawIdx) ? _rawIdx : parseInt(_rawIdx);
+    let _val = inp.value.trim();
+    if (inp.dataset.foldA) {
+      var _nb = inp.nextElementSibling;
+      if (_nb && _nb.dataset && _nb.dataset.foldB) _val = (_val + _nb.value.trim()).trim();   // 🆕 v197：两截拼回一个空
+    }
     if (!ans[cid]) ans[cid] = {};
-    ans[cid][bidx] = inp.value.trim();
+    ans[cid][bidx] = _val;
   });
   for (const [cid, blanks] of Object.entries(ans)) {
     if (!practiceState.answers[cid]) practiceState.answers[cid] = {};
@@ -14436,6 +14539,7 @@ function checkMyAnswers() {
   // 检查当前显示的所有输入框是否都已填写
   const inputs = document.querySelectorAll('#cardText .blank-input');
   for (const inp of inputs) {
+    if (inp.dataset.foldB) continue;   // 🆕 v197：长空的后半截不单独算「没填」
     if (!inp.value.trim()) return;
   }
   if (!inputs.length) return;
@@ -14443,11 +14547,13 @@ function checkMyAnswers() {
 }
 
 function autoCheckIfDone() {
+  if (!practiceState) return;   // 🆕 v197 防御（同上：折行会程序化移焦点）
   saveCurrentAnswers();
   const card = practiceState.cards[practiceState.index];
   if (!card || practiceState.revealed.has(card.id)) return;
   const inputs = document.querySelectorAll('#cardText .blank-input');
   for (const inp of inputs) {
+    if (inp.dataset.foldB) continue;   // 🆕 v197：长空的后半截不单独算「没填」
     if (!inp.value.trim()) return;
   }
   if (inputs.length) applyCheckToInputs(card);
@@ -14524,17 +14630,33 @@ function applyCheckToInputs(card) {
   //   结果页那张「完整原文」要靠它给每个空上色（对=绿、错=红）。
   //   顺序 = 做题页渲染的顺序 = 题目区的空 + 答案区的空（见 renderCardWithBlanks）。
   const _rdMarks = [];
+  let _logic = -1;
   inputs.forEach((inp, i) => {
-    const userAns = inp.value.trim();
-    const correctAns = (inp.dataset.ans || '').trim();
+    // 🆕 v197：长空拆出来的后半截 —— 跟着前半截一起判，**别单独算一条**
+    //   （marks / 错题本的 wrongIndices 都是「第几个空」，拆两截会把序号全冲乱）
+    if (inp.dataset.foldB) return;
+    _logic++;
+    let userAns = inp.value.trim();
+    let correctAns = (inp.dataset.ans || '').trim();
+    let foldB = null;
+    if (inp.dataset.foldA) {
+      var _nb = inp.nextElementSibling;
+      if (_nb && _nb.dataset && _nb.dataset.foldB) {
+        foldB = _nb; _nb.classList.remove('correct', 'wrong');
+        userAns = userAns + _nb.value.trim();
+        correctAns = correctAns + (_nb.dataset.ans || '').trim();
+      }
+    }
     inp.classList.remove('correct', 'wrong');
     if (fuzzyMatch(userAns, correctAns)) {
       inp.classList.add('correct');
+      if (foldB) foldB.classList.add('correct');
       _rdMarks.push(true);
     } else {
       inp.classList.add('wrong');
+      if (foldB) foldB.classList.add('wrong');
       hasWrong = true;
-      wrongIndices.push(i);
+      wrongIndices.push(_logic);
       wrongAnswers.push(userAns);
       _rdWrong.push({ mine: userAns, right: correctAns });
       _rdMarks.push(false);
@@ -15092,7 +15214,7 @@ function showPracticeResult() {
     '<div id="rdList"></div>' +
     // 🆕 v191（用户 2026-09-30）：明细**最后**再放一遍那两颗按钮 ——
     //   明细很长，翻到底不用再滚回顶上找按钮。**功能跟上面那两颗一模一样**（同一个函数）。
-    //   ⚠️ 只放「再来一轮 / 重新设置」这两颗；「💾 复制备份码保存」**只在上面那一处**
+    //   ⚠️ 只放「再来一轮 / 重新设置」这两颗（v197：上面那处「💾 复制备份码保存」已删，结算页整个没有备份码入口了）
     //      （用户原话就是"这俩按钮"）。
     '<div class="flex gap-8 flex-wrap justify-center" style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--border)">' +
       '<button class="btn btn-primary btn-sm" onclick="retrySameSettings()">▶ 再来一轮</button>' +
@@ -15132,11 +15254,10 @@ function showPracticeResult() {
       <button class="btn btn-primary btn-sm" onclick="retrySameSettings()">▶ 再来一轮</button>
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()">🔄 重新设置</button>
     </div>
-    <div class="text-center mt-12">
-      <span style="font-size:var(--f12);color:var(--text-tertiary);cursor:pointer;text-decoration:underline" onclick="copyBackup()">💾 复制备份码保存</span>
-    </div>
+    <!-- 🔧 v197：结算页这行「复制备份码保存」小字**已删**（用户 2026-10-07：「复制备份码不需要……这行小字也去掉」）——
+         它原来是 v191（2026-09-30）用户拍板放这儿的，这次被用户亲手撤了。 -->
     <!-- 🆕 v191（用户 2026-09-30 拍板）：明细**挪到最下面** ——
-         上面「小结 ＋ 结语 ＋ 时间 ＋ 两颗按钮 ＋ 备份码」是**这一轮的总结**，先给用户看；
+         上面「小结 ＋ 结语 ＋ 时间 ＋ 两颗按钮」是**这一轮的总结**，先给用户看；
          逐题明细是"要细看才翻"的东西，放最后。
          ⚠️ v189/v190 时它是在"四个数字格子"下面的，这次是**整段搬下来**，内容一个字没改。 -->
     ${rdHtml}
@@ -15567,7 +15688,7 @@ function showInstallGuide() {
 //              4详细里面不包括按钮功能  5开发者的话  有五个可以点击的按钮  可以滑动显示」
 //   ⚠️ 5 个按钮手机上一排排不下 → 按钮条做成**可横向滑动**，且选中那个会自动滑进视野。
 //   ⚠️ 只改「说明书」这一个弹窗，**没有动工具里任何功能的实现**。
-var _MANUAL = {"quick":"<div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f16);margin:0 0 8px;color:#e74c3c\">🔴 数据安全 <span style=\"font-size:var(--f12);font-weight:400;color:#999\">— 最最重要，先看这个</span></h4><div style=\"background:#fff5f5;border:1px solid #fcc;border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>📍 你的题目和学习记录，存在这台设备的浏览器里，不在云端。</b>换个浏览器打开、或者换台设备，就看不到原来的数据了 —— 那不是丢了，是本来就不在一块儿。</p><p style=\"margin:0 0 6px\"><b>📦 导出备份是唯一的保险。</b>没有备份 = 赌运气。设置页里可以「导出备份文件」，存到电脑、网盘、微信收藏都行。</p><p style=\"margin:0 0 4px\"><b>🗑️ 这几种操作会真的把数据弄丢：</b></p><p style=\"margin:0 0 2px;padding-left:12px\">① <b style=\"color:#e74c3c\">iPhone 的「清除历史记录与网站数据」</b>（iPhone 用户最容易中招）</p><p style=\"margin:0 0 2px;padding-left:12px\">② 浏览器清除数据时，勾了「Cookie 和网站数据」</p><p style=\"margin:0 0 2px;padding-left:12px\">③ 手机管家 / 清理软件的「垃圾清理」</p><p style=\"margin:0 0 2px;padding-left:12px\">④ 无痕 / 隐私模式下关掉窗口</p><p style=\"margin:0 0 2px;padding-left:12px\">⑤ 手机存储空间不够，系统自己清理</p><p style=\"margin:0 0 2px;padding-left:12px\">⑥ 卸载或重置浏览器</p><p style=\"margin:8px 0 0\"><b>💾 「清缓存」一般不丢题</b>，但上面那两条「清 Cookie / 网站数据」会丢 —— 这俩不一样，别搞混。</p><p style=\"margin:4px 0 0\"><b>🔒 隐私：</b>这是个纯本地工具，你的题目不会上传到任何地方。导出的备份文件请自己收好。</p></div></div><div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🚀 30 秒上手</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\">① 先在「📚 题库」页建一个题库 → ② 点「📥 导入」把题目放进去 → ③ 点「▶ 开始练习」就能做了。</p><p style=\"margin:0 0 6px\"><b>手上没有整理好的题目？</b>不用自己敲。点「复制格式话术」，把它发给豆包之类的工具，再把你手上的资料（书上的照片、PDF、Word 都行）一起发过去，让它按格式整理好发回来，你贴进导入框就行。</p><p style=\"margin:0\">导入完会先给你看一页「预检」—— 它会告诉你一共几道题、哪些行可能有问题。确认没问题再点导入。</p></div></div><div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚠️ 最容易踩的 3 个坑</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>1. 清「缓存」不丢数据，清「Cookie 和网站数据」会丢。</b>两个按钮挨在一起，别点错。</p><p style=\"margin:0 0 6px\"><b>2. 换手机 / 发给别人，优先用「导出备份文件」，别用「备份码」。</b>备份码是长文字，经过微信、QQ 转发时里面的字符会被改掉，对方就导不进去了；文件不会。备份码是一长串文字，经过微信、QQ 转发时里面的「+」会被自动改成空格，对方就导不进去了；文件不会出这个问题。</p><p style=\"margin:0\"><b>3. 导入前先看一眼预检页。</b>哪几行写得不对、会被丢掉，它会直接指给你 —— 省得导入完发现少了几道题。</p></div></div><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;font-size:var(--f13);color:var(--text-secondary)\">📖 想看某个功能具体怎么用？<p style=\"margin:0 0 6px\"><b>📅 给自己定个规矩：至少每周导出一次备份。</b>存在电脑或网盘里 —— 这是唯一能完整恢复的办法，出事的时候它就是全部。</p>📖 想看某个功能具体怎么用？点上面那排按钮：<b>🔘 按钮功能</b>讲每一颗按钮干嘛的，<b>🧩 功能介绍</b>讲每个功能是什么、为什么这么设计，<b>📋 详细</b>讲具体怎么操作。</div><div style=\"margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);font-size:var(--f13);color:var(--text-secondary)\">📕 小红书：2750492576 —— 有新版本、或者用着有问题，都可以来找我。</div><div style=\"background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:var(--f13);line-height:1.8\"><b>🔴 第一次打开有点慢？</b><br>那是因为题库里有数学/化学公式，工具在装「公式引擎」。<b>只有第一次（或更新后第一次）慢</b>，之后就快了。<br>不想用公式的话：<b>设置 → 关于 → 📐 数学公式 → 改成「显示源码」</b>。</div>","btns":"<p style=\"margin:0 0 12px;color:var(--text-secondary);font-size:var(--f13)\">下面是工具里<b>能点的东西</b>分别干嘛的，按页面分组。只看「点了会发生什么」，不讲原理（原理去「🧩 功能介绍」）。</p><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🧭 底部这一排（去哪个页面）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>📚 题库</b> —— 建题库、导入题目、改挖空、开始练习，都在这里</p><p style=\"margin:0 0 5px\"><b>📝 做题</b> —— 上来的第一屏是「这一轮怎么出题」的设置，往下才是做题</p><p style=\"margin:0 0 5px\"><b>📖 浏览</b> —— 不考试，就翻着看。找题、导出、看章节掌握度</p><p style=\"margin:0 0 5px\"><b>🌱 复习</b> —— 错题本 + 记忆复习，两个都在这一页</p><p style=\"margin:0\"><b>📑 资料</b> / <b>⚙️ 设置</b> —— 笔记导图一个是资料区，一个是所有开关</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📚 题库页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>＋ 新建题库</b> —— 建一个空题库，之后往里导题</p><p style=\"margin:0 0 5px\"><b>📥 导入</b> —— 粘贴、TXT、Word、PDF 都能进。贴完先看预检页</p><p style=\"margin:0 0 5px\"><b>🔍 搜索全部 N 道题</b> —— 顶上那个框，所有题库一起搜</p><p style=\"margin:0 0 5px\"><b>▶ 开始练习</b> —— 进「这一轮怎么出题」的设置页</p><p style=\"margin:0 0 5px\"><b>🏷 改它属于哪些分组</b>（长按/点题库右边的按钮）—— 把题库分到别的小组里</p><p style=\"margin:0 0 5px\"><b>📁 新建分组</b> —— 题库太多的时候，分个类放</p><p style=\"margin:0 0 5px\"><b>🔀 合并</b> —— 把两个题库并成一个。会先问你要保留哪边的重复题</p><p style=\"margin:0 0 5px\"><b>✏️ 重命名 / 排序 / 🗑 删除</b> —— 题库右边那排小按钮</p><p style=\"margin:0 0 5px\"><b>📋 选题</b> —— 手动挑几道题出来专门练</p><p style=\"margin:0 0 5px\"><b>📤 导出</b> —— 点开先选：导出 PDF（题目卷 / 挖空练习卷），或者导出「题库文件」发给别人（对方在导入页点「📂 上传」选中就能用）</p><p style=\"margin:0\"><b>📊 章节掌握度 / ⚙️ 章节管理</b> —— 在浏览页里，按章节看每章背得怎么样（全能版）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📝 做题页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>检查</b> —— 判这一题对不对。点了之后才能看答案</p><p style=\"margin:0 0 5px\"><b>👁 看答案</b> —— 直接看答案，自己判断对错（「看答案」和「检查」是两条路）</p><p style=\"margin:0 0 5px\"><b>⭐ 收藏</b> —— 把这题标上星，以后专门练收藏的题</p><p style=\"margin:0 0 5px\"><b>❌ 加错题</b> —— 手动把这题扔进错题本（答错了也会自动进）</p><p style=\"margin:0 0 5px\"><b>💡 口诀</b> —— 展开这道题的口诀（导入时写了「口诀：」才有）</p><p style=\"margin:0 0 5px\"><b>← 上一题 / 下一题</b> —— 手机上也能左右滑</p><p style=\"margin:0\"><b>📖 浏览</b> —— 这一轮的题目列表，做完想回头翻就点它</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📖 浏览页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>📋 题目列表</b> / <b>📊 章节掌握度</b> —— 顶上两个页签，切两种看法</p><p style=\"margin:0 0 5px\"><b>全部 / ⭐ 收藏 / 💡 口诀 / ❌ 错题</b> —— 一组筛选按钮，只显示你想看的</p><p style=\"margin:0 0 5px\"><b>🏷 标签 / 📚 章节</b> —— 另一组筛选，两组可以叠着用</p><p style=\"margin:0 0 5px\"><b>📤 导出</b> —— 把筛出来的题导成 PDF / 打印（全能版）</p><p style=\"margin:0\"><b>🔍 只搜当前题库</b> —— 只在这个题库里找</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🌱 复习页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>🧠 记忆复习</b> —— 按遗忘曲线排的复习清单（全能版）。上面有 🔴 该复习了 / 🟡 今天 / ⚪ 明天 / ⚪ 3天后 … ✅ 已掌握 这些档位，点开哪一档就列哪一档的题</p><p style=\"margin:0 0 5px\"><b>✅ 我记住了</b> —— 这题不用再排了，从记忆复习里拿掉</p><p style=\"margin:0 0 5px\"><b>⏰ 明天再练</b> —— 今天不想练，推到明天</p><p style=\"margin:0 0 5px\"><b>🗑</b>（题右边）—— 只把它从记忆复习里移除，<b>题目还在题库里</b></p><p style=\"margin:0\"><b>📝 复习清单</b> —— 下面那块是老功能：你答错过的题和收藏的题</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚙️ 设置页（几个常用的）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>🎨 主题颜色</b> —— 换配色（不同版本能选的数量不一样）</p><p style=\"margin:0 0 5px\"><b>🔊 朗读</b> —— 让手机念题、念答案</p><p style=\"margin:0 0 5px\"><b>🍅 番茄钟</b> —— 打开后做题会计时，还能进番茄乐园（全能版）</p><p style=\"margin:0 0 5px\"><b>🧠 记忆复习</b> —— 在这里选学习节奏（轻松/标准/加强/自定义）、哪些题库参加记录，还能把复习题打印出来</p><p style=\"margin:0 0 5px\"><b>📤 导出备份文件</b> —— <b>最推荐</b>的备份方式，存成一个文件</p><p style=\"margin:0 0 5px\"><b>📋 复制备份码</b> —— 变成一段文字，适合直接发出去</p><p style=\"margin:0 0 5px\"><b>📥 从备份恢复</b> —— 换设备、或者数据丢了之后，用这个导回来</p><p style=\"margin:0 0 5px\"><b>🗑 清理空间</b> —— 清考试记录、缓存这些，<b>不清题库</b></p><p style=\"margin:0\"><b>📊 查看版本对比</b> —— 看看每个版本各有什么</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📑 资料页（全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 5px\"><b>＋ 新建笔记</b> / <b>📷 上传照片</b> —— 记笔记、拍书上的图</p><p style=\"margin:0 0 5px\"><b>🧠 导图</b> —— 思维导图：➕ 添加子节点 / 🗑 删除此节点 / 📸 导出此分支</p><p style=\"margin:0 0 5px\"><b>📋 模板 / 📝 大纲 / 📥 导入大纲</b> —— 快速搭出一份笔记的骨架</p><p style=\"margin:0\"><b>🤖 AI话术</b> —— 复制一段话发给 AI，让它按格式帮你整理成导图</p></div>","feat":"<p style=\"margin:0 0 14px;color:var(--text-secondary);font-size:var(--f13)\">这一页讲每个功能<b>是什么、为什么需要它、它怎么工作</b> —— 假设你是第一次接触这个工具，所以每一步都说清楚。<br>想知道具体怎么点，去「📋 详细」；想知道某颗按钮干嘛的，去「🔘 按钮功能」。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📥 导入：怎么把题目放进来</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>把一段文字、一个 Word、一个 PDF、一张照片变成能刷的题。</p><p style=\"margin:0 0 6px\"><b>为什么要这样：</b>你的资料多半是书上的、PDF 里的，乱七八糟。工具没法猜哪儿是题、哪儿是答案 —— 所以要先约定一个简单的写法，让它一眼就能认出来。</p><p style=\"margin:0 0 6px\"><b>写法长这样（一行一个符号就打头）：</b></p><div style=\"background:var(--bg-card);border-radius:8px;padding:10px 12px;margin:0 0 6px;font-size:var(--f13);line-height:1.9\">一行开头写 <b>￥</b> → 这是一个大点（当分类用）。例：<code>￥教育观</code><br>一行开头写 <b>$</b> → 这是一道题目。例：<code>$素质教育的内涵</code><br>一行以 <b>口诀：</b> 打头 → 这是这道题的口诀。例：<code>口诀：提速创屎体面的歌星</code><br>其余的行 → 都算上一道题的答案，一行写一个要点<br>想挖空的地方 → 用两个 <b>@@</b> 把它括起来。例：<code>②素质教育以@@培养创新精神@@为重点</code></div><p style=\"margin:0 0 6px\"><b>懒得自己整理？</b>工具里有个「复制格式话术」，点一下复制，发给豆包之类的 AI，再把你的资料一起发过去，它会按这个格式整理好发回来。话术有四版可选：不挖空的、标好挖空的（推荐）、处理 Word/PDF/图片的、还有原来那版竖线写法。</p><p style=\"margin:0\"><b>导入前的预检页</b>是干嘛的：它先算一遍「一共几道题、几个大点、几处挖空」，再把有问题的行指给你 —— <b>红块</b>是确定会被丢掉的行，<b>黄块</b>是它猜你可能漏写了标记（机器猜的，不一定准）。看一眼再点导入，能省掉很多「怎么少了几道题」。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">✂️ 挖空：横线版 和 圈圈版</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>把关键词遮住，让你填空 —— 这是这个工具最主要的功能。</p><p style=\"margin:0 0 6px\"><b>怎么决定挖哪儿：</b>导入时用 <code>@@</code> 标出来的，就挖那些；没标的，可以在题库页点「✏️ 编辑挖空」自己点字挖。</p><p style=\"margin:0\"><b>两种长相（设置里能换）：</b><br>· <b>横线版</b>（默认）—— 挖空处是一条下划线，最清爽<br>· <b>圈圈版</b>（椭圆挖空，全能版）—— 用椭圆圈住，圈的大小跟着字数走，一眼能看出该填几个字。想试试：设置里打开「椭圆挖空」开关，做题页就变了</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🧠 记忆复习：让它记得更久</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>一个自动帮你排「什么时候该复习哪道题」的清单。</p><p style=\"margin:0 0 6px\"><b>为什么需要它：</b>人的记性是会掉的。同一道题，今天背会了，明天看还剩八成，一周后可能只剩三成。但你要是<b>在快要忘的那一刻</b>再复习一遍，就能把它按住，下次能撑更久 —— 这比每天无脑重背一遍省时间得多。</p><p style=\"margin:0 0 6px\"><b>它怎么排：</b>默认按 <b>1 天 → 2 天 → 4 天 → 7 天 → 15 天 → 30 天</b> 这个节奏。答对一次就往下一档走（下次隔更久才问你）；答错就退回去，明天再来。觉得太快或太慢，设置里能换成「轻松」「加强」或者自己填天数。</p><p style=\"margin:0 0 6px\"><b>什么时候算「背熟了」：</b>走到最后一档才算（也就是连着答对好几轮）。工具里所有跟「掌握」有关的数字 —— <b>章节掌握度、总掌握率、学习周报里的「本周掌握」</b> —— 用的都是这个标准。</p><p style=\"margin:0\"><b>什么时候该用它：</b>你有一批题要长期记住（比如教资考点），已经过了「第一遍看懂」的阶段，需要一遍遍滚到不忘。注意它只帮你想起来，<b>不能保证你记住</b> —— 记住靠的是你真的复习。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">⏱ 学习时长是怎么算的</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>只算你真在做题的那段时间。</b>下面三种情况都不算：</p><p style=\"margin:0 0 2px;padding-left:12px\">· 切到别的 App、别的浏览器标签（按 Home 也算）</p><p style=\"margin:0 0 2px;padding-left:12px\">· 在工具里切到别的页（题库页、设置页、番茄乐园…）</p><p style=\"margin:0 0 6px;padding-left:12px\">· 番茄钟正在休息的那几分钟</p><p style=\"margin:0 0 6px\">所以「今天学了 40 分钟」不是「你开着这个页面 40 分钟」，而是「你<b>真的在做题</b> 40 分钟」。把页面放那儿挂着不算数 —— 这个数字才骗不了自己。</p><p style=\"margin:0\">做题页上面那个秒表，跟统计里的时长是<b>同一个数</b>，不是两套。</p><p style=\"margin:0 0 6px\">做题页左上角那个秒表，走的就是这个数；<b>结果页、今日摘要、学习周报用的也是它</b> —— 四个地方永远是同一个数。</p><p style=\"margin:0\">⚠️ 所以番茄钟休息时，<b>那个秒表会停住不动，这是正常的</b>，回来接着走。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🍅 番茄钟 和 冲刺背诵清单</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>番茄钟是什么：</b>一个「专注 25 分钟、休息 5 分钟」的计时器。开起来做题时，屏幕顶上会有一个倒计时。</p><p style=\"margin:0 0 6px\"><b>它会看着你专注：</b>专注期间你要是切出去（回个微信、刷个别的），它会记一次。<b>切满 5 次，这一轮就自动结束了</b> —— 结束的时候结算页会写明「是因为切屏」，不会让你莫名其妙。每次切回来它都会提醒你「已切屏 N / 5 次」。休息时间切出去不算。</p><p style=\"margin:0 0 6px\"><b>专心时切走了会怎样：</b>切到工具里别的页、切到别的 App、按 Home，番茄钟都会<b>暂停</b>，回来接着走，剩下的秒数不会少。</p><p style=\"margin:0 0 6px\">⚠️ 但<b>休息时切走不暂停</b> —— 休息本来就是让你离开屏幕动一动的，把你按在屏幕前就不叫休息了。</p><p style=\"margin:0\"><b>关掉页面了会怎样：</b>番茄钟会自己存下来。再打开时秒数还在原地、但是<b>停着的</b>，回到做题页才开始走。（故意不按真实时间扣 —— 关了 3 小时再打开，要是照着算早该结束了，那要么白送你一个番茄、要么一轮凭空消失，两种都不对。）</p><p style=\"margin:0 0 6px\"><b>冲刺背诵清单是什么：</b>考前那几天，你不可能把整本书再过一遍，这个清单帮你把「最该临时抱佛脚的」挑出来 —— 还没背熟的题、你答错过的题、你自己收藏或标了高频的题。</p><p style=\"margin:0\"><b>已经背熟的题不会进这个清单</b>（除非你自己收藏或标了高频，那说明你特意想留着它）。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📊 章节掌握度：哪一章还没背下来</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>在浏览页里，按「章节」统计你每章背得怎么样 —— 哪一章掌握率高、哪一章还是 0%。</p><p style=\"margin:0 0 6px\"><b>章节是哪来的：</b>导入时用 <b>￥</b> 打头的那些行就是章节名。如果一个章节都没有，可以在「⚙️ 章节管理」里手动建、或者把题目分进去。</p><p style=\"margin:0\">「掌握」的算法跟记忆复习是同一套（走到最后一档才算）—— 所以你在记忆复习里标了「✅ 我记住了」的题，这里立刻就会算进去，两边的数字永远对得上。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📈 学习数据：热力图 / 周报 / 每日洞见</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>🔥 热力图：</b>像打卡日历一样，把你最近 12 周每天做了多少题铺成一片格子。颜色越深做得越多 —— 主要用来「别让链条断掉」。</p><p style=\"margin:0 0 6px\"><b>📊 学习周报：</b>这一周做了多少题、掌握了多少、哪天最勤快。</p><p style=\"margin:0 0 6px\"><b>📈 今日学习摘要：</b>今天做了多少、连续多少天没断、总掌握率。</p><p style=\"margin:0 0 6px\"><b>卡片的颜色是什么意思：</b>🔴 该复习了 / 🟡 今天 / ⚪ 明天 / ⚪ 3 天后 / ⚪ 7 天后 / ⚪ 更久 / ✅ 已掌握 / ○ 还没排上。</p><p style=\"margin:0\"><b>💡 每日洞见：</b>每天给你一句根据你的数据算出来的话（比如「这道题你错了 3 次了」），不是套话。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🍅 番茄乐园 和 小游戏</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>做题攒番茄，番茄能换东西（主题色、道具卡、游戏时间）。还有几个小游戏（舒尔特方格、翻牌记忆、2048、打砖块、扫雷…）。</p><p style=\"margin:0\"><b>为什么在背书工具里放游戏：</b>长时间背东西容易烦，做几道题换一局游戏，比硬撑着刷到厌恶要好 —— 这是给「坚持不下去」准备的，不是给「想玩」准备的。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🏆 成就徽章 · 🧘 专注模式 · 📑 资料页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>🏆 成就徽章：</b>连续学习、掌握多少题这些会解锁徽章。「连击」是你连着答对了多少题 —— 断了会有点心疼，这就是它的作用。</p><p style=\"margin:0 0 6px\"><b>🧘 专注模式：</b>把界面上一切跟做题无关的东西都藏起来，只留题目。手机屏幕小、容易分心的时候开它。</p><p style=\"margin:0\"><b>📑 资料页：</b>做题之外的另一半 —— 记笔记、传照片、画思维导图。考点之间是有联系的，散着背不如画成一张图。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">👑 三个版本差在哪</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\">免费版能建 2 个题库、每个题库 15 道题，导入、挖空、做题、错题本、热力图都有；基础版题量放到 8 个题库 / 合计 1000 道，多了分组、周报、朗读模式、专注模式这些；全能版没有题量限制，另外有记忆复习、番茄钟、章节掌握度、导出 PDF 和题库文件、资料页这些。</p><p style=\"margin:0\">具体每一行长什么样，点设置页的「查看版本对比」看那张表 —— <b>那张表是照着代码写的，不是宣传话术。</b></p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🤖 让 AI 帮你整理资料（话术）</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">在「＋ 导入」页点 <b>📋 复制格式话术（给AI用）</b>，按你的情况勾几下，「一键复制」粘给 AI，再把资料贴在最下面。</p><div style=\"background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:var(--f13);line-height:1.8\"><b>🔴 用豆包的话，必须切到「工作模式」</b> —— 普通模式读不到你文档里的加粗、高亮、下划线。<br><br><b>🔴 AI 的输出里不许有加粗</b> —— 在这个工具里「<b>加粗 = 这里要挖空</b>」，要是整篇都加粗，导进去整篇就全乱了。<br><span style=\"color:var(--text-tertiary)\">（话术里已经替你写死了这一条，别删）</span><br><br><b>让它用 Word 发回</b> —— 聊天框可能把换行弄丢。<br><br><b>一道题有好几个口诀时，让它合成一行</b>（中间用「；」隔开）—— 工具一道题只认一个口诀，写成好几行的话只有最后一行留得下。</div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📐 数学 / 化学公式</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">题里有公式（数学、化学、物理那种）时，工具能把它们<b>画成书本上的样子</b>，导出的 PDF 里也是。<br>第一次遇到公式会问你要不要下载「公式引擎」：<b>约 660KB，装一次一直能用</b>，<b>下载那一次要联网</b>，之后离线也能看。<br>不想要的话：<b>设置 → 关于 → 📐 数学公式 → 显示源码</b>（那就跟以前一样显示 源码）。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📤 把题库发给别人要注意</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">如果对方<b>没装公式引擎</b>，他看到的公式会是<b>源码</b>（一串带斜杠的字）—— 这是正常的，不是工具坏了。<br>还有一个：<b>直接把 Word 拖进工具</b>时，只有「<b>加粗</b>」会变成挖空，<b>高亮和下划线会被丢掉</b>。<br>想用高亮/下划线，就得走上面那条「让 AI 整理」的路。</p>","full":"<p style=\"margin:0 0 14px;color:var(--text-secondary);font-size:var(--f13)\">这里是<b>「想做什么 → 怎么走」</b>。不讲按钮长什么样（去「🔘 按钮功能」），也不讲原理（去「🧩 功能介绍」）。</p><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🔰 第一次用：从零到做完第一轮</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>1.</b> 打开「📚 题库」页 → 点「＋ 新建题库」，起个名字（比如「教资科二」）</p><p style=\"margin:0 0 4px\"><b>2.</b> 点「📥 导入」。手上已经有整理好的文字就直接粘；没有的话先点「复制格式话术」发给 AI</p><p style=\"margin:0 0 4px\"><b>3.</b> 导入后会先出一页「预检」。上面会写「一共 N 道题」，还有红块黄块提示哪些行有问题 —— <b>先看一眼再点确认</b></p><p style=\"margin:0 0 4px\"><b>4.</b> 想自己挖空：点题库页的「✏️ 编辑挖空」，用手指点你想遮住的字就行</p><p style=\"margin:0 0 4px\"><b>5.</b> 回题库页点「▶ 开始练习」→ 设置这一轮做几道题、什么顺序 → 开始</p><p style=\"margin:0\"><b>6.</b> 做完会出结算页，告诉你对了几道。答错的题自动进错题本</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📚 导入 & 题库管理</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>想导入粘贴的文字 / TXT：</b>题库页 → 📥 导入 → 把文字粘进去 → 看预检 → 确认</p><p style=\"margin:0 0 4px\"><b>想导入 Word / PDF：</b>同一入口，选文件就行。<b>PDF 是扫描件的话</b>，让它转成文字再导，识别不出来</p><p style=\"margin:0 0 4px\"><b>别人发来的「题库文件」：</b>还是这个入口 —— 导入页点「📂 上传」选中那个文件，会自动认出来。永远是新建一个题库，不会盖掉你已有的</p><p style=\"margin:0 0 4px\"><b>想让 AI 帮你整理：</b>点「复制格式话术」→ 选一版 → 发给 AI → 把 AI 回的内容粘进导入框</p><p style=\"margin:0 0 4px\"><b>预检页那三种块是什么意思：</b>统计栏是「几个大点 / 几道题 / 几处挖空」；<b>红块</b>＝这些行一定会被丢掉（写错了标记）；<b>黄块</b>＝它猜你可能漏写了标记（机器猜的，你可以不管）</p><p style=\"margin:0 0 4px\"><b>想把两个题库并成一个：</b>题库页 → 🔀 合并 → 选两个 → 有重复题它会问你要保留哪边</p><p style=\"margin:0\"><b>想把题库发别人 / 换手机：</b>题库页 → 📤 导出 → 📦 导出题库文件（只发这一个题库，可以选带不带你的做题痕迹）；整机数据搬家用设置页的「导出备份文件」</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📖 浏览 & 找题</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>只想翻着看，不做题：</b>进「📖 浏览」页，它就是干这个的</p><p style=\"margin:0 0 4px\"><b>只看某一类题：</b>用筛选那排按钮 —— 全部 / 收藏 / 口诀 / 错题；另一排能按章节或标签筛，两排可以叠着用（比如「第三章 + 收藏的」）</p><p style=\"margin:0 0 4px\"><b>找一道具体的题：</b>题库页顶上那个搜索框是<b>搜全部题库</b>；浏览页里的搜索只搜当前题库</p><p style=\"margin:0\"><b>把题导出来打印：</b>浏览页 → 筛好 → 📤 导出。能导「题目卷」和「挖空练习卷」两种（全能版）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📝 刷题</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>开始一轮：</b>「📝 做题」页上面那一屏就是设置 —— 做几道、什么顺序、要不要限时、要不要隐藏题目，选完点开始</p><p style=\"margin:0 0 4px\"><b>填完一题：</b>点「检查」判对错。不会做？点「👁 看答案」直接看</p><p style=\"margin:0 0 4px\"><b>想让手机念给你听：</b>设置里开朗读。基础版还能选「念题 / 念答案 / 都念」</p><p style=\"margin:0 0 4px\"><b>做到一半有事要走：</b>直接走就行，下次打开还在这一轮（番茄钟开着的话会自动暂停）</p><p style=\"margin:0\"><b>觉得界面太乱：</b>开「专注模式」，只留题目</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🍅 番茄钟怎么用</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>在哪开：</b>🍅 番茄乐园里那颗番茄点一下就开。时长可以在设置页改，也可以在番茄乐园里点快捷键（专注 10 / 15 / 25 / 45 分钟，休息 1 / 3 / 5 / 10 分钟），或者自己填一个数</p><p style=\"margin:0 0 4px\"><b>能设多长：</b>专注 <b>10～180 分钟</b>（默认 25），休息 <b>1～30 分钟</b>（默认 5）。休息填 0 就是不要休息</p><p style=\"margin:0 0 4px\"><b>一轮走完会怎样：</b>收 1 个番茄。配了休息就先自动进休息；休息结束（没配休息的就是一轮刚完）会<b>停下来</b>，弹一张小卡片问你下一轮要多少分钟，你选好才开下一轮</p><p style=\"margin:0 0 4px\"><b>不会自己偷偷接着开</b> —— 想换时长随时换</p><p style=\"margin:0\"><b>休息时秒表会停</b> —— 就是上面「⏱ 学习时长是怎么算的」那条，正常的</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📊 看学习数据</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>看今天做了多少：</b>首页那条进度 / 设置页 →「今日学习摘要」</p><p style=\"margin:0 0 4px\"><b>看这周做得怎么样：</b>设置页 →「📊 学习周报」</p><p style=\"margin:0 0 4px\"><b>看有没有断卡：</b>设置页的🔥热力图，最近 12 周一片格子，颜色越深做得越多</p><p style=\"margin:0\"><b>看哪一章还没背下来：</b>浏览页 → 章节掌握度（要全能版）</p><p style=\"margin:8px 0 4px\"><b>几个数各自怎么算：</b></p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>总掌握率 / ✅ 已掌握 / ✅ 本周掌握</b> —— 按「记忆复习」走到最后一档的题算（详见「🧩 功能介绍 → 🧠 记忆复习」）。「本周掌握」只数本周练过的那些</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>今日做题 / 本周做题数</b> —— 只算做完了一轮的题。做一半退出的不算（但填过字的那几道下次不会再抽到）</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>📱 切屏</b> —— 练习当中切走屏幕的次数（查个单词、回个消息都算）。休息时切走不算</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>🍅 本周番茄数</b> —— 这一周番茄钟收的番茄。用兑换码换来的、幸运掉落的，不算</p><p style=\"margin:0 0 4px;padding-left:12px\">· <b>⭐ 累计收藏</b> —— 收藏夹里一共多少题，不是本周的（所以它只会涨或不变）</p><p style=\"margin:8px 0 0\"><b>⏱ 学习时长是怎么算的：</b>只算你真在做题的时间 —— 切走、切到别的页、番茄钟休息都不算。（详细解释见「🧩 功能介绍 → ⏱ 学习时长是怎么算的」）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">❌ 错题怎么复习</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>答错的题会自己进错题本</b>，不用手动加</p><p style=\"margin:0 0 4px\"><b>只练错题：</b>做题设置页里选「复习优先」或在复习页点开错题那组</p><p style=\"margin:0 0 4px\"><b>做对了但想再确认：</b>做题时点「❌ 加错题」也能手动扔进去</p><p style=\"margin:0\"><b>从错题本拿掉：</b>在复习页那道题上点「✕ 移除」</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🧠 记忆复习怎么用（要全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>先打开它：</b>设置 → 记忆复习 → 打开开关。<b>还要勾上「哪些题库参加记录」</b> —— 没勾的题库不记录</p><p style=\"margin:0 0 4px\"><b>然后正常做题就行：</b>答对答错都会自动记，不用额外操作</p><p style=\"margin:0 0 4px\"><b>想看今天该复习哪几道：</b>复习页 → 点开标着「今天」的那一档 → 开始练</p><p style=\"margin:0 0 4px\"><b>题太多一次做不完：</b>没事，超出的会自动顺延到明天，不会丢</p><p style=\"margin:0 0 4px\"><b>某道题已经会了：</b>在那道题上点「✅ 我记住了」。想让它明天再问：「⏰ 明天再练」</p><p style=\"margin:0 0 4px\"><b>觉得复习太频繁 / 太慢：</b>设置 → 记忆复习 → 学习节奏，可以选「轻松 1/3/7/15 天」「标准 1/2/4/7/15/30 天」「加强 1/2/3/5/8/12/20/30 天」，也可以自己填天数</p><p style=\"margin:0 0 4px\"><b>想彻底清掉某道题的记录：</b>那道题右边的 🗑 —— <b>只删记录，题目还在题库里</b></p><p style=\"margin:0\"><b>想印成纸质的：</b>设置 → 记忆复习 → 「🖨️ 打印复习题」—— 想印哪一档、印多少题、印哪个题库，点进去自己选</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⭐ 收藏 & 🔍 搜索</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>收藏一道题：</b>做题时点「⭐」。收藏的题会在复习清单里单列一组</p><p style=\"margin:0 0 4px\"><b>只练收藏的：</b>做题设置里选「收藏优先」，或在浏览页筛「⭐ 收藏」</p><p style=\"margin:0\"><b>搜一道题在哪：</b>题库页顶上的框搜全部题库；浏览页里的框只搜当前题库</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚙️ 设置 & 数据安全</h4><div style=\"background:#fff5f5;border:1px solid #fcc;border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>⚠️ 最重要的一条：养成备份习惯。</b>数据存在这台设备的浏览器里，清数据、换手机、卸载浏览器都可能丢。没有备份 = 赌运气。</p><p style=\"margin:0 0 4px\"><b>怎么备份：</b>设置页 →「📤 导出备份文件」→ 存到电脑 / 网盘 / 微信收藏</p><p style=\"margin:0 0 4px\"><b>发给别人 / 换设备：</b>优先用「导出备份文件」，<b>别用备份码</b> —— 备份码是长文字，经过微信会掉字符，对方导不进去备份码是一长串文字，经过微信、QQ 转发时里面的「+」会被自动改成空格，对方就导不进去了 —— 文件不会这样</p><p style=\"margin:0 0 4px\"><b>怎么恢复：</b>设置页 →「📥 从备份恢复」→ 选那个文件。如果两边都有数据，它会列出来哪些题重复、让你选保留哪边</p><p style=\"margin:0 0 4px\"><b>只想清记录不清题库：</b>设置页 →「🗑 清理空间」</p><p style=\"margin:0\"><b>怎么换主题色：</b>设置页 → 主题颜色（不同版本能选的数量不一样）</p><p style=\"margin:8px 0 4px;border-top:1px dashed var(--border);padding-top:8px\"><b>数据到底存在哪：</b>题库、错题、设置存在浏览器的 <b>localStorage</b> 里；笔记和上传的照片存在 <b>IndexedDB</b>（浏览器自带的数据库）里。都不上传，完全离线可用。</p><p style=\"margin:0 0 4px\"><b>能存多少题：</b>浏览器给的空间大概等于 250 万字，换算成题目大约 <b>2 万～5 万道</b> —— 日常刷题够用。<b>能存多少题：</b>存储上限大约 <b>5 MB</b>（纯文本），约等于 250 万字，换算成题目大约 <b>2 万～5 万道题</b> —— 日常刷题完全够用。设置页顶上能看到现在用了多少。</p><p style=\"margin:0\"><b>iPhone 要特别注意：</b>iOS 的 Safari 在「清除网站数据」时，上面那两处会被一起清空 —— 这是 iPhone 用户最容易丢数据的一条路。所以<b>至少每周导出一份备份</b>存到电脑或网盘。</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📑 资料页（要全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>记一条笔记：</b>资料页 →「＋ 新建笔记」</p><p style=\"margin:0 0 4px\"><b>把书上的图拍下来：</b>「📷 上传照片（拍照/相册）」</p><p style=\"margin:0 0 4px\"><b>画一张思维导图：</b>进笔记 →「🧠 导图」→ 点节点可以 ➕ 加子节点、🗑 删节点、📸 单独导出这一支</p><p style=\"margin:0\"><b>让 AI 帮你搭骨架：</b>「🤖 AI话术」复制一段话发给 AI，把它回的贴进「📥 导入大纲」</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🤖 配合 AI 使用</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>整理题目：</b>题库页 / 导入页 →「复制格式话术」→ 选一版发给 AI → 把结果粘回导入框</p><p style=\"margin:0 0 4px\"><b>手上是 Word / PDF / 图片：</b>选「🅲️ 喂 Word / PDF / 图片」那版话术，让 AI 读完发一份 Word 回来</p><p style=\"margin:0 0 4px\"><b>整理笔记 / 导图：</b>资料页 →「🤖 AI话术」</p><p style=\"margin:0\"><b>话术里的要求是给 AI 看的</b>，你不用管，也别删 —— 删了它就容易偷懒、漏段落</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🖥️ 使用环境</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>手机 / 平板 / 电脑都能用</b>，建议用 Chrome、Edge、Safari 这些主流浏览器</p><p style=\"margin:0 0 4px\"><b>可以「装到桌面」</b>：用浏览器打开后，菜单里选「添加到主屏幕」，之后点图标就能像 App 一样打开，还能离线用</p><p style=\"margin:0\"><b>微信里直接点开可能功能不全</b> —— 右上角选「在浏览器中打开」再用</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📋 免责说明</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 4px\">这是个纯本地的学习工具，题目和学习记录都存在你自己的设备上，<b>不会上传到任何服务器</b>。</p><p style=\"margin:0 0 4px\">也正因为这样，<b>数据丢了我也找不回来</b> —— 请一定养成定期导出备份的习惯。</p><p style=\"margin:0\">工具只是帮你把题刷起来，能不能考过还得靠你自己。祝顺利。</p><p style=\"margin:6px 0 0\">· 📕 小红书：2750492576</p><p style=\"margin:2px 0 0\">购买后可联系获取最新版本，后续会不定期更新新功能。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🤖 「复制格式话术（给AI用）」怎么用</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">在「＋ 导入」页点那颗按钮，会弹出一串选择题（资料是什么形式、用哪种模式、哪些地方要挖空、题目怎么定…）。勾好点「📋 一键复制话术」，粘给 AI，再把资料贴在最下面。</p><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">· <b>它按你勾的生成，没勾的规则不会出现</b> —— 话术越短，AI 越不容易被无关规则带跑。<br>· 底部还有一颗 <b>📋 旧格式话术</b>：给以前一直用「题目|答案|口诀」竖线写法的老用户。<br>· 勾过的选项<b>会记住</b>，下次打开还是上次那套。</p><div style=\"background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:var(--f13);line-height:1.8\"><b>🔴 三条最要紧的：</b><br>1. <b>用豆包必须切「工作模式」</b> —— 普通模式读不到文档里的加粗 / 高亮 / 下划线。<br>2. <b>输出里不许有加粗</b> —— 工具里「加粗 = 要挖空」，整篇加粗就整篇乱（这条话术里已经写死）。<br>3. <b>让它用 Word 文档发回</b> —— 聊天框可能把换行弄丢。<br><span style=\"color:var(--text-tertiary)\">话术里都替你写好了，不用自己记；但别顺手删掉。</span></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📐 数学公式（公式引擎）</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">题里有数学 / 化学 / 物理公式时，工具能画成书本上的样子，<b>导出的 PDF 里也是</b>。<br>· 第一次遇到公式会问你要不要下载「公式引擎」：<b>约 660KB</b>，<b>装一次一直能用</b>。<br>· <b>下载那一次要联网</b>；下过一次之后就进了缓存，<b>离线也能看</b>。<br>· <b>不考数学的人一个字节都不用下</b> —— 只有题库里真出现公式才会去拿。<br>· 想关掉：<b>设置 → 关于 → 📐 数学公式 → 显示源码</b>。<br>· <b>第一次打开慢</b>就是因为它 —— 只在第一次（或更新后第一次）慢，之后就快。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📤 分享给别人 / 直接拖 Word</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">· 对方<b>没装公式引擎</b> → 他看到的公式是<b>源码</b>，不是工具坏了。<br>· <b>直接把 Word 拖进工具</b> → 只有「<b>加粗</b>」会变成挖空；<b>高亮和下划线会被丢掉</b>（Word 解析库的默认行为）。想用它们就走「让 AI 整理」那条路。<br>· 万一 AI 把整篇都加粗了：工具会自动认出来（≥85% 的段都加粗就判定「这不是挖空标记」），把加粗去掉当普通文字 —— 不会把整篇搞乱。</p>"};
+var _MANUAL = {"quick":"<div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f16);margin:0 0 8px;color:#e74c3c\">🔴 数据安全 <span style=\"font-size:var(--f12);font-weight:400;color:#999\">— 最最重要，先看这个</span></h4><div style=\"background:#fff5f5;border:1px solid #fcc;border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>📍 你的题目和学习记录，存在这台设备的浏览器里，不在云端。</b>换个浏览器打开、或者换台设备，就看不到原来的数据了 —— 那不是丢了，是本来就不在一块儿。</p><p style=\"margin:0 0 6px\"><b>📦 导出备份是唯一的保险。</b>没有备份 = 赌运气。设置页里可以「导出备份文件」，存到电脑、网盘、微信收藏都行。</p><p style=\"margin:0 0 4px\"><b>🗑️ 这几种操作会真的把数据弄丢：</b></p><p style=\"margin:0 0 2px;padding-left:12px\">① <b style=\"color:#e74c3c\">iPhone 的「清除历史记录与网站数据」</b>（iPhone 用户最容易中招）</p><p style=\"margin:0 0 2px;padding-left:12px\">② 浏览器清除数据时，勾了「Cookie 和网站数据」</p><p style=\"margin:0 0 2px;padding-left:12px\">③ 手机管家 / 清理软件的「垃圾清理」</p><p style=\"margin:0 0 2px;padding-left:12px\">④ 无痕 / 隐私模式下关掉窗口</p><p style=\"margin:0 0 2px;padding-left:12px\">⑤ 手机存储空间不够，系统自己清理</p><p style=\"margin:0 0 2px;padding-left:12px\">⑥ 卸载或重置浏览器</p><p style=\"margin:8px 0 0\"><b>💾 「清缓存」一般不丢题</b>，但上面那两条「清 Cookie / 网站数据」会丢 —— 这俩不一样，别搞混。</p><p style=\"margin:4px 0 0\"><b>🔒 隐私：</b>这是个纯本地工具，你的题目不会上传到任何地方。导出的备份文件请自己收好。</p></div></div><div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🚀 30 秒上手</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\">① 先在「📚 题库」页建一个题库 → ② 点「📥 导入」把题目放进去 → ③ 点「▶ 开始练习」就能做了。</p><p style=\"margin:0 0 6px\"><b>手上没有整理好的题目？</b>不用自己敲。点「复制格式话术」，把它发给豆包之类的工具，再把你手上的资料（书上的照片、PDF、Word 都行）一起发过去，让它按格式整理好发回来，你贴进导入框就行。</p><p style=\"margin:0\">导入完会先给你看一页「预检」—— 它会告诉你一共几道题、哪些行可能有问题。确认没问题再点导入。</p></div></div><div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚠️ 最容易踩的 3 个坑</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>1. 清「缓存」不丢数据，清「Cookie 和网站数据」会丢。</b>两个按钮挨在一起，别点错。</p><p style=\"margin:0 0 6px\"><b>2. 换手机 / 发给别人，优先用「导出备份文件」，别用「备份码」。</b>备份码是长文字，经过微信、QQ 转发时里面的字符会被改掉，对方就导不进去了；文件不会。备份码是一长串文字，经过微信、QQ 转发时里面的「+」会被自动改成空格，对方就导不进去了；文件不会出这个问题。</p><p style=\"margin:0\"><b>3. 导入前先看一眼预检页。</b>哪几行写得不对、会被丢掉，它会直接指给你 —— 省得导入完发现少了几道题。</p></div></div><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;font-size:var(--f13);color:var(--text-secondary)\">📖 想看某个功能具体怎么用？<p style=\"margin:0 0 6px\"><b>📅 给自己定个规矩：至少每周导出一次备份。</b>存在电脑或网盘里 —— 这是唯一能完整恢复的办法，出事的时候它就是全部。</p>📖 想看某个功能具体怎么用？点上面那排按钮：<b>🔘 按钮功能</b>讲每一颗按钮干嘛的，<b>🧩 功能介绍</b>讲每个功能是什么、为什么这么设计，<b>📋 详细</b>讲具体怎么操作。</div><div style=\"margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);font-size:var(--f13);color:var(--text-secondary)\">📕 小红书：2750492576 —— 有新版本、或者用着有问题，都可以来找我。</div><div style=\"background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:var(--f13);line-height:1.8\"><b>🔴 第一次打开有点慢？</b><br>那是因为题库里有数学/化学公式，工具在装「公式引擎」。<b>只有第一次（或更新后第一次）慢</b>，之后就快了。<br>不想用公式的话：<b>设置 → 关于 → 📐 数学公式 → 改成「显示源码」</b>。</div>","btns":"<p style=\"margin:0 0 12px;color:var(--text-secondary);font-size:var(--f13)\">下面是工具里<b>能点的东西</b>分别干嘛的，按页面分组。只看「点了会发生什么」，不讲原理（原理去「🧩 功能介绍」）。</p><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🧭 底部这一排（去哪个页面）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>📚 题库</b> —— 建题库、导入题目、改挖空、开始练习，都在这里</p><p style=\"margin:0 0 5px\"><b>📝 做题</b> —— 上来的第一屏是「这一轮怎么出题」的设置，往下才是做题</p><p style=\"margin:0 0 5px\"><b>📖 浏览</b> —— 不考试，就翻着看。找题、导出、看章节掌握度</p><p style=\"margin:0 0 5px\"><b>🌱 复习</b> —— 错题本 + 记忆复习，两个都在这一页</p><p style=\"margin:0\"><b>📑 资料</b> / <b>⚙️ 设置</b> —— 笔记导图一个是资料区，一个是所有开关</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📚 题库页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>＋ 新建题库</b> —— 建一个空题库，之后往里导题</p><p style=\"margin:0 0 5px\"><b>📥 导入</b> —— 粘贴、TXT、Word、PDF 都能进。贴完先看预检页</p><p style=\"margin:0 0 5px\"><b>🔍 搜索全部 N 道题</b> —— 顶上那个框，所有题库一起搜</p><p style=\"margin:0 0 5px\"><b>▶ 开始练习</b> —— 进「这一轮怎么出题」的设置页</p><p style=\"margin:0 0 5px\"><b>🏷 改它属于哪些分组</b>（长按/点题库右边的按钮）—— 把题库分到别的小组里</p><p style=\"margin:0 0 5px\"><b>📁 新建分组</b> —— 题库太多的时候，分个类放</p><p style=\"margin:0 0 5px\"><b>🔀 合并</b> —— 把两个题库并成一个。会先问你要保留哪边的重复题</p><p style=\"margin:0 0 5px\"><b>✏️ 重命名 / 排序 / 🗑 删除</b> —— 题库右边那排小按钮</p><p style=\"margin:0 0 5px\"><b>📋 选题</b> —— 手动挑几道题出来专门练</p><p style=\"margin:0 0 5px\"><b>📤 导出</b> —— 点开先选：导出 PDF（题目卷 / 挖空练习卷），或者导出「题库文件」发给别人（对方在导入页点「📂 上传」选中就能用）</p><p style=\"margin:0\"><b>📊 章节掌握度 / ⚙️ 章节管理</b> —— 在浏览页里，按章节看每章背得怎么样（全能版）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📝 做题页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>检查</b> —— 判这一题对不对。点了之后才能看答案</p><p style=\"margin:0 0 5px\"><b>👁 看答案</b> —— 直接看答案，自己判断对错（「看答案」和「检查」是两条路）</p><p style=\"margin:0 0 5px\"><b>⭐ 收藏</b> —— 把这题标上星，以后专门练收藏的题</p><p style=\"margin:0 0 5px\"><b>❌ 加错题</b> —— 手动把这题扔进错题本（答错了也会自动进）</p><p style=\"margin:0 0 5px\"><b>💡 口诀</b> —— 展开这道题的口诀（导入时写了「口诀：」才有）</p><p style=\"margin:0 0 5px\"><b>← 上一题 / 下一题</b> —— 手机上也能左右滑</p><p style=\"margin:0\"><b>📖 浏览</b> —— 这一轮的题目列表，做完想回头翻就点它</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📖 浏览页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>📋 题目列表</b> / <b>📊 章节掌握度</b> —— 顶上两个页签，切两种看法</p><p style=\"margin:0 0 5px\"><b>全部 / ⭐ 收藏 / 💡 口诀 / ❌ 错题</b> —— 一组筛选按钮，只显示你想看的</p><p style=\"margin:0 0 5px\"><b>🏷 标签 / 📚 章节</b> —— 另一组筛选，两组可以叠着用</p><p style=\"margin:0 0 5px\"><b>📤 导出</b> —— 把筛出来的题导成 PDF / 打印（全能版）</p><p style=\"margin:0\"><b>🔍 只搜当前题库</b> —— 只在这个题库里找</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🌱 复习页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>🧠 记忆复习</b> —— 按遗忘曲线排的复习清单（全能版）。上面有 🔴 该复习了 / 🟡 今天 / ⚪ 明天 / ⚪ 3天后 … ✅ 已掌握 这些档位，点开哪一档就列哪一档的题</p><p style=\"margin:0 0 5px\"><b>✅ 我记住了</b> —— 这题不用再排了，从记忆复习里拿掉</p><p style=\"margin:0 0 5px\"><b>⏰ 明天再练</b> —— 今天不想练，推到明天</p><p style=\"margin:0 0 5px\"><b>🗑</b>（题右边）—— 只把它从记忆复习里移除，<b>题目还在题库里</b></p><p style=\"margin:0\"><b>📝 复习清单</b> —— 下面那块是老功能：你答错过的题和收藏的题</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚙️ 设置页（几个常用的）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>🎨 主题颜色</b> —— 换配色（不同版本能选的数量不一样）</p><p style=\"margin:0 0 5px\"><b>🔊 朗读</b> —— 让手机念题、念答案</p><p style=\"margin:0 0 5px\"><b>🍅 番茄钟</b> —— 打开后做题会计时，还能进番茄乐园（全能版）</p><p style=\"margin:0 0 5px\"><b>🧠 记忆复习</b> —— 在这里选学习节奏（轻松/标准/加强/自定义）、哪些题库参加记录，还能把复习题打印出来</p><p style=\"margin:0 0 5px\"><b>📤 导出备份文件</b> —— <b>最推荐</b>的备份方式，存成一个文件</p><p style=\"margin:0 0 5px\"><b>📤 分享备份码</b> —— 变成一段文字，适合直接发出去</p><p style=\"margin:0 0 5px\"><b>📥 从备份恢复</b> —— 换设备、或者数据丢了之后，用这个导回来</p><p style=\"margin:0 0 5px\"><b>🗑 清理空间</b> —— 清考试记录、缓存这些，<b>不清题库</b></p><p style=\"margin:0\"><b>📊 查看版本对比</b> —— 看看每个版本各有什么</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📑 资料页（全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 5px\"><b>＋ 新建笔记</b> / <b>📷 上传照片</b> —— 记笔记、拍书上的图</p><p style=\"margin:0 0 5px\"><b>🧠 导图</b> —— 思维导图：➕ 添加子节点 / 🗑 删除此节点 / 📸 导出此分支</p><p style=\"margin:0 0 5px\"><b>📋 模板 / 📝 大纲 / 📥 导入大纲</b> —— 快速搭出一份笔记的骨架</p><p style=\"margin:0\"><b>🤖 AI话术</b> —— 复制一段话发给 AI，让它按格式帮你整理成导图</p></div>","feat":"<p style=\"margin:0 0 14px;color:var(--text-secondary);font-size:var(--f13)\">这一页讲每个功能<b>是什么、为什么需要它、它怎么工作</b> —— 假设你是第一次接触这个工具，所以每一步都说清楚。<br>想知道具体怎么点，去「📋 详细」；想知道某颗按钮干嘛的，去「🔘 按钮功能」。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📥 导入：怎么把题目放进来</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>把一段文字、一个 Word、一个 PDF、一张照片变成能刷的题。</p><p style=\"margin:0 0 6px\"><b>为什么要这样：</b>你的资料多半是书上的、PDF 里的，乱七八糟。工具没法猜哪儿是题、哪儿是答案 —— 所以要先约定一个简单的写法，让它一眼就能认出来。</p><p style=\"margin:0 0 6px\"><b>写法长这样（一行一个符号就打头）：</b></p><div style=\"background:var(--bg-card);border-radius:8px;padding:10px 12px;margin:0 0 6px;font-size:var(--f13);line-height:1.9\">一行开头写 <b>￥</b> → 这是一个大点（当分类用）。例：<code>￥教育观</code><br>一行开头写 <b>$</b> → 这是一道题目。例：<code>$素质教育的内涵</code><br>一行以 <b>口诀：</b> 打头 → 这是这道题的口诀。例：<code>口诀：提速创屎体面的歌星</code><br>其余的行 → 都算上一道题的答案，一行写一个要点<br>想挖空的地方 → 用两个 <b>@@</b> 把它括起来。例：<code>②素质教育以@@培养创新精神@@为重点</code></div><p style=\"margin:0 0 6px\"><b>懒得自己整理？</b>工具里有个「复制格式话术」，点一下复制，发给豆包之类的 AI，再把你的资料一起发过去，它会按这个格式整理好发回来。点开后会让你勾几下（资料是什么形式、哪些地方要挖空、题目怎么定……），勾好点「一键复制」就行。</p><p style=\"margin:0\"><b>导入前的预检页</b>是干嘛的：它先算一遍「一共几道题、几个大点、几处挖空」，再把有问题的行指给你 —— <b>红块</b>是确定会被丢掉的行，<b>黄块</b>是它猜你可能漏写了标记（机器猜的，不一定准）。看一眼再点导入，能省掉很多「怎么少了几道题」。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">✂️ 挖空：横线版 和 圈圈版</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>把关键词遮住，让你填空 —— 这是这个工具最主要的功能。</p><p style=\"margin:0 0 6px\"><b>怎么决定挖哪儿：</b>导入时用 <code>@@</code> 标出来的，就挖那些；没标的，可以在题库页点「✏️ 编辑挖空」自己点字挖。</p><p style=\"margin:0\"><b>两种长相（设置里能换）：</b><br>· <b>横线版</b>（默认）—— 挖空处是一条下划线，最清爽<br>· <b>圈圈版</b>（椭圆挖空，全能版）—— 用椭圆圈住，圈的大小跟着字数走，一眼能看出该填几个字。想试试：设置里打开「椭圆挖空」开关，做题页就变了</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🧠 记忆复习：让它记得更久</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>一个自动帮你排「什么时候该复习哪道题」的清单。</p><p style=\"margin:0 0 6px\"><b>为什么需要它：</b>人的记性是会掉的。同一道题，今天背会了，明天看还剩八成，一周后可能只剩三成。但你要是<b>在快要忘的那一刻</b>再复习一遍，就能把它按住，下次能撑更久 —— 这比每天无脑重背一遍省时间得多。</p><p style=\"margin:0 0 6px\"><b>它怎么排：</b>默认按 <b>1 天 → 2 天 → 4 天 → 7 天 → 15 天 → 30 天</b> 这个节奏。答对一次就往下一档走（下次隔更久才问你）；答错就退回去，明天再来。觉得太快或太慢，设置里能换成「轻松」「加强」或者自己填天数。</p><p style=\"margin:0 0 6px\"><b>什么时候算「背熟了」：</b>走到最后一档才算（也就是连着答对好几轮）。工具里所有跟「掌握」有关的数字 —— <b>章节掌握度、总掌握率、学习周报里的「本周掌握」</b> —— 用的都是这个标准。</p><p style=\"margin:0\"><b>什么时候该用它：</b>你有一批题要长期记住（比如教资考点），已经过了「第一遍看懂」的阶段，需要一遍遍滚到不忘。注意它只帮你想起来，<b>不能保证你记住</b> —— 记住靠的是你真的复习。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">⏱ 学习时长是怎么算的</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>只算你真在做题的那段时间。</b>下面三种情况都不算：</p><p style=\"margin:0 0 2px;padding-left:12px\">· 切到别的 App、别的浏览器标签（按 Home 也算）</p><p style=\"margin:0 0 2px;padding-left:12px\">· 在工具里切到别的页（题库页、设置页、番茄乐园…）</p><p style=\"margin:0 0 6px;padding-left:12px\">· 番茄钟正在休息的那几分钟</p><p style=\"margin:0 0 6px\">所以「今天学了 40 分钟」不是「你开着这个页面 40 分钟」，而是「你<b>真的在做题</b> 40 分钟」。把页面放那儿挂着不算数 —— 这个数字才骗不了自己。</p><p style=\"margin:0\">做题页上面那个秒表，跟统计里的时长是<b>同一个数</b>，不是两套。</p><p style=\"margin:0 0 6px\">做题页左上角那个秒表，走的就是这个数；<b>结果页、今日摘要、学习周报用的也是它</b> —— 四个地方永远是同一个数。</p><p style=\"margin:0\">⚠️ 所以番茄钟休息时，<b>那个秒表会停住不动，这是正常的</b>，回来接着走。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🍅 番茄钟 和 冲刺背诵清单</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>番茄钟是什么：</b>一个「专注 25 分钟、休息 5 分钟」的计时器。开起来做题时，屏幕顶上会有一个倒计时。</p><p style=\"margin:0 0 6px\"><b>它会看着你专注：</b>专注期间你要是切出去（回个微信、刷个别的），它会记一次。<b>切满 5 次，这一轮就自动结束了</b> —— 结束的时候结算页会写明「是因为切屏」，不会让你莫名其妙。每次切回来它都会提醒你「已切屏 N / 5 次」。休息时间切出去不算。</p><p style=\"margin:0 0 6px\"><b>专心时切走了会怎样：</b>切到工具里别的页、切到别的 App、按 Home，番茄钟都会<b>暂停</b>，回来接着走，剩下的秒数不会少。</p><p style=\"margin:0 0 6px\">⚠️ 但<b>休息时切走不暂停</b> —— 休息本来就是让你离开屏幕动一动的，把你按在屏幕前就不叫休息了。</p><p style=\"margin:0\"><b>关掉页面了会怎样：</b>番茄钟会自己存下来。再打开时秒数还在原地、但是<b>停着的</b>，回到做题页才开始走。（故意不按真实时间扣 —— 关了 3 小时再打开，要是照着算早该结束了，那要么白送你一个番茄、要么一轮凭空消失，两种都不对。）</p><p style=\"margin:0 0 6px\"><b>冲刺背诵清单是什么：</b>考前那几天，你不可能把整本书再过一遍，这个清单帮你把「最该临时抱佛脚的」挑出来 —— 还没背熟的题、你答错过的题、你自己收藏或标了高频的题。</p><p style=\"margin:0\"><b>已经背熟的题不会进这个清单</b>（除非你自己收藏或标了高频，那说明你特意想留着它）。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📊 章节掌握度：哪一章还没背下来</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>在浏览页里，按「章节」统计你每章背得怎么样 —— 哪一章掌握率高、哪一章还是 0%。</p><p style=\"margin:0 0 6px\"><b>章节是哪来的：</b>导入时用 <b>￥</b> 打头的那些行就是章节名。如果一个章节都没有，可以在「⚙️ 章节管理」里手动建、或者把题目分进去。</p><p style=\"margin:0\">「掌握」的算法跟记忆复习是同一套（走到最后一档才算）—— 所以你在记忆复习里标了「✅ 我记住了」的题，这里立刻就会算进去，两边的数字永远对得上。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📈 学习数据：热力图 / 周报 / 每日洞见</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>🔥 热力图：</b>像打卡日历一样，把你最近 12 周每天做了多少题铺成一片格子。颜色越深做得越多 —— 主要用来「别让链条断掉」。</p><p style=\"margin:0 0 6px\"><b>📊 学习周报：</b>这一周做了多少题、掌握了多少、哪天最勤快。</p><p style=\"margin:0 0 6px\"><b>📈 今日学习摘要：</b>今天做了多少、连续多少天没断、总掌握率。</p><p style=\"margin:0 0 6px\"><b>卡片的颜色是什么意思：</b>🔴 该复习了 / 🟡 今天 / ⚪ 明天 / ⚪ 3 天后 / ⚪ 7 天后 / ⚪ 更久 / ✅ 已掌握 / ○ 还没排上。</p><p style=\"margin:0\"><b>💡 每日洞见：</b>每天给你一句根据你的数据算出来的话（比如「这道题你错了 3 次了」），不是套话。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🍅 番茄乐园 和 小游戏</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>做题攒番茄，番茄能换东西（主题色、道具卡、游戏时间）。还有几个小游戏（舒尔特方格、翻牌记忆、2048、打砖块、扫雷…）。</p><p style=\"margin:0\"><b>为什么在背书工具里放游戏：</b>长时间背东西容易烦，做几道题换一局游戏，比硬撑着刷到厌恶要好 —— 这是给「坚持不下去」准备的，不是给「想玩」准备的。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🏆 成就徽章 · 🧘 专注模式 · 📑 资料页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>🏆 成就徽章：</b>连续学习、掌握多少题这些会解锁徽章。「连击」是你连着答对了多少题 —— 断了会有点心疼，这就是它的作用。</p><p style=\"margin:0 0 6px\"><b>🧘 专注模式：</b>把界面上一切跟做题无关的东西都藏起来，只留题目。手机屏幕小、容易分心的时候开它。</p><p style=\"margin:0\"><b>📑 资料页：</b>做题之外的另一半 —— 记笔记、传照片、画思维导图。考点之间是有联系的，散着背不如画成一张图。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">👑 三个版本差在哪</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\">免费版能建 2 个题库、每个题库 15 道题，导入、挖空、做题、错题本、热力图都有；全能版全都能用 —— 题库题数不限，还多了分组、周报、朗读模式、专注模式、记忆复习、番茄钟、章节掌握度、导出 PDF 和题库文件这些。</p><p style=\"margin:0\">具体每一行长什么样，点设置页的「查看版本对比」看那张表 —— <b>那张表是照着代码写的，不是宣传话术。</b></p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🤖 让 AI 帮你整理资料（话术）</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">在「＋ 导入」页点 <b>📋 复制格式话术（给AI用）</b>，按你的情况勾几下，「一键复制」粘给 AI，再把资料贴在最下面。</p><div style=\"background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:var(--f13);line-height:1.8\"><b>🔴 用豆包的话，必须切到「工作模式」</b> —— 普通模式读不到你文档里的加粗、高亮、下划线。<br><br><b>🔴 AI 的输出里不许有加粗</b> —— 在这个工具里「<b>加粗 = 这里要挖空</b>」，要是整篇都加粗，导进去整篇就全乱了。<br><span style=\"color:var(--text-tertiary)\">（话术里已经替你写死了这一条，别删）</span><br><br><b>让它用 Word 发回</b> —— 聊天框可能把换行弄丢。<br><br><b>一道题有好几个口诀时，让它合成一行</b>（中间用「；」隔开）—— 工具一道题只认一个口诀，写成好几行的话只有最后一行留得下。</div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📐 数学 / 化学公式</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">题里有公式（数学、化学、物理那种）时，工具能把它们<b>画成书本上的样子</b>，导出的 PDF 里也是。<br>第一次遇到公式会问你要不要下载「公式引擎」：<b>约 660KB，装一次一直能用</b>，<b>下载那一次要联网</b>，之后离线也能看。<br>不想要的话：<b>设置 → 关于 → 📐 数学公式 → 显示源码</b>（那就跟以前一样显示 源码）。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📤 把题库发给别人要注意</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">如果对方<b>没装公式引擎</b>，他看到的公式会是<b>源码</b>（一串带斜杠的字）—— 这是正常的，不是工具坏了。<br>还有一个：<b>直接把 Word 拖进工具</b>时，只有「<b>加粗</b>」会变成挖空，<b>高亮和下划线会被丢掉</b>。<br>想用高亮/下划线，就得走上面那条「让 AI 整理」的路。</p>","full":"<p style=\"margin:0 0 14px;color:var(--text-secondary);font-size:var(--f13)\">这里是<b>「想做什么 → 怎么走」</b>。不讲按钮长什么样（去「🔘 按钮功能」），也不讲原理（去「🧩 功能介绍」）。</p><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🔰 第一次用：从零到做完第一轮</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>1.</b> 打开「📚 题库」页 → 点「＋ 新建题库」，起个名字（比如「教资科二」）</p><p style=\"margin:0 0 4px\"><b>2.</b> 点「📥 导入」。手上已经有整理好的文字就直接粘；没有的话先点「复制格式话术」发给 AI</p><p style=\"margin:0 0 4px\"><b>3.</b> 导入后会先出一页「预检」。上面会写「一共 N 道题」，还有红块黄块提示哪些行有问题 —— <b>先看一眼再点确认</b></p><p style=\"margin:0 0 4px\"><b>4.</b> 想自己挖空：点题库页的「✏️ 编辑挖空」，用手指点你想遮住的字就行</p><p style=\"margin:0 0 4px\"><b>5.</b> 回题库页点「▶ 开始练习」→ 设置这一轮做几道题、什么顺序 → 开始</p><p style=\"margin:0\"><b>6.</b> 做完会出结算页，告诉你对了几道。答错的题自动进错题本</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📚 导入 & 题库管理</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>想导入粘贴的文字 / TXT：</b>题库页 → 📥 导入 → 把文字粘进去 → 看预检 → 确认</p><p style=\"margin:0 0 4px\"><b>想导入 Word / PDF：</b>同一入口，选文件就行。<b>PDF 是扫描件的话</b>，让它转成文字再导，识别不出来</p><p style=\"margin:0 0 4px\"><b>别人发来的「题库文件」：</b>还是这个入口 —— 导入页点「📂 上传」选中那个文件，会自动认出来。永远是新建一个题库，不会盖掉你已有的</p><p style=\"margin:0 0 4px\"><b>想让 AI 帮你整理：</b>点「复制格式话术」→ 按你的情况勾几下、一键复制 → 发给 AI → 把 AI 回的内容粘进导入框</p><p style=\"margin:0 0 4px\"><b>预检页那三种块是什么意思：</b>统计栏是「几个大点 / 几道题 / 几处挖空」；<b>红块</b>＝这些行一定会被丢掉（写错了标记）；<b>黄块</b>＝它猜你可能漏写了标记（机器猜的，你可以不管）</p><p style=\"margin:0 0 4px\"><b>想把两个题库并成一个：</b>题库页 → 🔀 合并 → 选两个 → 有重复题它会问你要保留哪边</p><p style=\"margin:0\"><b>想把题库发别人 / 换手机：</b>题库页 → 📤 导出 → 📦 导出题库文件（只发这一个题库，可以选带不带你的做题痕迹）；整机数据搬家用设置页的「导出备份文件」</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📖 浏览 & 找题</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>只想翻着看，不做题：</b>进「📖 浏览」页，它就是干这个的</p><p style=\"margin:0 0 4px\"><b>只看某一类题：</b>用筛选那排按钮 —— 全部 / 收藏 / 口诀 / 错题；另一排能按章节或标签筛，两排可以叠着用（比如「第三章 + 收藏的」）</p><p style=\"margin:0 0 4px\"><b>找一道具体的题：</b>题库页顶上那个搜索框是<b>搜全部题库</b>；浏览页里的搜索只搜当前题库</p><p style=\"margin:0\"><b>把题导出来打印：</b>浏览页 → 筛好 → 📤 导出。能导「题目卷」和「挖空练习卷」两种（全能版）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📝 刷题</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>开始一轮：</b>「📝 做题」页上面那一屏就是设置 —— 做几道、什么顺序、要不要限时、要不要隐藏题目，选完点开始</p><p style=\"margin:0 0 4px\"><b>填完一题：</b>点「检查」判对错。不会做？点「👁 看答案」直接看</p><p style=\"margin:0 0 4px\"><b>想让手机念给你听：</b>设置里开朗读。全能版还能选「念题 / 念答案 / 都念」</p><p style=\"margin:0 0 4px\"><b>做到一半有事要走：</b>直接走就行，下次打开还在这一轮（番茄钟开着的话会自动暂停）</p><p style=\"margin:0\"><b>觉得界面太乱：</b>开「专注模式」，只留题目</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🍅 番茄钟怎么用</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>在哪开：</b>🍅 番茄乐园里那颗番茄点一下就开。时长可以在设置页改，也可以在番茄乐园里点快捷键（专注 10 / 15 / 25 / 45 分钟，休息 1 / 3 / 5 / 10 分钟），或者自己填一个数</p><p style=\"margin:0 0 4px\"><b>能设多长：</b>专注 <b>10～180 分钟</b>（默认 25），休息 <b>1～30 分钟</b>（默认 5）。休息填 0 就是不要休息</p><p style=\"margin:0 0 4px\"><b>一轮走完会怎样：</b>收 1 个番茄。配了休息就先自动进休息；休息结束（没配休息的就是一轮刚完）会<b>停下来</b>，弹一张小卡片问你下一轮要多少分钟，你选好才开下一轮</p><p style=\"margin:0 0 4px\"><b>不会自己偷偷接着开</b> —— 想换时长随时换</p><p style=\"margin:0\"><b>休息时秒表会停</b> —— 就是上面「⏱ 学习时长是怎么算的」那条，正常的</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📊 看学习数据</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>看今天做了多少：</b>首页那条进度 / 设置页 →「今日学习摘要」</p><p style=\"margin:0 0 4px\"><b>看这周做得怎么样：</b>设置页 →「📊 学习周报」</p><p style=\"margin:0 0 4px\"><b>看有没有断卡：</b>设置页的🔥热力图，最近 12 周一片格子，颜色越深做得越多</p><p style=\"margin:0\"><b>看哪一章还没背下来：</b>浏览页 → 章节掌握度（要全能版）</p><p style=\"margin:8px 0 4px\"><b>几个数各自怎么算：</b></p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>总掌握率 / ✅ 已掌握 / ✅ 本周掌握</b> —— 按「记忆复习」走到最后一档的题算（详见「🧩 功能介绍 → 🧠 记忆复习」）。「本周掌握」只数本周练过的那些</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>今日做题 / 本周做题数</b> —— 只算做完了一轮的题。做一半退出的不算（但填过字的那几道下次不会再抽到）</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>📱 切屏</b> —— 练习当中切走屏幕的次数（查个单词、回个消息都算）。休息时切走不算</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>🍅 本周番茄数</b> —— 这一周番茄钟收的番茄。用兑换码换来的、幸运掉落的，不算</p><p style=\"margin:0 0 4px;padding-left:12px\">· <b>⭐ 累计收藏</b> —— 收藏夹里一共多少题，不是本周的（所以它只会涨或不变）</p><p style=\"margin:8px 0 0\"><b>⏱ 学习时长是怎么算的：</b>只算你真在做题的时间 —— 切走、切到别的页、番茄钟休息都不算。（详细解释见「🧩 功能介绍 → ⏱ 学习时长是怎么算的」）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">❌ 错题怎么复习</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>答错的题会自己进错题本</b>，不用手动加</p><p style=\"margin:0 0 4px\"><b>只练错题：</b>做题设置页里选「复习优先」或在复习页点开错题那组</p><p style=\"margin:0 0 4px\"><b>做对了但想再确认：</b>做题时点「❌ 加错题」也能手动扔进去</p><p style=\"margin:0\"><b>从错题本拿掉：</b>在复习页那道题上点「✕ 移除」</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🧠 记忆复习怎么用（要全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>先打开它：</b>设置 → 记忆复习 → 打开开关。<b>还要勾上「哪些题库参加记录」</b> —— 没勾的题库不记录</p><p style=\"margin:0 0 4px\"><b>然后正常做题就行：</b>答对答错都会自动记，不用额外操作</p><p style=\"margin:0 0 4px\"><b>想看今天该复习哪几道：</b>复习页 → 点开标着「今天」的那一档 → 开始练</p><p style=\"margin:0 0 4px\"><b>题太多一次做不完：</b>没事，超出的会自动顺延到明天，不会丢</p><p style=\"margin:0 0 4px\"><b>某道题已经会了：</b>在那道题上点「✅ 我记住了」。想让它明天再问：「⏰ 明天再练」</p><p style=\"margin:0 0 4px\"><b>觉得复习太频繁 / 太慢：</b>设置 → 记忆复习 → 学习节奏，可以选「轻松 1/3/7/15 天」「标准 1/2/4/7/15/30 天」「加强 1/2/3/5/8/12/20/30 天」，也可以自己填天数</p><p style=\"margin:0 0 4px\"><b>想彻底清掉某道题的记录：</b>那道题右边的 🗑 —— <b>只删记录，题目还在题库里</b></p><p style=\"margin:0\"><b>想印成纸质的：</b>设置 → 记忆复习 → 「🖨️ 打印复习题」—— 想印哪一档、印多少题、印哪个题库，点进去自己选</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⭐ 收藏 & 🔍 搜索</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>收藏一道题：</b>做题时点「⭐」。收藏的题会在复习清单里单列一组</p><p style=\"margin:0 0 4px\"><b>只练收藏的：</b>做题设置里选「收藏优先」，或在浏览页筛「⭐ 收藏」</p><p style=\"margin:0\"><b>搜一道题在哪：</b>题库页顶上的框搜全部题库；浏览页里的框只搜当前题库</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚙️ 设置 & 数据安全</h4><div style=\"background:#fff5f5;border:1px solid #fcc;border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>⚠️ 最重要的一条：养成备份习惯。</b>数据存在这台设备的浏览器里，清数据、换手机、卸载浏览器都可能丢。没有备份 = 赌运气。</p><p style=\"margin:0 0 4px\"><b>怎么备份：</b>设置页 →「📤 导出备份文件」→ 存到电脑 / 网盘 / 微信收藏</p><p style=\"margin:0 0 4px\"><b>发给别人 / 换设备：</b>优先用「导出备份文件」，<b>别用备份码</b> —— 备份码是长文字，经过微信会掉字符，对方导不进去备份码是一长串文字，经过微信、QQ 转发时里面的「+」会被自动改成空格，对方就导不进去了 —— 文件不会这样</p><p style=\"margin:0 0 4px\"><b>怎么恢复：</b>设置页 →「📥 从备份恢复」→ 选那个文件。如果两边都有数据，它会列出来哪些题重复、让你选保留哪边</p><p style=\"margin:0 0 4px\"><b>只想清记录不清题库：</b>设置页 →「🗑 清理空间」</p><p style=\"margin:0\"><b>怎么换主题色：</b>设置页 → 主题颜色（不同版本能选的数量不一样）</p><p style=\"margin:8px 0 4px;border-top:1px dashed var(--border);padding-top:8px\"><b>数据到底存在哪：</b>题库、错题、设置存在浏览器的 <b>localStorage</b> 里；笔记和上传的照片存在 <b>IndexedDB</b>（浏览器自带的数据库）里。都不上传，完全离线可用。</p><p style=\"margin:0 0 4px\"><b>能存多少题：</b>浏览器给的空间大概等于 250 万字，换算成题目大约 <b>2 万～5 万道</b> —— 日常刷题够用。<b>能存多少题：</b>存储上限大约 <b>5 MB</b>（纯文本），约等于 250 万字，换算成题目大约 <b>2 万～5 万道题</b> —— 日常刷题完全够用。设置页顶上能看到现在用了多少。</p><p style=\"margin:0\"><b>iPhone 要特别注意：</b>iOS 的 Safari 在「清除网站数据」时，上面那两处会被一起清空 —— 这是 iPhone 用户最容易丢数据的一条路。所以<b>至少每周导出一份备份</b>存到电脑或网盘。</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📑 资料页（要全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>记一条笔记：</b>资料页 →「＋ 新建笔记」</p><p style=\"margin:0 0 4px\"><b>把书上的图拍下来：</b>「📷 上传照片（拍照/相册）」</p><p style=\"margin:0 0 4px\"><b>画一张思维导图：</b>进笔记 →「🧠 导图」→ 点节点可以 ➕ 加子节点、🗑 删节点、📸 单独导出这一支</p><p style=\"margin:0\"><b>让 AI 帮你搭骨架：</b>「🤖 AI话术」复制一段话发给 AI，把它回的贴进「📥 导入大纲」</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🤖 配合 AI 使用</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>整理题目：</b>题库页 / 导入页 →「复制格式话术」→ 勾几下、复制发给 AI → 把结果粘回导入框</p><p style=\"margin:0 0 4px\"><b>手上是 Word / PDF / 图片：</b>在话术里把「资料是什么形式」选成 Word/PDF 或照片，再让 AI 读完发一份 Word 回来</p><p style=\"margin:0 0 4px\"><b>整理笔记 / 导图：</b>资料页 →「🤖 AI话术」</p><p style=\"margin:0\"><b>话术里的要求是给 AI 看的</b>，你不用管，也别删 —— 删了它就容易偷懒、漏段落</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🖥️ 使用环境</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>手机 / 平板 / 电脑都能用</b>，建议用 Chrome、Edge、Safari 这些主流浏览器</p><p style=\"margin:0 0 4px\"><b>可以「装到桌面」</b>：用浏览器打开后，菜单里选「添加到主屏幕」，之后点图标就能像 App 一样打开，还能离线用</p><p style=\"margin:0\"><b>微信里直接点开可能功能不全</b> —— 右上角选「在浏览器中打开」再用</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📋 免责说明</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 4px\">这是个纯本地的学习工具，题目和学习记录都存在你自己的设备上，<b>不会上传到任何服务器</b>。</p><p style=\"margin:0 0 4px\">也正因为这样，<b>数据丢了我也找不回来</b> —— 请一定养成定期导出备份的习惯。</p><p style=\"margin:0\">工具只是帮你把题刷起来，能不能考过还得靠你自己。祝顺利。</p><p style=\"margin:6px 0 0\">· 📕 小红书：2750492576</p><p style=\"margin:2px 0 0\">购买后可联系获取最新版本，后续会不定期更新新功能。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🤖 「复制格式话术（给AI用）」怎么用</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">在「＋ 导入」页点那颗按钮，会弹出一串选择题（资料是什么形式、用哪种模式、哪些地方要挖空、题目怎么定…）。勾好点「📋 一键复制话术」，粘给 AI，再把资料贴在最下面。</p><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">· <b>它按你勾的生成，没勾的规则不会出现</b> —— 话术越短，AI 越不容易被无关规则带跑。<br>· 底部还有一颗 <b>📋 旧格式话术</b>：给以前一直用「题目|答案|口诀」竖线写法的老用户。<br>· 勾过的选项<b>会记住</b>，下次打开还是上次那套。</p><div style=\"background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:var(--f13);line-height:1.8\"><b>🔴 三条最要紧的：</b><br>1. <b>用豆包必须切「工作模式」</b> —— 普通模式读不到文档里的加粗 / 高亮 / 下划线。<br>2. <b>输出里不许有加粗</b> —— 工具里「加粗 = 要挖空」，整篇加粗就整篇乱（这条话术里已经写死）。<br>3. <b>让它用 Word 文档发回</b> —— 聊天框可能把换行弄丢。<br><span style=\"color:var(--text-tertiary)\">话术里都替你写好了，不用自己记；但别顺手删掉。</span></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📐 数学公式（公式引擎）</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">题里有数学 / 化学 / 物理公式时，工具能画成书本上的样子，<b>导出的 PDF 里也是</b>。<br>· 第一次遇到公式会问你要不要下载「公式引擎」：<b>约 660KB</b>，<b>装一次一直能用</b>。<br>· <b>下载那一次要联网</b>；下过一次之后就进了缓存，<b>离线也能看</b>。<br>· <b>不考数学的人一个字节都不用下</b> —— 只有题库里真出现公式才会去拿。<br>· 想关掉：<b>设置 → 关于 → 📐 数学公式 → 显示源码</b>。<br>· <b>第一次打开慢</b>就是因为它 —— 只在第一次（或更新后第一次）慢，之后就快。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📤 分享给别人 / 直接拖 Word</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">· 对方<b>没装公式引擎</b> → 他看到的公式是<b>源码</b>，不是工具坏了。<br>· <b>直接把 Word 拖进工具</b> → 只有「<b>加粗</b>」会变成挖空；<b>高亮和下划线会被丢掉</b>（Word 解析库的默认行为）。想用它们就走「让 AI 整理」那条路。<br>· 万一 AI 把整篇都加粗了：工具会自动认出来（≥85% 的段都加粗就判定「这不是挖空标记」），把加粗去掉当普通文字 —— 不会把整篇搞乱。</p>"};
 // 🆕 v190：加了第 6 个页签「📌 小提示」，**放第一个**（用户 2026-09-29 拍板「第一个」）。
 //   用户原话：「我是指小提示　**和这些是同级**　改成小提示就 ok」—— 它不是一个浮在上面的块，
 //   是跟那 5 个**平级**的页签。
@@ -15783,7 +15904,7 @@ function backToPracticeSetup() {
 let browseState = null; // { bankId, bankName, cards, index, view: 'list'|'detail' }
 
 // 🆕 v176 ①：「📊 章节掌握度」那个标签按钮，**只有全能版才画**（用户 2026-09-19 拍板「甲案」＝
-//    免费版/基础版**整个标签页都不出现**，不是灰的+提示）。
+//    免费版**整个标签页都不出现**，不是灰的+提示）。
 //    ⚠️ 抽成函数是**必需**的，不是好看：这个按钮在**两个地方各拼了一份 HTML**
 //       （下面 renderBrowseStart 的模板串，和 changeBrowseBank 里那个巨型单行串）——
 //       档位判断要是各写一份，以后加规则必漏一处。
@@ -18101,9 +18222,10 @@ function renderSettings() {
   const s = appData.settings;
   const density = s.density || 'low';
 
-  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', coral: '珊瑚橘', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝', snow: '素白', amber: '琥珀金', sakura: '樱粉', sky: '天蓝', oat: '燕麦', sage2: '灰绿', dusk: '暮紫', wisteria: '紫藤', indigo: '靛青', mustard: '芥黄', turquoise: '松石', seapine: '海松', mint: '薄荷', butter: '奶杏', periwinkle: '藤风', iris: '鸢尾', mauve: '暖紫', 'sakura-sky': '樱天', 'purple-green': '紫青', 'purple-gold': '紫金', 'navy-orange': '藏橙' };
-  var colors = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'coral', 'peach', 'lavender', 'mist', 'snow', 'amber', 'sakura', 'sky', 'oat', 'sage2', 'dusk', 'wisteria', 'indigo', 'mustard', 'turquoise', 'seapine', 'mint', 'butter', 'periwinkle', 'iris', 'mauve', 'sakura-sky', 'purple-green', 'purple-gold', 'navy-orange'];
-  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', coral: '#f0755a', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', dusk: '#6b5b7a', wisteria: '#7b6ba8', indigo: '#3f51b5', mustard: '#d4a030', turquoise: '#2eb8a0', seapine: '#3c6e71', mint: '#98d4b8', butter: '#f0dcb0', periwinkle: '#acb8d8', iris: '#656db2', mauve: '#b6668f', 'sakura-sky': '#6db8d8', 'purple-green': '#34b85a', 'purple-gold': '#d4952a', 'navy-orange': '#e08050' };
+  var colorNames = { teal: '青绿', purple: '浅紫', blue: '浅蓝', pink: '粉色', green: '浅绿', yellow: '浅黄', bw: '黑白', cream: '护眼·米黄', sage: '护眼·豆沙绿', ink: '墨染', moss: '苔青', zen: '枯山水', bamboo: '竹青', wood: '暖木棕', ocean: '深海蓝', peach: '蜜桃', lavender: '薰衣草', mist: '雾蓝', snow: '素白', amber: '琥珀金', sakura: '樱粉', sky: '天蓝', oat: '燕麦', sage2: '灰绿', dusk: '暮紫', wisteria: '紫藤', indigo: '靛青', mustard: '芥黄', seapine: '海松', mint: '薄荷', butter: '奶杏', periwinkle: '藤风', iris: '鸢尾', mauve: '暖紫' };
+  // 🔧 v197：用户删了 6 个主题色（珊瑚橘/松石/樱天/紫青/紫金/藏橙）→ 40 色变 34 色
+  var colors = ['teal', 'purple', 'blue', 'pink', 'green', 'yellow', 'bw', 'cream', 'sage', 'ink', 'moss', 'zen', 'bamboo', 'wood', 'ocean', 'peach', 'lavender', 'mist', 'snow', 'amber', 'sakura', 'sky', 'oat', 'sage2', 'dusk', 'wisteria', 'indigo', 'mustard', 'seapine', 'mint', 'butter', 'periwinkle', 'iris', 'mauve'];
+  var colorBgs = { teal: '#0891b2', purple: '#9333ea', blue: '#3b82f6', pink: '#ec4899', green: '#22c55e', yellow: '#eab308', bw: '#555', cream: '#c8965c', sage: '#6b9e6b', ink: '#4a4a4a', moss: '#5a7d5a', zen: '#b8a089', bamboo: '#7a9a6a', wood: '#b8956a', ocean: '#1e3a5f', peach: '#f0a58a', lavender: '#b8a9d4', mist: '#a0b4c8', snow: '#9e9e9e', amber: '#d4952a', sakura: '#e8a0b4', sky: '#7cb8e0', oat: '#c4a882', sage2: '#8a9e8a', dusk: '#6b5b7a', wisteria: '#7b6ba8', indigo: '#3f51b5', mustard: '#d4a030', seapine: '#3c6e71', mint: '#98d4b8', butter: '#f0dcb0', periwinkle: '#acb8d8', iris: '#656db2', mauve: '#b6668f' };
 
   c.innerHTML =
     // 设置页顶部 header（开关打开时显示头像）
@@ -18191,11 +18313,8 @@ function renderSettings() {
       '<div style="font-size:var(--f12);font-weight:700;color:var(--text-secondary);margin-bottom:2px">💾 备份</div>' +
       '<button class="btn btn-primary btn-block" onclick="shareBackupFile()" style="font-size:var(--f15)">📤 导出备份文件</button>' +
       '<div style="font-size:var(--f12);color:var(--text-tertiary);text-align:center;margin:-4px 0 4px">📱 手机分享 &nbsp;|&nbsp; 💻 电脑下载</div>' +
-      '<div style="display:flex;border:2px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:6px">' +
-        '<button onclick="copyBackup()" style="flex:1;border:none;background:var(--bg-card);color:var(--text);padding:10px 6px;font-size:var(--f14);cursor:pointer;min-height:44px">📋 复制备份码</button>' +
-        '<div style="width:1px;background:var(--border);align-self:stretch"></div>' +
-        '<button onclick="shareBackupCode()" style="flex:1;border:none;background:var(--bg-card);color:var(--text);padding:10px 6px;font-size:var(--f14);cursor:pointer;min-height:44px">📤 分享备份码</button>' +
-      '</div>' +
+      // 🔧 v197：用户拍板「复制备份码不需要 保留一个分享备份码就行」→ 左按钮删掉，分享备份码整行一颗
+      '<button onclick="shareBackupCode()" style="width:100%;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);padding:10px 6px;font-size:var(--f14);cursor:pointer;min-height:44px;margin-bottom:6px">📤 分享备份码</button>' +
       '<div style="font-size:var(--f11);color:var(--text-tertiary);text-align:center;margin:-2px 0 6px">可粘贴/分享到微信或备忘录保存</div>' +
       // 📥 恢复
       '<div style="font-size:var(--f12);font-weight:700;color:var(--text-secondary);margin-bottom:2px;margin-top:4px">📥 恢复</div>' +
@@ -18247,9 +18366,8 @@ function renderSettings() {
       var trialMin = Math.floor(trialRemaining / 60);
       var trialSec = trialRemaining % 60;
       // 走 trialUsed()：自带批次号判断，改 TRIAL_BATCH 就能让所有人恢复试用机会
-      var trialUsedBasic = trialUsed('basic');
+      // 🆕 v197：只剩全能版试用一种（原基础版试用已删）
       var trialUsedPro = trialUsed('pro');
-      var bothTrialsUsed = trialUsedBasic && trialUsedPro;
       var dm8 = (appData.settings || {}).darkMode;
       var html = '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'activation\')"><span>⭐ 激活与版本</span><span class="section-arrow" id="arrow_activation">▲</span></div>' +
         '<div class="section-body" id="body_activation">' +
@@ -18257,7 +18375,7 @@ function renderSettings() {
           '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">' +
             '<span style="font-size:var(--f32)">' + (TIER_EMOJI[tier] || '🆓') + '</span>' +
             '<div><div style="font-size:var(--f16);font-weight:700;color:var(--text)">当前版本：' + (TIER_NAMES[tier] || '免费版') + '</div>' +
-            '<div style="font-size:var(--f12);color:var(--text-secondary)">' + (isTrial ? '试用中 · 剩余 ' + trialMin + '分' + trialSec + '秒' : (trialExpired ? '试用已结束 · 正在恢复数据…' : (tier === 'free' ? (bothTrialsUsed ? '两个版本均已试用，喜欢请购买激活码' : '基础功能可用') : '已激活 · 永久使用'))) + '</div></div>' +
+            '<div style="font-size:var(--f12);color:var(--text-secondary)">' + (isTrial ? '试用中 · 剩余 ' + trialMin + '分' + trialSec + '秒' : (trialExpired ? '试用已结束 · 正在恢复数据…' : (tier === 'free' ? (trialUsedPro ? '试用已用过，喜欢请购买激活码' : '基础功能可用') : '已激活 · 永久使用'))) + '</div></div>' +
           '</div>' +
           checkExpiryWarning() +
           // （2026-09-16 续修第 7 轮）这里原来还挂着一块「📌 开发者留言」（长期挂着那句
@@ -18266,16 +18384,15 @@ function renderSettings() {
           //   ⚠️ **更新弹窗里那一块照旧保留**（用户：「其他地方都留着」）——
           //      那块走 version.json 的 `devNote`，是「每次更新都说一句」，跟这里不是一回事。
         '</div>';
-      // 试用按钮（2026-09-13 放开：基础版用户也能试用全能版）
+      // 试用按钮（🆕 v197：只剩「全能版试用」一种 —— 原「试用基础版」已删，用户 2026-10-07 拍板）
       if (!isTrial) {
-        var canTryBasic = (tier === 'free') && !trialUsedBasic;   // 只有免费版能试基础版
-        var canTryPro = (tier !== 'pro') && !trialUsedPro;        // 免费版 / 基础版 都能试全能版
-        if (canTryBasic || canTryPro) {
+        var canTryPro = (tier !== 'pro') && !trialUsedPro;        // 免费版可试一次全能版
+        if (canTryPro) {
           html += '<div style="display:flex;gap:8px;margin-bottom:12px">';
-          if (canTryBasic) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:var(--f13);font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial(&#39;basic&#39;)">🎁 试用基础版</button>';
-          if (canTryPro) html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#7C3AED;color:#fff;border:none;border-radius:8px;font-size:var(--f13);font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial(&#39;pro&#39;)">👑 试用全能版</button>';
+          html += '<button class="btn btn-sm" style="flex:1;min-height:40px;background:#7C3AED;color:#fff;border:none;border-radius:8px;font-size:var(--f13);font-weight:600;cursor:pointer" onclick="event.stopPropagation();startTrial(&#39;pro&#39;)">👑 试用全能版</button>';
           html += '</div>';
-          html += '<div style="font-size:var(--f11);color:var(--text-tertiary);text-align:center;margin-bottom:8px">' + Math.round(TRIAL_MS / 60000) + '分钟试用 · 每版本可各试用一次 · 无需激活码<br>🎁 试用期间最多导入 ' + TRIAL_MAX_BANKS + ' 个题库（题数不限），思维导图连你已有的一共 ' + TRIAL_MAX_NOTES + ' 篇，合并题库 ' + TRIAL_MAX_MERGES + ' 次<br>⚠️ 试用期间的改动，试用结束会清空</div>';
+          // 🆕 v197：灰字里加了用户要的那句建议（先把要导入的内容导入好再试用）
+          html += '<div style="font-size:var(--f11);color:var(--text-tertiary);text-align:center;margin-bottom:8px">' + Math.round(TRIAL_MS / 60000) + '分钟试用 · 无需激活码<br>🎁 试用期间最多导入 ' + TRIAL_MAX_BANKS + ' 个题库（题数不限），思维导图连你已有的一共 ' + TRIAL_MAX_NOTES + ' 篇，合并题库 ' + TRIAL_MAX_MERGES + ' 次<br>⚠️ 试用期间的改动，试用结束会清空<br>💡 小建议：先把要导入的题目/内容都导入好，再点试用 —— 试用只有 ' + Math.round(TRIAL_MS / 60000) + ' 分钟，别把时间花在导入上</div>';
         }
       }
       // 试用倒计时 + 「提前结束试用」按钮（2026-09-15 用户要求）
@@ -18288,7 +18405,7 @@ function renderSettings() {
           '</div>';
       }
       // 激活码输入（始终显示，方便测试和升级）
-      var upgradeHint = tier === 'free' ? '激活码请联系开发者获取' : tier === 'pro' ? '👑 已是最高版本 · 输入新码可重新激活或测试' : '已是' + TIER_NAMES[tier] + '，输入新码可升级';
+      var upgradeHint = tier === 'free' ? '激活码请联系开发者获取' : '👑 已是最高版本 · 输入新码可重新激活或测试';   // v197：只剩免费/全能两档
       html += '<div style="display:flex;gap:8px;margin-bottom:6px">' +
         '<input type="text" id="activateInput" placeholder=" " autocomplete="off" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:var(--f13);min-height:40px">' +
         '<button class="btn btn-primary btn-sm" onclick="var v=document.getElementById(&#39;activateInput&#39;).value;if(v)activateCode(v)" style="min-height:40px;padding:0 16px;font-size:var(--f14);white-space:nowrap">激活</button>' +
@@ -18328,14 +18445,14 @@ function renderSettings() {
         '<div class="setting-item"><div><div class="setting-label">点两边翻页</div><div class="setting-desc">做题时点题目卡片的左右两侧可以翻页；关掉就只能用底部的按钮（两种情况下，点到输入框都不会翻页）</div></div>' +
         '<label class="toggle"><input type="checkbox" id="tapFlipToggle"' + (s.tapFlip !== false ? ' checked' : '') + ' onchange="saveSetting(\'tapFlip\', this.checked)"><span class="slider"></span></label></div>' +
       // 椭圆挖空开关（v157 用户要求）：开了用空白椭圆圈，关了回到老样子的横线
-        // ⭕ 2026-09-16：椭圆挖空归**全能版**（用户清单）→ 免费版/基础版整行换成「需升级」提示行。
+        // ⭕ 2026-09-16：椭圆挖空归**全能版**（用户清单）→ 免费版整行换成「需升级」提示行。
       (function() {
         if (!hasFeature('ovalBlank')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">椭圆挖空</div><div class="setting-desc">需升级全能版解锁</div></div></div>';
         return '<div class="setting-item"><div><div class="setting-label">椭圆挖空</div><div class="setting-desc">挖空处用空白圈圈起来，圈的长短跟答案字数对应；关掉就是原来的横线</div></div>' +
         '<label class="toggle"><input type="checkbox" id="ovalBlankToggle"' + (s.ovalBlank ? ' checked' : '') + ' onchange="saveSetting(\'ovalBlank\', this.checked)"><span class="slider"></span></label></div>';
       })() +
       (function() {
-        if (!hasFeature('adaptiveDifficulty')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">自适应难度</div><div class="setting-desc">需升级基础版解锁</div></div></div>';
+        if (!hasFeature('adaptiveDifficulty')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">自适应难度</div><div class="setting-desc">需升级全能版解锁</div></div></div>';
         return '<div class="setting-item" style="margin-top:4px"><div><div class="setting-label">🧠 自适应难度</div><div class="setting-desc">连续答对3次自动提高挖空密度，连续答错2次自动降低</div></div>' +
           '<label class="toggle"><input type="checkbox" id="adaptiveToggle"' + (s.adaptiveDensity ? ' checked' : '') + ' onchange="saveSetting(\'adaptiveDensity\', this.checked)"><span class="slider"></span></label></div>';
       })() +
@@ -18365,7 +18482,7 @@ function renderSettings() {
       '<div class="setting-item"><div><div class="setting-label">朗读模式</div><div class="setting-desc" id="readModeVal">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + '</div></div>' +
         '<input type="hidden" id="readModeSelect" value="' + (s.readMode||'once') + '"><button class="btn btn-ghost btn-sm' + (hasFeature('readModeSelect') ? '' : ' locked') + '" id="readModePickBtn" onclick="showReadModePicker()" style="font-size:var(--f13);padding:6px 10px;min-width:120px;white-space:nowrap">' + ({once:'仅读一遍',loop:'循环朗读','auto-next':'自动下一题','three-times':'每题三遍'}[s.readMode||'once']) + ' ▾</button></div>' +
       (function() {
-        if (!hasFeature('voiceRatePitch')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc">需升级基础版解锁</div></div></div><div class="setting-item tier-locked-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc">需升级基础版解锁</div></div></div>';
+        if (!hasFeature('voiceRatePitch')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc">需升级全能版解锁</div></div></div><div class="setting-item tier-locked-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc">需升级全能版解锁</div></div></div>';
         return '<div class="setting-item"><div><div class="setting-label">朗读语速</div><div class="setting-desc" id="rateVal">' + (s.voiceRate || 0.9) + 'x</div></div>' +
           '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voiceRate || 0.9) + '" step="0.1" oninput="updateVoiceRate(parseFloat(this.value))" onchange="updateVoiceRate(parseFloat(this.value))"></div></div>' +
           '<div class="setting-item"><div><div class="setting-label">朗读音调</div><div class="setting-desc" id="pitchVal">' + (s.voicePitch || 1.0) + 'x</div></div>' +
@@ -18382,12 +18499,12 @@ function renderSettings() {
           colors.filter(function(clr) {
             var t = getTier();
             if (t === 'free') return FREE_COLORS.indexOf(clr) >= 0;
-            if (t === 'basic') return FREE_COLORS.indexOf(clr) >= 0 || BASIC_COLORS.indexOf(clr) >= 0;
+            // v197：原「基础版 = 免费8色＋再8色」那道已删；非免费 = 全部 40 色
             return true;
           }).map(function(clr) {
             return '<span class="color-dot' + (s.color === clr ? ' active' : '') + '" style="background:' + colorBgs[clr] + '" onclick="saveThemeColor(\'' + clr + '\')"></span>';
           }).join('') +
-          (function() { var t = getTier(); if (t === 'free') return '<span style="font-size:var(--f11);color:var(--text-tertiary);margin-left:4px">+32种颜色待解锁</span>'; if (t === 'basic') return '<span style="font-size:var(--f11);color:var(--text-tertiary);margin-left:4px">+24种颜色待解锁</span>'; return ''; })() +
+          (function() { var t = getTier(); if (t === 'free') return '<span style="font-size:var(--f11);color:var(--text-tertiary);margin-left:4px">+26种颜色待解锁</span>'; /* v197：+24种（原基础版）那档已删；+32 → +26（又删了 6 个主题色） */ return ''; })() +
         '</div></div>' +
       '<div class="setting-item"><div><div class="setting-label">字体大小</div><div class="setting-desc" id="fontVal">' + s.fontSize + 'px</div></div>' +
         '<div style="display:flex;align-items:center;gap:6px;min-width:120px;flex:1;max-width:180px"><span style="font-size:var(--f12);flex-shrink:0">A</span><input type="range" min="14" max="24" value="' + s.fontSize + '" step="1" oninput="updateFontSize(parseInt(this.value))" onchange="updateFontSize(parseInt(this.value))" style="flex:1;min-width:0"><span style="font-size:var(--f16);font-weight:700;flex-shrink:0">A</span></div></div>' +
@@ -18400,7 +18517,7 @@ function renderSettings() {
           '<label class="toggle"><input type="checkbox" id="avatarToggle"' + (s.showAvatar ? ' checked' : '') + ' onchange="toggleAvatar(this.checked)"><span class="slider"></span></label></div>';
       })() +
       (function() {
-        if (!hasFeature('focusMode')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">专注模式</div><div class="setting-desc">需升级基础版解锁</div></div></div>';
+        if (!hasFeature('focusMode')) return '<div class="setting-item tier-locked-item"><div><div class="setting-label">专注模式</div><div class="setting-desc">需升级全能版解锁</div></div></div>';
         return '<div class="setting-item"><div><div class="setting-label">🧘 专注模式</div><div class="setting-desc">练习时自动隐藏多余按钮，沉浸背书</div></div>' +
           '<label class="toggle"><input type="checkbox" id="focusModeToggle"' + (s.focusMode ? ' checked' : '') + ' onchange="saveSetting(\'focusMode\', this.checked)"><span class="slider"></span></label></div>';
       })() +
@@ -18429,12 +18546,11 @@ function renderSettings() {
 
     // 学习计划 section
     (function() {
-      // ⚠️ 这段现在**三个档位都走不到**：dailySummary 归免费版（2026-09-16 用户拍板），
-      //    而基础版 = 免费版的并集（见 tierHasFeature）、全能版恒真，所以 hasFeature 永远为真。
-      //    留着只是兜底（万一以后挪档）。
-      //    🐞 但它曾经**真的会走到**：改之前基础版只查 basic 那张表，dailySummary 不在里面，
-        //       于是基础版买家在设置页看到「学习计划 · 需升级基础版解锁」。
-      if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>学习计划 · 需升级基础版解锁</span></div></div>';
+      // ⚠️ 这段现在**两档都走不到**：dailySummary 归免费版（2026-09-16 用户拍板），
+      //    而全能版恒真（见 tierHasFeature）→ hasFeature 永远为真。留着只是兜底（万一以后挪档）。
+      //    🐞 历史：2026-09-16 之前它**真的会走到**（那时基础版只查 basic 那张表，
+      //       dailySummary 不在里面 → 基础版买家看到「需升级解锁」）—— 三档时代的老坑，v197 删基础版后彻底没了。
+      if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>学习计划 · 需升级全能版解锁</span></div></div>';
       var examDateVal = ((appData.settings || {}).examDate || '');
       var dailyTarget = (appData.settings || {}).dailyTarget || '';
       var suggestedDaily = '';
@@ -18573,7 +18689,7 @@ function renderSettings() {
     //    原来那一大坨统计内容**原样搬进**下面的 showTodaySummary()，这里只留标题 + 按钮。
     (function() {
       // ⚠️ 同上面「学习计划」那段：dailySummary 归免费版（2026-09-16），三个档位都走不到，留着兜底。
-      if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>今日学习摘要 · 需升级基础版解锁</span></div></div>';
+      if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>今日学习摘要 · 需升级全能版解锁</span></div></div>';
       return '<div class="section">' +
         '<div class="section-header section-title">' +
           '<span>📋 今日学习摘要</span>' +
@@ -18601,7 +18717,7 @@ function renderSettings() {
         '</div>' +
       '</div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:var(--f12);transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:var(--f13);cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:var(--f12)"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v196</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v197</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
       // 📲 2026-09-18 v166：用户在设置页找不到「怎么把工具存到桌面」的说明 → 关于最后一行加这个入口。
       //    点开走 showInstallGuide()（无延迟弹窗）。以后别的工具要加同一份 → 见 `新建文件夹/安装教程-可复用.md`。
@@ -20876,24 +20992,9 @@ async function makeBackupCode() {
   return 'U' + btoa(bin);
 }
 
-async function copyBackup() {
-  if (!hasFeature('shareFile')) { showToast('免费版不支持复制备份码，请升级版本'); return; }
-  if (trialBlocksBackup()) { showTrialExportBlocked(); return; }   // 试用期间不给带走
-  try {
-    showToast('正在生成备份码...');
-    const code = await makeBackupCode();
-    // 2026-09-16 统一到公共入口：原先的新接口被拒后**没有老接口兜底**，
-    //   直接掉到弹窗（弹窗其实挺好，但还是先试一次老接口再说）。
-    var copiedOk = await copyTextSafe(code, function() { showBackupDetailToast('✅ 备份码已复制到剪贴板'); });
-    if (copiedOk) {
-      appData.settings.lastBackup = Date.now();
-      saveData(appData);
-      return;
-    }
-    showBackupModal(code);
-  } catch(e) { showToast('导出失败'); }
-}
-
+// 🔧 v197（2026-10-07 用户拍板：「复制备份码不需要」）：`copyBackup()` **整个删了** ——
+//   设置里那颗按钮 + 结算页那行小字都撤了。它的「复制不上就把码摆眼前」兜底链
+//   在「📤 分享备份码」里还留着（shareBackupCode → 复制失败 → showBackupModal），没丢。
 function showBackupModal(code) {
   var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = 'backupModal';
   // ⚠️ 2026-09-17 续修第 8 轮：遮罩层也关掉入场动画 —— 它一动（pageIn 的 translateY(10px)），
