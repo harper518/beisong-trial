@@ -13,7 +13,7 @@
      而且不能用透明底（苹果会把透明的地方填成黑色）。现在是草地绿实色底。 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-<title>挖空背诵工具 v199 · 小阮出品</title>
+<title>挖空背诵工具 v200 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -1450,7 +1450,7 @@ function totalCardCount(exceptBankId) {
   });
   return n;
 }
-var APP_VERSION = 199;
+var APP_VERSION = 200;
 
 // ==== 开发者的话（写死在 HTML 里的兜底文案）====
 // 显示优先级：云端(本次启动拉到了) → 本地 authorNote → 这段兜底
@@ -14491,9 +14491,25 @@ function foldLongBlanks() {
 }
 
 // 🆕 v197：转屏 / 改窗口宽度 → 折点要跟着新宽度重算（重渲染一遍，答过的字自动带回来）
+// 🐞 2026-10-12 v200 修（买家报「荣耀手机点挖空一闪一闪、打不了字」）：
+//   ⚠️ 安卓上**键盘弹出/收起、地址栏收起/展开都会触发 resize**（它们只改高度、不改宽度）。
+//   原来这里一律重绘 → 点一下输入框 → 键盘弹出 → resize → 250ms 后整卡重绘 →
+//   输入框被销毁、焦点丢了 → 键盘收起 → 又 resize → 又重绘…… 来回闪，字打不进去。
+//   两个闸门（用户 2026-10-12 拍板「甲」＋附加保险 ❓）：
+//     ① 只在**宽度真的变了**（转屏 / 电脑拖窗口）才重算 —— 键盘和地址栏不改宽度，直接滤掉；
+//     ② 正有输入框聚焦（在打字）时跳过 —— 绝不重建用户正点着的那个框。
+//   ⚠️ 宽度阈值 2px：个别浏览器改尺寸时会抖 1px，别让抖一下也触发重绘。
+//   ⚠️ 被 ② 跳过时 `_foldLastW` **照旧更新** —— 不然接下来任意一次高度变化
+//      又会因为"宽度跟上次记录对不上"而补一次重绘，焦点一样会被打掉。
 var _foldResizeTimer = null;
+var _foldLastW = window.innerWidth;
 window.addEventListener('resize', function () {
   if (!document.getElementById('cardText')) return;
+  var _w = window.innerWidth;
+  if (Math.abs(_w - _foldLastW) <= 2) return;   // ① 只有高度变了（键盘/地址栏）→ 不重绘
+  _foldLastW = _w;
+  var _ae = document.activeElement;
+  if (_ae && _ae.classList && _ae.classList.contains('blank-input')) return;   // ② 在打字 → 这次先不动
   clearTimeout(_foldResizeTimer);
   _foldResizeTimer = setTimeout(function () {
     try { saveCurrentAnswers(); renderPracticeCard(); } catch (e) {}
@@ -18988,7 +19004,7 @@ function renderSettings() {
         '</div>' +
       '</div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:var(--f12);transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:var(--f13);cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:var(--f12)"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v199</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v200</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
       // 📲 2026-09-18 v166：用户在设置页找不到「怎么把工具存到桌面」的说明 → 关于最后一行加这个入口。
       //    点开走 showInstallGuide()（无延迟弹窗）。以后别的工具要加同一份 → 见 `新建文件夹/安装教程-可复用.md`。
