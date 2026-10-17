@@ -13,7 +13,7 @@
      而且不能用透明底（苹果会把透明的地方填成黑色）。现在是草地绿实色底。 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-<title>挖空背诵工具 v210 · 小阮出品</title>
+<title>挖空背诵工具 v215 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -2108,7 +2108,7 @@ function totalCardCount(exceptBankId) {
   });
   return n;
 }
-var APP_VERSION = 210;
+var APP_VERSION = 215;
 
 // ==== 开发者的话（写死在 HTML 里的兜底文案）====
 // 显示优先级：云端(本次启动拉到了) → 本地 authorNote → 这段兜底
@@ -10976,6 +10976,605 @@ async function exportBankShareFile(bankId, withTraces) {
 }
 
 // ==================== 导入 ====================
+// ==================== 🤖 AI 整理（管理员专属，v211） ====================
+// 谁能用：输入过管理码（isAdmin()）的账号。没输管理码 → 导入页/设置页/预览页都看不到入口。
+// Key 存本机 localStorage（不进 appData，所以不进备份、不上云）；换设备要重新填一次。
+var AI_CFG_LS = 'beishu_ai_cfg_v1';
+var AI_API_BASE = 'https://api.deepseek.com';
+var AI_SYS_PROMPT = '你是一个严格按格式整理资料的中文助手。只输出整理后的内容，不要任何解释、开场白、结束语或代码块。';
+var _aiAbort = null;
+var _aiPendingCtx = null;
+
+function aiCfgLoad() {
+  var d = {
+    key: '', model: 'deepseek-chat', autoRepair: true, enabled: true, compactPrompt: true,
+    stats: { runs: 0, apiCalls: 0, prompt: 0, completion: 0, lastPrompt: 0, lastCompletion: 0, lastAt: 0 },
+    balance: null, alertBase: null, nextAlert: 2, lastBalance: null, alertCurrency: ''
+  };
+  try {
+    var raw = localStorage.getItem(AI_CFG_LS);
+    var o = raw ? JSON.parse(raw) : null;
+    if (!o || typeof o !== 'object') return d;
+    var out = {};
+    for (var k in d) out[k] = (o[k] !== undefined ? o[k] : d[k]);
+    out.key = typeof o.key === 'string' ? o.key : '';
+    out.model = (typeof o.model === 'string' && o.model) ? o.model : 'deepseek-chat';
+    out.autoRepair = !(o.autoRepair === false);
+    out.enabled = !(o.enabled === false);
+    out.compactPrompt = !(o.compactPrompt === false);
+    var s = (o.stats && typeof o.stats === 'object') ? o.stats : {};
+    out.stats = {
+      runs: +s.runs || 0, apiCalls: +s.apiCalls || 0,
+      prompt: +s.prompt || 0, completion: +s.completion || 0,
+      lastPrompt: +s.lastPrompt || 0, lastCompletion: +s.lastCompletion || 0,
+      lastAt: +s.lastAt || 0
+    };
+    out.balance = (o.balance && typeof o.balance === 'object') ? o.balance : null;
+    out.alertBase = (typeof o.alertBase === 'number' && isFinite(o.alertBase)) ? o.alertBase : null;
+    out.nextAlert = (typeof o.nextAlert === 'number' && o.nextAlert > 0) ? o.nextAlert : 2;
+    out.lastBalance = (typeof o.lastBalance === 'number' && isFinite(o.lastBalance)) ? o.lastBalance : null;
+    out.alertCurrency = typeof o.alertCurrency === 'string' ? o.alertCurrency : '';
+    return out;
+  } catch (e) {
+    return d;
+  }
+}
+function aiCfgSave(patch) {
+  var cur = aiCfgLoad();
+  var next = {};
+  for (var k in cur) next[k] = cur[k];
+  if (patch) { for (var k2 in patch) { if (Object.prototype.hasOwnProperty.call(patch, k2)) next[k2] = patch[k2]; } }
+  try { localStorage.setItem(AI_CFG_LS, JSON.stringify(next)); } catch (e) {}
+  return next;
+}
+function aiCfgSet(k, v) {
+  var p = {}; p[k] = v;
+  aiCfgSave(p);
+  if (k === 'enabled' && v === false && _aiAbort) { try { _aiAbort.abort(); } catch (e) {} }
+  var st = document.getElementById('aiCfgStatus');
+  if (st) {
+    st.style.color = 'var(--text-tertiary)';
+    st.textContent = '已保存';
+    setTimeout(function () { if (st) st.textContent = ''; }, 1500);
+  }
+}
+function aiSetEnabled(v) {
+  aiCfgSave({ enabled: !!v });
+  if (!v && _aiAbort) { try { _aiAbort.abort(); } catch (e) {} }
+  renderSettings();   // 重渲染后由 renderSettings 里的 60 秒缓存自动决定要不要查余额，避免连着发两次
+}
+function aiToggleKeyVisible() {
+  var el = document.getElementById('aiKeyInput');
+  if (!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+function _aiAttr(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function _aiSectionHtml() {
+  if (!isAdmin()) return '';
+  var cfg = aiCfgLoad();
+  var offDis = cfg.enabled ? '' : ' disabled';
+  return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'ai\')"><span>🤖 AI 整理（管理员）</span><span class="section-arrow" id="arrow_ai">▲</span></div>' +
+    '<div class="section-body" id="body_ai"><div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">' +
+      '<div style="font-size:12px;color:var(--text-secondary);line-height:1.7">填你自己的 DeepSeek Key，就能在导入页直接整理资料。<b>Key 只存在这台设备，不进备份、不上云。</b></div>' +
+      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);min-height:36px;margin-top:2px"><input type="checkbox" id="aiEnabled"' + (cfg.enabled ? ' checked' : '') + ' onchange="aiSetEnabled(this.checked)"> 启用 AI 整理</label>' +
+      '<div style="font-size:11px;color:var(--text-tertiary);line-height:1.6;margin-top:-4px">关掉后导入页不显示 AI 按钮、不发任何请求（余额也不查）；Key 仍保留。</div>' +
+      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);min-height:36px"><input type="checkbox" id="aiCompactPrompt"' + (cfg.compactPrompt ? ' checked' : '') + ' onchange="aiCfgSet(\'compactPrompt\', this.checked)"> 简洁话术（省 token，默认开）</label>' +
+      '<div style="font-size:11px;color:var(--text-tertiary);line-height:1.6;margin-top:-4px">系统规则固定，改选项也不换前缀（DeepSeek 缓存更稳）；关掉用完整话术。</div>' +
+      '<div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">DeepSeek Key</div>' +
+      '<div style="display:flex;gap:6px">' +
+        '<input id="aiKeyInput" type="password" value="' + _aiAttr(cfg.key) + '" placeholder="sk-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="aiCfgSet(\'key\', this.value)" style="flex:1;min-width:0;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg-card);color:var(--text);font-family:monospace">' +
+        '<button class="btn btn-sm btn-ghost" onclick="aiToggleKeyVisible()" style="min-width:40px;min-height:40px" title="显示/隐藏">👁</button>' +
+      '</div>' +
+      '<div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">模型</div>' +
+      '<div style="display:flex;gap:6px">' +
+        '<input id="aiModelInput" type="text" value="' + _aiAttr(cfg.model) + '" placeholder="deepseek-chat" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="aiCfgSet(\'model\', this.value.trim())" style="flex:1;min-width:0;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg-card);color:var(--text);font-family:monospace">' +
+        '<button class="btn btn-sm btn-ghost" onclick="aiFetchModels()" style="white-space:nowrap;min-height:40px' + (cfg.enabled ? '' : ';opacity:.45') + '"' + offDis + '>🔄 拉取模型</button>' +
+      '</div>' +
+      '<div id="aiModelList" style="display:flex;gap:6px;flex-wrap:wrap"></div>' +
+      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);min-height:36px"><input type="checkbox" id="aiAutoRepair"' + (cfg.autoRepair ? ' checked' : '') + ' onchange="aiCfgSet(\'autoRepair\', this.checked)"> 整理完自动检查，有问题自动返工一次</label>' +
+      '<div style="border-top:1px dashed var(--border);margin-top:6px;padding-top:10px">' +
+        '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">💰 用量与花费</div>' +
+        '<div id="aiBalLine" style="font-size:13px;color:var(--text);line-height:1.7">' + _aiBalanceLine(cfg.balance) + '</div>' +
+        '<div id="aiBalDetail" style="font-size:11px;color:var(--text-tertiary);line-height:1.6">' + _aiBalanceDetail(cfg.balance) + '</div>' +
+        '<div id="aiUsageLine" style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-top:4px">' + _aiStatsText() + '</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' +
+          '<button class="btn btn-sm btn-ghost" style="min-height:36px' + (cfg.enabled ? '' : ';opacity:.45') + '"' + offDis + ' onclick="aiRefreshBalance()">🔄 刷新余额</button>' +
+          '<button class="btn btn-sm btn-ghost" style="min-height:36px" onclick="aiResetSpendAlerts()">↺ 重置花费提醒</button>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text-tertiary);line-height:1.6;margin-top:4px">账号余额每下降 2 元提醒一次（含 Claude Code 等同账号用量）；充值后自动重新计。</div>' +
+      '</div>' +
+      '<button class="btn btn-outline btn-block" onclick="aiTestConnection()" style="min-height:42px' + (cfg.enabled ? '' : ';opacity:.45') + '"' + offDis + '>🧪 测试连接</button>' +
+      '<div id="aiCfgStatus" style="font-size:12px;color:var(--text-tertiary);line-height:1.6"></div>' +
+    '</div></div></div>';
+}
+function _aiErrText(e) {
+  if (!e) return '未知错误';
+  if (e.name === 'AbortError') return '已停止';
+  if (e.status === 401) return 'Key 不对或已失效，请到设置里重新填';
+  if (e.status === 402) return 'DeepSeek 余额不足，请充值';
+  if (e.status === 429) return '请求太频繁，等一会儿再试';
+  if (e.status >= 500) return 'DeepSeek 服务暂时不可用，稍后再试';
+  if (e.status) return 'DeepSeek 返回错误（' + e.status + '）';
+  return e.message || '连不上 DeepSeek，检查网络后再试';
+}
+function _aiFetchJson(url, opts, timeoutMs) {
+  var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timer = setTimeout(function () { if (ac) { try { ac.abort(); } catch (e) {} } }, timeoutMs || 20000);
+  var o = opts || {};
+  if (ac) o.signal = ac.signal;
+  return fetch(url, o).then(function (r) {
+    return r.text().then(function (t) {
+      clearTimeout(timer);
+      var data = null;
+      try { data = JSON.parse(t); } catch (e) {}
+      if (!r.ok) throw { status: r.status, body: data || t };
+      if (!data) throw { message: '返回内容看不懂，请重试' };
+      return data;
+    });
+  }).catch(function (e) { clearTimeout(timer); throw e; });
+}
+function aiTestConnection() {
+  var cfg = aiCfgLoad();
+  var st = document.getElementById('aiCfgStatus');
+  if (!cfg.enabled) { if (st) { st.style.color = 'var(--warning)'; st.textContent = 'AI 整理已关闭，先打开「启用 AI 整理」'; } return; }
+  if (!cfg.key) { if (st) { st.style.color = 'var(--danger)'; st.textContent = '先填 Key'; } return; }
+  if (st) { st.style.color = 'var(--text-secondary)'; st.textContent = '正在连接…'; }
+  _aiFetchJson(AI_API_BASE + '/models', { method: 'GET', headers: { 'Authorization': 'Bearer ' + cfg.key } }, 20000)
+    .then(function (d) {
+      var list = (d && d.data) || [];
+      if (st) { st.style.color = '#10B981'; st.textContent = '✅ 连接成功，可用模型 ' + list.length + ' 个'; }
+      _aiRenderModels(list);
+    })
+    .catch(function (e) { if (st) { st.style.color = 'var(--danger)'; st.textContent = '❌ ' + _aiErrText(e); } });
+}
+function aiFetchModels() {
+  var cfg = aiCfgLoad();
+  var st = document.getElementById('aiCfgStatus');
+  if (!cfg.enabled) { if (st) { st.style.color = 'var(--warning)'; st.textContent = 'AI 整理已关闭，先打开「启用 AI 整理」'; } return; }
+  if (!cfg.key) { if (st) { st.style.color = 'var(--danger)'; st.textContent = '先填 Key'; } return; }
+  if (st) { st.style.color = 'var(--text-secondary)'; st.textContent = '正在拉取模型…'; }
+  _aiFetchJson(AI_API_BASE + '/models', { method: 'GET', headers: { 'Authorization': 'Bearer ' + cfg.key } }, 20000)
+    .then(function (d) {
+      var list = (d && d.data) || [];
+      _aiRenderModels(list);
+      if (st) { st.style.color = list.length ? '#10B981' : 'var(--warning)'; st.textContent = list.length ? '✅ 拉到 ' + list.length + ' 个模型，点下面的名字就能换' : '这个 Key 没返回模型列表'; }
+    })
+    .catch(function (e) { if (st) { st.style.color = 'var(--danger)'; st.textContent = '❌ ' + _aiErrText(e); } });
+}
+function _aiRenderModels(list) {
+  var box = document.getElementById('aiModelList');
+  if (!box) return;
+  box.innerHTML = (list || []).map(function (m) {
+    return '<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:4px 8px;min-height:30px" onclick="aiPickModel(\'' + _aiAttr(m.id) + '\')">' + _aiAttr(m.id) + '</button>';
+  }).join('');
+}
+function aiPickModel(id) {
+  var el = document.getElementById('aiModelInput');
+  if (el) el.value = id;
+  aiCfgSet('model', id);
+}
+// ===== 💰 用量 / 余额 / 每 2 元提醒（v212） =====
+function _aiMoney(n, cur) {
+  var sym = cur === 'USD' ? '$' : (cur === 'CNY' ? '¥' : (cur || ''));
+  return sym + (Number(n) || 0).toFixed(2);
+}
+function _aiNum(n) {
+  var v = Number(n) || 0;
+  try { return v.toLocaleString('zh-CN'); } catch (e) { return String(v); }
+}
+function _aiStatsText() {
+  var s = (aiCfgLoad().stats) || {};
+  if (!s.runs && !s.apiCalls && !s.prompt && !s.completion) return '本工具：还没用过';
+  var t = '本工具：已整理 ' + (s.runs || 0) + ' 次 · 累计输入 ' + _aiNum(s.prompt) + ' / 输出 ' + _aiNum(s.completion) + ' tokens';
+  if (s.lastPrompt || s.lastCompletion) t += ' · 上次输入 ' + _aiNum(s.lastPrompt) + ' / 输出 ' + _aiNum(s.lastCompletion);
+  return t;
+}
+function _aiRenderStats() {
+  var el = document.getElementById('aiUsageLine');
+  if (el) el.textContent = _aiStatsText();
+}
+function _aiBalanceLine(bal) {
+  if (!bal) return '账号余额：点「刷新余额」查一下';
+  return '账号余额：' + _aiMoney(bal.total, bal.currency);
+}
+function _aiBalanceDetail(bal) {
+  if (!bal) return '余额是账号级的；包含同一个账号下别的用途（比如 Claude Code）。';
+  var at = bal.at ? new Date(bal.at) : null;
+  var time = at ? (at.getMonth() + 1) + '/' + at.getDate() + ' ' + String(at.getHours()).padStart(2, '0') + ':' + String(at.getMinutes()).padStart(2, '0') : '';
+  return '充值 ' + _aiMoney(bal.topped, bal.currency) + ' ＋ 赠金 ' + _aiMoney(bal.granted, bal.currency) + (time ? ' · 更新于 ' + time : '');
+}
+function _aiRenderBalance() {
+  var cfg = aiCfgLoad();
+  var line = document.getElementById('aiBalLine');
+  if (line) line.textContent = _aiBalanceLine(cfg.balance);
+  var detail = document.getElementById('aiBalDetail');
+  if (detail) { detail.style.color = 'var(--text-tertiary)'; detail.textContent = _aiBalanceDetail(cfg.balance); }
+  _aiRenderStats();
+}
+function _aiRenderBalanceError(e) {
+  var detail = document.getElementById('aiBalDetail');
+  if (detail) {
+    detail.style.color = 'var(--danger)';
+    detail.textContent = '余额查询失败：' + _aiErrText(e) + '（上次的余额还留着）';
+  }
+}
+function aiRefreshBalance(fromRun) {
+  if (!isAdmin()) return Promise.resolve(null);
+  var cfg = aiCfgLoad();
+  if (!cfg.enabled) { if (!fromRun) showToast('AI 整理已关闭，先打开开关'); return Promise.resolve(null); }
+  if (!cfg.key) { if (!fromRun) showToast('先填 DeepSeek Key'); return Promise.resolve(null); }
+  return fetch(AI_API_BASE + '/user/balance', { method: 'GET', headers: { 'Authorization': 'Bearer ' + cfg.key, 'Accept': 'application/json' } })
+    .then(function (r) {
+      return r.text().then(function (t) {
+        var d = null; try { d = JSON.parse(t); } catch (e) {}
+        if (!r.ok) throw { status: r.status, body: d || t };
+        if (!d) throw { message: '余额接口返回看不懂' };
+        return d;
+      });
+    })
+    .then(function (d) {
+      var infos = (d && d.balance_infos) || [];
+      var info = infos.filter(function (x) { return x.currency === 'CNY'; })[0] || infos[0];
+      if (!info) throw { message: '余额接口没有返回余额' };
+      var bal = {
+        currency: info.currency || 'CNY',
+        total: parseFloat(info.total_balance) || 0,
+        granted: parseFloat(info.granted_balance) || 0,
+        topped: parseFloat(info.topped_up_balance) || 0,
+        at: Date.now()
+      };
+      aiCfgSave({ balance: bal });
+      _aiRenderBalance();
+      _aiCheckBalanceAlert(bal);
+      return bal;
+    })
+    .catch(function (e) {
+      if (!fromRun) _aiRenderBalanceError(e);
+      return null;
+    });
+}
+// 账号余额每下降 2 元提醒一次；充值（余额变多）自动重置起点
+function _aiCheckBalanceAlert(bal) {
+  var cfg = aiCfgLoad();
+  var total = Number(bal.total) || 0;
+  var cur = bal.currency || 'CNY';
+  if (cfg.alertBase == null || (cfg.alertCurrency && cfg.alertCurrency !== cur) ||
+      (cfg.lastBalance != null && total > Number(cfg.lastBalance) + 0.0001)) {
+    aiCfgSave({ alertBase: total, nextAlert: 2, lastBalance: total, alertCurrency: cur });
+    return;
+  }
+  var spent = Number(cfg.alertBase) - total;
+  if (spent < -0.0001) {
+    aiCfgSave({ alertBase: total, nextAlert: 2, lastBalance: total, alertCurrency: cur });
+    return;
+  }
+  var next = Number(cfg.nextAlert) || 2;
+  if (spent + 0.0001 >= next) {
+    var crossed = Math.floor((spent + 0.0001) / 2) * 2;
+    var newNext = crossed + 2;
+    aiCfgSave({ nextAlert: newNext, lastBalance: total, alertCurrency: cur });
+    showAlert('💰 花费提醒',
+      '账号余额从 ' + _aiMoney(cfg.alertBase, cur) + ' 降到 ' + _aiMoney(total, cur) + '。\n' +
+      '累计花费 ' + _aiMoney(spent, cur) + '（含 Claude Code 等同账号用量）。\n' +
+      '下一档提醒：花到 ' + _aiMoney(newNext, cur) + '。');
+  } else {
+    aiCfgSave({ lastBalance: total, alertCurrency: cur });
+  }
+}
+function aiResetSpendAlerts() {
+  var cfg = aiCfgLoad();
+  var total = cfg.balance ? (Number(cfg.balance.total) || 0) : null;
+  aiCfgSave({ alertBase: total, nextAlert: 2, lastBalance: total, alertCurrency: cfg.balance ? (cfg.balance.currency || 'CNY') : '' });
+  showToast('↺ 已重置花费提醒起点');
+  renderSettings();
+}
+function _aiAccumUsage(u, data) {
+  var us = (data && data.usage) || {};
+  u.prompt += (+us.prompt_tokens || 0);
+  u.completion += (+us.completion_tokens || 0);
+  u.calls += 1;
+}
+function _aiCommitRun(u, ok) {
+  if (!u || !u.calls) return;
+  var s = aiCfgLoad().stats || {};
+  aiCfgSave({ stats: {
+    runs: (+s.runs || 0) + (ok ? 1 : 0),
+    apiCalls: (+s.apiCalls || 0) + u.calls,
+    prompt: (+s.prompt || 0) + u.prompt,
+    completion: (+s.completion || 0) + u.completion,
+    lastPrompt: u.prompt,
+    lastCompletion: u.completion,
+    lastAt: Date.now()
+  }});
+  _aiRenderStats();
+}
+// v214：简洁话术改成「固定系统规则 + 本次选项 + 资料」——
+//   系统规则是**常量**，改选项也不会变 → DeepSeek 的前缀缓存不会因为换选项失效。
+var AI_COMPACT_RULES = [
+  '你是背书资料整理器。把资料整理成可直接导入的格式。只输出整理结果，不要解释、不要开场白、不要代码块。',
+  '【输出格式】',
+  '- 一行以 $ 开头 = 一道题（题目）。',
+  '- 一行以 ￥ 开头 = 大类/章节（只有资料里有大分类、且【本次选项】说标时才写）。',
+  '- 其余行 = 上一题的答案，一行一个要点；一直写到下一个 $ 或 ￥ 为止。',
+  '- 答案每个要点行开头空两个全角空格；答案里的 ①②③ 原样保留。',
+  '- 口诀写成单独一行：口诀：xxx；多个口诀用「；」合到同一行。',
+  '【挖空】',
+  '- 原文有标记（加粗/高亮/下划线/括号/手画圈）→ 只挖这些标记处；标了几个就挖几个，别漏。',
+  '- 原文没有标记 → 你自己挑关键词挖，稍微多挖一点，别省着。',
+  '- 用 @@字@@ 标；题目和答案里都可以挖；别把整句括起来。',
+  '- 括号标记：去掉括号，只把里面用 @@ @@ 括起来；正常的标点括号不算。',
+  '- 手画圈：只挖圈里的字，圈本身不要写进结果。',
+  '- 公式：要么整个用 @@ @@ 挖，要么一个字都不挖；不许只挖公式一部分，也不许挖公式里的中文。',
+  '【分题/题目】',
+  '- 按【本次选项】列出的分题标记切分；每个标记单独算一道题，别全并成一道。',
+  '- 题目用对应的小标题原文，不改写、不加问号；答案写到下一个分题标记为止。',
+  '- 没有小标题时按【本次选项】的题目策略：大标题 · 第N点 → 知识点 N → 第一句（最多 20 字）；资料里已有题目就照抄；填空题把横线/括号里的答案挖空；一串编号（1. 2. 3.）不是多道题，用大标题当题目、编号全作答案。',
+  '【答案细节】',
+  '- 大分类「一、二、三」按【本次选项】用 ￥ 标出，原样照抄分类名。',
+  '- 答案行前的助记小前缀按【本次选项】保留或去掉。',
+  '- 「注意/提示/补充」小字按【本次选项】保留、挪到口诀、或不写。',
+  '- 一道题答案超过 10 条时按【本次选项】决定拆不拆；拆的话题目后加「（一）」「（二）」。',
+  '- 口诀按【本次选项】：只用原文，或可以编但编的后面加「（AI补的）」。',
+  '【公式/杂项】',
+  '- 公式用 LaTeX，并用 \\( \\) 包起来；不要用 $ 包（$ 是题目记号）。',
+  '- 资料里的页眉、页脚、页码、水印去掉，不要写进答案。',
+  '【本次选项】会告诉你这次用哪些规则；没提到的按默认（保守）处理。'
+].join('\n');
+function _aiCompactOptions() {
+  var st = _PGST || _PGD;
+  var marks = (!st.noMark && st.marks && st.marks.length) ? st.marks.join(' / ') : '没标记，你自己挑关键词挖';
+  var sp = (st.split || []).filter(function (k) { return k !== 's_ai'; });
+  var split = (st.split || []).indexOf('s_ai') >= 0 ? '你自己看着办' : (sp.map(function (k) { return _PGSPLIT_LABEL[k] || k; }).join('；') || '无特殊标记');
+  if ((st.splitOwn || '').trim()) split += '；实际写法：' + st.splitOwn.trim();
+  var ttl = st.title || [], title = [];
+  if (ttl.indexOf('auto') >= 0) title.push('没有小标题时：大标题 · 第N点 → 知识点 N → 第一句');
+  if (ttl.indexOf('mine') >= 0) title.push('资料里已有题目就照抄');
+  if (ttl.indexOf('fill') >= 0) title.push('填空题：横线/括号里的答案挖空');
+  if (ttl.indexOf('list') >= 0) title.push('一串编号是同一道题的答案');
+  var lines = [
+    '挖空：' + marks,
+    '分题：' + split,
+    '题目：' + (title.join('；') || '用小标题原文'),
+    '大点：' + (st.bigpoint === 'yes' ? '有就标 ￥' : '不标'),
+    '助记前缀：' + (st.prefix === 'drop' ? '去掉' : '保留'),
+    '注意小字：' + (st.aside === 'drop' ? '不写' : (st.aside === 'kj' ? '挪到口诀' : '写进答案')),
+    '长答案：' + (st.split10 === 'split' ? '超过 10 条拆，题目加（一）（二）' : '不拆'),
+    '口诀：' + (st.aikj === 'yes' ? '可用原文，也可编但标（AI补的）' : '只用原文，不编'),
+    '公式：' + ((st.extra || []).indexOf('formula') >= 0 ? '有公式' : '没公式或不用管'),
+    '表格：' + ((st.extra || []).indexOf('table') >= 0 ? '有表格，按文字整理' : '无')
+  ];
+  return '【本次选项】\n' + lines.join('\n');
+}
+function _aiBuildCompact(source) {
+  return _aiCompactOptions() + '\n\n【资料开始】\n' + String(source || '') + '\n【资料结束】';
+}
+// v213：发送前本地去掉纯页码/页脚行，并压掉多余空行（不动正文）
+function _aiCleanSource(s) {
+  var t = String(s || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  var lines = t.split('\n'), kept = [];
+  for (var i = 0; i < lines.length; i++) {
+    var ln = lines[i], tr = ln.trim();
+    if (/^[-—–\s]*\d{1,4}[-—–\s]*$/.test(tr)) continue;
+    if (/^第\s*\d{1,4}\s*页(\s*[\/／]\s*共\s*\d{1,4}\s*页)?$/.test(tr)) continue;
+    if (/^共\s*\d{1,4}\s*页$/.test(tr)) continue;
+    if (/^page\s*\d{1,4}(\s*of\s*\d{1,4})?$/i.test(tr)) continue;
+    kept.push(ln);
+  }
+  return kept.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+// v213：返工只发「坏结果 + 错误清单」；只有缺内容（空答案/没识别出题）才带原始资料
+function _aiRepairMessages(out, issues, source) {
+  var sys = '你是格式修正助手。只修正下面这份结果里的格式问题，保持内容不变。只输出修正后的完整结果，不要解释、不要开场白、不要代码块。格式：$题目、￥章节、@@挖空@@、口诀：。';
+  var user = '你刚才的输出有以下问题：\n- ' + (issues || []).join('\n- ') + '\n\n【结果开始】\n' + String(out || '') + '\n【结果结束】\n请只修正这些问题，保持其余内容不变，重新输出完整结果。';
+  var msgs = [{ role: 'system', content: sys }, { role: 'user', content: user }];
+  if (source) msgs.push({ role: 'user', content: '需要补回缺失内容时，参考原始资料：\n【资料开始】\n' + String(source) + '\n【资料结束】' });
+  return msgs;
+}
+function _aiBuildMessages(prompt, source) {
+  var p = String(prompt || '');
+  if (p.indexOf('页眉') < 0) p += '\n\n· 资料里如果有页眉、页脚、页码、水印，去掉它们，不要写进答案。';
+  return [
+    { role: 'system', content: AI_SYS_PROMPT },
+    { role: 'user', content: p + '\n\n【资料开始】\n' + String(source || '') + '\n【资料结束】' }
+  ];
+}
+function _aiCleanOutput(s) {
+  var t = String(s || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  if (/^```[a-zA-Z0-9]*\s*\n/.test(t) && /\n```\s*$/.test(t)) {
+    t = t.replace(/^```[a-zA-Z0-9]*\s*\n/, '').replace(/\n```\s*$/, '').trim();
+  }
+  var lines = t.split('\n');
+  while (lines.length && /^\s*(好的|以下是|当然|这是|已为您|没问题|收到|整理结果|整理好的)/.test(lines[0]) && !/[$￥¥@]/.test(lines[0])) lines.shift();
+  return lines.join('\n').trim();
+}
+function _aiValidateOutput(text) {
+  var cards = parseMarkedText(text || '');
+  var st = _markedStats || { lost: [], suspect: [] };
+  var issues = [];
+  var warnings = [];
+  if (!cards.length) issues.push('没有识别出任何题目（缺少以 $ 开头的题目行）');
+  var empty = 0;
+  for (var i = 0; i < cards.length; i++) { if (!String(cards[i].answer || '').trim()) empty++; }
+  if (empty) issues.push('有 ' + empty + ' 道题答案为空');
+  var marks = (String(text || '').match(/[@＠]{2}/g) || []).length;
+  if (marks % 2 === 1) issues.push('挖空标记 @@ 没有配对（少了一个 @）');
+  if (marks === 0) issues.push('一个挖空都没有');
+  if (marks === 0 && String(text || '').indexOf('【') >= 0) issues.push('挖空写成了【】，要改成 @@');
+  if (st.lost && st.lost.length) {
+    var nos = st.lost.slice(0, 3).map(function (x) { return x.no; }).join('、');
+    issues.push('有 ' + st.lost.length + ' 行没归属，会被丢掉（第 ' + nos + ' 行）');
+  }
+  // ⚠️ suspect 只是「看着像」的机器猜测（短答案行经常被误判）—— **不拿它触发自动返工**，
+  //    否则每份结果都会多烧一次 AI。它只作为提醒带给用户；预览页那边照旧标黄。
+  if (st.suspect && st.suspect.length) warnings.push('有 ' + st.suspect.length + ' 行看着像漏写了 $ 或 ￥（机器猜的，也可能本来就是答案）');
+  return { cards: cards, issues: issues, warnings: warnings };
+}
+function _aiChat(messages, model, signal) {
+  var cfg = aiCfgLoad();
+  return fetch(AI_API_BASE + '/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key },
+    body: JSON.stringify({ model: model || cfg.model || 'deepseek-chat', messages: messages, temperature: 0.2, stream: false }),
+    signal: signal || undefined
+  }).then(function (r) {
+    return r.text().then(function (t) {
+      var data = null;
+      try { data = JSON.parse(t); } catch (e) {}
+      if (!r.ok) throw { status: r.status, body: data || t };
+      if (!data) throw { message: '返回内容看不懂，请重试' };
+      return data;
+    });
+  });
+}
+function _aiContent(data) {
+  var ch = data && data.choices && data.choices[0];
+  var c = ch && ch.message && ch.message.content;
+  return { content: typeof c === 'string' ? c : '', finish: ch && ch.finish_reason };
+}
+function _aiProgressShow() {
+  _aiProgressHide();
+  var ov = document.createElement('div');
+  ov.id = 'aiProgressOverlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:100001;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom))';
+  ov.innerHTML = '<div style="background:var(--bg-card);border-radius:16px;padding:24px 20px;max-width:340px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.25)">' +
+    '<div style="font-size:var(--f18);font-weight:700;margin-bottom:8px">🤖 正在整理…</div>' +
+    '<div id="aiProgStatus" style="font-size:var(--f13);color:var(--text-secondary);line-height:1.6;margin-bottom:12px">把资料发给 AI，请稍等</div>' +
+    '<div style="height:6px;background:var(--bg-input);border-radius:3px;overflow:hidden;margin-bottom:10px"><div id="aiProgBar" style="height:100%;width:15%;background:var(--primary);border-radius:3px;transition:width .3s"></div></div>' +
+    '<div id="aiProgSec" style="font-size:var(--f12);color:var(--text-tertiary);margin-bottom:14px">0 秒</div>' +
+    '<button class="btn btn-ghost btn-block" id="aiProgStop" style="min-height:44px">停止</button>' +
+  '</div>';
+  document.body.appendChild(ov);
+  var stop = document.getElementById('aiProgStop');
+  if (stop) stop.onclick = function () { if (_aiAbort) { try { _aiAbort.abort(); } catch (e) {} } };
+}
+function _aiProgressUpdate(sec, text) {
+  var s = document.getElementById('aiProgStatus'); if (s && text) s.textContent = text;
+  var e = document.getElementById('aiProgSec'); if (e) e.textContent = sec + ' 秒';
+  var b = document.getElementById('aiProgBar'); if (b) b.style.width = Math.min(92, 15 + sec) + '%';
+}
+function _aiProgressHide() {
+  var ov = document.getElementById('aiProgressOverlay');
+  if (ov) ov.remove();
+}
+function _aiFillResult(ctx, out) {
+  var ta = $('importTextarea');
+  if (!ta) return;
+  if (ctx && ctx.hasSel) {
+    var v = ta.value;
+    ta.value = v.substring(0, ctx.selStart) + out + v.substring(ctx.selEnd);
+    ta.selectionStart = ctx.selStart;
+    ta.selectionEnd = ctx.selStart + out.length;
+  } else {
+    ta.value = out;
+    ta.selectionStart = ta.selectionEnd = out.length;
+  }
+  try { ta.focus(); } catch (e) {}
+  setTimeout(function () { try { precheckImport(); } catch (e) {} }, 200);
+}
+function startAIImport() {
+  if (!isAdmin()) { showToast('仅管理员可用'); return; }
+  if (!aiCfgLoad().enabled) { showToastLines(['AI 整理已关闭', '设置 → 🤖 AI 整理（管理员）→ 打开「启用 AI 整理」'], 5000); return; }
+  var ta = $('importTextarea');
+  if (!ta) return;
+  var v = ta.value || '';
+  var ss = ta.selectionStart, se = ta.selectionEnd;
+  var hasSel = typeof ss === 'number' && typeof se === 'number' && ss !== se;
+  var src = hasSel ? v.substring(ss, se) : v;
+  if (!src.trim()) {
+    showToastLines(['先粘贴或上传资料', '可以点上面的「📂 上传」，或者直接粘贴文字'], 5000);
+    return;
+  }
+  if (!aiCfgLoad().key) {
+    showToastLines(['还没填 DeepSeek Key', '设置 → 🤖 AI 整理（管理员）里填一次就行'], 6000);
+    return;
+  }
+  var ctx = { source: src, hasSel: hasSel, selStart: ss, selEnd: se };
+  if (src.length > 20000) {
+    showConfirm('这段资料有点长', '选中的这段有 ' + src.length + ' 字。一次整理太多，可能会很慢或者被截断。\n建议选中一章再整理。还要继续吗？', function () {
+      _aiPendingCtx = ctx;
+      showPromptChooser('ai');
+    }, '继续整理');
+    return;
+  }
+  _aiPendingCtx = ctx;
+  showPromptChooser('ai');
+}
+function _aiRun(prompt, ctx) {
+  if (!isAdmin()) { showToast('仅管理员可用'); return; }
+  var cfg = aiCfgLoad();
+  if (!cfg.enabled) { showToast('AI 整理已关闭，去设置里打开'); return; }
+  if (!cfg.key) { showToast('先去设置里填 DeepSeek Key'); return; }
+  var source = String((ctx && ctx.source) || '');
+  if (!source.trim()) { showToast('先粘贴或上传资料'); return; }
+  var model = cfg.model || 'deepseek-chat';
+  // v213：发送前本地去掉纯页码/页脚、压掉多余空行；简洁话术默认开
+  var cleanSource = _aiCleanSource(source);
+  var useCompact = cfg.compactPrompt !== false;
+  var messages = useCompact
+    ? [{ role: 'system', content: AI_COMPACT_RULES }, { role: 'user', content: _aiBuildCompact(cleanSource) }]
+    : _aiBuildMessages(prompt, cleanSource);
+  var runUsage = { prompt: 0, completion: 0, calls: 0 };
+  _aiProgressShow();
+  var t0 = Date.now();
+  _aiProgressUpdate(0, '把资料发给 AI，请稍等');
+  var timer = setInterval(function () {
+    _aiProgressUpdate(Math.floor((Date.now() - t0) / 1000));
+  }, 1000);
+  _aiAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timeoutTimer = setTimeout(function () { if (_aiAbort) { try { _aiAbort.abort(); } catch (e) {} } }, 300000);
+  function done() { clearInterval(timer); clearTimeout(timeoutTimer); _aiAbort = null; }
+  _aiChat(messages, model, _aiAbort && _aiAbort.signal)
+    .then(function (data) {
+      _aiAccumUsage(runUsage, data);
+      var r = _aiContent(data);
+      var out = _aiCleanOutput(r.content);
+      if (!out) throw { message: 'AI 没有返回内容，请重试' };
+      var v = _aiValidateOutput(out);
+      var truncated = r.finish === 'length';
+      if (!v.issues.length || cfg.autoRepair === false) {
+        return { out: out, issues: v.issues, warnings: v.warnings, truncated: truncated, repaired: false };
+      }
+      _aiProgressUpdate(Math.floor((Date.now() - t0) / 1000), '发现 ' + v.issues.length + ' 个问题，正在自动修正…');
+      // v213：返工只发「坏结果 + 错误清单」，不重发长话术；只有缺内容（空答案/没识别出题）才带原始资料
+      var needSource = v.issues.some(function (x) {
+        return x.indexOf('答案为空') >= 0 || x.indexOf('没有识别出任何题目') >= 0;
+      });
+      var repairMsgs = _aiRepairMessages(out, v.issues, needSource ? cleanSource : '');
+      return _aiChat(repairMsgs, model, _aiAbort && _aiAbort.signal).then(function (d2) {
+        _aiAccumUsage(runUsage, d2);
+        var r2 = _aiContent(d2);
+        var out2 = _aiCleanOutput(r2.content);
+        if (!out2) return { out: out, issues: v.issues, truncated: truncated, repaired: false };
+        var v2 = _aiValidateOutput(out2);
+        if (!v2.cards.length) return { out: out, issues: v.issues, warnings: v.warnings, truncated: truncated, repaired: false };
+        return { out: out2, issues: v2.issues, warnings: v2.warnings, truncated: r2.finish === 'length', repaired: true };
+      });
+    })
+    .then(function (res) {
+      done();
+      _aiProgressHide();
+      _aiCommitRun(runUsage, true);
+      _aiFillResult(ctx, res.out);
+      aiRefreshBalance(true);   // 免费 GET；顺便检查「每降 2 元」提醒
+      var finalV = _aiValidateOutput(res.out);
+      var _notes = (res.issues || []).concat(res.warnings || []);
+      var msg = '✅ 整理完成，共 ' + finalV.cards.length + ' 题';
+      if (res.repaired) msg += '（自动修正过）';
+      if (res.truncated) msg += '；⚠️ 输出可能被截断，建议分段整理';
+      if (_notes.length) msg += '；⚠️ 还有 ' + _notes.length + ' 处要注意';
+      showToastLines([msg, _notes.length ? '细节：' + _notes.slice(0, 2).join('；') : '检查一下再点「预览 →」'], 6000);
+    })
+    .catch(function (e) {
+      done();
+      _aiProgressHide();
+      if (runUsage.calls) { _aiCommitRun(runUsage, false); aiRefreshBalance(true); }
+      if (e && e.name === 'AbortError') { showToast('已停止'); return; }
+      showToastLines(['❌ 整理失败：' + _aiErrText(e), '资料没有动，可以再点一次 AI 重试'], 6000);
+    });
+}
+
 var _importFormat = 'auto';
 function showImportModal() {
   // 🆕 v201：只显示选择题模块时，导入直接走选择题导入
@@ -10991,6 +11590,13 @@ function showImportModal() {
         '<button class="btn btn-outline" style="flex:1;min-height:44px" onclick="qzStartQuizImportFromModal()">📝 选择题</button>' +
       '</div></div>';
   }
+  // 🆕 v211：管理员专属的 AI 整理入口。没输管理码 → 这个字符串是空的，页面上根本看不到。
+  var aiEntry = (isAdmin() && aiCfgLoad().enabled)
+    ? '<div style="margin-top:8px">' +
+        '<button class="btn btn-sm" style="background:var(--primary-light);border:none;font-size:var(--f13);width:100%;color:var(--primary);font-weight:700;min-height:44px;cursor:pointer" onclick="startAIImport()">🤖 AI 帮我整理（管理员）</button>' +
+        '<div style="font-size:var(--f11);color:var(--text-tertiary);margin-top:4px;text-align:center">先把资料粘贴/上传到上面，再点这里 —— 会按下面这套话术整理</div>' +
+      '</div>'
+    : '';
   ov.innerHTML = '<div class="flex-between mb-8">' +
     '<h2 style="font-size:var(--f18);margin:0">📋 导入题库</h2>' +
     '<button class="btn btn-sm" style="background:var(--border);border:none;min-width:40px;padding:8px;border-radius:8px;cursor:pointer;font-size:var(--f16)" onclick="closeImportModal()">✕</button>' +
@@ -11015,6 +11621,7 @@ function showImportModal() {
       '<button class="btn btn-sm desktop-only" style="font-size:var(--f11);color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="pasteRichText()">📋 富文本</button>' +
       '<span style="flex:1"></span>' +
     '</div>' +
+    aiEntry +
     '<div class="flex gap-6 mt-6" style="align-items:center">' +
       '<span style="flex:1"></span>' +
       '<button class="btn btn-sm" style="font-size:var(--f11);color:var(--primary);font-weight:600;background:var(--primary-light);border:none" onclick="precheckImport()">🔍 预检</button>' +
@@ -12315,8 +12922,15 @@ function _pgPick(qid, v) {
 function _pgCopy() {
   copyTextSafe(_pgBuild(), '📋 已复制「话术」，去粘贴给 AI 吧');
 }
-function showPromptChooser() {
+function showPromptChooser(mode) {
+  var aiMode = mode === 'ai';
   if (!_PGST) { if (!_pgLoad()) _pgReset(); }
+  var aiBanner = '';
+  if (aiMode && _aiPendingCtx) {
+    aiBanner = '<div style="background:var(--primary-light);border-left:4px solid var(--primary);border-radius:8px;padding:10px 12px;margin:0 0 10px;font-size:var(--f12);line-height:1.75">' +
+      '<b>🤖 本次整理：</b>' + (_aiPendingCtx.hasSel ? '只整理你选中的 <b>' + _aiPendingCtx.source.length + '</b> 字' : '整理文本框里的全部 <b>' + _aiPendingCtx.source.length + '</b> 字') +
+      '<br><span style="color:var(--text-secondary)">下面的选项决定用哪套话术；点最下面的「开始整理」就发给 DeepSeek。内置 AI 默认用<b>简洁版话术</b>省 token；这里显示的完整话术只用于「只复制话术」。</span></div>';
+  }
   var ov = document.createElement('div');
   ov.className = 'modal-overlay';
   ov.id = 'pgModal';
@@ -12325,29 +12939,49 @@ function showPromptChooser() {
   //    切掉赋值只剩 `'' +` → 弹窗是空的、点哪儿都崩（copy_test 抓出来的）。别删 `ov.innerHTML =`。
   ov.innerHTML = '' +
     '<div class="pg-wrap">' +
-    '<div class="pg-head"><h3>📋 生成话术（给 AI 用）</h3>' +
+    '<div class="pg-head"><h3>' + (aiMode ? '🤖 生成话术并整理' : '📋 生成话术（给 AI 用）') + '</h3>' +
     '<button class="btn btn-ghost btn-sm" id="pgClose" style="min-width:38px">✕</button></div>' +
     '<div class="pg-scroll" id="pgQs">' +
+      aiBanner +
       // 🆕 v183 D1 补（2026-09-24 用户：「LaTeX 就行　这个在复制话术的时候 你就要说明」）
       //   用户看不懂「LaTeX」是啥，得用大白话告诉她：就是 \\frac 那种写法，豆包会。
-      '<div style="background:var(--warning-light);border-left:4px solid var(--warning);border-radius:8px;padding:10px 12px;margin:0 0 10px;font-size:var(--f12);line-height:1.75">' +
-        '<b>📐 题里有数学 / 化学公式的话，先说一句：</b><br>' +
-        '这份话术里已经写了「公式要用 LaTeX」—— 你不用懂它是什么，<b>照着复制给豆包就行</b>。<br>' +
-        '它长这样：<code style="background:#fff;padding:1px 4px;border-radius:3px">\\frac{上面}{下面}</code>、' +
-        '<code style="background:#fff;padding:1px 4px;border-radius:3px">\\sum_{n=0}^{\\infty}</code>。' +
-        '<b>豆包自己会给这种写法</b>，你只管要「能渲染的版本」，别要「能在微信显示的版本」。' +
-      '</div>' +
+      // 🆕 v211：AI 模式下改说「内置 AI 会给」，不再说「复制给豆包」。
+      (aiMode
+        ? '<div style="background:var(--warning-light);border-left:4px solid var(--warning);border-radius:8px;padding:10px 12px;margin:0 0 10px;font-size:var(--f12);line-height:1.75">' +
+            '<b>📐 题里有公式：</b>话术里已经写了「用 LaTeX」，内置 AI 会给能渲染的写法，你不用管。' +
+          '</div>'
+        : '<div style="background:var(--warning-light);border-left:4px solid var(--warning);border-radius:8px;padding:10px 12px;margin:0 0 10px;font-size:var(--f12);line-height:1.75">' +
+            '<b>📐 题里有数学 / 化学公式的话，先说一句：</b><br>' +
+            '这份话术里已经写了「公式要用 LaTeX」—— 你不用懂它是什么，<b>照着复制给豆包就行</b>。<br>' +
+            '它长这样：<code style="background:#fff;padding:1px 4px;border-radius:3px">\\frac{上面}{下面}</code>、' +
+            '<code style="background:#fff;padding:1px 4px;border-radius:3px">\\sum_{n=0}^{\\infty}</code>。' +
+            '<b>豆包自己会给这种写法</b>，你只管要「能渲染的版本」，别要「能在微信显示的版本」。' +
+          '</div>') +
     '</div>' +
     '<div class="pg-pv"><div class="pg-pvhead"><span>📄 生成的话术</span><span id="pgLen" style="font-weight:500;color:var(--text-tertiary)"></span></div><pre id="pgPv"></pre></div>' +
     '<div class="pg-foot">' +
-    '<button class="btn btn-ghost" id="pgOld" style="flex:0 0 auto;font-size:var(--f13);padding:12px 12px">📋 旧格式话术</button>' +
-    '<button class="btn btn-primary" id="pgCopy" style="flex:1">📋 一键复制话术</button>' +
+    (aiMode
+      ? '<button class="btn btn-ghost" id="pgCopy" style="flex:0 0 auto;font-size:var(--f13);padding:12px 12px">📋 只复制话术</button>' +
+        '<button class="btn btn-primary" id="pgAiGo" style="flex:1">🤖 开始整理</button>'
+      : '<button class="btn btn-ghost" id="pgOld" style="flex:0 0 auto;font-size:var(--f13);padding:12px 12px">📋 旧格式话术</button>' +
+        '<button class="btn btn-primary" id="pgCopy" style="flex:1">📋 一键复制话术</button>') +
     '</div></div>';
   document.body.appendChild(ov);
-  ov.addEventListener('click', function (e) { if (e.target === ov) ov.remove(); });
-  ov.querySelector('#pgClose').onclick = function () { ov.remove(); };
-  ov.querySelector('#pgOld').onclick = function () { copyTextSafe(_PROMPT_OLD, '📋 已复制「旧格式话术」，去粘贴给 AI 吧'); };
+  function closeChooser() { ov.remove(); if (aiMode) _aiPendingCtx = null; }
+  ov.addEventListener('click', function (e) { if (e.target === ov) closeChooser(); });
+  ov.querySelector('#pgClose').onclick = closeChooser;
+  var oldBtn = ov.querySelector('#pgOld');
+  if (oldBtn) oldBtn.onclick = function () { copyTextSafe(_PROMPT_OLD, '📋 已复制「旧格式话术」，去粘贴给 AI 吧'); };
   ov.querySelector('#pgCopy').onclick = function () { _pgCopy(); };
+  var aiGo = ov.querySelector('#pgAiGo');
+  if (aiGo) aiGo.onclick = function () {
+    var p = _pgBuild();
+    var ctx = _aiPendingCtx;
+    ov.remove();
+    _aiPendingCtx = null;
+    if (!ctx) { showToast('资料状态丢了，请重新点 AI'); return; }
+    _aiRun(p, ctx);
+  };
   // 选项点击：用事件委托（选项是 innerHTML 生成的，不能挂 onclick 属性 + 全局函数）
   // 🆕 v192：① 点「更多」展开/收起  ② 自己写那个输入框（用 input 事件，只更新预览、不重渲染以免丢焦点）
   ov.querySelector('#pgQs').addEventListener('click', function (e) {
@@ -12760,7 +13394,7 @@ function showImportPreview(name, cards, stats) {
   _previewPage = 0;
   _skipSummaryOpen = false;
   _lastProblemIdx = -1;
-  previewData = { name, cards, mode: 'manual', editBankId: editId, stats: stats || null };
+  previewData = { name, cards, mode: 'manual', editBankId: editId, stats: stats || null, _undo: null };
   if (wasSingle) { previewData._singleCardEdit = true; previewData._cardIdx = cardIdx; }
 
   var statsHtml = '';
@@ -12818,19 +13452,21 @@ function showImportPreview(name, cards, stats) {
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="previewJumpRow">
       <span style="font-size:var(--f12);color:var(--text-secondary)">🔍 跳到</span>
       <input type="number" id="previewJumpInput" min="1" placeholder="1" style="width:48px;padding:4px 8px;border:2px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:var(--f13);text-align:center" onkeydown="if(event.key==='Enter')jumpToPreviewCard()">
-      <span style="font-size:var(--f12);color:var(--text-secondary)">/ ${cards.length}</span>
+      <span style="font-size:var(--f12);color:var(--text-secondary)">/ <span id="previewTotalCount">${cards.length}</span></span>
       <button class="btn btn-sm btn-ghost" onclick="jumpToPreviewCard()" style="padding:4px 8px;font-size:var(--f11)">GO</button>
       <span style="flex:1"></span>
       <span style="font-size:var(--f12);color:var(--text-secondary)" id="problemCount"></span>
+      <button class="btn btn-sm btn-ghost" id="previewUndoBtn" onclick="undoPreviewOperation()" style="display:none;padding:4px 8px;font-size:var(--f11)" title="撤回上一次拆/合">↩️ 撤回拆/合</button>
       <button class="btn btn-sm btn-ghost" onclick="jumpToProblemCard(-1)" style="padding:4px 8px;font-size:var(--f11)" title="上一个问题">⬆</button>
       <button class="btn btn-sm btn-ghost" onclick="jumpToProblemCard(1)" style="padding:4px 8px;font-size:var(--f11)" title="下一个问题">⬇</button>
     </div>
     <div id="previewCards"></div>
     <div id="previewPageNavBottom" style="margin-top:10px"></div>
     </div>
+    ${isAdmin() ? '<div style="display:flex;justify-content:flex-end;padding:10px 0 0"><button class="btn btn-ghost btn-sm" onclick="savePreviewAsTxt()" style="font-size:var(--f12);min-height:36px">💾 保存成 txt 文件（管理员）</button></div>' : ''}
     <div class="flex gap-10" style="padding:14px 0 0;flex-shrink:0">
     <button class="btn btn-ghost flex-1" onclick="closePreviewModal()">取消</button>
-    <button class="btn btn-primary flex-1" onclick="confirmImport()">确认导入 (${cards.length} 题)</button>
+    <button class="btn btn-primary flex-1" id="previewConfirmBtn" onclick="confirmImport()">确认导入 (${cards.length} 题)</button>
     </div></div>`;
   ov.innerHTML = html;
   document.body.appendChild(ov);
@@ -12980,7 +13616,10 @@ function renderPreviewCards() {
         '<div style="flex:1">' +
           '<div class="text-sm text-secondary mb-6" style="word-break:break-word;overflow-wrap:break-word">第 ' + (i + 1) + ' 题 ' + statusBadge + ' · ' + escapeHtml(card.question.replace(/^[\d\.\、\s]+/, '').substring(0, 30)) + '</div>' +
           (card.koujue ? '<div class="text-sm mb-6" style="color:var(--primary)">💡 ' + escapeHtml(card.koujue) + '</div>' : '') +
-          '<div class="text-sm mb-6" style="color:var(--text-tertiary);font-size:var(--f11)">📝 答案' + (card.answer||'').split('\n').filter(function(l){return l.trim();}).length + '行 · ' + (card.answer||'').length + '字</div>' +
+          '<div class="text-sm mb-6" style="color:var(--text-tertiary);font-size:var(--f11);display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+            '<span>📝 答案' + (card.answer||'').split('\n').filter(function(l){return l.trim();}).length + '行 · ' + (card.answer||'').length + '字</span>' +
+            '<button class="btn btn-sm btn-ghost" style="font-size:var(--f11);padding:2px 8px;min-height:28px;color:var(--primary)" onclick="event.stopPropagation();openAnswerFullscreen(' + i + ')" title="全屏看这道题的答案">⛶ 全屏</button>' +
+          '</div>' +
         '</div>' +
         // 🆕 v183 C1+C2：每题右上角变成 ➕ ⬆ ⬇ ✏️ 四颗并排（用户 2026-09-23 拍板「② 每题旁边」）
         //   ⚠️ 千万别做成竖排 —— 会吃掉卡片左边一列宽度，窄屏上题目会被挤成一行一个字。
@@ -12994,10 +13633,17 @@ function renderPreviewCards() {
       (card._editing ? '<div id="editPanel-' + i + '" style="background:var(--bg);border:2px solid var(--primary);border-radius:10px;padding:12px;margin-bottom:10px">' +
         '<label style="font-size:var(--f12);color:var(--text-secondary)">题目</label>' +
         '<textarea id="editPQ-' + i + '" style="width:100%;min-height:50px;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:var(--f13);resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="2">' + escapeHtml(card.question) + '</textarea>' +
-        '<label style="font-size:var(--f12);color:var(--text-secondary)">答案</label>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><label style="font-size:var(--f12);color:var(--text-secondary)">答案</label>' +
+          '<button class="btn btn-sm btn-ghost" style="font-size:var(--f11);padding:2px 8px;min-height:30px;color:var(--primary)" onclick="event.stopPropagation();openAnswerFullscreenEdit(' + i + ')" title="把答案放大到全屏编辑">⛶ 全屏编辑</button></div>' +
         '<textarea id="editPA-' + i + '" style="width:100%;min-height:60px;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:var(--f13);resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="2">' + escapeHtml(card.answer) + '</textarea>' +
         '<label style="font-size:var(--f12);color:var(--text-secondary)">💡 口诀（可选）</label>' +
         '<input id="editPKj-' + i + '" value="' + escapeHtml(card.koujue || '') + '" placeholder="例如：全（全民化）民（民主化）" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:var(--f13);margin-bottom:10px;font-family:inherit">' +
+        // 🆕 v212：拆 / 合 **所有人都能用**（用户拍板「三个都放开」）；拆的时候读答案框里的光标位置。
+        //   挖空会按拆点保留（见 splitPreviewCard / _previewSplitBlanks）。
+        '<div class="flex gap-6" style="flex-wrap:wrap;margin-bottom:8px">' +
+          '<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();splitPreviewCard(' + i + ')" style="font-size:var(--f12);padding:4px 10px;min-height:32px" title="把答案从光标处拆成两道题">✂️ 按光标拆成两题</button>' +
+          (i > 0 ? '<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();mergePreviewCard(' + i + ')" style="font-size:var(--f12);padding:4px 10px;min-height:32px" title="把这一题并到上一题里">🔗 与上一题合并</button>' : '') +
+          '</div>' +
         '<div class="flex gap-8" style="justify-content:flex-end">' +
           '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deletePreviewCard(' + i + ')" style="color:var(--danger);margin-right:auto">🗑️ 删除此题</button>' +
           (card._undoSnapshot ? '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();undoCardEdit(' + i + ')" style="color:var(--warning)">↩️ 撤回编辑</button>' : '') +
@@ -13043,6 +13689,16 @@ function renderPreviewCards() {
       pcEl.style.fontWeight = '400';
     }
   }
+
+  // 🆕 v211：拆/合会改变题目数 —— 顶部「/ N」和底部「确认导入 (N 题)」要跟着变（别让用户看到旧数字）。
+  var _tc = document.getElementById('previewTotalCount');
+  if (_tc) _tc.textContent = cards.length;
+  var _cb = document.getElementById('previewConfirmBtn');
+  if (_cb) _cb.textContent = '确认导入 (' + cards.length + ' 题)';
+
+  // 🆕 v212：拆/合所有人可用，只要拆/合过就显示「撤回」按钮。
+  var _ub = document.getElementById('previewUndoBtn');
+  if (_ub) _ub.style.display = (previewData && previewData._undo) ? '' : 'none';
 
   // 🆕 v183 D1：预览页也挂公式渲染 ——
   //   ⚠️ 这里跟「点字挖空」是冲突的：MathJax 会把文字块换成图形，换掉之后就点不了字了。
@@ -13906,6 +14562,501 @@ function saveEditPreviewCard(idx) {
   card._editing = false;
   renderPreviewCards();
   showToast('已保存');
+}
+
+// ==================== ✂️ 拆题 / 🔗 合并（v212：所有人可用） ====================
+// v211：管理员专属；v212 用户拍板「拆/合/撤回三个都放开」，并且拆题时**原来的挖空要保留**。
+// 拆：拆点前的空留在第一题、拆点后的空跟到第二题；正好跨过拆点的空 → 不让拆，提示挪光标。
+// 合：两题的答空都保留（按合并后的位置重新换算）；题目区挖空按实际情况保留。
+// 只有「文字本身被改过」时才清空挖空（位置对不上），并先弹确认。
+function _previewCloneCards(cards) {
+  return JSON.parse(JSON.stringify((cards || []).map(function (c) {
+    var x = {};
+    for (var k in c) {
+      if (Object.prototype.hasOwnProperty.call(c, k) && k !== '_undoSnapshot') x[k] = c[k];
+    }
+    return x;
+  })));
+}
+function _previewPushUndo() {
+  if (!previewData) return;
+  previewData._undo = { cards: _previewCloneCards(previewData.cards) };
+}
+function _previewReadEdit(idx) {
+  var card = previewData.cards[idx];
+  var qEl = document.getElementById('editPQ-' + idx);
+  var aEl = document.getElementById('editPA-' + idx);
+  var kEl = document.getElementById('editPKj-' + idx);
+  return {
+    q: qEl ? qEl.value : card.question,
+    a: aEl ? aEl.value : card.answer,
+    kj: kEl ? kEl.value : (card.koujue || ''),
+    cursor: aEl ? aEl.selectionStart : -1
+  };
+}
+function _previewClearBlanks(card) {
+  card.blanks = [];
+  card._autoBlanks = null;
+  card._charSelected = {};
+  card._savedChars = {};
+  card._charSelectedQ = {};
+  card._savedCharsQ = {};
+  card._editing = false;
+}
+function _previewHasBlanks(card) {
+  if (!card) return false;
+  if (card.blanks && card.blanks.length) return true;
+  if (card._autoBlanks && card._autoBlanks.length) return true;
+  if (card._savedChars && Object.keys(card._savedChars).length) return true;
+  if (card._savedCharsQ && Object.keys(card._savedCharsQ).length) return true;
+  if (card._charSelected && Object.keys(card._charSelected).some(function (k) { return card._charSelected[k]; })) return true;
+  if (card._charSelectedQ && Object.keys(card._charSelectedQ).some(function (k) { return card._charSelectedQ[k]; })) return true;
+  return false;
+}
+function _previewCopyBlank(b) {
+  return { start: b.start, end: b.end, text: b.text, isAnswer: b.isAnswer, _combined: !!b._combined, _removed: !!b._removed };
+}
+// 从 blanks 重建 _savedChars / _savedCharsQ（预览页渲染靠它显示“已保存的空”）
+function _previewBuildSaved(blanks, q, answer) {
+  var savedA = {}, savedQ = {};
+  var qq = String(q || ''), aa = String(answer || '');
+  var ansStart = qq.length + 1;
+  (blanks || []).forEach(function (b) {
+    if (b.isAnswer === false) {
+      for (var i = Math.max(0, b.start); i < Math.min(b.end, qq.length); i++) savedQ[i] = true;
+    } else {
+      for (var j = Math.max(0, b.start - ansStart); j < Math.min(b.end - ansStart, aa.length); j++) savedA[j] = true;
+    }
+  });
+  return { savedA: savedA, savedQ: savedQ };
+}
+function _previewApplyBlankSet(card, blanks, auto, q, answer) {
+  card.blanks = blanks || [];
+  card._autoBlanks = (auto && auto.length) ? auto : null;
+  var s = _previewBuildSaved(card.blanks, q, answer);
+  card._savedChars = s.savedA;
+  card._savedCharsQ = s.savedQ;
+  card._charSelected = {};
+  card._charSelectedQ = {};
+  card._editing = false;
+  if (card.blanks.length) card._manualBlanks = true; else delete card._manualBlanks;
+}
+// 把一组挖空按拆分点切开；跨过拆分点的空 → 返回 ok:false（调用方提示挪光标）
+//   firstQ  = 第一题的题目（跟原来一样）；secondQ = 第二题的新题目（原题（二），长度会变）
+function _previewMapBlankList(list, oldQ, splitAbs, firstQ, secondQ) {
+  var first = [], second = [];
+  for (var i = 0; i < (list || []).length; i++) {
+    var b = list[i];
+    if (b.isAnswer === false) {
+      if (String(firstQ) === String(oldQ)) first.push(_previewCopyBlank(b));
+      continue;
+    }
+    if (b.end <= splitAbs) {
+      first.push(_previewCopyBlank(b));
+    } else if (b.start >= splitAbs) {
+      var nb = _previewCopyBlank(b);
+      var ansStart = String(secondQ || '').length + 1;
+      nb.start = ansStart + (b.start - splitAbs);
+      nb.end = ansStart + (b.end - splitAbs);
+      second.push(nb);
+    } else {
+      return { ok: false, reason: 'straddle', text: b.text };
+    }
+  }
+  return { ok: true, first: first, second: second };
+}
+function _previewSplitBlanks(card, firstQ, secondQ, cursor) {
+  var oldQ = String(card.question || '');
+  var splitAbs = oldQ.length + 1 + cursor;
+  var mb = _previewMapBlankList(card.blanks || [], oldQ, splitAbs, firstQ, secondQ);
+  if (!mb.ok) return mb;
+  var ma = _previewMapBlankList(card._autoBlanks || [], oldQ, splitAbs, firstQ, secondQ);
+  if (!ma.ok) return ma;
+  return { ok: true, firstBlanks: mb.first, secondBlanks: mb.second, firstAuto: ma.first, secondAuto: ma.second };
+}
+function _nextPartTitle(q) {
+  var s = String(q || '');
+  var m = s.match(/（([一二三四五六七八九十]+)）\s*$/);
+  if (!m) return s + '（二）';
+  var map = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10 };
+  var n = map[m[1]] || 0;
+  if (!n) return s + '（二）';
+  var num = n + 1;
+  var cn = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+  var next = num <= 10 ? cn[num] : (num < 20 ? '十' + cn[num - 10] : String(num));
+  return s.replace(/（[一二三四五六七八九十]+）\s*$/, '（' + next + '）');
+}
+function splitPreviewCard(idx) {
+  if (!previewData || !previewData.cards[idx]) return;
+  var v = _previewReadEdit(idx);
+  var rawQ = String(v.q || '');
+  var q = rawQ.trim();
+  var a = String(v.a || '');
+  if (!q) { showToast('题目不能为空'); return; }
+  if (v.cursor <= 0 || v.cursor >= a.length) { showToast('先把光标放到答案里要拆开的位置'); return; }
+  var before = a.substring(0, v.cursor);
+  var after = a.substring(v.cursor);
+  if (!before.trim() || !after.trim()) { showToast('光标两边都要有内容才能拆'); return; }
+  var card = previewData.cards[idx];
+  var textUnchanged = (rawQ === String(card.question) && a === String(card.answer));
+  if (_previewHasBlanks(card) && !textUnchanged) {
+    showConfirm('文字改过了', '文字改过之后，原来的挖空位置对不上了。\n拆完这一题的挖空会清空（要重新点空）。继续吗？', function () {
+      _doSplitPreviewCard(idx, v, before, after, null);
+    }, '继续拆');
+    return;
+  }
+  var mapped = null;
+  if (_previewHasBlanks(card)) {
+    // 第二题的新题目长度会影响答案起点，必须先算出来再换算挖空位置
+    var secondQ = _nextPartTitle(q);
+    mapped = _previewSplitBlanks(card, rawQ, secondQ, v.cursor);
+    if (!mapped.ok) {
+      if (mapped.reason === 'straddle') showToast('这里有一个挖空跨过拆分点，挪一下光标再拆（挖空：「' + (mapped.text || '') + '」）');
+      else showToast('挖空位置对不上，拆不了');
+      return;
+    }
+  }
+  _doSplitPreviewCard(idx, v, before, after, mapped);
+}
+function _doSplitPreviewCard(idx, v, before, after, mapped) {
+  _previewPushUndo();
+  var card = previewData.cards[idx];
+  card.question = String(v.q || '').trim();
+  // ⚠️ 答案不 trim —— 一 trim 挖空的 start/end 就整体错位；位置必须跟切之前的文本一致
+  card.answer = before;
+  card.koujue = String(v.kj || '').trim();
+  card.fullText = card.question + '\n' + card.answer;
+  if (mapped) {
+    _previewApplyBlankSet(card, mapped.firstBlanks, mapped.firstAuto, card.question, card.answer);
+  } else {
+    _previewClearBlanks(card);
+  }
+  card._editing = false;
+  var newQuestion = _nextPartTitle(card.question);
+  var newCard = {
+    question: newQuestion,
+    answer: after,
+    koujue: '',
+    chapter: card.chapter,
+    blanks: [],
+    fullText: newQuestion + '\n' + after
+  };
+  if (mapped) {
+    _previewApplyBlankSet(newCard, mapped.secondBlanks, mapped.secondAuto, newQuestion, after);
+  }
+  previewData.cards.splice(idx + 1, 0, newCard);
+  renderPreviewCards();
+  showToast(mapped ? '✂️ 已拆成两题（原来的挖空已保留）' : '✂️ 已拆成两题，第二题可以点 ✏️ 改题目');
+}
+function mergePreviewCard(idx) {
+  if (!previewData || idx <= 0 || !previewData.cards[idx]) return;
+  var v = _previewReadEdit(idx);
+  var cur = previewData.cards[idx];
+  var textUnchanged = (String(v.q) === String(cur.question) && String(v.a) === String(cur.answer));
+  var doMerge = function () { _doMergePreviewCard(idx, v, textUnchanged); };
+  if (_previewHasBlanks(cur) && !textUnchanged) {
+    showConfirm('文字改过了', '文字改过之后，原来的挖空位置对不上了。\n合并后这道题的挖空会清空（要重新点空）。继续吗？', doMerge, '继续合并');
+    return;
+  }
+  doMerge();
+}
+function _doMergePreviewCard(idx, v, preserve) {
+  var cur = previewData.cards[idx];
+  var prev = previewData.cards[idx - 1];
+  var q = String(v.q || '').trim();
+  var a = String(v.a || '');
+  if (!a.trim()) { showToast('这一题答案是空的，没法合并'); return; }
+  _previewPushUndo();
+  var addQ = (q && q !== prev.question) ? q : '';
+  var oldPrevAnswer = String(prev.answer || '');
+  var sep = (oldPrevAnswer && !/\n$/.test(oldPrevAnswer)) ? '\n' : '';
+  var addQPart = addQ ? addQ + '\n' : '';
+  var newPrevAnswer = oldPrevAnswer + sep + addQPart + a;
+  var curAnswerStart = prev.question.length + 1 + newPrevAnswer.length - a.length;
+  var addQStart = prev.question.length + 1 + oldPrevAnswer.length + sep.length;
+  prev.answer = newPrevAnswer;
+  var kj = [prev.koujue, String(v.kj || '').trim()].filter(function (x) { return !!x; });
+  prev.koujue = kj.join('；');
+  prev.fullText = prev.question + '\n' + prev.answer;
+  if (preserve) {
+    // prev 的题目 + 答案前缀没变 → 挖空原样保留；cur 的挖空按合并后的位置换算
+    var prevBlanks = (prev.blanks || []).map(_previewCopyBlank);
+    var prevAuto = (prev._autoBlanks || []).map(_previewCopyBlank);
+    var curBlanks = [], curAuto = [];
+    (cur.blanks || []).forEach(function (b) {
+      var nb = _previewCopyBlank(b);
+      if (b.isAnswer === false) {
+        if (!addQ) return;
+        nb.start = addQStart + b.start;
+        nb.end = addQStart + b.end;
+        nb.isAnswer = true;   // 后一题的题目行现在是答案的一部分
+      } else {
+        var base = String(cur.question || '').length + 1;
+        nb.start = curAnswerStart + (b.start - base);
+        nb.end = curAnswerStart + (b.end - base);
+      }
+      curBlanks.push(nb);
+    });
+    (cur._autoBlanks || []).forEach(function (b) {
+      var nb = _previewCopyBlank(b);
+      if (b.isAnswer === false) {
+        if (!addQ) return;
+        nb.start = addQStart + b.start;
+        nb.end = addQStart + b.end;
+        nb.isAnswer = true;
+      } else {
+        var base = String(cur.question || '').length + 1;
+        nb.start = curAnswerStart + (b.start - base);
+        nb.end = curAnswerStart + (b.end - base);
+      }
+      curAuto.push(nb);
+    });
+    _previewApplyBlankSet(prev, prevBlanks.concat(curBlanks), prevAuto.concat(curAuto), prev.question, prev.answer);
+  } else {
+    _previewClearBlanks(prev);
+  }
+  previewData.cards.splice(idx, 1);
+  renderPreviewCards();
+  showToast(preserve ? '🔗 已合并到上一题（挖空已保留）' : '🔗 已合并到上一题');
+}
+function undoPreviewOperation() {
+  if (!previewData || !previewData._undo) { showToast('没有可撤回的拆/合'); return; }
+  previewData.cards = previewData._undo.cards;
+  previewData._undo = null;
+  renderPreviewCards();
+  showToast('↩️ 已撤回');
+}
+
+// ==================== 💾 预览保存成 txt（v213：管理员专属） ====================
+// 用户：「文本文件 .txt 想自己改、或给别的工具 目前只需要管理码有」
+//   导出的是工具能直接再导入的标记格式：￥章节 / $题目 / @@挖空@@ / 口诀：
+function _insertBlankMarks(text, blanks, offset) {
+  var list = (blanks || []).map(function (b) {
+    return { start: b.start - offset, end: b.end - offset, text: b.text };
+  }).filter(function (b) {
+    return b.start >= 0 && b.end <= text.length && b.end > b.start;
+  }).sort(function (a, b) { return a.start - b.start; });
+  var out = '', le = 0;
+  list.forEach(function (b) {
+    if (b.start < le) return;   // 组合空/重叠的跳过
+    out += text.substring(le, b.start) + '@@' + text.substring(b.start, b.end) + '@@';
+    le = b.end;
+  });
+  out += text.substring(le);
+  return out;
+}
+function _previewToMarkedText(cards) {
+  var out = [], lastChapter = null;
+  (cards || []).forEach(function (card) {
+    var q = String(card.question || '');
+    var a = String(card.answer || '');
+    if (card.chapter && card.chapter !== lastChapter) {
+      out.push('￥' + card.chapter);
+      lastChapter = card.chapter;
+    }
+    var sourceBlanks = (previewData && previewData.mode === 'auto')
+      ? (card._autoBlanks || []).filter(function (b) { return !b._removed; })
+      : (card.blanks || []).filter(function (b) { return !b._combined; });
+    var qb = [], ab = [];
+    sourceBlanks.forEach(function (b) {
+      if (b.isAnswer === false) qb.push(b); else ab.push(b);
+    });
+    out.push('$' + _insertBlankMarks(q, qb, 0));
+    out.push(_insertBlankMarks(a, ab, q.length + 1));
+    if (card.koujue) out.push('口诀：' + card.koujue);
+  });
+  return out.join('\n') + '\n';
+}
+function _downloadTextFile(name, text) {
+  var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+}
+function savePreviewAsTxt() {
+  if (!isAdmin()) { showToast('仅管理员可用'); return; }
+  if (!previewData || !previewData.cards || !previewData.cards.length) { showToast('没有可保存的内容'); return; }
+  var text = _previewToMarkedText(previewData.cards);
+  var base = String(previewData.name || '题库').replace(/[\\\/:*?"<>|]/g, '_').slice(0, 40) || '题库';
+  var d = new Date();
+  var date = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  var name = base + '_' + date + '.txt';
+  try {
+    _downloadTextFile(name, text);
+    showToastLines(['💾 已生成 ' + name, '对方在「📂 上传」里选中它就能导入'], 6000);
+  } catch (e) {
+    showToast('保存失败：' + (e && e.message ? e.message : e));
+  }
+}
+
+// ==================== ⛶ 答案全屏（v212：所有人可用） ====================
+// 用户原话：「题目的答案都有个类似全屏的按钮 因为框框太小了 能看的视野太小了不方便」
+//   · 每题答案旁「⛶ 全屏」= 大字只读查看（挖空高亮、可滚动、不误点）
+//   · 编辑面板「⛶ 全屏编辑」= 大框编辑，保存后走原来的 saveEditPreviewCard（挖空规则不变）
+function _fullscreenAnswerHtml(card) {
+  var text = String(card.answer || '');
+  var ansStart = String(card.question || '').length + 1;
+  var list;
+  if (previewData && previewData.mode === 'auto') {
+    list = (card._autoBlanks || []).filter(function (b) { return !b._removed && b.isAnswer !== false; });
+  } else {
+    list = (card.blanks || []).filter(function (b) { return !b._combined && b.isAnswer !== false; });
+  }
+  list = list.map(function (b) {
+    return { start: b.start - ansStart, end: b.end - ansStart, text: b.text };
+  }).filter(function (b) {
+    return b.start >= 0 && b.end <= text.length && b.end > b.start;
+  }).sort(function (a, b) { return a.start - b.start; });
+  var h = '', le = 0;
+  list.forEach(function (b) {
+    if (b.start < le) return;   // 组合空/重叠的跳过，避免重复高亮
+    h += escapeHtml(text.substring(le, b.start));
+    h += '<span class="blank-highlight">' + escapeHtml(text.substring(b.start, b.end)) + '</span>';
+    le = b.end;
+  });
+  h += escapeHtml(text.substring(le));
+  return '<div style="white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word">' + h + '</div>';
+}
+function openAnswerFullscreen(idx) {
+  if (!previewData || !previewData.cards[idx]) return;
+  closeAnswerFullscreen();
+  var card = previewData.cards[idx];
+  var ov = document.createElement('div');
+  ov.id = 'answerFullscreen';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:100002;background:var(--bg);display:flex;flex-direction:column;padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom))';
+  ov.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-shrink:0">' +
+      '<div style="font-size:var(--f16);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">第 ' + (idx + 1) + ' 题 · 答案</div>' +
+      '<button class="btn btn-sm btn-ghost" style="min-width:44px;min-height:44px" onclick="closeAnswerFullscreen()">✕</button>' +
+    '</div>' +
+    '<div style="font-size:var(--f13);color:var(--text-secondary);margin-bottom:8px;flex-shrink:0;word-break:break-word">📌 ' + escapeHtml(card.question || '') + '</div>' +
+    '<div id="answerFullscreenBody" style="flex:1;min-height:0;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:var(--f17);line-height:2.0">' + _fullscreenAnswerHtml(card) + '</div>' +
+    '<div style="display:flex;gap:8px;margin-top:10px;flex-shrink:0">' +
+      '<button class="btn btn-ghost" style="flex:1;min-height:44px" onclick="closeAnswerFullscreen()">关闭</button>' +
+      '<button class="btn btn-primary" style="flex:1;min-height:44px" onclick="openAnswerFullscreenEdit(' + idx + ')">✏️ 全屏编辑</button>' +
+    '</div>';
+  document.body.appendChild(ov);
+  try { if (typeof mathAfterRender === 'function') mathAfterRender(); } catch (e) {}
+}
+function closeAnswerFullscreen() {
+  var ov = document.getElementById('answerFullscreen');
+  if (ov) ov.remove();
+}
+function openAnswerFullscreenEdit(idx) {
+  if (!previewData || !previewData.cards[idx]) return;
+  var card = previewData.cards[idx];
+  if (!card._editing) {
+    card._editing = true;
+    renderPreviewCards();
+  }
+  var qSrc = document.getElementById('editPQ-' + idx);
+  var aSrc = document.getElementById('editPA-' + idx);
+  var kSrc = document.getElementById('editPKj-' + idx);
+  var qVal = qSrc ? qSrc.value : (card.question || '');
+  var aVal = aSrc ? aSrc.value : (card.answer || '');
+  var kVal = kSrc ? kSrc.value : (card.koujue || '');
+  closeAnswerFullscreen();
+  closeAnswerFullscreenEdit();
+  var ov = document.createElement('div');
+  ov.id = 'answerFullscreenEdit';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:100003;background:var(--bg);display:flex;flex-direction:column;padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom));overflow-y:auto';
+  ov.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-shrink:0">' +
+      '<div style="font-size:var(--f16);font-weight:700">第 ' + (idx + 1) + ' 题 · 全屏编辑</div>' +
+      '<button class="btn btn-sm btn-ghost" style="min-width:44px;min-height:44px" onclick="closeAnswerFullscreenEdit()">✕</button>' +
+    '</div>' +
+    '<div style="font-size:var(--f12);color:var(--text-secondary);margin-bottom:4px;flex-shrink:0">题目</div>' +
+    '<input id="answerFullscreenQ" value="' + escapeHtml(qVal) + '" spellcheck="false" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:var(--f15);margin-bottom:8px;flex-shrink:0;font-family:inherit">' +
+    '<div style="font-size:var(--f12);color:var(--text-secondary);margin-bottom:4px;flex-shrink:0">答案 <span style="font-size:var(--f11);color:var(--text-tertiary);font-weight:400">（点一下答案就能放光标；键盘会出来，选好位置可以收起来）</span></div>' +
+    '<textarea id="answerFullscreenEditTa" spellcheck="false" oninput="refreshFullscreenLines(' + idx + ')" style="flex:0 0 auto;min-height:120px;max-height:30vh;width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;background:var(--bg-card);color:var(--text);font-size:var(--f16);line-height:1.9;resize:none;font-family:inherit">' + escapeHtml(aVal) + '</textarea>' +
+    '<div style="font-size:var(--f12);color:var(--text-secondary);margin-top:8px;flex-shrink:0">按行拆（不用键盘）<span style="font-size:var(--f11);color:var(--text-tertiary)">—— 点某一行的 ✂️，直接从这一行前面拆开</span></div>' +
+    '<div id="answerFullscreenLines" style="max-height:26vh;overflow-y:auto;border:1px solid var(--border);border-radius:10px;margin:4px 0 8px;flex-shrink:0">' + _fullscreenLinesHtml(idx, aVal) + '</div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:0;flex-shrink:0">' +
+      '<button class="btn btn-sm btn-ghost" style="font-size:var(--f12);padding:6px 10px;min-height:36px" onclick="splitFromFullscreen(' + idx + ')">✂️ 按光标拆成两题</button>' +
+      (idx > 0 ? '<button class="btn btn-sm btn-ghost" style="font-size:var(--f12);padding:6px 10px;min-height:36px" onclick="mergeFromFullscreen(' + idx + ')">🔗 与上一题合并</button>' : '') +
+    '</div>' +
+    '<div style="font-size:var(--f12);color:var(--text-secondary);margin:8px 0 4px;flex-shrink:0">口诀（可选）</div>' +
+    '<input id="answerFullscreenKj" value="' + escapeHtml(kVal) + '" spellcheck="false" placeholder="例如：全（全民化）民（民主化）" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:var(--f14);margin-bottom:8px;flex-shrink:0;font-family:inherit">' +
+    '<div style="display:flex;gap:8px;flex-shrink:0">' +
+      '<button class="btn btn-ghost" style="flex:1;min-height:44px" onclick="closeAnswerFullscreenEdit()">取消</button>' +
+      '<button class="btn btn-primary" style="flex:1;min-height:44px" onclick="saveAnswerFullscreenEdit(' + idx + ')">💾 保存回预览</button>' +
+    '</div>';
+  document.body.appendChild(ov);
+  // ⚠️ v214：打开全屏**不再自动 focus 答案框** —— 手机上 focus 会立刻弹键盘，
+  //   而用户多数只是要“把光标放到某个位置”去拆题/合并，不想被键盘挡住。
+  //   想编辑时自己点一下答案框，键盘才会出来。
+}
+function closeAnswerFullscreenEdit() {
+  var ov = document.getElementById('answerFullscreenEdit');
+  if (ov) ov.remove();
+}
+function _fullscreenEditRead(idx) {
+  var q = document.getElementById('answerFullscreenQ');
+  var a = document.getElementById('answerFullscreenEditTa');
+  var k = document.getElementById('answerFullscreenKj');
+  return { q: q, a: a, k: k, qv: q ? q.value : '', av: a ? a.value : '', kv: k ? k.value : '', start: a ? a.selectionStart : -1, end: a ? a.selectionEnd : -1 };
+}
+function _fullscreenEditWriteBack(idx, v) {
+  var tq = document.getElementById('editPQ-' + idx);
+  var ta = document.getElementById('editPA-' + idx);
+  var tk = document.getElementById('editPKj-' + idx);
+  if (tq) tq.value = v.qv;
+  if (ta) { ta.value = v.av; ta.selectionStart = v.start; ta.selectionEnd = v.end; }
+  if (tk) tk.value = v.kv;
+}
+function _fullscreenLinesHtml(idx, text) {
+  var lines = String(text || '').split('\n'), pos = 0, h = '';
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i], start = pos;
+    var label = line.trim() ? escapeHtml(line) : '<span style="color:var(--text-tertiary)">（空行）</span>';
+    var dis = (start <= 0) ? ';opacity:.45;pointer-events:none' : '';
+    h += '<button type="button" onclick="splitFullscreenAtLine(' + idx + ',' + i + ',' + start + ')" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;border:none;border-bottom:1px solid var(--border);padding:8px 10px;font-size:var(--f14);color:var(--text);line-height:1.6;cursor:pointer;min-height:40px;font-family:inherit' + dis + '">' +
+      '<span style="flex:none;color:var(--primary)">✂️</span>' +
+      '<span style="flex:none;font-size:var(--f11);color:var(--text-tertiary)">第 ' + (i + 1) + ' 行</span>' +
+      '<span style="flex:1;min-width:0;word-break:break-word">' + label + '</span>' +
+      '</button>';
+    pos += line.length + 1;
+  }
+  return h || '<div style="padding:8px 10px;color:var(--text-tertiary);font-size:var(--f12)">（没有内容）</div>';
+}
+function refreshFullscreenLines(idx) {
+  var box = document.getElementById('answerFullscreenLines');
+  var ta = document.getElementById('answerFullscreenEditTa');
+  if (box && ta) box.innerHTML = _fullscreenLinesHtml(idx, ta.value);
+}
+function splitFullscreenAtLine(idx, lineIndex, start) {
+  var v = _fullscreenEditRead(idx);
+  if (!v.a) return;
+  if (start <= 0 || start >= v.av.length) { showToast('要从第 2 行开始拆'); return; }
+  v.a.selectionStart = v.a.selectionEnd = start;
+  splitFromFullscreen(idx);
+}
+function splitFromFullscreen(idx) {
+  var v = _fullscreenEditRead(idx);
+  if (!v.a) return;
+  if (v.start <= 0 || v.start >= v.av.length) { showToast('先把光标放到答案里要拆开的位置'); return; }
+  _fullscreenEditWriteBack(idx, v);
+  closeAnswerFullscreenEdit();
+  splitPreviewCard(idx);
+}
+function mergeFromFullscreen(idx) {
+  var v = _fullscreenEditRead(idx);
+  if (!v.a) return;
+  _fullscreenEditWriteBack(idx, v);
+  closeAnswerFullscreenEdit();
+  mergePreviewCard(idx);
+}
+function saveAnswerFullscreenEdit(idx) {
+  var v = _fullscreenEditRead(idx);
+  if (!v.a) return;
+  if (!v.av.trim()) { showToast('答案不能为空'); return; }
+  _fullscreenEditWriteBack(idx, v);
+  closeAnswerFullscreenEdit();
+  closeAnswerFullscreen();
+  saveEditPreviewCard(idx);
 }
 
 function confirmImport() {
@@ -17929,6 +19080,20 @@ var _MANUAL_TIP =
     '· <b>永远是新建一个题库</b>，不会盖掉你已有的；万一重名，会自动叫「XX（2）」。' +
   '</div>';
 
+// 🆕 v215：说明书补「预览页拆题 / 合并 / 撤回」—— 用户 2026-10-18：
+//   「更新说明书这次不要写管理码接口ai的事情 可以写光标可以拆分题目的事情」
+//   ⚠️ 这一节**不许出现** 管理码 / AI / Key / DeepSeek 字样。
+var _MANUAL_SPLIT =
+  '<div style="background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:var(--f13);line-height:1.85">' +
+    '<h4 style="font-size:var(--f15);margin:0 0 8px;color:var(--primary)">✂️ 预览页：按光标拆题 / 合并 / 撤回</h4>' +
+    '<p style="margin:0 0 4px"><b>拆成两题：</b>导入后预览页 → 点某题右上角 <b>✏️</b> → 在答案里点一下放光标 → 点 <b>✂️ 按光标拆成两题</b>。光标前面留第一题，后面变成第二题（默认叫「原题（二）」，可以改）。</p>' +
+    '<p style="margin:0 0 4px"><b>按行拆（不用键盘）：</b>点答案旁的 <b>⛶ 全屏编辑</b> → 下面有一排「第 1 行 / 第 2 行…」→ 点某一行的 <b>✂️</b>，直接从这一行前面拆开，不用弹出键盘。</p>' +
+    '<p style="margin:0 0 4px"><b>合并：</b>点第二题上的 <b>🔗 与上一题合并</b>，它就会并到上一题里。</p>' +
+    '<p style="margin:0 0 4px"><b>拆错 / 合错：</b>点预览页上的 <b>↩️ 撤回拆/合</b>，回到上一步。</p>' +
+    '<p style="margin:0 0 4px"><b>挖空：</b>拆 / 合会保留原来的挖空 —— 拆点前面的空留在第一题，后面的空跟到第二题；如果光标正好跨过一个挖空，会提示你挪一下光标。</p>' +
+    '<p style="margin:0"><b>看全：</b>每题答案旁有 <b>⛶ 全屏</b>，字小 / 框小的时候可以放大看。</p>' +
+  '</div>';
+
 // 页签按钮的样式：选中 = 主色底白字；未选中 = 透明
 function _manualTabStyle(on) {
   return 'padding:6px 12px;border:none;border-radius:7px;font-size:var(--f13);cursor:pointer;flex:0 0 auto;white-space:nowrap;min-height:32px;transition:all .15s;' +
@@ -17954,6 +19119,7 @@ function showManualMenu() {
     else if (tj.id === 'tip') paneBody = _MANUAL_TIP;
     else if (tj.id === 'quiz') paneBody = _MANUAL_QUIZ;
     else if (tj.id === 'feat') paneBody = _MANUAL_RATE + _MANUAL[tj.id];
+    else if (tj.id === 'full') paneBody = _MANUAL_SPLIT + _MANUAL[tj.id];
     else paneBody = _MANUAL[tj.id];
     panes += '<div id="manualTab_' + tj.id + '" class="manual-pane" style="' + (j === 0 ? '' : 'display:none;') + '">' + paneBody + '</div>';
   }
@@ -21032,6 +22198,9 @@ function renderSettings() {
       return html;
     })() +
 
+    // 🆕 v211：管理员专属「AI 整理」设置。没输管理码 → 这一段直接是空字符串。
+    (isAdmin() ? _aiSectionHtml() : '') +
+
     // 🆕 v201：合并版显示设置（模块状态 / 显示开关 / 题库显示方式 / 类型标识）
     (function() {
       var reciteTier = getRawModuleTier('recite');
@@ -21423,7 +22592,7 @@ function renderSettings() {
         '</div>' +
       '</div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:var(--f12);transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:var(--f13);cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:var(--f12)"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v210</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v215</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
       // 📲 2026-09-18 v166：用户在设置页找不到「怎么把工具存到桌面」的说明 → 关于最后一行加这个入口。
       //    点开走 showInstallGuide()（无延迟弹窗）。以后别的工具要加同一份 → 见 `新建文件夹/安装教程-可复用.md`。
@@ -21437,6 +22606,18 @@ function renderSettings() {
   loadVoices();
   setTimeout(function() { checkForUpdateDot(); }, 1000);
   setTimeout(function() { updateAuthorSyncStatus(); }, 200);
+  // 🆕 v212：管理员 + AI 开关打开时，余额缓存超过 60 秒就自动刷新一次（免费 GET，不花 token）
+  try {
+    if (isAdmin()) {
+      var _aic = aiCfgLoad();
+      if (_aic.enabled && _aic.key) {
+        var _b = _aic.balance;
+        if (!_b || Date.now() - (+_b.at || 0) > 60000) {
+          setTimeout(function () { aiRefreshBalance(); }, 500);
+        }
+      }
+    }
+  } catch (e) {}
 }
 
 // 折叠/展开 section，状态持久化到 settings
@@ -34352,7 +35533,6 @@ function renderSettings() {
         '</div></div>';
     })() +
 
-                     
     (function() {
       var printLocked = isTierLocked('print');
       var printTitle = printLocked ? '🖨 打印 🔒' : '🖨 打印';
