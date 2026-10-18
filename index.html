@@ -13,7 +13,7 @@
      而且不能用透明底（苹果会把透明的地方填成黑色）。现在是草地绿实色底。 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-<title>挖空背诵工具 v216 · 小阮出品</title>
+<title>挖空背诵工具 v217 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -905,13 +905,19 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
   .practice-card .blank-input.bw-flat{padding:0;min-width:0}
   /* 🆕 v193：椭圆挖空时，输入框的 min-width 是 1.5em（见上面 .blank-input.oval），
      显示答案那块原来还是 28px → **短答案上又会差几个像素**。这里对齐。 */
-  .practice-card .revealed-text.oval{min-width:1.5em;border:2px solid var(--blank-revealed-text);border-radius:50%;max-width:none}
+  /* 🆕 v217：长答案/长英文单词不许撑出屏幕 —— 折行逻辑已经保证「一整行放得下就整个换行」，
+     这里再兜一道 max-width。 */
+  .practice-card .revealed-text.oval{min-width:1.5em;border:2px solid var(--blank-revealed-text);border-radius:50%;max-width:100%}
   .practice-card .revealed-text{
     display:inline-block;min-width:28px;
     /* 🆕 v193：内边距要对齐 .blank-input（0.25em），高度那边 v192 已经对齐过了 */
     padding:0 .25em;border-bottom:2px solid var(--blank-revealed-text);border-radius:3px 3px 0 0;
     font-size:var(--font-size);font-weight:700;line-height:1.35;
-    text-align:center;vertical-align:baseline;margin:0 2px;
+    text-align:center;vertical-align:baseline;margin:0 2px;max-width:100%;
+    /* 🐞 v217 补修（用户真机截图：两个汉字在绿框里上下各一个）：
+       显示答案这层永远不许在字中间换行；宽度不够时宁可让框撑到内容宽（min-width:max-content），
+       也绝不把最后一个字挤到第二行。横线 / 椭圆两套都走这条。 */
+    white-space:nowrap;min-width:max-content;
     color:var(--blank-revealed-text);background:var(--blank-revealed-bg);
   }
 
@@ -1844,6 +1850,8 @@ body.focus-mode #cardText { line-height:2; }
       <div class="form-group" id="singleBankGroup">
         <label class="form-label">选择题库</label>
         <select id="qzBankSelect"><option value="">-- 请先导入题库 --</option></select>
+        <!-- 🆕 v217：分类筛选挪到题库下拉正下方（跟挖空同一个位置）；只能单题库模式用，混合刷题会跟着整块隐藏 -->
+        <div id="qzCategoryFilter" style="margin-top:10px"></div>
       </div>
       <div class="form-group" id="mixedBankGroup" style="display:none">
         <label class="form-label">勾选题库（至少选2个）</label>
@@ -1910,7 +1918,6 @@ body.focus-mode #cardText { line-height:2; }
           </label>
         </div>
       </div>
-      <div id="qzCategoryFilter" style="margin-top:10px"></div>
       <button class="btn btn-primary btn-block mt-12" onclick="QZ.startQuiz()">🚀 开始刷题</button>
     </div>
   </div>
@@ -2108,7 +2115,7 @@ function totalCardCount(exceptBankId) {
   });
   return n;
 }
-var APP_VERSION = 216;
+var APP_VERSION = 217;
 
 // ==== 开发者的话（写死在 HTML 里的兜底文案）====
 // 显示优先级：云端(本次启动拉到了) → 本地 authorNote → 这段兜底
@@ -3356,11 +3363,118 @@ function saveSetting(key, value) { appData.settings[key] = value; saveData(appDa
 // 检查晚间复习模式（v70 已移除）
 function checkEveningMode() { /* v70 已移除晚间复习模式 */ }
 
+// 🆕 v217：考试日期支持多个（用户 2026-10-18）
+//   · 存储：appData.settings.examDates = [{id, label, date}]
+//   · 老数据：没有 examDates、只有 examDate → 读的时候当成「一项」，用户不改就一个字都不写回
+//   · 首页主倒计时 = 列表里**第一个还没过**的考试（按用户排的顺序，↑/↓ 可调）
+function getExamDates() {
+  var s = appData.settings || {};
+  var arr = Array.isArray(s.examDates) ? s.examDates : [];
+  if (!arr.length && s.examDate) arr = [{ id: 'legacy', label: '', date: s.examDate }];
+  return arr.filter(function(e) { return e && typeof e === 'object'; }).map(function(e, idx) {
+    return { id: String(e.id || ('e' + idx)), label: String(e.label || ''), date: String(e.date || '') };
+  });
+}
+function _examDaysLeftOf(dateStr) {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
+  var exam = new Date(dateStr + 'T00:00:00');
+  if (isNaN(exam.getTime())) return null;
+  return Math.ceil((exam.getTime() - Date.now()) / 86400000);
+}
+function getPrimaryExam() {
+  var arr = getExamDates();
+  for (var i = 0; i < arr.length; i++) {
+    var d = _examDaysLeftOf(arr[i].date);
+    if (d !== null && d >= 0) return { id: arr[i].id, label: arr[i].label, date: arr[i].date, daysLeft: d };
+  }
+  return null;
+}
+function _saveExamDates(arr) {
+  var s = appData.settings || (appData.settings = {});
+  s.examDates = (arr || []).map(function(e) { return { id: e.id, label: e.label || '', date: e.date || '' }; });
+  // 兼容老字段：始终让它等于第一项（老代码/老备份读 examDate 时不会拿到过期值）
+  s.examDate = (arr && arr.length && arr[0].date) ? arr[0].date : null;
+  saveData(appData);
+}
+function addExamEntry() {
+  var arr = getExamDates();
+  arr.push({ id: 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), label: '', date: '' });
+  _saveExamDates(arr);
+  renderSettings();
+  renderBanks();
+}
+function updateExamEntry(id, field, value) {
+  var arr = getExamDates();
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i].id === id) {
+      if (field === 'label') arr[i].label = String(value || '').slice(0, 8);
+      else arr[i].date = String(value || '');
+      break;
+    }
+  }
+  _saveExamDates(arr);
+  renderSettings();
+  renderBanks();
+}
+function removeExamEntry(id) {
+  var arr = getExamDates().filter(function(e) { return e.id !== id; });
+  _saveExamDates(arr);
+  renderSettings();
+  renderBanks();
+}
+function moveExamEntry(id, dir) {
+  var arr = getExamDates();
+  var i = -1;
+  for (var k = 0; k < arr.length; k++) if (arr[k].id === id) { i = k; break; }
+  if (i < 0) return;
+  var j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  _saveExamDates(arr);
+  renderSettings();
+  renderBanks();
+}
+function clearAllExamDates() {
+  _saveExamDates([]);
+  renderSettings();
+  renderBanks();
+}
 function saveExamDate(value) {
-  appData.settings.examDate = value || null;
+  // 老入口（只有一处旧 UI 会调）：改第一项
+  var arr = getExamDates();
+  if (!arr.length) arr = [{ id: 'e' + Date.now().toString(36), label: '', date: '' }];
+  arr[0].date = value || '';
+  _saveExamDates(arr);
+  renderSettings();
+  renderBanks();
+}
+function updateExamNote(value) {
+  var s = appData.settings || (appData.settings = {});
+  s.examNote = String(value || '').slice(0, 20);
+  debouncedSaveData(appData);
+  renderBanks();
+}
+function clearExamNote() {
+  appData.settings.examNote = '';
   saveData(appData);
   renderSettings();
-  renderBanks(); // 刷新首页banner
+  renderBanks();
+}
+function showAllExams() {
+  var arr = getExamDates().filter(function(e) { return _examDaysLeftOf(e.date) !== null; });
+  if (!arr.length) { showToast('还没有设置考试日期'); return; }
+  var html = '<div style="max-height:60vh;max-height:60dvh;overflow-y:auto">';
+  arr.forEach(function(e) {
+    var d = _examDaysLeftOf(e.date);
+    var past = d < 0;
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid var(--border);' + (past ? 'opacity:.5' : '') + '">' +
+      '<span style="font-weight:600;font-size:var(--f14);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📅 ' + escapeHtml(e.label || '考试') + '</span>' +
+      '<span style="font-size:var(--f12);color:var(--text-tertiary);margin-left:auto;white-space:nowrap">' + escapeHtml(e.date) + '</span>' +
+      '<span style="font-size:var(--f13);font-weight:700;color:' + (past ? 'var(--text-tertiary)' : 'var(--primary)') + ';white-space:nowrap;min-width:54px;text-align:right">' + (past ? '已过' : (d === 0 ? '今天' : d + ' 天')) + '</span>' +
+    '</div>';
+  });
+  html += '</div>';
+  showModal('全部考试', html);
 }
 
 function saveAuthorNote(value) {
@@ -3435,7 +3549,12 @@ function toggleAuthorNoteSection() {
 }
 
 function saveDailyTarget(value) {
-  appData.settings.dailyTarget = value > 0 ? value : null;
+  // 🆕 v217：留空 = 自动（null）；填 0 = 不显示；填其它数字 = 按你写的
+  var raw = String(value == null ? '' : value).trim();
+  var n = raw === '' ? null : parseInt(raw, 10);
+  if (n !== null && isNaN(n)) n = null;
+  if (n !== null && n < 0) n = 0;
+  appData.settings.dailyTarget = n;
   saveData(appData);
   renderSettings();
   renderBanks();
@@ -3466,23 +3585,31 @@ function countMasteredQuestions() {
       if (cards[j].srMastered) mastered++;
     }
   }
+  // 🆕 v217：选择题也算进来（每日目标自动计算、成就「掌握50道题」、今日摘要都走这里）
+  var _qb = (appData.quiz && appData.quiz.banks) || {};
+  Object.keys(_qb).forEach(function(n) {
+    var arr = _qb[n] || [];
+    total += arr.length;
+    arr.forEach(function(q) { if (q && q.srMastered) mastered++; });
+  });
   return { mastered: mastered, total: total, unmastered: total - mastered };
 }
 
 function getExamDaysLeft() {
-
-
-  var examDate = (appData.settings || {}).examDate;
-  if (!examDate) return null;
-  var now = new Date();
-  var exam = new Date(examDate + 'T00:00:00');
-  var diff = Math.ceil((exam.getTime() - now.getTime()) / 86400000);
-  return diff;
+  // 🆕 v217：主倒计时＝列表里第一个还没过的考试；有日期但全过了 → -1；一个日期都没设 → null
+  var p = getPrimaryExam();
+  if (p) return p.daysLeft;
+  var any = getExamDates().some(function(e) { return _examDaysLeftOf(e.date) !== null; });
+  return any ? -1 : null;
 }
 
 function getDailyTarget() {
   var s = appData.settings || {};
-  if (s.dailyTarget && s.dailyTarget > 0) return s.dailyTarget;
+  // 🆕 v217：每日目标三态 —— 留空/undefined = 自动；0 = 不显示；N>0 = 按你写的
+  if (typeof s.dailyTarget === 'number') {
+    if (s.dailyTarget === 0) return 0;
+    if (s.dailyTarget > 0) return s.dailyTarget;
+  }
   var daysLeft = getExamDaysLeft();
   if (daysLeft === null || daysLeft <= 0) return 0;
   var stats = countMasteredQuestions();
@@ -3628,6 +3755,16 @@ function showWeeklyReport() {
     (b.cards || []).forEach(function(c) {
       if (c.lastPracticed && new Date(c.lastPracticed) >= weekStart) weekCardsTotal++;
       // v175 甲：判 `srMastered`（跟 countMasteredQuestions 同口径），不判 `srStage >= 4`
+      if (c.srMastered && c.lastPracticed && new Date(c.lastPracticed) >= weekStart) weekCardsMastered++;
+      if (c.starred) weekCardsStarred++;
+    });
+  });
+  // 🆕 v217：选择题也进学习周报（本周练习 / 掌握 / 收藏）
+  var _qbWeek = (appData.quiz && appData.quiz.banks) || {};
+  Object.keys(_qbWeek).forEach(function(n) {
+    (_qbWeek[n] || []).forEach(function(c) {
+      if (!c) return;
+      if (c.lastPracticed && new Date(c.lastPracticed) >= weekStart) weekCardsTotal++;
       if (c.srMastered && c.lastPracticed && new Date(c.lastPracticed) >= weekStart) weekCardsMastered++;
       if (c.starred) weekCardsStarred++;
     });
@@ -4890,9 +5027,9 @@ function deleteFbItem(fbId) {
 // tier 变成 pro 了、资料页却还是进不去，思维导图根本打不开。
 // 用户要求「试用的时候思维导图可以浏览」，所以试用中也放行。
 function canUseZiliao() {
-  var act = appData.activation || {};
-  if (act.tier !== 'pro') return false;
-  return !!act.codeHash || isTrialActive();
+  // 🆕 v217：资料页是**两个模块共用**的 —— 任一模块全能版（含选择题试用）就该能用。
+  //   原来只看 `activation.tier`（那只是挖空档位），只买选择题全能版的买家会被挡在外面。
+  return getTier() === 'pro' || getQuizTier() === 'pro';
 }
 
 // ====== IndexedDB ======
@@ -4973,6 +5110,7 @@ function dbClearBank(storeName, bankId) {
 
 // ====== 资料页状态 ======
 var _zlSubTab = 'notes'; // 'notes' | 'photos'
+var _zlType = 'recite';  // 🆕 v217：'recite' | 'quiz'（资料页顶部的两个文字按钮）
 var _zlBankId = '';
 var _zlEditingNote = null; // note object being edited, null = new
 var _zlNoteContent = '';
@@ -4981,6 +5119,58 @@ var _zlViewMode = 'edit'; // 'edit' | 'mindmap'
 var _zlMarkmapLoaded = false;
 var _zlReadonlyMap = false;   // 🧠 免费版资料页那份"只读示范导图"（2026-09-18）：开着一渲染完就把整棵树缩进框里
 var _zlSearchQuery = '';
+// 🆕 v217：资料页区分「挖空资料 / 选择题资料」
+//   · 挖空资料：bankId = 挖空题库的 id（老数据原样）
+//   · 选择题资料：bankId = 'qz:' + 选择题库名（跟挖空完全隔离，同名题库也不会串）
+function _zlBankKeys(type) {
+  if (type === 'quiz') {
+    return quizBankNamesSorted().map(function(n) { return 'qz:' + n; });
+  }
+  return Object.keys(appData.banks || {});
+}
+function zlBankDisplayName(key) {
+  if (key && String(key).indexOf('qz:') === 0) return String(key).slice(3);
+  var b = appData.banks && appData.banks[key];
+  return b ? (b.name || key) : key;
+}
+function zlBankIsQuiz(key) { return String(key || '').indexOf('qz:') === 0; }
+function setZlType(type) {
+  _zlType = (type === 'quiz') ? 'quiz' : 'recite';
+  var keys = _zlBankKeys(_zlType);
+  if (keys.indexOf(_zlBankId) < 0) _zlBankId = keys[0] || '';
+  _zlEditingNote = null;
+  _zlViewMode = 'edit';
+  renderZiliao();
+}
+// 选择题库改名 → 资料跟着改名（IndexedDB 里的 bankId 从 qz:old 改成 qz:new）
+function dbRenameBankId(storeName, oldKey, newKey) {
+  return openZiliaoDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(storeName, 'readwrite');
+      var store = tx.objectStore(storeName);
+      var req = store.getAll();
+      req.onsuccess = function() {
+        var all = req.result || [];
+        var n = 0;
+        all.forEach(function(r) {
+          if (r.bankId === oldKey) { r.bankId = newKey; store.put(r); n++; }
+        });
+        tx.oncomplete = function() { db.close(); resolve(n); };
+        tx.onerror = function() { db.close(); reject(tx.error); };
+      };
+      req.onerror = function() { db.close(); reject(req.error); };
+    });
+  });
+}
+function zlRenameQuizBankMaterials(oldName, newName) {
+  var oldKey = 'qz:' + oldName, newKey = 'qz:' + newName;
+  Promise.all([dbRenameBankId('notes', oldKey, newKey), dbRenameBankId('photos', oldKey, newKey)])
+    .catch(function() {});
+}
+function zlClearQuizBankMaterials(name) {
+  var key = 'qz:' + name;
+  Promise.all([dbClearBank('notes', key), dbClearBank('photos', key)]).catch(function() {});
+}
 
 // ====== 主渲染 ======
 function renderZiliao() {
@@ -5024,23 +5214,42 @@ function renderZiliao() {
     return;
   }
 
-  // 默认选中第一个题库
-  var bankIds = Object.keys(appData.banks || {});
-  if (!_zlBankId && bankIds.length > 0) _zlBankId = bankIds[0];
+  // 🆕 v217：先定类型（挖空 / 选择题），再列这一类的题库
+  if (_zlBankId && zlBankIsQuiz(_zlBankId)) _zlType = 'quiz';
+  else if (_zlBankId && appData.banks[_zlBankId]) _zlType = 'recite';
+  else if (!_zlBankKeys(_zlType).length) {
+    _zlType = (!Object.keys(appData.banks || {}).length && quizBankNamesSorted().length) ? 'quiz' : 'recite';
+  }
+  var bankIds = _zlBankKeys(_zlType);
+  if (bankIds.indexOf(_zlBankId) < 0) _zlBankId = bankIds[0] || '';
 
   var bankOptions = '';
   for (var i = 0; i < bankIds.length; i++) {
     var bid = bankIds[i];
-    var b = appData.banks[bid];
-    bankOptions += '<option value="' + bid + '"' + (_zlBankId === bid ? ' selected' : '') + '>' + escapeHtml(b.name || bid) + '</option>';
+    if (zlBankIsQuiz(bid)) {
+      var qn = bid.slice(3);
+      var qArr = (appData.quiz && appData.quiz.banks && appData.quiz.banks[qn]) || [];
+      bankOptions += '<option value="' + escapeHtml(bid) + '"' + (_zlBankId === bid ? ' selected' : '') + '>' + escapeHtml(qn) + '（' + qArr.length + ' 题）</option>';
+    } else {
+      var b = appData.banks[bid];
+      bankOptions += '<option value="' + escapeHtml(bid) + '"' + (_zlBankId === bid ? ' selected' : '') + '>' + escapeHtml((b && b.name) || bid) + '（' + (((b && b.cards) || []).length) + ' 题）</option>';
+    }
+  }
+  function _zlTypeBtn(t, label) {
+    var on = _zlType === t;
+    return '<button onclick="setZlType(\'' + t + '\')" style="flex:0 0 auto;width:78px;height:44px;padding:0;border:2px solid ' + (on ? 'var(--primary)' : 'var(--border)') +
+      ';border-radius:10px;background:' + (on ? 'var(--primary-light)' : 'var(--bg-card)') +
+      ';color:' + (on ? 'var(--primary)' : 'var(--text-secondary)') + ';font-size:var(--f14);font-weight:' + (on ? '700' : '500') +
+      ';cursor:pointer;white-space:nowrap;box-sizing:border-box">' + label + '</button>';
   }
 
   var html = '<div style="padding-bottom:80px">' +
     '<h1 style="font-size:var(--f22);font-weight:800;margin-bottom:14px;letter-spacing:-.02em;display:flex;align-items:center;justify-content:space-between">📑 资料<span id="zlStorageBadge" style="font-size:var(--f11);font-weight:400;color:var(--text-tertiary);cursor:pointer" onclick="showStorageInfo()">📦</span></h1>' +
-    // 题库选择
-    '<div style="margin-bottom:14px">' +
-      '<select id="zlBankSelect" onchange="_zlBankId=this.value;_zlEditingNote=null;renderZiliaoContent()" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);min-height:44px">' +
-        (bankOptions || '<option value="">无题库</option>') +
+    // 类型 + 题库选择（🆕 v217：两个等大纯文字按钮在左，下拉在右；永远一行，下拉可短）
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:nowrap">' +
+      _zlTypeBtn('recite', '挖空资料') + _zlTypeBtn('quiz', '选择题资料') +
+      '<select id="zlBankSelect" onchange="_zlBankId=this.value;_zlEditingNote=null;renderZiliaoContent()" style="flex:1;min-width:0;padding:10px 12px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);min-height:44px;box-sizing:border-box;text-overflow:ellipsis;white-space:nowrap;overflow:hidden">' +
+        (bankOptions || '<option value="">' + (_zlType === 'quiz' ? '还没有选择题库' : '还没有挖空题库') + '</option>') +
       '</select>' +
     '</div>' +
     // 子Tab
@@ -6325,10 +6534,10 @@ function showStorageInfo() {
       html += '<p style="font-size:var(--f12);color:var(--text-tertiary);margin-bottom:8px">按题库分布：</p>';
       for (var bi = 0; bi < bankIds.length; bi++) {
         var bsid = bankIds[bi];
-        var bname = (appData.banks[bsid] && appData.banks[bsid].name) || bsid;
+        var bname = zlBankDisplayName(bsid);
         var bs = bankStats[bsid];
         html += '<div style="font-size:var(--f12);color:var(--text-secondary);padding:4px 0;display:flex;justify-content:space-between">' +
-          '<span>' + escapeHtml(bname) + '（笔记' + bs.notes + ' 照片' + bs.photos + '）</span>' +
+          '<span>' + (zlBankIsQuiz(bsid) ? '📝 ' : '📖 ') + escapeHtml(bname) + '（笔记' + bs.notes + ' 照片' + bs.photos + '）</span>' +
           '<button onclick="clearBankZlData(\'' + bsid + '\')" style="background:none;border:none;color:var(--danger);font-size:var(--f11);cursor:pointer">🗑 清理</button>' +
         '</div>';
       }
@@ -6341,7 +6550,7 @@ function showStorageInfo() {
 }
 
 function clearBankZlData(bankId) {
-  var bname = (appData.banks[bankId] && appData.banks[bankId].name) || bankId;
+  var bname = (zlBankIsQuiz(bankId) ? '📝 ' : '📖 ') + zlBankDisplayName(bankId);
   showConfirm('🧹 清空资料', '确定清除「' + bname + '」的所有笔记和照片吗？此操作不可恢复。', function() {
     Promise.all([dbClearBank('notes', bankId), dbClearBank('photos', bankId)]).then(function() {
       showToast('已清除');
@@ -7410,6 +7619,275 @@ function restorePresetQuizBank() {
   }
 }
 
+// ==================== 🆕 v217：选择题章节掌握度 + 章节管理 ====================
+//   · 算法跟挖空完全一样：章节 = q.chapter（空 → 未分类）；已掌握 = q.srMastered；80/60 两档颜色；
+//     顺序 = 章节第一次出现的顺序；点一行 → 带着这一章去做题设置页。
+//   · 章节管理：新建 / 重命名 / 合并 / 选题（勾上=在本章；取消=移出本章）。
+var _quizChapterBankId = null;
+var _quizChapterStats = null;
+var _quizChapterMgr = null;
+var _quizChapterPick = null;
+
+function getQuizChapterStats(bankName) {
+  var arr = ((appData.quiz && appData.quiz.banks) || {})[bankName] || [];
+  var chapters = {};
+  arr.forEach(function(q) {
+    var ch = (q && q.chapter ? String(q.chapter).trim() : '') || CHAPTER_UNCATEGORIZED;
+    if (!chapters[ch]) chapters[ch] = { name: ch, total: 0, mastered: 0 };
+    chapters[ch].total++;
+    if (q && q.srMastered) chapters[ch].mastered++;
+  });
+  return Object.values(chapters);
+}
+function _quizHasRealChapters(stats) {
+  return (stats || []).some(function(s) { return s.name !== CHAPTER_UNCATEGORIZED; });
+}
+function renderQuizChapterHeatmap(bankName) {
+  if (!hasFeature('chapterHeatmap')) return '';
+  var names = quizBankNamesSorted();
+  if (!names.length) return '<div class="empty"><span class="icon">📊</span><h3>还没有选择题库</h3><p>先导入选择题，就能按章节看掌握度</p></div>';
+  if (!bankName || names.indexOf(bankName) < 0) bankName = names[0];
+  _quizChapterBankId = bankName;
+  var stats = getQuizChapterStats(bankName);
+  _quizChapterStats = stats;
+  var enc = encodeURIComponent(bankName);
+  var sel = '<div style="margin-bottom:12px"><select id="quizChapterBankSelect" onchange="setQuizChapterBank(this.value)" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);min-height:44px">' +
+    names.map(function(n) { return '<option value="' + escapeHtml(n) + '"' + (n === bankName ? ' selected' : '') + '>' + escapeHtml(n) + '</option>'; }).join('') +
+    '</select></div>';
+  var head = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px">' +
+    '<span style="font-size:var(--f13);color:var(--text-tertiary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📊 📝 ' + escapeHtml(bankName) + ' · 章节掌握度</span>' +
+    '<button class="btn btn-sm btn-ghost" onclick="showQuizChapterManager(decodeURIComponent(\'' + enc + '\'))" style="font-size:var(--f12);padding:4px 10px;flex-shrink:0">⚙️ 章节管理</button></div>';
+  if (!stats.length || !_quizHasRealChapters(stats)) {
+    return sel + head + '<div class="empty"><span class="icon">📊</span><h3>暂无章节数据</h3><p>这个选择题库的题目还没有填章节</p>' +
+      '<div style="margin-top:14px"><button class="btn btn-sm btn-ghost" onclick="showQuizChapterManager(decodeURIComponent(\'' + enc + '\'))" style="font-size:var(--f13);padding:8px 16px">⚙️ 章节管理</button></div></div>';
+  }
+  var html = sel + head;
+  for (var i = 0; i < stats.length; i++) {
+    var s = stats[i];
+    var rate = s.total > 0 ? s.mastered / s.total : 0;
+    var color = getChapterRateColor(rate);
+    var pct = Math.round(rate * 100);
+    html += '<div class="chapter-stat-row" onclick="qzPracticeChapterAt(' + i + ')">' +
+      '<div class="chapter-stat-name" title="' + escapeHtml(s.name) + '">' + escapeHtml(s.name) + '</div>' +
+      '<div class="chapter-stat-count">' + s.mastered + '/' + s.total + '</div>' +
+      '<div class="chapter-stat-bar"><div class="chapter-stat-fill ' + color + '" style="width:' + pct + '%"></div></div>' +
+      '<div class="chapter-stat-pct" style="color:' + (color === 'red' ? '#f44336' : color === 'yellow' ? '#ff9800' : '#4caf50') + '">' + pct + '%</div>' +
+    '</div>';
+  }
+  html += '<div style="margin-top:14px"><button class="btn btn-primary btn-block" onclick="QZ.openQuizChapter(decodeURIComponent(\'' + enc + '\'), \'\')">🎯 练习全部章节</button></div>';
+  return html;
+}
+function setQuizChapterBank(name) {
+  _quizChapterBankId = name;
+  _renderQuizChapterView();
+}
+function _renderQuizChapterView() {
+  var c = document.getElementById('browseTabContent');
+  if (!c) return;
+  c.innerHTML = renderQuizChapterHeatmap(_quizChapterBankId);
+}
+function qzPracticeChapterAt(i) {
+  var st = _quizChapterStats || [];
+  if (!st[i]) return;
+  if (window.QZ && QZ.openQuizChapter) {
+    try { QZ.openQuizChapter(_quizChapterBankId, st[i].name); } catch (e) { console.error('openQuizChapter', e); }
+  }
+}
+function showQuizChapterManager(bankName) {
+  if (!hasFeature('chapterHeatmap')) return;
+  var names = quizBankNamesSorted();
+  if (!names.length) { showToast('还没有选择题库'); return; }
+  if (names.indexOf(bankName) < 0) bankName = names[0];
+  var stats = getQuizChapterStats(bankName);
+  _quizChapterMgr = { bankName: bankName, names: stats.map(function(s) { return s.name; }) };
+  var old = document.getElementById('quizChapterMgrOverlay'); if (old) old.remove();
+  var enc = encodeURIComponent(bankName);
+  var ov = document.createElement('div');
+  ov.className = 'modal-overlay'; ov.id = 'quizChapterMgrOverlay'; ov.style.animation = 'none';
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:480px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:80vh;max-height:80dvh;overflow-y:auto;padding:20px">' +
+    '<h3 style="margin:0 0 8px;font-size:var(--f18)">⚙️ 选择题章节管理</h3>' +
+    '<p style="color:var(--text-secondary);font-size:var(--f13);margin-bottom:16px">' + escapeHtml(bankName) + ' · 共 ' + stats.length + ' 个章节</p>';
+  for (var i = 0; i < stats.length; i++) {
+    var s = stats[i];
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">' +
+      '<span style="flex:1;font-size:var(--f14);font-weight:500;min-width:120px">' + escapeHtml(s.name) + ' <span style="color:var(--text-tertiary);font-size:var(--f12)">(' + s.total + '题)</span></span>' +
+      (s.name !== CHAPTER_UNCATEGORIZED ? '<button class="btn btn-sm btn-ghost" style="font-size:var(--f11);padding:4px 8px" onclick="quizChapterMgrPick(' + i + ')">📋 选题</button>' : '') +
+      (s.name !== CHAPTER_UNCATEGORIZED ? '<button class="btn btn-sm btn-ghost" style="font-size:var(--f11);padding:4px 8px" onclick="quizChapterMgrRename(' + i + ')">✏️ 重命名</button>' : '') +
+      (stats.length > 1 ? '<button class="btn btn-sm btn-ghost" style="font-size:var(--f11);padding:4px 8px;color:var(--danger)" onclick="quizChapterMgrMerge(' + i + ')">📦 合并</button>' : '') +
+      '</div>';
+  }
+  html += '<div style="margin-top:16px"><button class="btn btn-primary btn-block" onclick="quizChapterMgrNew()" style="font-size:var(--f14)">➕ 新建章节</button></div></div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
+function _quizChapterMgrRefresh() {
+  var m = _quizChapterMgr; if (!m) return;
+  var ov = document.getElementById('quizChapterMgrOverlay'); if (ov) ov.remove();
+  showQuizChapterManager(m.bankName);
+  if (_quizChapterBankId === m.bankName) _renderQuizChapterView();
+}
+function quizChapterMgrNew() {
+  var m = _quizChapterMgr; if (!m) return;
+  showChapterInputModal({
+    title: '➕ 新建章节',
+    hint: '下一步接着勾题目 —— 勾中的题才算进这个章节，一道都没勾就不会建。',
+    placeholder: '比如：第一章 教育与教育学',
+    okText: '下一步：勾题',
+    onOk: function(v) {
+      var taken = chapterNameTaken(m, v, -1);
+      if (taken) return taken;
+      showQuizChapterPicker(m.bankName, v, true);
+      return null;
+    }
+  });
+}
+function quizChapterMgrRename(i) {
+  var m = _quizChapterMgr; if (!m || !m.names[i]) return;
+  var oldName = m.names[i];
+  showChapterInputModal({
+    title: '✏️ 重命名章节',
+    hint: '「' + oldName + '」里的题会跟着一起改名。',
+    value: oldName, placeholder: '章节名', okText: '改名',
+    onOk: function(v) {
+      if (v === oldName) return '跟原来一样，不用改';
+      var taken = chapterNameTaken(m, v, i);
+      if (taken) return taken;
+      var arr = ((appData.quiz && appData.quiz.banks) || {})[m.bankName] || [];
+      var n = 0;
+      arr.forEach(function(q) {
+        if (((q.chapter || '').trim() || CHAPTER_UNCATEGORIZED) === oldName) { q.chapter = v; n++; }
+      });
+      saveData(appData);
+      showToast('✅ 已改名 ' + n + ' 题 → 「' + v + '」');
+      _quizChapterMgrRefresh();
+      return null;
+    }
+  });
+}
+function quizChapterMgrMerge(i) {
+  var m = _quizChapterMgr; if (!m || i < 0 || !m.names[i]) return;
+  var fromName = m.names[i];
+  var stats = getQuizChapterStats(m.bankName).filter(function(s) { return s.name !== fromName; });
+  if (!stats.length) { showToast('只有这一个章节，没地方可并'); return; }
+  var arr = ((appData.quiz && appData.quiz.banks) || {})[m.bankName] || [];
+  var n = 0;
+  arr.forEach(function(q) { if (((q.chapter || '').trim() || CHAPTER_UNCATEGORIZED) === fromName) n++; });
+  showMergeChapterModal(fromName, n, stats, function(toName) {
+    var c = 0;
+    arr.forEach(function(q) {
+      if (((q.chapter || '').trim() || CHAPTER_UNCATEGORIZED) === fromName) { q.chapter = toName; c++; }
+    });
+    saveData(appData);
+    showToast('✅ 已合并 ' + c + ' 题 → 「' + toName + '」');
+    _quizChapterMgrRefresh();
+  });
+}
+function quizChapterMgrPick(i) {
+  var m = _quizChapterMgr; if (!m || !m.names[i]) return;
+  showQuizChapterPicker(m.bankName, m.names[i], false);
+}
+function showQuizChapterPicker(bankName, chapterName, isNew) {
+  var arr = ((appData.quiz && appData.quiz.banks) || {})[bankName] || [];
+  if (!arr.length) { showToast('这个题库里还没有题'); return; }
+  var orig = {}, sel = {};
+  arr.forEach(function(q, i) {
+    var cur = ((q.chapter || '').trim() || CHAPTER_UNCATEGORIZED);
+    if (cur === chapterName) { orig[i] = 1; sel[i] = 1; }
+  });
+  _quizChapterPick = { bankName: bankName, chapterName: chapterName, isNew: !!isNew, keyword: '', orig: orig, sel: sel };
+  var old = document.getElementById('quizChapterPickOverlay'); if (old) old.remove();
+  var ov = document.createElement('div');
+  ov.className = 'modal-overlay'; ov.id = 'quizChapterPickOverlay'; ov.style.animation = 'none';
+  ov.innerHTML = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:540px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:88vh;max-height:88dvh;display:flex;flex-direction:column;padding:0">' +
+    '<div style="padding:16px 18px 12px;border-bottom:1px solid var(--border);flex-shrink:0">' +
+      '<h3 style="margin:0 0 4px;font-size:var(--f17)">📋 勾题目进「' + escapeHtml(chapterName) + '」</h3>' +
+      '<p style="color:var(--text-secondary);font-size:var(--f12);margin:0;line-height:1.5">勾上 = 这道题在本章节里；把勾去掉 = 移出本章节</p></div>' +
+    '<div style="padding:10px 18px;border-bottom:1px solid var(--border);flex-shrink:0">' +
+      '<div class="flex gap-8" style="align-items:center">' +
+        '<input id="quizChapterPickSearch" type="search" placeholder="搜题目 / 答案 / 章节名" autocomplete="off" style="flex:1;min-width:0;padding:8px 12px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f13)">' +
+        '<button class="btn btn-sm btn-ghost" id="quizChapterPickAll" style="font-size:var(--f12);padding:6px 10px;white-space:nowrap">全选</button>' +
+        '<button class="btn btn-sm btn-ghost" id="quizChapterPickNone" style="font-size:var(--f12);padding:6px 10px;white-space:nowrap">全不选</button>' +
+      '</div><div id="quizChapterPickCount" style="font-size:var(--f12);color:var(--text-secondary);margin-top:8px;line-height:1.5"></div></div>' +
+    '<div style="overflow-y:auto;flex:1;padding:8px 18px" id="quizChapterPickList"></div>' +
+    '<div style="padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px">' +
+      '<button class="btn btn-ghost" id="quizChapterPickCancel" style="flex:1;font-size:var(--f14)">取消</button>' +
+      '<button class="btn btn-primary" id="quizChapterPickOk" style="flex:1;font-size:var(--f14)">确定</button></div></div>';
+  document.body.appendChild(ov);
+  function visibleIdx() {
+    var kw = _quizChapterPick.keyword;
+    var out = [];
+    arr.forEach(function(q, i) {
+      if (!kw) { out.push(i); return; }
+      var hay = ((q.question || '') + ' ' + (q.answer || '') + ' ' + (q.chapter || '')).toLowerCase();
+      if (hay.indexOf(kw) >= 0) out.push(i);
+    });
+    return out;
+  }
+  function paint() {
+    var list = document.getElementById('quizChapterPickList'); if (!list) return;
+    var ids = visibleIdx();
+    var h = '';
+    ids.forEach(function(i) {
+      var q = arr[i] || {};
+      h += '<label style="display:flex;align-items:flex-start;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);cursor:pointer">' +
+        '<input type="checkbox" data-qidx="' + i + '"' + (_quizChapterPick.sel[i] ? ' checked' : '') + ' style="margin-top:3px;flex-shrink:0">' +
+        '<span style="font-size:var(--f13);line-height:1.5;min-width:0">' + escapeHtml(String(q.question || '').slice(0, 120)) +
+        (q.chapter ? ' <span style="font-size:var(--f11);color:var(--text-tertiary)">［' + escapeHtml(q.chapter) + '］</span>' : '') + '</span></label>';
+    });
+    list.innerHTML = h || '<div class="empty"><p>没有匹配的题目</p></div>';
+    var cnt = document.getElementById('quizChapterPickCount');
+    if (cnt) {
+      var n = 0;
+      for (var k in _quizChapterPick.sel) if (_quizChapterPick.sel[k]) n++;
+      cnt.textContent = '已勾 ' + n + ' 题' + (_quizChapterPick.keyword ? '（列表里 ' + ids.length + ' 题）' : '');
+    }
+  }
+  ov.addEventListener('change', function(e) {
+    var cb = e.target;
+    if (!cb || cb.getAttribute('data-qidx') == null) return;
+    var i = parseInt(cb.getAttribute('data-qidx'), 10);
+    if (cb.checked) _quizChapterPick.sel[i] = 1; else delete _quizChapterPick.sel[i];
+    paint();
+  });
+  ov.addEventListener('input', function(e) {
+    if (e.target && e.target.id === 'quizChapterPickSearch') {
+      _quizChapterPick.keyword = String(e.target.value || '').trim().toLowerCase();
+      paint();
+    }
+  });
+  ov.querySelector('#quizChapterPickAll').onclick = function() {
+    visibleIdx().forEach(function(i) { _quizChapterPick.sel[i] = 1; });
+    paint();
+  };
+  ov.querySelector('#quizChapterPickNone').onclick = function() {
+    visibleIdx().forEach(function(i) { delete _quizChapterPick.sel[i]; });
+    paint();
+  };
+  ov.querySelector('#quizChapterPickCancel').onclick = function() { ov.remove(); };
+  ov.querySelector('#quizChapterPickOk').onclick = function() {
+    var n = 0, removed = 0;
+    arr.forEach(function(q, i) {
+      var cur = ((q.chapter || '').trim() || CHAPTER_UNCATEGORIZED);
+      if (_quizChapterPick.sel[i]) {
+        if (cur !== chapterName) { q.chapter = chapterName; n++; }
+      } else if (cur === chapterName && chapterName !== CHAPTER_UNCATEGORIZED) {
+        delete q.chapter; removed++;
+      }
+    });
+    if (isNew && n === 0) {
+      showToast('一道题都没勾，这个章节没有建');
+      ov.remove();
+      return;
+    }
+    saveData(appData);
+    showToast('✅ 已更新 ' + n + ' 题进「' + chapterName + '」' + (removed ? '，移出 ' + removed + ' 题' : ''));
+    ov.remove();
+    _quizChapterMgrRefresh();
+  };
+  paint();
+}
+
 // ==================== 自动挖空算法 ====================
 const STOP_WORDS = new Set(['的','了','是','在','和','与','或','对','从','到','等','这','那','其','之','也','就','都','但','而','且','所','被','把','让','向','同','及','以及','着','过','可以','能够','需要','应该','必须','可能','已经','正在','将要','没有','不是','什么','怎么','怎样','如何','为什么','哪个','哪里','因为','所以','虽然','但是','如果','即使','除非','无论','不管','进行','使用','通过','根据','关于','对于','由于','为了','一个','一种','这个','这种','一些','这些','那些','每个','第一','第二','第三','首先','其次','最后','然后','接着','方面','部分','情况','过程','结果','作用','功能','特点','具有','形成','产生','发生','发展','变化','包括','包含','主要','重要','基本','一般','特别','非常','比较','更加','一定','所有','任何','不同','相同','之间','之中','之后','之前','以内','以外','以上','以下','不能','不会','不可','不再','也是','就有','都会','也可','是指','称为','叫做','属于','用来','用以','用于','作为','其中','其他','其它','各自','某些','有的','有些','我国','人们','我们','他们','你们','它们','当','并','则','以','可','能','会','要','有','无','为主','程度','有助于','标志着','就是说','指的是','共同','相互','整体','具体','实际','直接','间接','最终','逐步','不断','充分','进一步','结合']);
 
@@ -8120,7 +8598,12 @@ function _blankTextEm(t) {
   return w;
 }
 function ovalBlankWidth(t) {
-  return (_blankTextEm(t) + 0.6).toFixed(2) + 'em';
+  // 🐞 v217 补修（用户 2026-10-18 真机截图「还家 / 多应 / 陛下」上下各一个字）：
+  //   全局 `*{box-sizing:border-box}` —— 这个 width 是**含 padding 和边框**的！
+  //   原来 +0.6em 只算了 padding(0.5em) + 0.1em 余量，**没算 2px 上下左右边框（≈0.25em）**
+  //   → 内容区实际只有 `文字宽 - 0.15em`，两个字正好差一点点 → 最后一个字换行（竖着排）。
+  //   现在 +0.85em = padding 0.5 + 边框 0.25 + 余量 0.1；同时 .revealed-text 加 nowrap 兜底。
+  return (_blankTextEm(t) + 0.85).toFixed(2) + 'em';
 }
 function shuffle(a) { const arr = [...a]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 function fmtDate(ts) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -9906,9 +10389,13 @@ function qzShowQuizPractice() {
 function qzOpenBank(name) {
   if (!window.QZ || !((appData.quiz && appData.quiz.banks) || {})[name]) return;
   qzShowQuizPractice();
-  var sel = document.getElementById('bankSelect');
+  // 🐞 v217（用户 2026-10-18 报「点外面的题库，做题还是原来的题」）：
+  //   这里原来写的是 `bankSelect` —— 那是**挖空**的隐藏下拉，选择题的下拉叫 `qzBankSelect`。
+  //   所以点哪个都没用，做题页永远停在上次选的那个库。现在写对，并顺手把筛选重置到这个库。
+  var sel = document.getElementById('qzBankSelect');
   if (sel) sel.value = name;
   try { QZ.renderQuizSetup(); } catch (e) { console.error('renderQuizSetup', e); }
+  try { QZ.renderCategoryFilter(name, false); } catch (e) { console.error('renderCategoryFilter', e); }
 }
 function qzRenameBankPrompt(el, name) {
   if (!window.QZ || !QZ.renameBankPrompt) return;
@@ -10158,20 +10645,29 @@ function renderBanks() {
   var daysLeft = getExamDaysLeft();
   var todayCompleted = getTodayCompleted();
   var dailyTarget = getDailyTarget();
-  // 考试倒计时（仅设置了考试日期时显示）
-  if (daysLeft !== null) {
-    var bannerClass = daysLeft > 30 ? 'green' : daysLeft > 7 ? 'yellow' : daysLeft > 0 ? 'red' : 'gray';
-    var bannerEmoji = daysLeft > 30 ? '📅' : daysLeft > 7 ? '📅' : daysLeft > 0 ? '🚨' : '✅';
-    var bannerText = daysLeft > 0 ? '距考试还有 <b>' + daysLeft + '</b> 天' : '考试日期已过';
-    var progressHtml = '';
-    if (dailyTarget > 0) {
-      var pct = Math.min(100, Math.round((todayCompleted / dailyTarget) * 100));
-      progressHtml = '<div class="exam-banner-progress"><div class="exam-banner-progress-fill" style="width:' + pct + '%"></div></div>';
+  // 🆕 v217：紧凑一行（13px / 字重 600，跟用户发的那张图一样的实际大小）
+  //   · 主倒计时 = 第一个还没过的考试（getPrimaryExam）
+  //   · 右边：一句话（设置里填的，最多 20 字）+「还有 N 场 ›」
+  var _examsAll = getExamDates();
+  var _examsValid = _examsAll.filter(function(e) { return _examDaysLeftOf(e.date) !== null; });
+  if (_examsValid.length) {
+    var _prim = getPrimaryExam();
+    var _note = String((appData.settings || {}).examNote || '').slice(0, 20);
+    var _mainTxt, _color;
+    if (_prim) {
+      _mainTxt = (_prim.daysLeft === 0 ? '今天考试' : '距' + (_prim.label || '考试') + ' ' + _prim.daysLeft + ' 天');
+      _color = _prim.daysLeft <= 7 ? '#e74c3c' : (_prim.daysLeft <= 30 ? '#e67e22' : 'var(--primary)');
+    } else {
+      _mainTxt = '考试日期已过';
+      _color = 'var(--text-tertiary)';
     }
-    examBannerHtml = '<div class="exam-banner ' + bannerClass + '" onclick="switchTab(\'practice\')">' +
-      '<div class="exam-banner-main">' +
-        '<div class="exam-banner-title">' + bannerEmoji + ' ' + bannerText + '</div>' +
-      '</div>' +
+    var _moreN = _prim ? (_examsValid.length - 1) : _examsValid.length;
+    var _moreHtml = _moreN > 0 ? '<span onclick="event.stopPropagation();showAllExams()" style="font-size:13px;font-weight:600;color:var(--primary);white-space:nowrap;cursor:pointer;flex-shrink:0">还有 ' + _moreN + ' 场 ›</span>' : '';
+    var _noteHtml = _note ? '<span style="font-size:13px;color:var(--text-secondary);margin-left:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right">' + escapeHtml(_note) + '</span>' : '';
+    examBannerHtml = '<div class="exam-banner" onclick="switchTab(\'practice\')" style="background:transparent;border:none;padding:0 2px 8px;margin-bottom:10px;display:flex;align-items:center;gap:7px;min-height:0">' +
+      '<span style="font-size:14px;flex-shrink:0">📅</span>' +
+      '<span style="font-size:13px;font-weight:600;color:' + _color + ';white-space:nowrap;flex-shrink:0">' + escapeHtml(_mainTxt) + '</span>' +
+      _moreHtml + _noteHtml +
     '</div>';
   }
   // 今日学习统计（始终显示）
@@ -14533,6 +15029,96 @@ function cancelEditPreviewCard(idx) {
   renderPreviewCards();
 }
 
+// 🆕 v217（用户 2026-10-18 报）：导入后修改题目，原来的挖空会被**整批清掉**。
+//   现在改成「重新对位」：
+//     · 改动在挖空前面 → 后面的挖空整体平移
+//     · 改动在挖空后面 → 前面的挖空原样保留
+//     · 改动正好动了挖空里的字 → 在新文字里找原来那段；找得到就保留，找不到才丢掉那一个空
+function _previewMapBlankOffset(oldText, newText, b) {
+  var os = b.start, oe = b.end;
+  var ot = (b.text != null) ? String(b.text) : String(oldText || '').slice(os, oe);
+  if (oldText === newText) return { start: os, end: oe, text: ot };
+  // 公共前后缀（不重叠）
+  var p = 0;
+  while (p < oldText.length && p < newText.length && oldText.charAt(p) === newText.charAt(p)) p++;
+  var s = 0;
+  while (s < oldText.length - p && s < newText.length - p &&
+         oldText.charAt(oldText.length - 1 - s) === newText.charAt(newText.length - 1 - s)) s++;
+  var delta = newText.length - oldText.length;
+  if (oe <= p) return { start: os, end: oe, text: newText.slice(os, oe) };
+  if (os >= oldText.length - s) return { start: os + delta, end: oe + delta, text: newText.slice(os + delta, oe + delta) };
+  // 改动正好压到挖空上 → 按原文找最近的同文片段
+  if (!ot) return null;
+  var idxs = [], from = 0, at;
+  while ((at = newText.indexOf(ot, from)) >= 0) {
+    idxs.push(at);
+    from = at + 1;
+    if (idxs.length > 30) break;
+  }
+  if (!idxs.length) {
+    var tt = ot.trim();
+    if (tt && tt !== ot) {
+      from = 0;
+      while ((at = newText.indexOf(tt, from)) >= 0) {
+        idxs.push(at);
+        from = at + 1;
+        if (idxs.length > 30) break;
+      }
+      if (idxs.length) ot = tt;
+    }
+  }
+  if (!idxs.length) return null;
+  var target = os + (delta < 0 ? delta : 0);
+  var best = idxs[0], bd = Math.abs(idxs[0] - target);
+  for (var ii = 1; ii < idxs.length; ii++) {
+    var d = Math.abs(idxs[ii] - target);
+    if (d < bd) { bd = d; best = idxs[ii]; }
+  }
+  return { start: best, end: best + ot.length, text: ot };
+}
+function _previewRemapBlanks(card, oldQ, oldA, newQ, newA) {
+  var oldBlanks = (card.blanks || []).filter(function(b) { return !b._combined; });
+  if (!oldBlanks.length) return { kept: 0, lost: 0 };
+  var oldAnswerStart = String(oldQ).length + 1;
+  var newAnswerStart = String(newQ).length + 1;
+  var kept = [], lost = 0;
+  oldBlanks.forEach(function(b) {
+    var isAnswer = b.start >= oldAnswerStart;
+    var oldText = isAnswer ? String(oldA) : String(oldQ);
+    var newText = isAnswer ? String(newA) : String(newQ);
+    var localStart = isAnswer ? (b.start - oldAnswerStart) : b.start;
+    var localEnd = isAnswer ? (b.end - oldAnswerStart) : b.end;
+    if (localStart < 0 || localEnd > oldText.length || localEnd <= localStart) { lost++; return; }
+    var mapped = _previewMapBlankOffset(oldText, newText, {
+      start: localStart, end: localEnd,
+      text: (b.text != null) ? b.text : oldText.slice(localStart, localEnd)
+    });
+    if (!mapped || mapped.end <= mapped.start || mapped.end > newText.length) { lost++; return; }
+    var absStart = isAnswer ? (newAnswerStart + mapped.start) : mapped.start;
+    var absEnd = isAnswer ? (newAnswerStart + mapped.end) : mapped.end;
+    kept.push({
+      start: absStart, end: absEnd,
+      text: String(newQ + '\n' + newA).slice(absStart, absEnd),
+      isAnswer: !!isAnswer,
+      _removed: false
+    });
+  });
+  // 按位置排序、去掉重叠（后一个跟前一个撞上就丢掉）
+  kept.sort(function(a, b) { return a.start - b.start; });
+  var clean = [], lastEnd = -1;
+  kept.forEach(function(b) {
+    if (b.start < lastEnd) { lost++; return; }
+    clean.push(b); lastEnd = b.end;
+  });
+  card.blanks = clean;
+  if (clean.length) card._manualBlanks = true; else delete card._manualBlanks;
+  var saved = _previewBuildSaved(clean, newQ, newA);
+  card._savedChars = saved.savedA;
+  card._savedCharsQ = saved.savedQ;
+  card._charSelected = {};
+  card._charSelectedQ = {};
+  return { kept: clean.length, lost: lost };
+}
 function saveEditPreviewCard(idx) {
   if (!previewData || !previewData.cards[idx]) return;
   const card = previewData.cards[idx];
@@ -14545,23 +15131,25 @@ function saveEditPreviewCard(idx) {
 
   const ansChanged = newA !== card.answer;
   const qChanged = newQ !== card.question;
+  const oldQ = card.question, oldA = card.answer;
   card.question = newQ;
   card.answer = newA;
   card.koujue = newKj || '';
   card.fullText = card.question + '\n' + card.answer;
 
-  // 答案或题目变了，清除挖空选择（偏移量已过期）
+  // 🆕 v217：不再「一改就全清」—— 按上面那套规则重新对位
+  var _remap = { kept: 0, lost: 0 };
   if (ansChanged || qChanged) {
-    card._charSelected = {};
-    card._savedChars = {};
-    card._charSelectedQ = {};
-    card._savedCharsQ = {};
-    card.blanks = [];
+    _remap = _previewRemapBlanks(card, oldQ, oldA, newQ, newA);
   }
 
   card._editing = false;
   renderPreviewCards();
-  showToast('已保存');
+  if (_remap.kept || _remap.lost) {
+    showToast('已保存 · 保留 ' + _remap.kept + ' 个挖空' + (_remap.lost ? '，' + _remap.lost + ' 个因文字改动找不到已去掉' : ''));
+  } else {
+    showToast('已保存');
+  }
 }
 
 // ==================== ✂️ 拆题 / 🔗 合并（v212：所有人可用） ====================
@@ -16541,6 +17129,15 @@ function startPracticeSetup(bankId) {
   _qzPracticeMode = false;
   var qroot = $('quizPracticeRoot'); if (qroot) qroot.style.display = 'none';
   sessionStorage.setItem('lastPracticeBank', bankId);
+  // 🆕 v217（用户 2026-10-18 报）：结束页还在时点题库卡片，原来会被 switchTab 当成
+  //   「还在结果页 → 保持」→ 停在上一轮的结束页。从题库卡片点进来 = 明确要开这个题库，
+  //   所以先把上一轮状态收干净（正在做题的先存答案），再走设置页。
+  if (typeof practiceState !== 'undefined' && practiceState) {
+    try { saveCurrentAnswers(); } catch (e) {}
+  }
+  practiceState = null;
+  try { stopTimer(); } catch (e) {}
+  try { pausePomodoro(); } catch (e) {}
   switchTab('practice');
 }
 
@@ -17305,15 +17902,42 @@ function foldLongBlanks() {
     var fs = parseFloat(getComputedStyle(inp).fontSize) || 16;
     // 隐形测量 span：字体/内边距/外边距跟输入框对齐，量出来的折点才准
     var span = document.createElement('span');
-    span.style.cssText = 'font-size:' + fs + 'px;font-weight:500;padding:0 .25em;margin:0 2px;border-bottom:2px solid transparent;white-space:normal;word-break:break-word;';
+    // 🐞 v217（用户 2026-10-18 报「英文最后一个字母掉第二行 / 横线挖空也掉」）：
+    //   原来一上来就用 `white-space:normal;word-break:break-word` 量，只要这个空**跨了行**
+    //   就折成两截 —— 但「这一行剩下的地方放不下」不等于「这个空太长必须折」：
+    //   · 2 个字的空排在行尾 → 被拆成 1+1，看起来像上下各一个字；
+    //   · magnanimous 排在行尾 → 最后一个字母被甩到下一行，前半截 10 个字母的框特别宽。
+    //   现在**先按「不许折」量整块**：整块放得下一整行 → 原样放回，让浏览器把它整个移到下一行；
+    //   只有整块比一整行还宽 → 才允许折。
+    span.style.cssText = 'font-size:' + fs + 'px;font-weight:500;padding:0 .25em;margin:0 2px;border-bottom:2px solid transparent;white-space:nowrap;word-break:normal;';
     span.textContent = ans;
     parent.replaceChild(span, inp);
+    var _wholeW = span.getBoundingClientRect().width;
+    var _fullW = parent.clientWidth || 0;
+    // 一整行放得下，而且属于「短空」或「单个英文单词」→ 不折，让它整个换行
+    //   · 短空：宽度 ≤ 7em（2~6 个汉字都在里面）—— 免得行尾只剩一个字被拆下去
+    //   · 单个英文单词：magnanimous 这种，哪怕 11 个字母也不许拆
+    var _trimA = String(ans).trim();
+    var _isSingleWord = /^[A-Za-z0-9'’\-._]+$/.test(_trimA) && _trimA.length > 0;
+    if (!_wholeW || !_fullW) { parent.replaceChild(inp, span); return; }
+    if (_wholeW <= _fullW - 2 && (_isSingleWord || _wholeW <= fs * 7)) { parent.replaceChild(inp, span); return; }
+    // 一整行放不下的长内容（或较长的句子）→ 才按行宽折。换回可折的测量样式再量第一行能用多少。
+    span.style.whiteSpace = 'normal';
+    span.style.wordBreak = 'break-word';
     var rects = Array.prototype.slice.call(span.getClientRects()).filter(function (r) { return r.width > 1; });
     if (rects.length <= 1) { parent.replaceChild(inp, span); return; }   // 没跨行 → 原样放回
     var availEm = Math.max(1, (rects[0].width - (fs * 0.5 + 4)) / fs - 0.5);   // 减左右 padding(.25em×2)+margin(4px)，再留 0.5em 安全边
     var w = 0, k = 0;
     while (k < ans.length && w + _blankCharEm(ans[k]) <= availEm) { w += _blankCharEm(ans[k]); k++; }
     if (k < 1) k = 1;
+    // 英文/带空格的文字：优先在空格处断开，别把最后一个字母单独甩下去
+    if (/[A-Za-z]/.test(ans)) {
+      var _sp = -1;
+      for (var _q = Math.min(k, ans.length) - 1; _q > 0; _q--) {
+        if (/\s/.test(ans.charAt(_q))) { _sp = _q; break; }
+      }
+      if (_sp > Math.max(1, Math.floor(k * 0.4))) k = _sp + 1;
+    }
     if (k >= ans.length) { parent.replaceChild(inp, span); return; }     // 保险：不该折的情况原样放回
     var v = inp.value || '';
     function mk(sliceAns, sliceVal) {
@@ -17374,15 +17998,32 @@ function foldLongBlanks() {
     //   ⚠️ 探针字重必须是 700（.revealed-text 的实际字重；挖空态 input 是 500）——
     //      两边字体宽度不一样，字重写错折点就会差一个字。
     var probe = document.createElement('span');
-    probe.style.cssText = 'font-size:' + fs + 'px;font-weight:700;padding:0 .25em;margin:0 2px;border-bottom:2px solid transparent;white-space:normal;word-break:break-word;';
+    // 🐞 v217：跟作答态同一个修法 —— 先按「不许折」量整块，一整行放得下就整个换行、不拆。
+    probe.style.cssText = 'font-size:' + fs + 'px;font-weight:700;padding:0 .25em;margin:0 2px;border-bottom:2px solid transparent;white-space:nowrap;word-break:normal;';
     probe.textContent = txt;
     parent.replaceChild(probe, sp);
+    var _wholeW2 = probe.getBoundingClientRect().width;
+    var _fullW2 = parent.clientWidth || 0;
+    var _trimT = String(txt).trim();
+    var _isSingleWord2 = /^[A-Za-z0-9'’\-._]+$/.test(_trimT) && _trimT.length > 0;
+    if (!_wholeW2 || !_fullW2) { parent.replaceChild(sp, probe); return; }
+    if (_wholeW2 <= _fullW2 - 2 && (_isSingleWord2 || _wholeW2 <= fs * 7)) { parent.replaceChild(sp, probe); return; }
+    probe.style.whiteSpace = 'normal';
+    probe.style.wordBreak = 'break-word';
     var rects = Array.prototype.slice.call(probe.getClientRects()).filter(function (r) { return r.width > 1; });
     if (rects.length <= 1) { parent.replaceChild(sp, probe); return; }
     var availEm = Math.max(1, (rects[0].width - (fs * 0.5 + 4)) / fs - 0.5);
     var w = 0, k = 0;
     while (k < txt.length && w + _blankCharEm(txt[k]) <= availEm) { w += _blankCharEm(txt[k]); k++; }
     if (k < 1) k = 1;
+    // 英文/带空格的文字：优先在空格处断开
+    if (/[A-Za-z]/.test(txt)) {
+      var _sp2 = -1;
+      for (var _q2 = Math.min(k, txt.length) - 1; _q2 > 0; _q2--) {
+        if (/\s/.test(txt.charAt(_q2))) { _sp2 = _q2; break; }
+      }
+      if (_sp2 > Math.max(1, Math.floor(k * 0.4))) k = _sp2 + 1;
+    }
     if (k >= txt.length) { parent.replaceChild(sp, probe); return; }
     function mkRev(sliceTxt) {
       var el = document.createElement('span');
@@ -18059,6 +18700,24 @@ function renderCardSwapped(card, hideQ, revealed) {
     return h;
   }
   if (!aBlanks.length) {
+    // 🆕 v217（用户 2026-10-18）：答案区没有挖空时，🪄 可以把**整个答案**（含 n. 词性）变成一个空。
+    //   默认关（老用户行为不变）；设置 → 做题设置里打开。
+    //   用 s9999 这个专用键 —— 它跟正常空 / 其它置换空都隔开，saveCurrentAnswers 的 /^s\d+$/ 也认。
+    if (appData && appData.settings && appData.settings.swapBlankAnswer && a) {
+      var _wholeKey = 's9999';
+      var _wholeVal = saved[_wholeKey] || '';
+      if (revealed) {
+        h += '<div style="line-height:1.9"><span class="revealed-text' + (isOvalBlank() ? ' oval' : '') + '" style="width:' + ovalBlankWidth(a) + '">' + escNl(a) + '</span></div>';
+      } else {
+        h += '<div style="line-height:1.9"><input type="text" class="blank-input' + (isOvalBlank() ? ' oval' : '') + '" style="width:' + ovalBlankWidth(a) + ';max-width:100%"' +
+          ' data-cid="' + card.id + '" data-bidx="' + _wholeKey + '" data-swap="1"' +
+          ' data-ans="' + escapeHtml(a).replace(/\n/g, ' ') + '"' +
+          ' value="' + escapeHtml(_wholeVal) + '"' +
+          ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"' +
+          ' enterkeyhint="next" oncontextmenu="return false" onblur="autoCheckIfDone()"></div>';
+      }
+      return h;
+    }
     h += '<div style="line-height:1.9">' + escNl(a) + '</div>';
     return h;
   }
@@ -18079,7 +18738,16 @@ function renderBrowseSwapAnswer(card) {
   var answerStart = (card.question || '').length + 1;
   var abs = (card.blanks || []).filter(function(b) { return b.start >= answerStart; })
                                .sort(function(a, b) { return a.start - b.start; });
-  if (!abs.length) return '<div style="color:var(--text-secondary)">' + escNl(ans) + '</div>';
+  if (!abs.length) {
+    // 🆕 v217：跟做题页同一个设置 —— 答案没有挖空时，🪄 把整个答案变成一个只读空框
+    if (appData && appData.settings && appData.settings.swapBlankAnswer) {
+      var _ovalB = isOvalBlank();
+      return '<div class="practice-card" style="background:none;border:none;box-shadow:none;padding:0;min-height:0;margin:0">' +
+             '<div style="line-height:2.0;color:var(--text-secondary)"><span class="blank-input bw-flat' + (_ovalB ? ' oval' : '') + '" style="width:' +
+             browsePlainBlankWidth(ans, _ovalB) + ';max-width:100%"></span></div></div>';
+    }
+    return '<div style="color:var(--text-secondary)">' + escNl(ans) + '</div>';
+  }
   var full = card.fullText || ((card.question || '') + '\n' + ans);
   var _r = _swapRegionHtml(card, full, answerStart, full.length, abs, {}, 0, true, false, '');
   return '<div class="practice-card" style="background:none;border:none;box-shadow:none;padding:0;min-height:0;margin:0">' +
@@ -18957,7 +19625,7 @@ function showInstallGuide() {
 //              4详细里面不包括按钮功能  5开发者的话  有五个可以点击的按钮  可以滑动显示」
 //   ⚠️ 5 个按钮手机上一排排不下 → 按钮条做成**可横向滑动**，且选中那个会自动滑进视野。
 //   ⚠️ 只改「说明书」这一个弹窗，**没有动工具里任何功能的实现**。
-var _MANUAL = {"quick":"<div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f16);margin:0 0 8px;color:#e74c3c\">🔴 数据安全 <span style=\"font-size:var(--f12);font-weight:400;color:#999\">— 最最重要，先看这个</span></h4><div style=\"background:#fff5f5;border:1px solid #fcc;border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>📍 你的题目和学习记录，存在这台设备的浏览器里，不在云端。</b>换个浏览器打开、或者换台设备，就看不到原来的数据了 —— 那不是丢了，是本来就不在一块儿。</p><p style=\"margin:0 0 6px\"><b>📦 导出备份是唯一的保险。</b>没有备份 = 赌运气。设置页里可以「导出备份文件」，存到电脑、网盘、微信收藏都行。</p><p style=\"margin:0 0 4px\"><b>🗑️ 这几种操作会真的把数据弄丢：</b></p><p style=\"margin:0 0 2px;padding-left:12px\">① <b style=\"color:#e74c3c\">iPhone 的「清除历史记录与网站数据」</b>（iPhone 用户最容易中招）</p><p style=\"margin:0 0 2px;padding-left:12px\">② 浏览器清除数据时，勾了「Cookie 和网站数据」</p><p style=\"margin:0 0 2px;padding-left:12px\">③ 手机管家 / 清理软件的「垃圾清理」</p><p style=\"margin:0 0 2px;padding-left:12px\">④ 无痕 / 隐私模式下关掉窗口</p><p style=\"margin:0 0 2px;padding-left:12px\">⑤ 手机存储空间不够，系统自己清理</p><p style=\"margin:0 0 2px;padding-left:12px\">⑥ 卸载或重置浏览器</p><p style=\"margin:8px 0 0\"><b>💾 「清缓存」一般不丢题</b>，但上面那两条「清 Cookie / 网站数据」会丢 —— 这俩不一样，别搞混。</p><p style=\"margin:4px 0 0\"><b>🔒 隐私：</b>这是个纯本地工具，你的题目不会上传到任何地方。导出的备份文件请自己收好。</p></div></div><div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🚀 30 秒上手</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\">① 先在「📚 题库」页建一个题库 → ② 点「📥 导入」把题目放进去 → ③ 点「▶ 开始练习」就能做了。</p><p style=\"margin:0 0 6px\"><b>手上没有整理好的题目？</b>不用自己敲。可以直接粘贴文字，或者上传 Word / PDF / txt；导入前会先给你看预检。</p><p style=\"margin:0\">导入完会先给你看一页「预检」—— 它会告诉你一共几道题、哪些行可能有问题。确认没问题再点导入。</p></div></div><div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚠️ 最容易踩的 3 个坑</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>1. 清「缓存」不丢数据，清「Cookie 和网站数据」会丢。</b>两个按钮挨在一起，别点错。</p><p style=\"margin:0 0 6px\"><b>2. 换手机 / 发给别人，优先用「导出备份文件」，别用「备份码」。</b>备份码是长文字，经过微信、QQ 转发时里面的字符会被改掉，对方就导不进去了；文件不会。备份码是一长串文字，经过微信、QQ 转发时里面的「+」会被自动改成空格，对方就导不进去了；文件不会出这个问题。</p><p style=\"margin:0\"><b>3. 导入前先看一眼预检页。</b>哪几行写得不对、会被丢掉，它会直接指给你 —— 省得导入完发现少了几道题。</p></div></div><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;font-size:var(--f13);color:var(--text-secondary)\">📖 想看某个功能具体怎么用？<p style=\"margin:0 0 6px\"><b>📅 给自己定个规矩：至少每周导出一次备份。</b>存在电脑或网盘里 —— 这是唯一能完整恢复的办法，出事的时候它就是全部。</p>📖 想看某个功能具体怎么用？点上面那排按钮：<b>🔘 按钮功能</b>讲每一颗按钮干嘛的，<b>🧩 功能介绍</b>讲每个功能是什么、为什么这么设计，<b>📋 详细</b>讲具体怎么操作。</div><div style=\"margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);font-size:var(--f13);color:var(--text-secondary)\">📕 小红书：2750492576 —— 有新版本、或者用着有问题，都可以来找我。</div><div style=\"background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:var(--f13);line-height:1.8\"><b>🔴 第一次打开有点慢？</b><br>那是因为题库里有数学/化学公式，工具在装「公式引擎」。<b>只有第一次（或更新后第一次）慢</b>，之后就快了。<br>不想用公式的话：<b>设置 → 关于 → 📐 数学公式 → 改成「显示源码」</b>。</div>","btns":"<p style=\"margin:0 0 12px;color:var(--text-secondary);font-size:var(--f13)\">下面是工具里<b>能点的东西</b>分别干嘛的，按页面分组。只看「点了会发生什么」，不讲原理（原理去「🧩 功能介绍」）。</p><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🧭 底部这一排（去哪个页面）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>📚 题库</b> —— 建题库、导入题目、改挖空、开始练习，都在这里</p><p style=\"margin:0 0 5px\"><b>📝 做题</b> —— 上来的第一屏是「这一轮怎么出题」的设置，往下才是做题</p><p style=\"margin:0 0 5px\"><b>📖 浏览</b> —— 不考试，就翻着看。找题、导出、看章节掌握度</p><p style=\"margin:0 0 5px\"><b>🌱 复习</b> —— 错题本 + 记忆复习，两个都在这一页</p><p style=\"margin:0\"><b>📑 资料</b> / <b>⚙️ 设置</b> —— 笔记导图一个是资料区，一个是所有开关</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📚 题库页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>＋ 新建题库</b> —— 建一个空题库，之后往里导题</p><p style=\"margin:0 0 5px\"><b>📥 导入</b> —— 粘贴、TXT、Word、PDF 都能进。贴完先看预检页</p><p style=\"margin:0 0 5px\"><b>🔍 搜索全部 N 道题</b> —— 顶上那个框，所有题库一起搜</p><p style=\"margin:0 0 5px\"><b>▶ 开始练习</b> —— 进「这一轮怎么出题」的设置页</p><p style=\"margin:0 0 5px\"><b>🏷 改它属于哪些分组</b>（长按/点题库右边的按钮）—— 把题库分到别的小组里</p><p style=\"margin:0 0 5px\"><b>📁 新建分组</b> —— 题库太多的时候，分个类放</p><p style=\"margin:0 0 5px\"><b>🔀 合并</b> —— 把两个题库并成一个。会先问你要保留哪边的重复题</p><p style=\"margin:0 0 5px\"><b>✏️ 重命名 / 排序 / 🗑 删除</b> —— 题库右边那排小按钮</p><p style=\"margin:0 0 5px\"><b>📋 选题</b> —— 手动挑几道题出来专门练</p><p style=\"margin:0 0 5px\"><b>📤 导出</b> —— 点开先选：导出 PDF（题目卷 / 挖空练习卷），或者导出「题库文件」发给别人（对方在导入页点「📂 上传」选中就能用）</p><p style=\"margin:0\"><b>📊 章节掌握度 / ⚙️ 章节管理</b> —— 在浏览页里，按章节看每章背得怎么样（全能版）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📝 做题页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>低 / 高</b> —— 点击切换挖空密度（只对「工具自己挖的空」生效；你自己标着挖的题不受影响）</p><p style=\"margin:0 0 5px\"><b>🪄 置换挖空</b>（全能版）—— 把「挖空的」和「没挖空的」对调：点一下，原来挖空的答案露出来、其余的字遮起来（都能填、能判对错）；再点一下换回来</p><p style=\"margin:0 0 5px\"><b>检查</b> —— 判这一题对不对。点了之后才能看答案</p><p style=\"margin:0 0 5px\"><b>👁 看答案</b> —— 直接看答案，自己判断对错（「看答案」和「检查」是两条路）</p><p style=\"margin:0 0 5px\"><b>⭐ 收藏</b> —— 把这题标上星，以后专门练收藏的题</p><p style=\"margin:0 0 5px\"><b>❌ 加错题</b> —— 手动把这题扔进错题本（答错了也会自动进）</p><p style=\"margin:0 0 5px\"><b>💡 口诀</b> —— 展开这道题的口诀（导入时写了「口诀：」才有）</p><p style=\"margin:0 0 5px\"><b>← 上一题 / 下一题</b> —— 手机上也能左右滑</p><p style=\"margin:0\"><b>📖 浏览</b> —— 这一轮的题目列表，做完想回头翻就点它</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📖 浏览页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>📋 题目列表</b> / <b>📊 章节掌握度</b> —— 顶上两个页签，切两种看法</p><p style=\"margin:0 0 5px\"><b>全部 / ⭐ 收藏 / 💡 口诀 / ❌ 错题</b> —— 一组筛选按钮，只显示你想看的</p><p style=\"margin:0 0 5px\"><b>🏷 标签 / 📚 章节</b> —— 另一组筛选，两组可以叠着用</p><p style=\"margin:0 0 5px\"><b>📤 导出</b> —— 把筛出来的题导成 PDF / 打印（全能版）</p><p style=\"margin:0\"><b>🔍 只搜当前题库</b> —— 只在这个题库里找</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🌱 复习页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>🧠 记忆复习</b> —— 按遗忘曲线排的复习清单（全能版）。上面有 🔴 该复习了 / 🟡 今天 / ⚪ 明天 / ⚪ 3天后 … ✅ 已掌握 这些档位，点开哪一档就列哪一档的题</p><p style=\"margin:0 0 5px\"><b>✅ 我记住了</b> —— 这题不用再排了，从记忆复习里拿掉</p><p style=\"margin:0 0 5px\"><b>⏰ 明天再练</b> —— 今天不想练，推到明天</p><p style=\"margin:0 0 5px\"><b>🗑</b>（题右边）—— 只把它从记忆复习里移除，<b>题目还在题库里</b></p><p style=\"margin:0\"><b>📝 复习清单</b> —— 下面那块是老功能：你答错过的题和收藏的题</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚙️ 设置页（几个常用的）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>🎨 主题颜色</b> —— 换配色（不同版本能选的数量不一样）</p><p style=\"margin:0 0 5px\"><b>🔊 朗读</b> —— 让手机念题、念答案</p><p style=\"margin:0 0 5px\"><b>🍅 番茄钟</b> —— 打开后做题会计时，还能进番茄乐园（全能版）</p><p style=\"margin:0 0 5px\"><b>🧠 记忆复习</b> —— 在这里选学习节奏（轻松/标准/加强/自定义）、哪些题库参加记录，还能把复习题打印出来</p><p style=\"margin:0 0 5px\"><b>📤 导出备份文件</b> —— <b>最推荐</b>的备份方式，存成一个文件</p><p style=\"margin:0 0 5px\"><b>📤 分享备份码</b> —— 变成一段文字，适合直接发出去</p><p style=\"margin:0 0 5px\"><b>📥 从备份恢复</b> —— 换设备、或者数据丢了之后，用这个导回来</p><p style=\"margin:0 0 5px\"><b>🗑 清理空间</b> —— 清考试记录、缓存这些，<b>不清题库</b></p><p style=\"margin:0\"><b>📊 查看版本对比</b> —— 看看每个版本各有什么</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📑 资料页（全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 5px\"><b>＋ 新建笔记</b> / <b>📷 上传照片</b> —— 记笔记、拍书上的图</p><p style=\"margin:0 0 5px\"><b>🧠 导图</b> —— 思维导图：➕ 添加子节点 / 🗑 删除此节点 / 📸 导出此分支</p><p style=\"margin:0 0 5px\"><b>📋 模板 / 📝 大纲 / 📥 导入大纲</b> —— 快速搭出一份笔记的骨架</p></div>","feat":"<p style=\"margin:0 0 14px;color:var(--text-secondary);font-size:var(--f13)\">这一页讲每个功能<b>是什么、为什么需要它、它怎么工作</b> —— 假设你是第一次接触这个工具，所以每一步都说清楚。<br>想知道具体怎么点，去「📋 详细」；想知道某颗按钮干嘛的，去「🔘 按钮功能」。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📥 导入：怎么把题目放进来</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>把一段文字、一个 Word、一个 PDF、一张照片变成能刷的题。</p><p style=\"margin:0 0 6px\"><b>为什么要这样：</b>你的资料多半是书上的、PDF 里的，乱七八糟。工具没法猜哪儿是题、哪儿是答案 —— 所以要先约定一个简单的写法，让它一眼就能认出来。</p><p style=\"margin:0 0 6px\"><b>写法长这样（一行一个符号就打头）：</b></p><div style=\"background:var(--bg-card);border-radius:8px;padding:10px 12px;margin:0 0 6px;font-size:var(--f13);line-height:1.9\">一行开头写 <b>￥</b> → 这是一个大点（当分类用）。例：<code>￥教育观</code><br>一行开头写 <b>$</b> → 这是一道题目。例：<code>$素质教育的内涵</code><br>一行以 <b>口诀：</b> 打头 → 这是这道题的口诀。例：<code>口诀：提速创屎体面的歌星</code><br>其余的行 → 都算上一道题的答案，一行写一个要点<br>想挖空的地方 → 用两个 <b>@@</b> 把它括起来。例：<code>②素质教育以@@培养创新精神@@为重点</code></div><p style=\"margin:0 0 6px\"><b>懒得自己整理？</b>可以直接粘贴文字，或者上传 Word / PDF；导入前会先给你看预检。</p><p style=\"margin:0\"><b>导入前的预检页</b>是干嘛的：它先算一遍「一共几道题、几个大点、几处挖空」，再把有问题的行指给你 —— <b>红块</b>是确定会被丢掉的行，<b>黄块</b>是它猜你可能漏写了标记（机器猜的，不一定准）。看一眼再点导入，能省掉很多「怎么少了几道题」。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">✂️ 挖空：横线版 和 圈圈版</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>把关键词遮住，让你填空 —— 这是这个工具最主要的功能。</p><p style=\"margin:0 0 6px\"><b>怎么决定挖哪儿：</b>导入时用 <code>@@</code> 标出来的，就挖那些；没标的，可以在题库页点「✏️ 编辑挖空」自己点字挖。</p><p style=\"margin:0\"><b>两种长相（设置里能换）：</b><br>· <b>横线版</b>（默认）—— 挖空处是一条下划线，最清爽<br>· <b>圈圈版</b>（椭圆挖空，全能版）—— 用椭圆圈住，圈的大小跟着字数走，一眼能看出该填几个字。想试试：设置里打开「椭圆挖空」开关，做题页就变了</p><p style=\"margin:6px 0 0\"><b>用不上「工具自动挖空」？</b>设置 → 做题设置里有个 <b>「系统自动挖空」</b>开关，关掉后做题页的「低/高」那颗就不显示了 —— 你自己导入的挖空不受影响。默认是开着的。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🪄 置换挖空：反过来背一遍</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>把「挖空的」和「没挖空的」对调 —— 你原来挖了「中国」，点一下 🪄，变成「中国」露出来、句子里剩下的字遮起来。</p><p style=\"margin:0 0 6px\"><b>什么时候用：</b>背到后半段，人往往只记得住挖过的关键词、整句反而说不出。点一下 🪄，让工具反过来考你剩下的部分 —— 能把整句写出来，才算真背下来了。</p><p style=\"margin:0 0 6px\"><b>它怎么工作：</b><br>· 遮出来的空<b>能填、能判对错</b>（跟正常挖空一样的对错反馈）<br>· <b>只是练习、不记成绩</b> —— 不进记忆复习、不进错题本、不算正确率；你正常做的那次才算<br>· <b>公式整段不参与</b>（怕把公式切碎），公式照常显示<br>· 标点和空格不挖；<b>中英文都行</b>（英文按单词遮）<br>· 翻页时保持，退出做题自动结束</p><p style=\"margin:0 0 6px\"><b>做题页上的配合：</b>置换开着时点「低/高」＝换一批新的挖空、置换跟着更新（你自己挖空的题不会有变化）；点「✨」＝看刚才练的那些空的答案（原来的空是「保持空着」还是「也显示出来」，可以在 设置 → 做题设置 里选）。</p><p style=\"margin:0\"><b>浏览页也能用：</b>浏览页右上角的 🪄 —— 先把「浏览页显示挖空」开着（那颗 ✨），🪄 才有效（只是看、不能填字）。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🧠 记忆复习：让它记得更久</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>一个自动帮你排「什么时候该复习哪道题」的清单。</p><p style=\"margin:0 0 6px\"><b>为什么需要它：</b>人的记性是会掉的。同一道题，今天背会了，明天看还剩八成，一周后可能只剩三成。但你要是<b>在快要忘的那一刻</b>再复习一遍，就能把它按住，下次能撑更久 —— 这比每天无脑重背一遍省时间得多。</p><p style=\"margin:0 0 6px\"><b>它怎么排：</b>默认按 <b>1 天 → 2 天 → 4 天 → 7 天 → 15 天 → 30 天</b> 这个节奏。答对一次就往下一档走（下次隔更久才问你）；答错就退回去，明天再来。觉得太快或太慢，设置里能换成「轻松」「加强」或者自己填天数。</p><p style=\"margin:0 0 6px\"><b>什么时候算「背熟了」：</b>走到最后一档才算（也就是连着答对好几轮）。工具里所有跟「掌握」有关的数字 —— <b>章节掌握度、总掌握率、学习周报里的「本周掌握」</b> —— 用的都是这个标准。</p><p style=\"margin:0\"><b>什么时候该用它：</b>你有一批题要长期记住（比如教资考点），已经过了「第一遍看懂」的阶段，需要一遍遍滚到不忘。注意它只帮你想起来，<b>不能保证你记住</b> —— 记住靠的是你真的复习。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">⏱ 学习时长是怎么算的</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>只算你真在做题的那段时间。</b>下面三种情况都不算：</p><p style=\"margin:0 0 2px;padding-left:12px\">· 切到别的 App、别的浏览器标签（按 Home 也算）</p><p style=\"margin:0 0 2px;padding-left:12px\">· 在工具里切到别的页（题库页、设置页、番茄乐园…）</p><p style=\"margin:0 0 6px;padding-left:12px\">· 番茄钟正在休息的那几分钟</p><p style=\"margin:0 0 6px\">所以「今天学了 40 分钟」不是「你开着这个页面 40 分钟」，而是「你<b>真的在做题</b> 40 分钟」。把页面放那儿挂着不算数 —— 这个数字才骗不了自己。</p><p style=\"margin:0\">做题页上面那个秒表，跟统计里的时长是<b>同一个数</b>，不是两套。</p><p style=\"margin:0 0 6px\">做题页左上角那个秒表，走的就是这个数；<b>结果页、今日摘要、学习周报用的也是它</b> —— 四个地方永远是同一个数。</p><p style=\"margin:0\">⚠️ 所以番茄钟休息时，<b>那个秒表会停住不动，这是正常的</b>，回来接着走。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🍅 番茄钟 和 冲刺背诵清单</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>番茄钟是什么：</b>一个「专注 25 分钟、休息 5 分钟」的计时器。开起来做题时，屏幕顶上会有一个倒计时。</p><p style=\"margin:0 0 6px\"><b>它会看着你专注：</b>专注期间你要是切出去（回个微信、刷个别的），它会记一次。<b>切满 5 次，这一轮就自动结束了</b> —— 结束的时候结算页会写明「是因为切屏」，不会让你莫名其妙。每次切回来它都会提醒你「已切屏 N / 5 次」。休息时间切出去不算。</p><p style=\"margin:0 0 6px\"><b>专心时切走了会怎样：</b>切到工具里别的页、切到别的 App、按 Home，番茄钟都会<b>暂停</b>，回来接着走，剩下的秒数不会少。</p><p style=\"margin:0 0 6px\">⚠️ 但<b>休息时切走不暂停</b> —— 休息本来就是让你离开屏幕动一动的，把你按在屏幕前就不叫休息了。</p><p style=\"margin:0\"><b>关掉页面了会怎样：</b>番茄钟会自己存下来。再打开时秒数还在原地、但是<b>停着的</b>，回到做题页才开始走。（故意不按真实时间扣 —— 关了 3 小时再打开，要是照着算早该结束了，那要么白送你一个番茄、要么一轮凭空消失，两种都不对。）</p><p style=\"margin:0 0 6px\"><b>冲刺背诵清单是什么：</b>考前那几天，你不可能把整本书再过一遍，这个清单帮你把「最该临时抱佛脚的」挑出来 —— 还没背熟的题、你答错过的题、你自己收藏或标了高频的题。</p><p style=\"margin:0\"><b>已经背熟的题不会进这个清单</b>（除非你自己收藏或标了高频，那说明你特意想留着它）。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📊 章节掌握度：哪一章还没背下来</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>在浏览页里，按「章节」统计你每章背得怎么样 —— 哪一章掌握率高、哪一章还是 0%。</p><p style=\"margin:0 0 6px\"><b>章节是哪来的：</b>导入时用 <b>￥</b> 打头的那些行就是章节名。如果一个章节都没有，可以在「⚙️ 章节管理」里手动建、或者把题目分进去。</p><p style=\"margin:0\">「掌握」的算法跟记忆复习是同一套（走到最后一档才算）—— 所以你在记忆复习里标了「✅ 我记住了」的题，这里立刻就会算进去，两边的数字永远对得上。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📈 学习数据：热力图 / 周报 / 每日洞见</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>🔥 热力图：</b>像打卡日历一样，把你最近 12 周每天做了多少题铺成一片格子。颜色越深做得越多 —— 主要用来「别让链条断掉」。</p><p style=\"margin:0 0 6px\"><b>📊 学习周报：</b>这一周做了多少题、掌握了多少、哪天最勤快。</p><p style=\"margin:0 0 6px\"><b>📈 今日学习摘要：</b>今天做了多少、连续多少天没断、总掌握率。</p><p style=\"margin:0 0 6px\"><b>卡片的颜色是什么意思：</b>🔴 该复习了 / 🟡 今天 / ⚪ 明天 / ⚪ 3 天后 / ⚪ 7 天后 / ⚪ 更久 / ✅ 已掌握 / ○ 还没排上。</p><p style=\"margin:0\"><b>💡 每日洞见：</b>每天给你一句根据你的数据算出来的话（比如「这道题你错了 3 次了」），不是套话。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🍅 番茄乐园 和 小游戏</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>做题攒番茄，番茄能换东西（主题色、道具卡、游戏时间）。还有几个小游戏（舒尔特方格、翻牌记忆、2048、打砖块、扫雷…）。</p><p style=\"margin:0\"><b>为什么在背书工具里放游戏：</b>长时间背东西容易烦，做几道题换一局游戏，比硬撑着刷到厌恶要好 —— 这是给「坚持不下去」准备的，不是给「想玩」准备的。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🏆 成就徽章 · 🧘 专注模式 · 📑 资料页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>🏆 成就徽章：</b>连续学习、掌握多少题这些会解锁徽章。「连击」是你连着答对了多少题 —— 断了会有点心疼，这就是它的作用。</p><p style=\"margin:0 0 6px\"><b>🧘 专注模式：</b>把界面上一切跟做题无关的东西都藏起来，只留题目。手机屏幕小、容易分心的时候开它。</p><p style=\"margin:0\"><b>📑 资料页：</b>做题之外的另一半 —— 记笔记、传照片、画思维导图。考点之间是有联系的，散着背不如画成一张图。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">👑 三个版本差在哪</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\">免费版能建 2 个题库、每个题库 15 道题，导入、挖空、做题、错题本、热力图都有；全能版全都能用 —— 题库题数不限，还多了分组、周报、朗读模式、专注模式、记忆复习、番茄钟、章节掌握度、导出 PDF 和题库文件这些。</p><p style=\"margin:0\">具体每一行长什么样，点设置页的「查看版本对比」看那张表 —— <b>那张表是照着代码写的，不是宣传话术。</b></p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📐 数学 / 化学公式</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">题里有公式（数学、化学、物理那种）时，工具能把它们<b>画成书本上的样子</b>，导出的 PDF 里也是。<br>第一次遇到公式会问你要不要下载「公式引擎」：<b>约 660KB，装一次一直能用</b>，<b>下载那一次要联网</b>，之后离线也能看。<br>不想要的话：<b>设置 → 关于 → 📐 数学公式 → 显示源码</b>（那就跟以前一样显示 源码）。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📤 把题库发给别人要注意</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">如果对方<b>没装公式引擎</b>，他看到的公式会是<b>源码</b>（一串带斜杠的字）—— 这是正常的，不是工具坏了。<br>还有一个：<b>直接把 Word 拖进工具</b>时，只有「<b>加粗</b>」会变成挖空，<b>高亮和下划线会被丢掉</b>。<br>想用高亮/下划线，可以先把文档整理成带标记的文字再导入。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🎧 耳返（背书时听自己的声音）</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">设置 → 语音里打开「🎧 耳返」（<b>全能版功能</b>）后，挖空做题页 💡 右边会出现 🎧 按钮，点一下就能从耳机里实时听到自己念书的声音 —— 背书时听得更清楚，也更容易发现自己哪里念错了。<br>它<b>不录音、不上传、不保存</b>，只是把麦克风的声音立刻放回耳机；离开做题页、切到别的 App、关掉开关都会自动停。<br><b>一定要戴耳机</b>：外放会把声音再收进麦克风，产生啸叫（很刺耳）。蓝牙耳机连接时会自动走蓝牙。</p>","full":"<p style=\"margin:0 0 14px;color:var(--text-secondary);font-size:var(--f13)\">这里是<b>「想做什么 → 怎么走」</b>。不讲按钮长什么样（去「🔘 按钮功能」），也不讲原理（去「🧩 功能介绍」）。</p><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🔰 第一次用：从零到做完第一轮</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>1.</b> 打开「📚 题库」页 → 点「＋ 新建题库」，起个名字（比如「教资科二」）</p><p style=\"margin:0 0 4px\"><b>2.</b> 点「📥 导入」。手上已经有整理好的文字就直接粘；没有的话直接粘贴或上传 Word / PDF</p><p style=\"margin:0 0 4px\"><b>3.</b> 导入后会先出一页「预检」。上面会写「一共 N 道题」，还有红块黄块提示哪些行有问题 —— <b>先看一眼再点确认</b></p><p style=\"margin:0 0 4px\"><b>4.</b> 想自己挖空：点题库页的「✏️ 编辑挖空」，用手指点你想遮住的字就行</p><p style=\"margin:0 0 4px\"><b>5.</b> 回题库页点「▶ 开始练习」→ 设置这一轮做几道题、什么顺序 → 开始</p><p style=\"margin:0\"><b>6.</b> 做完会出结算页，告诉你对了几道。答错的题自动进错题本</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📚 导入 & 题库管理</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>想导入粘贴的文字 / TXT：</b>题库页 → 📥 导入 → 把文字粘进去 → 看预检 → 确认</p><p style=\"margin:0 0 4px\"><b>想导入 Word / PDF：</b>同一入口，选文件就行。<b>PDF 是扫描件的话</b>，让它转成文字再导，识别不出来</p><p style=\"margin:0 0 4px\"><b>别人发来的「题库文件」：</b>还是这个入口 —— 导入页点「📂 上传」选中那个文件，会自动认出来。永远是新建一个题库，不会盖掉你已有的</p><p style=\"margin:0 0 4px\"><b>想整理资料：</b>直接粘贴文字，或上传 Word / PDF；导入前会先预检。</p><p style=\"margin:0 0 4px\"><b>预检页那三种块是什么意思：</b>统计栏是「几个大点 / 几道题 / 几处挖空」；<b>红块</b>＝这些行一定会被丢掉（写错了标记）；<b>黄块</b>＝它猜你可能漏写了标记（机器猜的，你可以不管）</p><p style=\"margin:0 0 4px\"><b>想把两个题库并成一个：</b>题库页 → 🔀 合并 → 选两个 → 有重复题它会问你要保留哪边</p><p style=\"margin:0\"><b>想把题库发别人 / 换手机：</b>题库页 → 📤 导出 → 📦 导出题库文件（只发这一个题库，可以选带不带你的做题痕迹）；整机数据搬家用设置页的「导出备份文件」</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📖 浏览 & 找题</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>只想翻着看，不做题：</b>进「📖 浏览」页，它就是干这个的</p><p style=\"margin:0 0 4px\"><b>只看某一类题：</b>用筛选那排按钮 —— 全部 / 收藏 / 口诀 / 错题；另一排能按章节或标签筛，两排可以叠着用（比如「第三章 + 收藏的」）</p><p style=\"margin:0 0 4px\"><b>找一道具体的题：</b>题库页顶上那个搜索框是<b>搜全部题库</b>；浏览页里的搜索只搜当前题库</p><p style=\"margin:0\"><b>把题导出来打印：</b>浏览页 → 筛好 → 📤 导出。能导「题目卷」和「挖空练习卷」两种（全能版）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📝 刷题</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>开始一轮：</b>「📝 做题」页上面那一屏就是设置 —— 做几道、什么顺序、要不要限时、要不要隐藏题目，选完点开始</p><p style=\"margin:0 0 4px\"><b>填完一题：</b>点「检查」判对错。不会做？点「👁 看答案」直接看</p><p style=\"margin:0 0 4px\"><b>想让手机念给你听：</b>设置里开朗读。全能版还能选「念题 / 念答案 / 都念」</p><p style=\"margin:0 0 4px\"><b>做到一半有事要走：</b>直接走就行，下次打开还在这一轮（番茄钟开着的话会自动暂停）</p><p style=\"margin:0\"><b>觉得界面太乱：</b>开「专注模式」，只留题目</p><p style=\"margin:8px 0 4px\"><b>想反过来考自己（遮住其余、只露出挖空）：</b>做题页点 <b>🪄</b>（全能版）—— 能填、能判对错，但只是练习、不计成绩；再点一下退出。浏览页也能这样看（先把「浏览页显示挖空」开着）</p><p style=\"margin:0\"><b>用不上工具自动挖空：</b>设置 → 做题设置 → 关掉「系统自动挖空」，做题页的「低/高」就不再显示</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🍅 番茄钟怎么用</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>在哪开：</b>🍅 番茄乐园里那颗番茄点一下就开。时长可以在设置页改，也可以在番茄乐园里点快捷键（专注 10 / 15 / 25 / 45 分钟，休息 1 / 3 / 5 / 10 分钟），或者自己填一个数</p><p style=\"margin:0 0 4px\"><b>能设多长：</b>专注 <b>10～180 分钟</b>（默认 25），休息 <b>1～30 分钟</b>（默认 5）。休息填 0 就是不要休息</p><p style=\"margin:0 0 4px\"><b>一轮走完会怎样：</b>收 1 个番茄。配了休息就先自动进休息；休息结束（没配休息的就是一轮刚完）会<b>停下来</b>，弹一张小卡片问你下一轮要多少分钟，你选好才开下一轮</p><p style=\"margin:0 0 4px\"><b>不会自己偷偷接着开</b> —— 想换时长随时换</p><p style=\"margin:0\"><b>休息时秒表会停</b> —— 就是上面「⏱ 学习时长是怎么算的」那条，正常的</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📊 看学习数据</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>看今天做了多少：</b>首页那条进度 / 设置页 →「今日学习摘要」</p><p style=\"margin:0 0 4px\"><b>看这周做得怎么样：</b>设置页 →「📊 学习周报」</p><p style=\"margin:0 0 4px\"><b>看有没有断卡：</b>设置页的🔥热力图，最近 12 周一片格子，颜色越深做得越多</p><p style=\"margin:0\"><b>看哪一章还没背下来：</b>浏览页 → 章节掌握度（要全能版）</p><p style=\"margin:8px 0 4px\"><b>几个数各自怎么算：</b></p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>总掌握率 / ✅ 已掌握 / ✅ 本周掌握</b> —— 按「记忆复习」走到最后一档的题算（详见「🧩 功能介绍 → 🧠 记忆复习」）。「本周掌握」只数本周练过的那些</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>今日做题 / 本周做题数</b> —— 只算做完了一轮的题。做一半退出的不算（但填过字的那几道下次不会再抽到）</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>📱 切屏</b> —— 练习当中切走屏幕的次数（查个单词、回个消息都算）。休息时切走不算</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>🍅 本周番茄数</b> —— 这一周番茄钟收的番茄。用兑换码换来的、幸运掉落的，不算</p><p style=\"margin:0 0 4px;padding-left:12px\">· <b>⭐ 累计收藏</b> —— 收藏夹里一共多少题，不是本周的（所以它只会涨或不变）</p><p style=\"margin:8px 0 0\"><b>⏱ 学习时长是怎么算的：</b>只算你真在做题的时间 —— 切走、切到别的页、番茄钟休息都不算。（详细解释见「🧩 功能介绍 → ⏱ 学习时长是怎么算的」）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">❌ 错题怎么复习</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>答错的题会自己进错题本</b>，不用手动加</p><p style=\"margin:0 0 4px\"><b>只练错题：</b>做题设置页里选「复习优先」或在复习页点开错题那组</p><p style=\"margin:0 0 4px\"><b>做对了但想再确认：</b>做题时点「❌ 加错题」也能手动扔进去</p><p style=\"margin:0\"><b>从错题本拿掉：</b>在复习页那道题上点「✕ 移除」</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🧠 记忆复习怎么用（要全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>先打开它：</b>设置 → 记忆复习 → 打开开关。<b>还要勾上「哪些题库参加记录」</b> —— 没勾的题库不记录</p><p style=\"margin:0 0 4px\"><b>然后正常做题就行：</b>答对答错都会自动记，不用额外操作</p><p style=\"margin:0 0 4px\"><b>想看今天该复习哪几道：</b>复习页 → 点开标着「今天」的那一档 → 开始练</p><p style=\"margin:0 0 4px\"><b>题太多一次做不完：</b>没事，超出的会自动顺延到明天，不会丢</p><p style=\"margin:0 0 4px\"><b>某道题已经会了：</b>在那道题上点「✅ 我记住了」。想让它明天再问：「⏰ 明天再练」</p><p style=\"margin:0 0 4px\"><b>觉得复习太频繁 / 太慢：</b>设置 → 记忆复习 → 学习节奏，可以选「轻松 1/3/7/15 天」「标准 1/2/4/7/15/30 天」「加强 1/2/3/5/8/12/20/30 天」，也可以自己填天数</p><p style=\"margin:0 0 4px\"><b>想彻底清掉某道题的记录：</b>那道题右边的 🗑 —— <b>只删记录，题目还在题库里</b></p><p style=\"margin:0\"><b>想印成纸质的：</b>设置 → 记忆复习 → 「🖨️ 打印复习题」—— 想印哪一档、印多少题、印哪个题库，点进去自己选</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⭐ 收藏 & 🔍 搜索</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>收藏一道题：</b>做题时点「⭐」。收藏的题会在复习清单里单列一组</p><p style=\"margin:0 0 4px\"><b>只练收藏的：</b>做题设置里选「收藏优先」，或在浏览页筛「⭐ 收藏」</p><p style=\"margin:0\"><b>搜一道题在哪：</b>题库页顶上的框搜全部题库；浏览页里的框只搜当前题库</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚙️ 设置 & 数据安全</h4><div style=\"background:#fff5f5;border:1px solid #fcc;border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>⚠️ 最重要的一条：养成备份习惯。</b>数据存在这台设备的浏览器里，清数据、换手机、卸载浏览器都可能丢。没有备份 = 赌运气。</p><p style=\"margin:0 0 4px\"><b>怎么备份：</b>设置页 →「📤 导出备份文件」→ 存到电脑 / 网盘 / 微信收藏</p><p style=\"margin:0 0 4px\"><b>发给别人 / 换设备：</b>优先用「导出备份文件」，<b>别用备份码</b> —— 备份码是长文字，经过微信会掉字符，对方导不进去备份码是一长串文字，经过微信、QQ 转发时里面的「+」会被自动改成空格，对方就导不进去了 —— 文件不会这样</p><p style=\"margin:0 0 4px\"><b>怎么恢复：</b>设置页 →「📥 从备份恢复」→ 选那个文件。如果两边都有数据，它会列出来哪些题重复、让你选保留哪边</p><p style=\"margin:0 0 4px\"><b>只想清记录不清题库：</b>设置页 →「🗑 清理空间」</p><p style=\"margin:0\"><b>怎么换主题色：</b>设置页 → 主题颜色（不同版本能选的数量不一样）</p><p style=\"margin:8px 0 4px;border-top:1px dashed var(--border);padding-top:8px\"><b>数据到底存在哪：</b>题库、错题、设置存在浏览器的 <b>localStorage</b> 里；笔记和上传的照片存在 <b>IndexedDB</b>（浏览器自带的数据库）里。都不上传，完全离线可用。</p><p style=\"margin:0 0 4px\"><b>能存多少题：</b>浏览器给的空间大概等于 250 万字，换算成题目大约 <b>2 万～5 万道</b> —— 日常刷题够用。<b>能存多少题：</b>存储上限大约 <b>5 MB</b>（纯文本），约等于 250 万字，换算成题目大约 <b>2 万～5 万道题</b> —— 日常刷题完全够用。设置页顶上能看到现在用了多少。</p><p style=\"margin:0\"><b>iPhone 要特别注意：</b>iOS 的 Safari 在「清除网站数据」时，上面那两处会被一起清空 —— 这是 iPhone 用户最容易丢数据的一条路。所以<b>至少每周导出一份备份</b>存到电脑或网盘。</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📑 资料页（要全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>记一条笔记：</b>资料页 →「＋ 新建笔记」</p><p style=\"margin:0 0 4px\"><b>把书上的图拍下来：</b>「📷 上传照片（拍照/相册）」</p><p style=\"margin:0 0 4px\"><b>画一张思维导图：</b>进笔记 →「🧠 导图」→ 点节点可以 ➕ 加子节点、🗑 删节点、📸 单独导出这一支</p><p style=\"margin:0\"><b>搭骨架：</b>可以用「📋 模板 / 📝 大纲 / 📥 导入大纲」。</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🖥️ 使用环境</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>手机 / 平板 / 电脑都能用</b>，建议用 Chrome、Edge、Safari 这些主流浏览器</p><p style=\"margin:0 0 4px\"><b>可以「装到桌面」</b>：用浏览器打开后，菜单里选「添加到主屏幕」，之后点图标就能像 App 一样打开，还能离线用</p><p style=\"margin:0\"><b>微信里直接点开可能功能不全</b> —— 右上角选「在浏览器中打开」再用</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📋 免责说明</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 4px\">这是个纯本地的学习工具，题目和学习记录都存在你自己的设备上，<b>不会上传到任何服务器</b>。</p><p style=\"margin:0 0 4px\">也正因为这样，<b>数据丢了我也找不回来</b> —— 请一定养成定期导出备份的习惯。</p><p style=\"margin:0\">工具只是帮你把题刷起来，能不能考过还得靠你自己。祝顺利。</p><p style=\"margin:6px 0 0\">· 📕 小红书：2750492576</p><p style=\"margin:2px 0 0\">购买后可联系获取最新版本，后续会不定期更新新功能。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📐 数学公式（公式引擎）</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">题里有数学 / 化学 / 物理公式时，工具能画成书本上的样子，<b>导出的 PDF 里也是</b>。<br>· 第一次遇到公式会问你要不要下载「公式引擎」：<b>约 660KB</b>，<b>装一次一直能用</b>。<br>· <b>下载那一次要联网</b>；下过一次之后就进了缓存，<b>离线也能看</b>。<br>· <b>不考数学的人一个字节都不用下</b> —— 只有题库里真出现公式才会去拿。<br>· 想关掉：<b>设置 → 关于 → 📐 数学公式 → 显示源码</b>。<br>· <b>第一次打开慢</b>就是因为它 —— 只在第一次（或更新后第一次）慢，之后就快。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📤 分享给别人 / 直接拖 Word</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">· 对方<b>没装公式引擎</b> → 他看到的公式是<b>源码</b>，不是工具坏了。<br>· <b>直接把 Word 拖进工具</b> → 只有「<b>加粗</b>」会变成挖空；<b>高亮和下划线会被丢掉</b>（Word 解析库的默认行为）。想用它们，可以先把文档整理成带标记的文字再导入。<br>· 万一整篇都加粗了：工具会自动认出来（≥85% 的段都加粗就判定「这不是挖空标记」），把加粗去掉当普通文字 —— 不会把整篇搞乱。</p>"};
+var _MANUAL = {"quick":"<div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f16);margin:0 0 8px;color:#e74c3c\">🔴 数据安全 <span style=\"font-size:var(--f12);font-weight:400;color:#999\">— 最最重要，先看这个</span></h4><div style=\"background:#fff5f5;border:1px solid #fcc;border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>📍 你的题目和学习记录，存在这台设备的浏览器里，不在云端。</b>换个浏览器打开、或者换台设备，就看不到原来的数据了 —— 那不是丢了，是本来就不在一块儿。</p><p style=\"margin:0 0 6px\"><b>📦 导出备份是唯一的保险。</b>没有备份 = 赌运气。设置页里可以「导出备份文件」，存到电脑、网盘、微信收藏都行。</p><p style=\"margin:0 0 4px\"><b>🗑️ 这几种操作会真的把数据弄丢：</b></p><p style=\"margin:0 0 2px;padding-left:12px\">① <b style=\"color:#e74c3c\">iPhone 的「清除历史记录与网站数据」</b>（iPhone 用户最容易中招）</p><p style=\"margin:0 0 2px;padding-left:12px\">② 浏览器清除数据时，勾了「Cookie 和网站数据」</p><p style=\"margin:0 0 2px;padding-left:12px\">③ 手机管家 / 清理软件的「垃圾清理」</p><p style=\"margin:0 0 2px;padding-left:12px\">④ 无痕 / 隐私模式下关掉窗口</p><p style=\"margin:0 0 2px;padding-left:12px\">⑤ 手机存储空间不够，系统自己清理</p><p style=\"margin:0 0 2px;padding-left:12px\">⑥ 卸载或重置浏览器</p><p style=\"margin:8px 0 0\"><b>💾 「清缓存」一般不丢题</b>，但上面那两条「清 Cookie / 网站数据」会丢 —— 这俩不一样，别搞混。</p><p style=\"margin:4px 0 0\"><b>🔒 隐私：</b>这是个纯本地工具，你的题目不会上传到任何地方。导出的备份文件请自己收好。</p></div></div><div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🚀 30 秒上手</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\">① 先在「📚 题库」页建一个题库 → ② 点「📥 导入」把题目放进去 → ③ 点「▶ 开始练习」就能做了。</p><p style=\"margin:0 0 6px\"><b>手上没有整理好的题目？</b>不用自己敲。可以直接粘贴文字，或者上传 Word / PDF / txt；导入前会先给你看预检。</p><p style=\"margin:0\">导入完会先给你看一页「预检」—— 它会告诉你一共几道题、哪些行可能有问题。确认没问题再点导入。</p></div></div><div style=\"margin-bottom:18px\"><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚠️ 最容易踩的 3 个坑</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>1. 清「缓存」不丢数据，清「Cookie 和网站数据」会丢。</b>两个按钮挨在一起，别点错。</p><p style=\"margin:0 0 6px\"><b>2. 换手机 / 发给别人，优先用「导出备份文件」，别用「备份码」。</b>备份码是长文字，经过微信、QQ 转发时里面的字符会被改掉，对方就导不进去了；文件不会。备份码是一长串文字，经过微信、QQ 转发时里面的「+」会被自动改成空格，对方就导不进去了；文件不会出这个问题。</p><p style=\"margin:0\"><b>3. 导入前先看一眼预检页。</b>哪几行写得不对、会被丢掉，它会直接指给你 —— 省得导入完发现少了几道题。</p></div></div><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;font-size:var(--f13);color:var(--text-secondary)\">📖 想看某个功能具体怎么用？<p style=\"margin:0 0 6px\"><b>📅 给自己定个规矩：至少每周导出一次备份。</b>存在电脑或网盘里 —— 这是唯一能完整恢复的办法，出事的时候它就是全部。</p>📖 想看某个功能具体怎么用？点上面那排按钮：<b>🔘 按钮功能</b>讲每一颗按钮干嘛的，<b>🧩 功能介绍</b>讲每个功能是什么、为什么这么设计，<b>📋 详细</b>讲具体怎么操作。</div><div style=\"margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);font-size:var(--f13);color:var(--text-secondary)\">📕 小红书：2750492576 —— 有新版本、或者用着有问题，都可以来找我。</div><div style=\"background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 13px;margin:10px 0;font-size:var(--f13);line-height:1.8\"><b>🔴 第一次打开有点慢？</b><br>那是因为题库里有数学/化学公式，工具在装「公式引擎」。<b>只有第一次（或更新后第一次）慢</b>，之后就快了。<br>不想用公式的话：<b>设置 → 关于 → 📐 数学公式 → 改成「显示源码」</b>。</div>","btns":"<p style=\"margin:0 0 12px;color:var(--text-secondary);font-size:var(--f13)\">下面是工具里<b>能点的东西</b>分别干嘛的，按页面分组。只看「点了会发生什么」，不讲原理（原理去「🧩 功能介绍」）。</p><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🧭 底部这一排（去哪个页面）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>📚 题库</b> —— 建题库、导入题目、改挖空、开始练习，都在这里</p><p style=\"margin:0 0 5px\"><b>📝 做题</b> —— 上来的第一屏是「这一轮怎么出题」的设置，往下才是做题</p><p style=\"margin:0 0 5px\"><b>📖 浏览</b> —— 不考试，就翻着看。找题、导出、看章节掌握度</p><p style=\"margin:0 0 5px\"><b>🌱 复习</b> —— 错题本 + 记忆复习，两个都在这一页</p><p style=\"margin:0\"><b>📑 资料</b> / <b>⚙️ 设置</b> —— 笔记导图一个是资料区，一个是所有开关</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📚 题库页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>＋ 新建题库</b> —— 建一个空题库，之后往里导题</p><p style=\"margin:0 0 5px\"><b>📥 导入</b> —— 粘贴、TXT、Word、PDF 都能进。贴完先看预检页</p><p style=\"margin:0 0 5px\"><b>🔍 搜索全部 N 道题</b> —— 顶上那个框，所有题库一起搜</p><p style=\"margin:0 0 5px\"><b>▶ 开始练习</b> —— 进「这一轮怎么出题」的设置页</p><p style=\"margin:0 0 5px\"><b>🏷 改它属于哪些分组</b>（长按/点题库右边的按钮）—— 把题库分到别的小组里</p><p style=\"margin:0 0 5px\"><b>📁 新建分组</b> —— 题库太多的时候，分个类放</p><p style=\"margin:0 0 5px\"><b>🔀 合并</b> —— 把两个题库并成一个。会先问你要保留哪边的重复题</p><p style=\"margin:0 0 5px\"><b>✏️ 重命名 / 排序 / 🗑 删除</b> —— 题库右边那排小按钮</p><p style=\"margin:0 0 5px\"><b>📋 选题</b> —— 手动挑几道题出来专门练</p><p style=\"margin:0 0 5px\"><b>📤 导出</b> —— 点开先选：导出 PDF（题目卷 / 挖空练习卷），或者导出「题库文件」发给别人（对方在导入页点「📂 上传」选中就能用）</p><p style=\"margin:0\"><b>📊 章节掌握度 / ⚙️ 章节管理</b> —— 在浏览页里，按章节看每章背得怎么样（全能版）；挖空和选择题都能看，点「章节掌握度」页签切换</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📝 做题页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>低 / 高</b> —— 点击切换挖空密度（只对「工具自己挖的空」生效；你自己标着挖的题不受影响）</p><p style=\"margin:0 0 5px\"><b>🪄 置换挖空</b>（全能版）—— 把「挖空的」和「没挖空的」对调：点一下，原来挖空的答案露出来、其余的字遮起来（都能填、能判对错）；再点一下换回来。答案没有挖空时，可以在 设置 → 做题设置 里打开「答案没有挖空时，把答案变成挖空」，点 🪄 会把整个答案（包括 n. 这种词性）变成一个空</p><p style=\"margin:0 0 5px\"><b>检查</b> —— 判这一题对不对。点了之后才能看答案</p><p style=\"margin:0 0 5px\"><b>👁 看答案</b> —— 直接看答案，自己判断对错（「看答案」和「检查」是两条路）</p><p style=\"margin:0 0 5px\"><b>⭐ 收藏</b> —— 把这题标上星，以后专门练收藏的题</p><p style=\"margin:0 0 5px\"><b>❌ 加错题</b> —— 手动把这题扔进错题本（答错了也会自动进）</p><p style=\"margin:0 0 5px\"><b>💡 口诀</b> —— 展开这道题的口诀（导入时写了「口诀：」才有）</p><p style=\"margin:0 0 5px\"><b>← 上一题 / 下一题</b> —— 手机上也能左右滑</p><p style=\"margin:0\"><b>📖 浏览</b> —— 这一轮的题目列表，做完想回头翻就点它</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📖 浏览页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>📋 题目列表</b> / <b>📊 章节掌握度</b> —— 顶上两个页签，切两种看法；在「章节掌握度」上再点一下，可以在挖空 / 选择题之间切换</p><p style=\"margin:0 0 5px\"><b>全部 / ⭐ 收藏 / 💡 口诀 / ❌ 错题</b> —— 一组筛选按钮，只显示你想看的</p><p style=\"margin:0 0 5px\"><b>🏷 标签 / 📚 章节</b> —— 另一组筛选，两组可以叠着用</p><p style=\"margin:0 0 5px\"><b>📤 导出</b> —— 把筛出来的题导成 PDF / 打印（全能版）</p><p style=\"margin:0\"><b>🔍 只搜当前题库</b> —— 只在这个题库里找</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🌱 复习页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>🧠 记忆复习</b> —— 按遗忘曲线排的复习清单（全能版）。上面有 🔴 该复习了 / 🟡 今天 / ⚪ 明天 / ⚪ 3天后 … ✅ 已掌握 这些档位，点开哪一档就列哪一档的题</p><p style=\"margin:0 0 5px\"><b>✅ 我记住了</b> —— 这题不用再排了，从记忆复习里拿掉</p><p style=\"margin:0 0 5px\"><b>⏰ 明天再练</b> —— 今天不想练，推到明天</p><p style=\"margin:0 0 5px\"><b>🗑</b>（题右边）—— 只把它从记忆复习里移除，<b>题目还在题库里</b></p><p style=\"margin:0\"><b>📝 复习清单</b> —— 下面那块是老功能：你答错过的题和收藏的题</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚙️ 设置页（几个常用的）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 5px\"><b>🎨 主题颜色</b> —— 换配色（不同版本能选的数量不一样）</p><p style=\"margin:0 0 5px\"><b>🔊 朗读</b> —— 让手机念题、念答案</p><p style=\"margin:0 0 5px\"><b>🍅 番茄钟</b> —— 打开后做题会计时，还能进番茄乐园（全能版）</p><p style=\"margin:0 0 5px\"><b>🧠 记忆复习</b> —— 在这里选学习节奏（轻松/标准/加强/自定义）、哪些题库参加记录（挖空和选择题各有一份名单），还能把复习题打印出来（选择题也能印）</p><p style=\"margin:0 0 5px\"><b>📤 导出备份文件</b> —— <b>最推荐</b>的备份方式，存成一个文件</p><p style=\"margin:0 0 5px\"><b>📤 分享备份码</b> —— 变成一段文字，适合直接发出去</p><p style=\"margin:0 0 5px\"><b>📥 从备份恢复</b> —— 换设备、或者数据丢了之后，用这个导回来</p><p style=\"margin:0 0 5px\"><b>🗑 清理空间</b> —— 先选「挖空数据 / 选择题数据」，再按题库清；<b>不清题库本身</b></p><p style=\"margin:0\">📅 考试日期 —— 可以加多个，首页显示第一场还没过的；倒计时旁边还能写一句话<br><b>📊 查看版本对比</b> —— 看看每个版本各有什么</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📑 资料页（全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 5px\"><b>＋ 新建笔记</b> / <b>📷 上传照片</b> —— 记笔记、拍书上的图；先选「挖空资料 / 选择题资料」，两边分开存</p><p style=\"margin:0 0 5px\"><b>🧠 导图</b> —— 思维导图：➕ 添加子节点 / 🗑 删除此节点 / 📸 导出此分支</p><p style=\"margin:0 0 5px\"><b>📋 模板 / 📝 大纲 / 📥 导入大纲</b> —— 快速搭出一份笔记的骨架</p></div>","feat":"<p style=\"margin:0 0 14px;color:var(--text-secondary);font-size:var(--f13)\">这一页讲每个功能<b>是什么、为什么需要它、它怎么工作</b> —— 假设你是第一次接触这个工具，所以每一步都说清楚。<br>想知道具体怎么点，去「📋 详细」；想知道某颗按钮干嘛的，去「🔘 按钮功能」。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📥 导入：怎么把题目放进来</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>把一段文字、一个 Word、一个 PDF、一张照片变成能刷的题。</p><p style=\"margin:0 0 6px\"><b>为什么要这样：</b>你的资料多半是书上的、PDF 里的，乱七八糟。工具没法猜哪儿是题、哪儿是答案 —— 所以要先约定一个简单的写法，让它一眼就能认出来。</p><p style=\"margin:0 0 6px\"><b>写法长这样（一行一个符号就打头）：</b></p><div style=\"background:var(--bg-card);border-radius:8px;padding:10px 12px;margin:0 0 6px;font-size:var(--f13);line-height:1.9\">一行开头写 <b>￥</b> → 这是一个大点（当分类用）。例：<code>￥教育观</code><br>一行开头写 <b>$</b> → 这是一道题目。例：<code>$素质教育的内涵</code><br>一行以 <b>口诀：</b> 打头 → 这是这道题的口诀。例：<code>口诀：提速创屎体面的歌星</code><br>其余的行 → 都算上一道题的答案，一行写一个要点<br>想挖空的地方 → 用两个 <b>@@</b> 把它括起来。例：<code>②素质教育以@@培养创新精神@@为重点</code></div><p style=\"margin:0 0 6px\"><b>懒得自己整理？</b>可以直接粘贴文字，或者上传 Word / PDF；导入前会先给你看预检。</p><p style=\"margin:0\"><b>导入前的预检页</b>是干嘛的：它先算一遍「一共几道题、几个大点、几处挖空」，再把有问题的行指给你 —— <b>红块</b>是确定会被丢掉的行，<b>黄块</b>是它猜你可能漏写了标记（机器猜的，不一定准）。看一眼再点导入，能省掉很多「怎么少了几道题」。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">✂️ 挖空：横线版 和 圈圈版</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>把关键词遮住，让你填空 —— 这是这个工具最主要的功能。</p><p style=\"margin:0 0 6px\"><b>怎么决定挖哪儿：</b>导入时用 <code>@@</code> 标出来的，就挖那些；没标的，可以在题库页点「✏️ 编辑挖空」自己点字挖。改题目里的字时，原来的挖空会尽量保留，不会一改就清空。</p><p style=\"margin:0\"><b>两种长相（设置里能换）：</b><br>· <b>横线版</b>（默认）—— 挖空处是一条下划线，最清爽<br>· <b>圈圈版</b>（椭圆挖空，全能版）—— 用椭圆圈住，圈的大小跟着字数走，一眼能看出该填几个字。想试试：设置里打开「椭圆挖空」开关，做题页就变了</p><p style=\"margin:6px 0 0\"><b>用不上「工具自动挖空」？</b>设置 → 做题设置里有个 <b>「系统自动挖空」</b>开关，关掉后做题页的「低/高」那颗就不显示了 —— 你自己导入的挖空不受影响。默认是开着的。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🪄 置换挖空：反过来背一遍</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>把「挖空的」和「没挖空的」对调 —— 你原来挖了「中国」，点一下 🪄，变成「中国」露出来、句子里剩下的字遮起来。</p><p style=\"margin:0 0 6px\"><b>什么时候用：</b>背到后半段，人往往只记得住挖过的关键词、整句反而说不出。点一下 🪄，让工具反过来考你剩下的部分 —— 能把整句写出来，才算真背下来了。</p><p style=\"margin:0 0 6px\"><b>它怎么工作：</b><br>· 遮出来的空<b>能填、能判对错</b>（跟正常挖空一样的对错反馈）<br>· <b>只是练习、不记成绩</b> —— 不进记忆复习、不进错题本、不算正确率；你正常做的那次才算<br>· <b>公式整段不参与</b>（怕把公式切碎），公式照常显示<br>· 标点和空格不挖；<b>中英文都行</b>（英文按单词遮）<br>· 翻页时保持，退出做题自动结束</p><p style=\"margin:0 0 6px\"><b>做题页上的配合：</b>置换开着时点「低/高」＝换一批新的挖空、置换跟着更新（你自己挖空的题不会有变化）；点「✨」＝看刚才练的那些空的答案（原来的空是「保持空着」还是「也显示出来」，可以在 设置 → 做题设置 里选）。</p><p style=\"margin:0\"><b>浏览页也能用：</b>浏览页右上角的 🪄 —— 先把「浏览页显示挖空」开着（那颗 ✨），🪄 才有效（只是看、不能填字）；开着时题目里的挖空也会藏起来。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🧠 记忆复习：让它记得更久</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>一个自动帮你排「什么时候该复习哪道题」的清单。</p><p style=\"margin:0 0 6px\"><b>为什么需要它：</b>人的记性是会掉的。同一道题，今天背会了，明天看还剩八成，一周后可能只剩三成。但你要是<b>在快要忘的那一刻</b>再复习一遍，就能把它按住，下次能撑更久 —— 这比每天无脑重背一遍省时间得多。</p><p style=\"margin:0 0 6px\"><b>它怎么排：</b>默认按 <b>1 天 → 2 天 → 4 天 → 7 天 → 15 天 → 30 天</b> 这个节奏。答对一次就往下一档走（下次隔更久才问你）；答错就退回去，明天再来。觉得太快或太慢，设置里能换成「轻松」「加强」或者自己填天数。</p><p style=\"margin:0 0 6px\"><b>什么时候算「背熟了」：</b>走到最后一档才算（也就是连着答对好几轮）。工具里所有跟「掌握」有关的数字 —— <b>章节掌握度、总掌握率、学习周报里的「本周掌握」</b> —— 用的都是这个标准。</p><p style=\"margin:0\"><b>什么时候该用它：</b>你有一批题要长期记住（比如教资考点），已经过了「第一遍看懂」的阶段，需要一遍遍滚到不忘。注意它只帮你想起来，<b>不能保证你记住</b> —— 记住靠的是你真的复习。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">⏱ 学习时长是怎么算的</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>只算你真在做题的那段时间。</b>下面三种情况都不算：</p><p style=\"margin:0 0 2px;padding-left:12px\">· 切到别的 App、别的浏览器标签（按 Home 也算）</p><p style=\"margin:0 0 2px;padding-left:12px\">· 在工具里切到别的页（题库页、设置页、番茄乐园…）</p><p style=\"margin:0 0 6px;padding-left:12px\">· 番茄钟正在休息的那几分钟</p><p style=\"margin:0 0 6px\">所以「今天学了 40 分钟」不是「你开着这个页面 40 分钟」，而是「你<b>真的在做题</b> 40 分钟」。把页面放那儿挂着不算数 —— 这个数字才骗不了自己。</p><p style=\"margin:0\">做题页上面那个秒表，跟统计里的时长是<b>同一个数</b>，不是两套。</p><p style=\"margin:0 0 6px\">做题页左上角那个秒表，走的就是这个数；<b>结果页、今日摘要、学习周报用的也是它</b> —— 四个地方永远是同一个数。</p><p style=\"margin:0\">⚠️ 所以番茄钟休息时，<b>那个秒表会停住不动，这是正常的</b>，回来接着走。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🍅 番茄钟 和 冲刺背诵清单</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>番茄钟是什么：</b>一个「专注 25 分钟、休息 5 分钟」的计时器。开起来做题时，屏幕顶上会有一个倒计时。</p><p style=\"margin:0 0 6px\"><b>它会看着你专注：</b>专注期间你要是切出去（回个微信、刷个别的），它会记一次。<b>切满 5 次，这一轮就自动结束了</b> —— 结束的时候结算页会写明「是因为切屏」，不会让你莫名其妙。每次切回来它都会提醒你「已切屏 N / 5 次」。休息时间切出去不算。</p><p style=\"margin:0 0 6px\"><b>专心时切走了会怎样：</b>切到工具里别的页、切到别的 App、按 Home，番茄钟都会<b>暂停</b>，回来接着走，剩下的秒数不会少。</p><p style=\"margin:0 0 6px\">⚠️ 但<b>休息时切走不暂停</b> —— 休息本来就是让你离开屏幕动一动的，把你按在屏幕前就不叫休息了。</p><p style=\"margin:0\"><b>关掉页面了会怎样：</b>番茄钟会自己存下来。再打开时秒数还在原地、但是<b>停着的</b>，回到做题页才开始走。（故意不按真实时间扣 —— 关了 3 小时再打开，要是照着算早该结束了，那要么白送你一个番茄、要么一轮凭空消失，两种都不对。）</p><p style=\"margin:0 0 6px\"><b>冲刺背诵清单是什么：</b>考前那几天，你不可能把整本书再过一遍，这个清单帮你把「最该临时抱佛脚的」挑出来 —— 还没背熟的题、你答错过的题、你自己收藏或标了高频的题。</p><p style=\"margin:0\"><b>已经背熟的题不会进这个清单</b>（除非你自己收藏或标了高频，那说明你特意想留着它）。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📊 章节掌握度：哪一章还没背下来</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>在浏览页里，按「章节」统计你每章背得怎么样 —— 哪一章掌握率高、哪一章还是 0%。</p><p style=\"margin:0 0 6px\"><b>章节是哪来的：</b>导入时用 <b>￥</b> 打头的那些行就是章节名。如果一个章节都没有，可以在「⚙️ 章节管理」里手动建、或者把题目分进去。</p><p style=\"margin:0\">「掌握」的算法跟记忆复习是同一套（走到最后一档才算）—— 所以你在记忆复习里标了「✅ 我记住了」的题，这里立刻就会算进去，两边的数字永远对得上。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📈 学习数据：热力图 / 周报 / 每日洞见</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>🔥 热力图：</b>像打卡日历一样，把你最近 12 周每天做了多少题铺成一片格子。颜色越深做得越多 —— 主要用来「别让链条断掉」。</p><p style=\"margin:0 0 6px\"><b>📊 学习周报：</b>这一周做了多少题、掌握了多少、哪天最勤快。</p><p style=\"margin:0 0 6px\"><b>📈 今日学习摘要：</b>今天做了多少、连续多少天没断、总掌握率。</p><p style=\"margin:0 0 6px\"><b>卡片的颜色是什么意思：</b>🔴 该复习了 / 🟡 今天 / ⚪ 明天 / ⚪ 3 天后 / ⚪ 7 天后 / ⚪ 更久 / ✅ 已掌握 / ○ 还没排上。</p><p style=\"margin:0\"><b>💡 每日洞见：</b>每天给你一句根据你的数据算出来的话（比如「这道题你错了 3 次了」），不是套话。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🍅 番茄乐园 和 小游戏</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>它是什么：</b>做题攒番茄，番茄能换东西（主题色、道具卡、游戏时间）。还有几个小游戏（舒尔特方格、翻牌记忆、2048、打砖块、扫雷…）。</p><p style=\"margin:0\"><b>为什么在背书工具里放游戏：</b>长时间背东西容易烦，做几道题换一局游戏，比硬撑着刷到厌恶要好 —— 这是给「坚持不下去」准备的，不是给「想玩」准备的。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🏆 成就徽章 · 🧘 专注模式 · 📑 资料页</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\"><b>🏆 成就徽章：</b>连续学习、掌握多少题这些会解锁徽章。「连击」是你连着答对了多少题 —— 断了会有点心疼，这就是它的作用。</p><p style=\"margin:0 0 6px\"><b>🧘 专注模式：</b>把界面上一切跟做题无关的东西都藏起来，只留题目。手机屏幕小、容易分心的时候开它。</p><p style=\"margin:0\"><b>📑 资料页：</b>做题之外的另一半 —— 记笔记、传照片、画思维导图。考点之间是有联系的，散着背不如画成一张图。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">👑 三个版本差在哪</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 6px\">免费版能建 2 个题库、每个题库 15 道题，导入、挖空、做题、错题本、热力图都有；全能版全都能用 —— 题库题数不限，还多了分组、周报、朗读模式、专注模式、记忆复习、番茄钟、章节掌握度、导出 PDF 和题库文件这些。</p><p style=\"margin:0\">具体每一行长什么样，点设置页的「查看版本对比」看那张表 —— <b>那张表是照着代码写的，不是宣传话术。</b></p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📐 数学 / 化学公式</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">题里有公式（数学、化学、物理那种）时，工具能把它们<b>画成书本上的样子</b>，导出的 PDF 里也是。<br>第一次遇到公式会问你要不要下载「公式引擎」：<b>约 660KB，装一次一直能用</b>，<b>下载那一次要联网</b>，之后离线也能看。<br>不想要的话：<b>设置 → 关于 → 📐 数学公式 → 显示源码</b>（那就跟以前一样显示 源码）。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📤 把题库发给别人要注意</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">如果对方<b>没装公式引擎</b>，他看到的公式会是<b>源码</b>（一串带斜杠的字）—— 这是正常的，不是工具坏了。<br>还有一个：<b>直接把 Word 拖进工具</b>时，只有「<b>加粗</b>」会变成挖空，<b>高亮和下划线会被丢掉</b>。<br>想用高亮/下划线，可以先把文档整理成带标记的文字再导入。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">🎧 耳返（背书时听自己的声音）</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">设置 → 语音里打开「🎧 耳返」（<b>全能版功能</b>）后，挖空做题页 💡 右边会出现 🎧 按钮，点一下就能从耳机里实时听到自己念书的声音 —— 背书时听得更清楚，也更容易发现自己哪里念错了。<br>它<b>不录音、不上传、不保存</b>，只是把麦克风的声音立刻放回耳机；离开做题页、切到别的 App、关掉开关都会自动停。<br><b>一定要戴耳机</b>：外放会把声音再收进麦克风，产生啸叫（很刺耳）。蓝牙耳机连接时会自动走蓝牙。</p>","full":"<p style=\"margin:0 0 14px;color:var(--text-secondary);font-size:var(--f13)\">这里是<b>「想做什么 → 怎么走」</b>。不讲按钮长什么样（去「🔘 按钮功能」），也不讲原理（去「🧩 功能介绍」）。</p><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🔰 第一次用：从零到做完第一轮</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>1.</b> 打开「📚 题库」页 → 点「＋ 新建题库」，起个名字（比如「教资科二」）</p><p style=\"margin:0 0 4px\"><b>2.</b> 点「📥 导入」。手上已经有整理好的文字就直接粘；没有的话直接粘贴或上传 Word / PDF</p><p style=\"margin:0 0 4px\"><b>3.</b> 导入后会先出一页「预检」。上面会写「一共 N 道题」，还有红块黄块提示哪些行有问题 —— <b>先看一眼再点确认</b></p><p style=\"margin:0 0 4px\"><b>4.</b> 想自己挖空：点题库页的「✏️ 编辑挖空」，用手指点你想遮住的字就行</p><p style=\"margin:0 0 4px\"><b>5.</b> 回题库页点「▶ 开始练习」→ 设置这一轮做几道题、什么顺序 → 开始</p><p style=\"margin:0\"><b>6.</b> 做完会出结算页，告诉你对了几道。答错的题自动进错题本</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📚 导入 & 题库管理</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>想导入粘贴的文字 / TXT：</b>题库页 → 📥 导入 → 把文字粘进去 → 看预检 → 确认</p><p style=\"margin:0 0 4px\"><b>想导入 Word / PDF：</b>同一入口，选文件就行。<b>PDF 是扫描件的话</b>，让它转成文字再导，识别不出来</p><p style=\"margin:0 0 4px\"><b>别人发来的「题库文件」：</b>还是这个入口 —— 导入页点「📂 上传」选中那个文件，会自动认出来。永远是新建一个题库，不会盖掉你已有的</p><p style=\"margin:0 0 4px\"><b>想整理资料：</b>直接粘贴文字，或上传 Word / PDF；导入前会先预检。</p><p style=\"margin:0 0 4px\"><b>预检页那三种块是什么意思：</b>统计栏是「几个大点 / 几道题 / 几处挖空」；<b>红块</b>＝这些行一定会被丢掉（写错了标记）；<b>黄块</b>＝它猜你可能漏写了标记（机器猜的，你可以不管）</p><p style=\"margin:0 0 4px\"><b>想把两个题库并成一个：</b>题库页 → 🔀 合并 → 选两个 → 有重复题它会问你要保留哪边</p><p style=\"margin:0\"><b>想把题库发别人 / 换手机：</b>题库页 → 📤 导出 → 📦 导出题库文件（只发这一个题库，可以选带不带你的做题痕迹）；整机数据搬家用设置页的「导出备份文件」</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📖 浏览 & 找题</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>只想翻着看，不做题：</b>进「📖 浏览」页，它就是干这个的</p><p style=\"margin:0 0 4px\"><b>只看某一类题：</b>用筛选那排按钮 —— 全部 / 收藏 / 口诀 / 错题；另一排能按章节或标签筛，两排可以叠着用（比如「第三章 + 收藏的」）</p><p style=\"margin:0 0 4px\"><b>找一道具体的题：</b>题库页顶上那个搜索框是<b>搜全部题库</b>；浏览页里的搜索只搜当前题库</p><p style=\"margin:0\"><b>把题导出来打印：</b>浏览页 → 筛好 → 📤 导出。能导「题目卷」和「挖空练习卷」两种（全能版）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📝 刷题</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>开始一轮：</b>「📝 做题」页上面那一屏就是设置 —— 做几道、什么顺序、要不要限时、要不要隐藏题目，选完点开始</p><p style=\"margin:0 0 4px\"><b>填完一题：</b>点「检查」判对错。不会做？点「👁 看答案」直接看</p><p style=\"margin:0 0 4px\"><b>想让手机念给你听：</b>设置里开朗读。全能版还能选「念题 / 念答案 / 都念」</p><p style=\"margin:0 0 4px\"><b>做到一半有事要走：</b>直接走就行，下次打开还在这一轮（番茄钟开着的话会自动暂停）</p><p style=\"margin:0\"><b>觉得界面太乱：</b>开「专注模式」，只留题目</p><p style=\"margin:8px 0 4px\"><b>想反过来考自己（遮住其余、只露出挖空）：</b>做题页点 <b>🪄</b>（全能版）—— 能填、能判对错，但只是练习、不计成绩；再点一下退出。浏览页也能这样看（先把「浏览页显示挖空」开着）</p><p style=\"margin:0\"><b>用不上工具自动挖空：</b>设置 → 做题设置 → 关掉「系统自动挖空」，做题页的「低/高」就不再显示</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🍅 番茄钟怎么用</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>在哪开：</b>🍅 番茄乐园里那颗番茄点一下就开。时长可以在设置页改，也可以在番茄乐园里点快捷键（专注 10 / 15 / 25 / 45 分钟，休息 1 / 3 / 5 / 10 分钟），或者自己填一个数</p><p style=\"margin:0 0 4px\"><b>能设多长：</b>专注 <b>10～180 分钟</b>（默认 25），休息 <b>1～30 分钟</b>（默认 5）。休息填 0 就是不要休息</p><p style=\"margin:0 0 4px\"><b>一轮走完会怎样：</b>收 1 个番茄。配了休息就先自动进休息；休息结束（没配休息的就是一轮刚完）会<b>停下来</b>，弹一张小卡片问你下一轮要多少分钟，你选好才开下一轮</p><p style=\"margin:0 0 4px\"><b>不会自己偷偷接着开</b> —— 想换时长随时换</p><p style=\"margin:0\"><b>休息时秒表会停</b> —— 就是上面「⏱ 学习时长是怎么算的」那条，正常的</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📊 看学习数据</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>看今天做了多少：</b>首页那条进度 / 设置页 →「今日学习摘要」</p><p style=\"margin:0 0 4px\"><b>看这周做得怎么样：</b>设置页 →「📊 学习周报」</p><p style=\"margin:0 0 4px\"><b>看有没有断卡：</b>设置页的🔥热力图，最近 12 周一片格子，颜色越深做得越多</p><p style=\"margin:0\"><b>看哪一章还没背下来：</b>浏览页 → 章节掌握度（要全能版）</p><p style=\"margin:8px 0 4px\"><b>几个数各自怎么算：</b></p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>总掌握率 / ✅ 已掌握 / ✅ 本周掌握</b> —— 按「记忆复习」走到最后一档的题算（详见「🧩 功能介绍 → 🧠 记忆复习」）。「本周掌握」只数本周练过的那些</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>今日做题 / 本周做题数</b> —— 只算做完了一轮的题。做一半退出的不算（但填过字的那几道下次不会再抽到）</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>📱 切屏</b> —— 练习当中切走屏幕的次数（查个单词、回个消息都算）。休息时切走不算</p><p style=\"margin:0 0 2px;padding-left:12px\">· <b>🍅 本周番茄数</b> —— 这一周番茄钟收的番茄。用兑换码换来的、幸运掉落的，不算</p><p style=\"margin:0 0 4px;padding-left:12px\">· <b>⭐ 累计收藏</b> —— 收藏夹里一共多少题，不是本周的（所以它只会涨或不变）</p><p style=\"margin:8px 0 0\"><b>⏱ 学习时长是怎么算的：</b>只算你真在做题的时间 —— 切走、切到别的页、番茄钟休息都不算。（详细解释见「🧩 功能介绍 → ⏱ 学习时长是怎么算的」）</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">❌ 错题怎么复习</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>答错的题会自己进错题本</b>，不用手动加</p><p style=\"margin:0 0 4px\"><b>只练错题：</b>做题设置页里选「复习优先」或在复习页点开错题那组</p><p style=\"margin:0 0 4px\"><b>做对了但想再确认：</b>做题时点「❌ 加错题」也能手动扔进去</p><p style=\"margin:0\"><b>从错题本拿掉：</b>在复习页那道题上点「✕ 移除」</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🧠 记忆复习怎么用（要全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>先打开它：</b>设置 → 记忆复习 → 打开开关。<b>还要勾上「哪些题库参加记录」</b> —— 没勾的题库不记录</p><p style=\"margin:0 0 4px\"><b>然后正常做题就行：</b>答对答错都会自动记，不用额外操作</p><p style=\"margin:0 0 4px\"><b>想看今天该复习哪几道：</b>复习页 → 点开标着「今天」的那一档 → 开始练</p><p style=\"margin:0 0 4px\"><b>题太多一次做不完：</b>没事，超出的会自动顺延到明天，不会丢</p><p style=\"margin:0 0 4px\"><b>某道题已经会了：</b>在那道题上点「✅ 我记住了」。想让它明天再问：「⏰ 明天再练」</p><p style=\"margin:0 0 4px\"><b>觉得复习太频繁 / 太慢：</b>设置 → 记忆复习 → 学习节奏，可以选「轻松 1/3/7/15 天」「标准 1/2/4/7/15/30 天」「加强 1/2/3/5/8/12/20/30 天」，也可以自己填天数</p><p style=\"margin:0 0 4px\"><b>想彻底清掉某道题的记录：</b>那道题右边的 🗑 —— <b>只删记录，题目还在题库里</b></p><p style=\"margin:0\"><b>想印成纸质的：</b>设置 → 记忆复习 → 「🖨️ 打印复习题」—— 想印哪一档、印多少题、印哪个题库，点进去自己选</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⭐ 收藏 & 🔍 搜索</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>收藏一道题：</b>做题时点「⭐」。收藏的题会在复习清单里单列一组</p><p style=\"margin:0 0 4px\"><b>只练收藏的：</b>做题设置里选「收藏优先」，或在浏览页筛「⭐ 收藏」</p><p style=\"margin:0\"><b>搜一道题在哪：</b>题库页顶上的框搜全部题库；浏览页里的框只搜当前题库</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">⚙️ 设置 & 数据安全</h4><div style=\"background:#fff5f5;border:1px solid #fcc;border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>⚠️ 最重要的一条：养成备份习惯。</b>数据存在这台设备的浏览器里，清数据、换手机、卸载浏览器都可能丢。没有备份 = 赌运气。</p><p style=\"margin:0 0 4px\"><b>怎么备份：</b>设置页 →「📤 导出备份文件」→ 存到电脑 / 网盘 / 微信收藏</p><p style=\"margin:0 0 4px\"><b>发给别人 / 换设备：</b>优先用「导出备份文件」，<b>别用备份码</b> —— 备份码是长文字，经过微信会掉字符，对方导不进去备份码是一长串文字，经过微信、QQ 转发时里面的「+」会被自动改成空格，对方就导不进去了 —— 文件不会这样</p><p style=\"margin:0 0 4px\"><b>怎么恢复：</b>设置页 →「📥 从备份恢复」→ 选那个文件。如果两边都有数据，它会列出来哪些题重复、让你选保留哪边</p><p style=\"margin:0 0 4px\"><b>只想清记录不清题库：</b>设置页 →「🗑 清理空间」</p><p style=\"margin:0\"><b>怎么换主题色：</b>设置页 → 主题颜色（不同版本能选的数量不一样）</p><p style=\"margin:8px 0 4px;border-top:1px dashed var(--border);padding-top:8px\"><b>数据到底存在哪：</b>题库、错题、设置存在浏览器的 <b>localStorage</b> 里；笔记和上传的照片存在 <b>IndexedDB</b>（浏览器自带的数据库）里。都不上传，完全离线可用。</p><p style=\"margin:0 0 4px\"><b>能存多少题：</b>浏览器给的空间大概等于 250 万字，换算成题目大约 <b>2 万～5 万道</b> —— 日常刷题够用。<b>能存多少题：</b>存储上限大约 <b>5 MB</b>（纯文本），约等于 250 万字，换算成题目大约 <b>2 万～5 万道题</b> —— 日常刷题完全够用。设置页顶上能看到现在用了多少。</p><p style=\"margin:0\"><b>iPhone 要特别注意：</b>iOS 的 Safari 在「清除网站数据」时，上面那两处会被一起清空 —— 这是 iPhone 用户最容易丢数据的一条路。所以<b>至少每周导出一份备份</b>存到电脑或网盘。</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📑 资料页（要全能版）</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>记一条笔记：</b>资料页 →「＋ 新建笔记」</p><p style=\"margin:0 0 4px\"><b>把书上的图拍下来：</b>「📷 上传照片（拍照/相册）」</p><p style=\"margin:0 0 4px\"><b>画一张思维导图：</b>进笔记 →「🧠 导图」→ 点节点可以 ➕ 加子节点、🗑 删节点、📸 单独导出这一支</p><p style=\"margin:0\"><b>搭骨架：</b>可以用「📋 模板 / 📝 大纲 / 📥 导入大纲」。</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">🖥️ 使用环境</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px;margin-bottom:16px\"><p style=\"margin:0 0 4px\"><b>手机 / 平板 / 电脑都能用</b>，建议用 Chrome、Edge、Safari 这些主流浏览器</p><p style=\"margin:0 0 4px\"><b>可以「装到桌面」</b>：用浏览器打开后，菜单里选「添加到主屏幕」，之后点图标就能像 App 一样打开，还能离线用</p><p style=\"margin:0\"><b>微信里直接点开可能功能不全</b> —— 右上角选「在浏览器中打开」再用</p></div><h4 style=\"font-size:var(--f15);margin:0 0 8px;color:var(--primary)\">📋 免责说明</h4><div style=\"background:var(--bg-input);border-radius:10px;padding:12px 14px\"><p style=\"margin:0 0 4px\">这是个纯本地的学习工具，题目和学习记录都存在你自己的设备上，<b>不会上传到任何服务器</b>。</p><p style=\"margin:0 0 4px\">也正因为这样，<b>数据丢了我也找不回来</b> —— 请一定养成定期导出备份的习惯。</p><p style=\"margin:0\">工具只是帮你把题刷起来，能不能考过还得靠你自己。祝顺利。</p><p style=\"margin:6px 0 0\">· 📕 小红书：2750492576</p><p style=\"margin:2px 0 0\">购买后可联系获取最新版本，后续会不定期更新新功能。</p></div><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📐 数学公式（公式引擎）</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">题里有数学 / 化学 / 物理公式时，工具能画成书本上的样子，<b>导出的 PDF 里也是</b>。<br>· 第一次遇到公式会问你要不要下载「公式引擎」：<b>约 660KB</b>，<b>装一次一直能用</b>。<br>· <b>下载那一次要联网</b>；下过一次之后就进了缓存，<b>离线也能看</b>。<br>· <b>不考数学的人一个字节都不用下</b> —— 只有题库里真出现公式才会去拿。<br>· 想关掉：<b>设置 → 关于 → 📐 数学公式 → 显示源码</b>。<br>· <b>第一次打开慢</b>就是因为它 —— 只在第一次（或更新后第一次）慢，之后就快。</p><h4 style=\"font-size:var(--f15);margin:18px 0 8px;color:var(--primary)\">📤 分享给别人 / 直接拖 Word</h4><p style=\"font-size:var(--f13);line-height:1.85;color:var(--text-secondary)\">· 对方<b>没装公式引擎</b> → 他看到的公式是<b>源码</b>，不是工具坏了。<br>· <b>直接把 Word 拖进工具</b> → 只有「<b>加粗</b>」会变成挖空；<b>高亮和下划线会被丢掉</b>（Word 解析库的默认行为）。想用它们，可以先把文档整理成带标记的文字再导入。<br>· 万一整篇都加粗了：工具会自动认出来（≥85% 的段都加粗就判定「这不是挖空标记」），把加粗去掉当普通文字 —— 不会把整篇搞乱。</p>"};
 // 🆕 v190：加了第 6 个页签「📌 小提示」，**放第一个**（用户 2026-09-29 拍板「第一个」）。
 //   用户原话：「我是指小提示　**和这些是同级**　改成小提示就 ok」—— 它不是一个浮在上面的块，
 //   是跟那 5 个**平级**的页签。
@@ -18991,7 +19659,7 @@ var _MANUAL_QUIZ =
   '<div style="margin-bottom:16px"><h4 style="font-size:var(--f15);margin:0 0 8px;color:var(--primary)">📝 错题、复习、备份</h4>' +
   '<div style="background:var(--bg-input);border-radius:10px;padding:12px 14px;font-size:var(--f13);line-height:1.85">' +
   '· <b>选择题错题本：</b>浏览页顶部第三个页签「📝 选择题错题本」；<br>' +
-  '· <b>复习：</b>复习页顶部切到「📝 选择题复习」，跟挖空共用同一套记忆曲线；下面还有一块<b>「选择题复习清单」</b>，按题库 → 章节列出错题，点一下就能练这一道，也能单独移出错题本；<br>' +
+  '· <b>复习：</b>复习页点标题「🧠 记忆复习」四个字切到「选择题复习」，跟挖空共用同一套记忆曲线；下面还有一块<b>「选择题复习清单」</b>，按题库 → 章节列出错题，点一下就能练这一道，也能单独移出错题本；<br>' +
   '· <b>备份：</b>一个备份文件同时包含挖空 + 选择题；旧选择题导出的 JSON 备份，可以在 设置 → 恢复 →「从旧选择题备份导入」带过来（需要选择题全能版）。' +
   '</div></div>' +
   '<div style="margin-bottom:16px"><h4 style="font-size:var(--f15);margin:0 0 8px;color:var(--primary)">📝 分组 / 合并</h4>' +
@@ -19259,11 +19927,22 @@ function renderBrowseStart() {
   //   （用户 2026-10-17 报的现象；点一下页签又正常，就是因为页签会调 qzHideWrongBook）。
   try { qzHideWrongBook(); } catch (e) {}
   _browseTab = 'list';
-  // 🆕 v204（用户 2026-10-17）：只显示选择题时，浏览页只留「选择题错题本」——
-  //   不再显示「题目列表 / 章节掌握度」（那些是挖空的），避免点进去只有“还没有挖空题库”。
+  // 🆕 v217：只显示选择题时，浏览页给「📊 章节掌握度（选择题）」+「📝 选择题错题本」两页。
+  //   （v204 当时是只留错题本；现在用户要选择题章节掌握度，所以补回来。）
   if (!settingShowReciteModule() && settingShowQuizModule()) {
-    var _onlyQuizC = $('browseContainer'); if (_onlyQuizC) _onlyQuizC.innerHTML = '';
-    try { qzShowWrongBook(); } catch (e) {}
+    var _onlyQuizC = $('browseContainer');
+    _browseChapterKind = 'quiz';
+    _browseTab = 'chapters';
+    if (_onlyQuizC) {
+      _onlyQuizC.innerHTML = '<div class="flex justify-between items-center mb-10"><h1 style="font-size:var(--f20);font-weight:800">📖 目录</h1></div>' +
+        '<div class="browse-tabs" id="browseTabs">' +
+          '<button class="browse-tab active" id="browseTabChapters" onclick="switchBrowseTab(\'chapters\')">📊 章节掌握度</button>' +
+          '<button class="browse-tab" id="browseTabQuizWrong" onclick="qzShowWrongBook()">📝 选择题错题本</button>' +
+        '</div>' +
+        '<div id="browseReciteBody"><div id="browseTabContent"></div></div>';
+      var _tcq = document.getElementById('browseTabContent');
+      if (_tcq) _tcq.innerHTML = renderQuizChapterHeatmap(_quizChapterBankId);
+    }
     return;
   }
   const c = $('browseContainer');
@@ -19271,13 +19950,16 @@ function renderBrowseStart() {
 
   if (!banks.length) {
     if (settingShowQuizModule()) {
+      _browseChapterKind = 'quiz';
+      _browseTab = 'chapters';
       c.innerHTML = '<div class="flex justify-between items-center mb-10"><h1 style="font-size:var(--f20);font-weight:800">📖 目录</h1></div>' +
         '<div class="browse-tabs" id="browseTabs">' +
-          '<button class="browse-tab" id="browseTabList" onclick="qzShowEmptyReciteBrowse()">📋 题目列表</button>' +
+          '<button class="browse-tab active" id="browseTabChapters" onclick="switchBrowseTab(\'chapters\')">📊 章节掌握度</button>' +
           '<button class="browse-tab" id="browseTabQuizWrong" onclick="qzShowWrongBook()">📝 选择题错题本</button>' +
         '</div>' +
-        '<div id="browseReciteBody"><div class="empty"><span class="icon">📖</span><h3>还没有挖空题库</h3><p>请先在「题库」页面导入题目</p></div></div>';
-      qzShowWrongBook();
+        '<div id="browseReciteBody"><div id="browseTabContent"></div></div>';
+      var _tc2 = document.getElementById('browseTabContent');
+      if (_tc2) _tc2.innerHTML = renderQuizChapterHeatmap(_quizChapterBankId);
     } else {
       c.innerHTML = `<div class="empty"><span class="icon">📖</span><h3>还没有题库</h3><p>请先在「题库」页面导入题目</p></div>`;
     }
@@ -19299,11 +19981,11 @@ function renderBrowseStart() {
   c.innerHTML = `<div class="flex justify-between items-center mb-10">
     <h1 style="font-size:var(--f20);font-weight:800">📖 目录</h1>
     <input type="hidden" id="browseBankSelect" value="${bankId}">
-    <button class="btn btn-ghost btn-sm" onclick="showBankPicker(document.getElementById('browseBankSelect').value, function(bid){document.getElementById('browseBankSelect').value=bid;var bk=appData.banks[bid];if(bk){sessionStorage.setItem('lastPracticeBank',bid);changeBrowseBank()}})" style="font-size:var(--f13)">
+    <button class="btn btn-ghost btn-sm" id="browseBankPickBtn" onclick="showBankPicker(document.getElementById('browseBankSelect').value, function(bid){document.getElementById('browseBankSelect').value=bid;var bk=appData.banks[bid];if(bk){sessionStorage.setItem('lastPracticeBank',bid);changeBrowseBank()}})" style="font-size:var(--f13)">
       ${escapeHtml(bank.name)} ▾
     </button>
   </div>
-  <div style="margin-bottom:10px">
+  <div style="margin-bottom:10px" id="browseSearchWrap">
     <input type="search" id="browseSearchInput" placeholder="🔍 只搜当前题库" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14)" oninput="doBrowseSearch()">
   </div>
   <div class="browse-tabs" id="browseTabs">
@@ -19369,12 +20051,26 @@ function doBrowseSearch() {
 }
 
 var _browseTab = 'list';
+// 🆕 v217：章节掌握度看的是哪一类（'recite' | 'quiz'）。点「📊 章节掌握度」标题切换。
+var _browseChapterKind = 'recite';
 
 function switchBrowseTab(tab) {
   // 🆕 v176 ①：非全能版没有「章节掌握度」这一页（甲案）。按钮已经不画了，
   //    这里再兜一道 —— 万一以后有别的代码/书签直接调它，也不会翻到那一页。
   if (tab === 'chapters' && !hasFeature('chapterHeatmap')) return;
-  // 🆕 v201：从选择题错题本切回挖空浏览
+  // 🆕 v217：两个模块都显示时，点「📊 章节掌握度」这同一颗 tab = 在挖空 / 选择题之间切换
+  //   （跟复习页「点标题切换」同一个交互；用户 2026-10-18 拍板）。
+  if (tab === 'chapters') {
+    var _bothKind = settingShowReciteModule() && settingShowQuizModule();
+    var _wasChapters = (_browseTab === 'chapters');
+    if (!settingShowReciteModule()) _browseChapterKind = 'quiz';
+    else if (!settingShowQuizModule()) _browseChapterKind = 'recite';
+    else if (_wasChapters) _browseChapterKind = (_browseChapterKind === 'quiz') ? 'recite' : 'quiz';
+    // 切到的那一类一个题库都没有 → 自动退回另一类，别给用户一屏空白
+    if (_browseChapterKind === 'quiz' && !quizBankNamesSorted().length) _browseChapterKind = 'recite';
+    if (_browseChapterKind === 'recite' && !Object.keys(appData.banks).length && quizBankNamesSorted().length) _browseChapterKind = 'quiz';
+  }
+  // 🆕 v201：从选择题错题本切回浏览
   qzHideWrongBook();
   var _qt = document.getElementById('browseTabQuizWrong'); if (_qt) _qt.classList.remove('active');
   _browseTab = tab;
@@ -19386,13 +20082,22 @@ function switchBrowseTab(tab) {
   if (tabChapters) tabChapters.classList.toggle('active', tab === 'chapters');
   if (filterArea) filterArea.style.display = tab === 'list' ? '' : 'none';
   if (tabContent) tabContent.style.display = tab === 'chapters' ? '' : 'none';
-  if (!browseState) return;
-  if (tab === 'list') {
-    renderBrowseList();
-  } else {
-    var bankId = document.getElementById('browseBankSelect') ? document.getElementById('browseBankSelect').value : browseState.bankId;
-    if (tabContent) tabContent.innerHTML = renderChapterHeatmap(bankId);
+  // 看选择题章节时，顶上那套「挖空题库下拉 + 搜索」先收起来（选择题库在章节页自己的下拉里选）
+  var _quizKind = (tab === 'chapters' && _browseChapterKind === 'quiz');
+  var _bp = document.getElementById('browseBankPickBtn'); if (_bp) _bp.style.display = _quizKind ? 'none' : '';
+  var _sw = document.getElementById('browseSearchWrap'); if (_sw) _sw.style.display = _quizKind ? 'none' : '';
+  if (tab === 'chapters') {
+    if (!tabContent) return;
+    if (_quizKind) {
+      tabContent.innerHTML = renderQuizChapterHeatmap(_quizChapterBankId);
+    } else if (browseState) {
+      var bankId = document.getElementById('browseBankSelect') ? document.getElementById('browseBankSelect').value : browseState.bankId;
+      tabContent.innerHTML = renderChapterHeatmap(bankId);
+    }
+    return;
   }
+  if (!browseState) return;
+  if (tab === 'list') renderBrowseList();
 }
 
 function changeBrowseBank() {
@@ -19703,46 +20408,75 @@ function browsePlainBlankWidth(t, oval) {
   //   椭圆挖空多留 0.3em：它有一圈 2px 的实线边（左右各 2px ≈ 0.25em）。
   return (_blankTextEm(t) + (oval ? 0.3 : 0.04)).toFixed(2) + 'em';
 }
-function renderBrowseAnswerBlanks(card) {
-  var ans = card.answer || '';
-  if (!ans) return '';
-  // 跟做题页 :11127 完全同一个算法（+1 是那个 \n），两边必须一致，别各算各的
-  var answerStart = (card.question || '').length + 1;
-  var abs = (card.blanks || []).filter(function(b) { return b.start >= answerStart; })
-                               .sort(function(a, b) { return a.start - b.start; });
-  if (!abs.length) return '<div style="color:var(--text-secondary)">' + escNl(ans) + '</div>';
-  var oval = isOvalBlank();
-  // 🆕 v193：公式**夹着**挖空的那几段 —— **整段画成公式、里面一概不挖**（跟做题页同一套）
-  var _rel = abs.map(function (b) { return { start: b.start - answerStart, end: b.end - answerStart }; });
-  var _segs = _blankFormulaSegs(ans, _rel);
+// 🆕 v217：把「按一段文字画只读挖空」抽成一份 —— 题目区和答案区共用，别再各抄一套。
+//   relBlanks 的 start/end 是**相对于 text 开头**的。
+function _renderBrowseBlankRegionHtml(text, relBlanks, oval, color) {
+  var abs = (relBlanks || []).slice().sort(function(a, b) { return a.start - b.start; });
+  if (!abs.length) return escNl(text);
+  var _segs = _blankFormulaSegs(text, abs);
   var h = '', le = 0;
   for (var i = 0; i < abs.length; i++) {
-    var b = abs[i], s = b.start - answerStart, e = b.end - answerStart;
+    var b = abs[i], s = b.start, e = b.end;
     var _sg = _segHolding(_segs, { start: s, end: e });
     if (_sg) {
       if (_sg._used) continue;
       _sg._used = true;
-      if (_sg.s < le || _sg.e > ans.length) continue;      // 同一条越界保护
-      h += escNl(ans.substring(le, _sg.s));
-      // 🆕 v193：浏览页这里本来就是**只读的空白框**（没有显示答案那回事）→
-      //   直接给一个覆盖整段公式的空白框，宽度按整段估、max-width:100% 免得撑出屏幕
+      if (_sg.s < le || _sg.e > text.length) continue;
+      h += escNl(text.substring(le, _sg.s));
       h += '<span class="blank-input bw-flat' + (oval ? ' oval' : '') + '" style="width:' +
-           browsePlainBlankWidth(ans.slice(_sg.s, _sg.e), oval) + ';max-width:100%"></span>';
+           browsePlainBlankWidth(text.slice(_sg.s, _sg.e), oval) + ';max-width:100%"></span>';
       le = _sg.e;
       continue;
     }
-    // 越界 / 空挖空 / 跟上一处重叠 → 跳过。宁可少画一个圈，也不能把答案切乱
-    if (s < le || s >= e || e > ans.length) continue;
-    h += escNl(ans.substring(le, s));
+    // 越界 / 空挖空 / 跟上一处重叠 → 跳过。宁可少画一个圈，也不能把正文切乱
+    if (s < le || s >= e || e > text.length) continue;
+    h += escNl(text.substring(le, s));
     h += '<span class="blank-input bw-flat' + (oval ? ' oval' : '') + '" style="width:' +
          browsePlainBlankWidth(b.text, oval) + '"></span>';
     le = e;
   }
-  h += escNl(ans.substring(le));
+  h += escNl(text.substring(le));
   // 外面套一层 .practice-card：挖空的 12 条 CSS 全挂在 .practice-card 下面，
   // 套上就整个复用（等于两边长得一模一样）；再把那张卡自己的白框压掉，只借样式不借壳。
   return '<div class="practice-card" style="background:none;border:none;box-shadow:none;padding:0;min-height:0;margin:0">' +
-         '<div style="line-height:2.0;color:var(--text-secondary)">' + h + '</div></div>';
+         '<div style="line-height:2.0;color:' + (color || 'var(--text-secondary)') + '">' + h + '</div></div>';
+}
+function renderBrowseAnswerBlanks(card) {
+  var ans = card.answer || '';
+  if (!ans) return '';
+  var answerStart = (card.question || '').length + 1;
+  var abs = (card.blanks || []).filter(function(b) { return b.start >= answerStart; })
+                               .sort(function(a, b) { return a.start - b.start; });
+  if (!abs.length) return '<div style="color:var(--text-secondary)">' + escNl(ans) + '</div>';
+  var rel = abs.map(function(b) {
+    return { start: b.start - answerStart, end: b.end - answerStart, text: b.text };
+  });
+  return _renderBrowseBlankRegionHtml(ans, rel, isOvalBlank(), 'var(--text-secondary)');
+}
+// 🆕 v217（用户 2026-10-18 报）：题目区有挖空、答案区没有时，点 ✨ 原来只切答案，
+//   题目永远显示完整原文 → 看起来「没有隐藏挖空」。现在题目区也按同一套只读空框画。
+function renderBrowseQuestionBlanks(card) {
+  var q = card.question || '';
+  if (!q) return '';
+  var answerStart = q.length + 1;
+  var qb = (card.blanks || []).filter(function(b) { return b.start < answerStart; })
+                              .sort(function(a, b) { return a.start - b.start; });
+  if (!qb.length) return escNl(q);
+  return _renderBrowseBlankRegionHtml(q, qb.map(function(b) {
+    return { start: b.start, end: b.end, text: b.text };
+  }), isOvalBlank(), 'var(--text)');
+}
+// 🆕 v217：浏览页 🪄 置换态下的题目区（只读）—— 跟做题页同一套 _swapRegionHtml
+function renderBrowseSwapQuestion(card) {
+  var q = card.question || '';
+  if (!q) return '';
+  var answerStart = q.length + 1;
+  var qb = (card.blanks || []).filter(function(b) { return b.start < answerStart; })
+                              .sort(function(a, b) { return a.start - b.start; });
+  if (!qb.length) return escNl(q);
+  var full = card.fullText || ((card.question || '') + '\n' + (card.answer || ''));
+  var _r = _swapRegionHtml(card, full, 0, answerStart, qb, {}, 0, true, false, 'q');
+  return '<div style="line-height:2.0">' + _r.html + '</div>';
 }
 // ✨ 按钮：翻「浏览页显示挖空」这个设置，翻完立刻重画（＝「一个值两个入口」的那个第二入口）
 function toggleBrowseBlank() {
@@ -19796,7 +20530,7 @@ function renderBrowseDetail() {
       </div>
     </div>
     <div class="browse-detail-body" style="line-height:2;font-size:var(--font-size-lg)">
-      <div style="margin-bottom:12px;font-weight:500">${escNl(card.question)}</div>
+      <div style="margin-bottom:12px;font-weight:500">${browseBlankOn() ? (st._swapped ? renderBrowseSwapQuestion(card) : renderBrowseQuestionBlanks(card)) : escNl(card.question)}</div>
       ${answerHtml}
     </div>
     <!-- 🆕 v191：浏览页也挂同样的四档（用户 2026-09-30 拍板「挂」）——
@@ -20010,6 +20744,35 @@ function memBankOn(bankId) {
   if (!list) return true;                    // 没设过 ＝ 全部参加（含以后新导入的）
   return list.indexOf(bankId) >= 0;
 }
+// 🆕 v217：选择题题库是**按名字**存的（appData.quiz.banks 的名字就是键）——
+//   单独一份「哪些选择题库要记」，别和挖空那串 bankId 混在一起。
+//   没设过 / 空数组 = 全部参加（跟挖空同一套语义）。
+function memQuizBankList() {
+  var v = (appData.settings || {}).memQuizBanks;
+  return (Array.isArray(v) && v.length) ? v : null;
+}
+function memQuizBankOn(name) {
+  var list = memQuizBankList();
+  if (!list) return true;
+  return list.indexOf(name) >= 0;
+}
+function memCanSwitchKind() { return settingShowReciteModule() && settingShowQuizModule(); }
+// 选择题库改名 / 删除时，把「参加记录」名单跟着改（否则那个库会悄悄变成"不记录"）
+function memRenameQuizBank(oldName, newName) {
+  var list = memQuizBankList();
+  if (!list) return;
+  var i = list.indexOf(oldName);
+  if (i >= 0) list[i] = newName;
+  memSave('memQuizBanks', list);
+}
+function memForgetQuizBank(name) {
+  var list = memQuizBankList();
+  if (!list) return;
+  var i = list.indexOf(name);
+  if (i < 0) return;
+  list.splice(i, 1);
+  memSave('memQuizBanks', list.length ? list : null);
+}
 function memActive(bankId) { return memCanUse() && memS('memOn') && memBankOn(bankId); }
 function memDayStart(ts) { var d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); }
 function memDaysLeft(ts) { return Math.round((memDayStart(ts) - memDayStart(Date.now())) / MEM_DAY); }
@@ -20040,6 +20803,7 @@ function memStats() {
     if (!settingShowQuizModule()) return out;
     var qbanks = (appData.quiz && appData.quiz.banks) || {};
     Object.keys(qbanks).forEach(function(name) {
+      if (!memQuizBankOn(name)) return;      // 🆕 v217：没勾「参加记录」的选择题库不出现
       var arr = qbanks[name] || [];
       arr.forEach(function(q) {
         if (!q) return;
@@ -20526,6 +21290,20 @@ function memPrintBankIds() {
 function memPrintStats() {
   var out = {};
   MEM_BUCKETS.forEach(function(b) { out[b.key] = []; });
+  // 🆕 v217：选择题复习的打印 —— 题库范围跟当前类型走
+  if (_memKindFilter === 'quiz') {
+    var _qAll = quizBankNamesSorted();
+    var _qBanks = (appData.quiz && appData.quiz.banks) || {};
+    var _qPick = (_memPrintBank === '__all__') ? _qAll
+      : (_memPrintBank ? [_memPrintBank] : (memQuizBankList() || _qAll));
+    _qPick.filter(function(n) { return !!_qBanks[n] && memQuizBankOn(n); }).forEach(function(name) {
+      (_qBanks[name] || []).forEach(function(q) {
+        if (!q) return;
+        out[memBucketOf(q)].push({ card: q, bankId: 'qz:' + name, bankName: name, kind: 'quiz' });
+      });
+    });
+    return out;
+  }
   var ids = memPrintBankIds() || Object.keys(appData.banks);
   ids.forEach(function(bid) {
     var bank = appData.banks[bid];
@@ -20618,6 +21396,14 @@ function memPrintRefreshSummary() {
 function renderMemPrintBody() {
   var el = document.getElementById('memPrintBody');
   if (!el) return;
+  // 🆕 v217：换了类型（挖空 ⇄ 选择题）后，上一次选的那个题库可能已经不存在于这一类型 → 回到「当前范围」
+  if (_memPrintBank && _memPrintBank !== '__all__') {
+    if (_memKindFilter === 'quiz') {
+      if (quizBankNamesSorted().indexOf(_memPrintBank) < 0) _memPrintBank = '';
+    } else if (!appData.banks[_memPrintBank]) {
+      _memPrintBank = '';
+    }
+  }
   var box = 'style="background:var(--bg-input);border-radius:12px;padding:12px;margin-bottom:12px"';
   var numCss = 'style="width:66px;padding:7px 8px;border:1px solid var(--border);border-radius:8px;font-size:var(--f13);background:var(--bg-card);color:var(--text);text-align:center;box-sizing:border-box"';
   var stats = memPrintStats();
@@ -20639,17 +21425,33 @@ function renderMemPrintBody() {
     '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="memPrintAll()">全选</button>' +
     '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="memPrintNone()">清空</button></div></div>';
 
-  // ② 印哪个题库
-  var vids = memViewBankIds();
-  var curTxt = !vids ? '全部题库' : (vids.length === 1 ? ((appData.banks[vids[0]] || {}).name || '1 个题库') : vids.length + ' 个题库');
-  var opts = '<option value=""' + (_memPrintBank === '' ? ' selected' : '') + '>📚 当前复习范围（' + escapeHtml(curTxt) + '）</option>' +
-    '<option value="__all__"' + (_memPrintBank === '__all__' ? ' selected' : '') + '>📚 全部题库</option>';
-  Object.values(appData.banks)
-    .sort(function(a, b) { return (a.order != null ? a.order : a.createdAt) - (b.order != null ? b.order : b.createdAt); })
-    .forEach(function(b) {
-      opts += '<option value="' + escapeHtml(b.id) + '"' + (_memPrintBank === b.id ? ' selected' : '') + '>' +
-        escapeHtml(b.name) + '（' + (b.cards || []).length + ' 题）</option>';
+  // ② 印哪个题库（🆕 v217：选择题复习列选择题库）
+  var opts;
+  if (_memKindFilter === 'quiz') {
+    var _pqAll = quizBankNamesSorted();
+    var _pqBanks = (appData.quiz && appData.quiz.banks) || {};
+    var _pqPick = memQuizBankList() || _pqAll;
+    _pqPick = _pqPick.filter(memQuizBankOn);
+    var _pqCur = _pqPick.length >= _pqAll.length ? '全部选择题库'
+      : (_pqPick.length === 1 ? _pqPick[0] : _pqPick.length + ' 个选择题库');
+    opts = '<option value=""' + (_memPrintBank === '' ? ' selected' : '') + '>📝 当前复习范围（' + escapeHtml(_pqCur) + '）</option>' +
+      '<option value="__all__"' + (_memPrintBank === '__all__' ? ' selected' : '') + '>📝 全部选择题库</option>';
+    _pqAll.forEach(function(name) {
+      opts += '<option value="' + escapeHtml(name) + '"' + (_memPrintBank === name ? ' selected' : '') + '>' +
+        escapeHtml(name) + '（' + ((_pqBanks[name] || []).length) + ' 题）</option>';
     });
+  } else {
+    var vids = memViewBankIds();
+    var curTxt = !vids ? '全部题库' : (vids.length === 1 ? ((appData.banks[vids[0]] || {}).name || '1 个题库') : vids.length + ' 个题库');
+    opts = '<option value=""' + (_memPrintBank === '' ? ' selected' : '') + '>📚 当前复习范围（' + escapeHtml(curTxt) + '）</option>' +
+      '<option value="__all__"' + (_memPrintBank === '__all__' ? ' selected' : '') + '>📚 全部题库</option>';
+    Object.values(appData.banks)
+      .sort(function(a, b) { return (a.order != null ? a.order : a.createdAt) - (b.order != null ? b.order : b.createdAt); })
+      .forEach(function(b) {
+        opts += '<option value="' + escapeHtml(b.id) + '"' + (_memPrintBank === b.id ? ' selected' : '') + '>' +
+          escapeHtml(b.name) + '（' + (b.cards || []).length + ' 题）</option>';
+      });
+  }
   h += '<div ' + box + '><div style="font-weight:700;font-size:var(--f14);margin-bottom:8px">印哪个题库</div>' +
     '<select onchange="memPrintSetBank(this.value)" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);min-height:44px;box-sizing:border-box">' + opts + '</select></div>';
 
@@ -20665,11 +21467,12 @@ function renderMemPrintBody() {
     '<div id="memPrintSum" style="font-size:var(--f12);color:var(--text-secondary);margin-top:9px;line-height:1.7"></div></div>';
 
   // ④ 两颗卷（跟题库页那两颗一样）
+  var _isQuizPrint = _memKindFilter === 'quiz';
   h += '<div style="display:flex;gap:8px;margin-bottom:10px">' +
     '<button class="btn btn-primary" style="flex:1;min-height:46px' + (r.n ? '' : ';opacity:.45') + '" onclick="memPrintGo(\'full\')">📤 题目卷</button>' +
-    '<button class="btn btn-outline" style="flex:1;min-height:46px' + (r.n ? '' : ';opacity:.45') + '" onclick="memPrintGo(\'blank\')">📝 挖空练习卷</button></div>' +
+    '<button class="btn btn-outline" style="flex:1;min-height:46px' + (r.n ? '' : ';opacity:.45') + '" onclick="memPrintGo(\'blank\')">📝 ' + (_isQuizPrint ? '练习卷' : '挖空练习卷') + '</button></div>' +
     '<div style="font-size:var(--f115);color:var(--text-tertiary);text-align:center;line-height:1.75">' +
-    '题目卷 ＝ 答案紧跟每题 ／ 挖空卷 ＝ 正文挖空、答案在最后一页<br>' +
+    '题目卷 ＝ 答案紧跟每题 ／ ' + (_isQuizPrint ? '练习卷 ＝ 题目在上、答案在最后一页' : '挖空卷 ＝ 正文挖空、答案在最后一页') + '<br>' +
     '⚠️ 不受「每天最多安排」限制，印多少你自己定</div>';
 
   el.innerHTML = h;
@@ -20681,6 +21484,32 @@ function memPrintGo(mode) {
   if (!pool.length) { showToast('还没勾任何一档'); return; }
   var r = memPrintRange();
   var cut = pool.slice(r.from - 1, r.to);
+
+  // 🆕 v217：选择题复习的打印 —— 选项跟题目一起印，答案按模式紧跟在每题或放最后一页
+  if (_memKindFilter === 'quiz') {
+    var _qItems = cut.map(function(x, idx) {
+      var q = x.card || {};
+      var _opts = [];
+      ['A','B','C','D','E','F','G'].forEach(function(l) {
+        if (q[l] && String(q[l]).trim()) _opts.push(l + '. ' + q[l]);
+      });
+      var _qText = (idx + 1) + '. ' + (q.question || '') + (_opts.length ? '\n' + _opts.join('\n') : '');
+      var _ansText = '答案：' + (q.answer || '') + (q.explanation ? '\n解析：' + q.explanation : '');
+      return { q: _qText, ans: _ansText, body: '', meta: '' };
+    });
+    var _qNames = memPrintKeysOn(memPrintStats()).map(function(k) {
+      var b = memPrintBucket(k); return b ? (b.emoji + ' ' + b.name) : k;
+    });
+    var _qTitle = '选择题复习 · ' + (_qNames.length <= 2 ? _qNames.join(' / ') : _qNames.length + ' 档');
+    if (r.n !== r.total) _qTitle += '（第 ' + r.from + '–' + r.to + ' 题）';
+    var _qInline = (mode !== 'blank');
+    var _qTextAll = _qInline
+      ? _qItems.map(function(it) { return it.q + '\n' + it.ans; }).join('\n\n')
+      : _qItems.map(function(it) { return it.q; }).join('\n\n') + '\n\n【参考答案】\n' +
+        _qItems.map(function(it, i) { return (i + 1) + '. ' + it.ans; }).join('\n');
+    showExportModal(_qTitle, _qTextAll, _qItems, _qInline);
+    return;
+  }
 
   // 跨题库时每题标「📚 题库 · 章节」；只有一个题库时就不用重复写题库名了
   //   （用户 2026-09-23 拍板「要」）。
@@ -20713,7 +21542,7 @@ function showMemSettings() {
   var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
   ov.innerHTML = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:420px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;width:92%;max-height:85vh;max-height:85dvh;overflow-y:auto">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
-    '<h3 style="font-size:var(--f17)">⚙️ 记忆复习设置</h3>' +
+    '<h3 style="font-size:var(--f17)">⚙️ ' + (_memKindFilter === 'quiz' ? '选择题复习' : '记忆复习') + '设置</h3>' +
     '<span style="cursor:pointer;color:var(--text-tertiary);font-size:var(--f16)" onclick="closeMemSettings()">✕</span></div>' +
     '<div id="memSetBody"></div></div>';
   document.body.appendChild(ov);
@@ -20745,17 +21574,27 @@ function renderMemSetBody() {
     h += '<div style="font-size:var(--f12);color:var(--text-secondary);margin-top:6px">答对后间隔：<b style="color:var(--text)">' + memLadderText() + '</b> → 已掌握</div>';
   }
   h += '</div>';
-  // ② 哪些题库要记
-  var banks = Object.values(appData.banks).sort(function(a, b) { return (a.order != null ? a.order : a.createdAt) - (b.order != null ? b.order : b.createdAt); });
+  // ② 哪些题库要记（🆕 v217：跟随当前类型 —— 挖空 tab 列挖空题库、选择题 tab 列选择题库）
+  var _isQuizSet = _memKindFilter === 'quiz';
+  var banks;
+  if (_isQuizSet) {
+    var _qNames = quizBankNamesSorted();
+    var _qBanks = (appData.quiz && appData.quiz.banks) || {};
+    banks = _qNames.map(function(n) { return { id: n, name: n, count: (_qBanks[n] || []).length }; });
+  } else {
+    banks = Object.values(appData.banks)
+      .sort(function(a, b) { return (a.order != null ? a.order : a.createdAt) - (b.order != null ? b.order : b.createdAt); })
+      .map(function(b) { return { id: b.id, name: b.name, count: (b.cards || []).length }; });
+  }
   h += '<div ' + box + '><div style="font-weight:700;font-size:var(--f14);margin-bottom:2px">哪些题库要记</div>' +
     '<div style="font-size:var(--f12);color:var(--text-tertiary);margin-bottom:4px">不勾的题库：做题不做记录，记忆复习里也不出现</div>';
-  if (!banks.length) h += '<div style="font-size:var(--f13);color:var(--text-secondary);padding:6px 0">还没有题库</div>';
+  if (!banks.length) h += '<div style="font-size:var(--f13);color:var(--text-secondary);padding:6px 0">还没有' + (_isQuizSet ? '选择题' : '') + '题库</div>';
   banks.forEach(function(b) {
-    var on = memBankOn(b.id);
-    h += '<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" data-bank="' + b.id + '" onclick="memToggleRecordBank(this.dataset.bank)">' +
+    var on = _isQuizSet ? memQuizBankOn(b.id) : memBankOn(b.id);
+    h += '<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" data-bank="' + escapeHtml(b.id) + '" onclick="' + (_isQuizSet ? 'memToggleRecordQuizBank' : 'memToggleRecordBank') + '(this.dataset.bank)">' +
       '<span style="font-size:var(--f16);color:' + (on ? 'var(--primary)' : 'var(--text-tertiary)') + '">' + (on ? '☑' : '☐') + '</span>' +
       '<span style="flex:1;font-weight:600;' + (on ? '' : 'color:var(--text-tertiary)') + '">' + escapeHtml(b.name) + '</span>' +
-      '<span style="font-size:var(--f12);color:var(--text-secondary)">' + b.cards.length + ' 题</span></div>';
+      '<span style="font-size:var(--f12);color:var(--text-secondary)">' + b.count + ' 题</span></div>';
   });
   h += '</div>';
   // ③ 答错怎么算
@@ -20788,9 +21627,17 @@ function renderMemSetBody() {
     '<div style="font-size:var(--f12);color:var(--text-tertiary);margin-bottom:8px;line-height:1.7">' +
     '想印哪一档、印多少题，点进去自己选。印出来跟「题库页」导出的一样（水印、页脚都在）。</div>' +
     '<button class="btn btn-ghost" style="min-height:44px;width:100%" onclick="showMemPrintPanel()">🖨️ 打开打印面板</button></div>';
-  // ⑥ 清空记录
-  var vids = memViewBankIds();
-  var scopeTxt = vids ? (vids.length === 1 ? '「' + escapeHtml(appData.banks[vids[0]].name) + '」' : '当前选中的 ' + vids.length + ' 个题库') : '全部题库';
+  // ⑥ 清空记录（🆕 v217：跟着当前类型走）
+  var vids = _isQuizSet ? null : memViewBankIds();
+  var scopeTxt;
+  if (_isQuizSet) {
+    var _qcAll = quizBankNamesSorted();
+    var _qcOn = _qcAll.filter(memQuizBankOn);
+    scopeTxt = _qcOn.length === _qcAll.length ? '全部选择题库'
+      : (_qcOn.length === 1 ? '「' + escapeHtml(_qcOn[0]) + '」' : '当前选中的 ' + _qcOn.length + ' 个选择题库');
+  } else {
+    scopeTxt = vids ? (vids.length === 1 ? '「' + escapeHtml(appData.banks[vids[0]].name) + '」' : '当前选中的 ' + vids.length + ' 个题库') : '全部题库';
+  }
   h += '<div ' + box + '><div style="font-weight:700;font-size:var(--f14);margin-bottom:4px;color:var(--danger)">清空复习记录</div>' +
     '<div style="font-size:var(--f12);color:var(--text-tertiary);margin-bottom:8px;line-height:1.7">把' + scopeTxt + '的复习进度清掉，全部回到「还没排上」。想重新开始时用。</div>' +
     '<button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);min-height:44px;width:100%" onclick="memAskClear()">清空' + scopeTxt + '的复习记录</button></div>';
@@ -20820,21 +21667,52 @@ function memToggleRecordBank(bid) {
   memSave('memBanks', list.length === all.length ? null : list);
   renderMemSetBody();
 }
+// 🆕 v217：选择题库版的「参加/不参加」
+function memToggleRecordQuizBank(name) {
+  var all = quizBankNamesSorted();
+  if (!all.length) return;
+  var list = memQuizBankList() ? memQuizBankList().slice() : all.slice();
+  var i = list.indexOf(name);
+  if (i >= 0) {
+    if (list.length <= 1) { showToast('至少留一个题库记录'); return; }
+    list.splice(i, 1);
+  } else {
+    list.push(name);
+  }
+  memSave('memQuizBanks', list.length === all.length ? null : list);
+  renderMemSetBody();
+}
 function memAskClear() {
-  var vids = memViewBankIds();
-  var scopeTxt = vids ? (vids.length === 1 ? '「' + appData.banks[vids[0]].name + '」' : '这 ' + vids.length + ' 个题库') : '全部题库';
+  var _isQuizClear = _memKindFilter === 'quiz';
+  var vids = _isQuizClear ? null : memViewBankIds();
+  var qNames = _isQuizClear ? (memQuizBankList() || quizBankNamesSorted()).filter(memQuizBankOn) : [];
+  var qAll = _isQuizClear ? quizBankNamesSorted() : [];
+  var scopeTxt = _isQuizClear
+    ? (qNames.length === qAll.length ? '全部选择题库' : (qNames.length === 1 ? '「' + qNames[0] + '」' : '这 ' + qNames.length + ' 个选择题库'))
+    : (vids ? (vids.length === 1 ? '「' + appData.banks[vids[0]].name + '」' : '这 ' + vids.length + ' 个题库') : '全部题库');
   showConfirm('清空复习记录？', '会把' + scopeTxt + '的记忆进度清掉，全部回到「还没排上」。\n题目本身一道都不会少。', function() {
     showConfirm('真的要清空吗？', '清掉之后没法撤销，得从「还没排上」重新排。', function() {
-      var ids = vids || Object.keys(appData.banks);
       var n = 0;
-      ids.forEach(function(bid) {
-        var bank = appData.banks[bid];
-        if (!bank) return;
-        (bank.cards || []).forEach(function(c) {
-          if (c.srStage || c.srNextReview || c.srMastered) n++;
-          c.srStage = 0; c.srMastered = false; c.srNextReview = null; c.srLastOk = null;
+      if (_isQuizClear) {
+        var qBanks = (appData.quiz && appData.quiz.banks) || {};
+        qNames.forEach(function(name) {
+          (qBanks[name] || []).forEach(function(c) {
+            if (!c) return;
+            if (c.srStage || c.srNextReview || c.srMastered) n++;
+            c.srStage = 0; c.srMastered = false; c.srNextReview = null; c.srLastOk = null; c.srLastMs = undefined;
+          });
         });
-      });
+      } else {
+        var ids = vids || Object.keys(appData.banks);
+        ids.forEach(function(bid) {
+          var bank = appData.banks[bid];
+          if (!bank) return;
+          (bank.cards || []).forEach(function(c) {
+            if (c.srStage || c.srNextReview || c.srMastered) n++;
+            c.srStage = 0; c.srMastered = false; c.srNextReview = null; c.srLastOk = null;
+          });
+        });
+      }
       saveData(appData);
       if (_memSetOv) { _memSetOv.remove(); _memSetOv = null; }
       showToast('已清空 ' + n + ' 道题的复习记录');
@@ -20843,13 +21721,21 @@ function memAskClear() {
   }, '继续');
 }
 // ── 🧠 那块卡片 ──────────────────────────────────────────
+// 🆕 v217：标题「🧠 记忆复习」这四个字点一下切挖空/选择题（用户 2026-10-18 拍板）。
+//   ⚠️ 不加提示文字、不加图标 —— 用户明确「不需要」。
+//   ⚠️ 点标题要 stopPropagation：整块标题栏本身是「收起/展开」，别让它一起触发。
+function memTitleSpan(isQuizMem) {
+  var txt = isQuizMem ? '🧠 选择题复习' : '🧠 记忆复习';
+  if (!memCanSwitchKind()) return '<div style="font-size:var(--f19);font-weight:800;letter-spacing:-.02em">' + txt + '</div>';
+  return '<div style="font-size:var(--f19);font-weight:800;letter-spacing:-.02em;cursor:pointer" onclick="event.stopPropagation();setMemKindFilter(\'' + (isQuizMem ? 'recite' : 'quiz') + '\')">' + txt + '</div>';
+}
 function memBlockHtml() {
   var isQuizMem = _memKindFilter === 'quiz';
   // 非全能版：看到一张说明卡（用户拍板「看到说明卡」，不是完全隐藏）
   if (!memCanUse()) {
     return '<div class="card" style="margin-bottom:16px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
-        '<div style="font-size:var(--f19);font-weight:800;letter-spacing:-.02em">' + (isQuizMem ? '🧠 选择题复习' : '🧠 记忆复习') + '</div>' +
+        memTitleSpan(isQuizMem) +
         '<span class="mem-pill" style="background:var(--bg-input);color:var(--text-tertiary)">全能版</span></div>' +
       '<div style="font-size:var(--f13);color:var(--text-secondary);margin-top:8px;line-height:1.8">按遗忘规律自动排复习：该复习的排前面，答对拉长间隔、答错退回重来，还能按题库分别看。</div>' +
       '<div style="font-size:var(--f13);color:var(--primary);font-weight:700;margin-top:8px;cursor:pointer" onclick="showTierCompare()">→ 了解全能版</div></div>';
@@ -20860,7 +21746,7 @@ function memBlockHtml() {
   var dueN = on ? (stats.over.length + stats.today.length) : 0;
   var h = '<div class="card" style="margin-bottom:16px">';
   h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer" onclick="memToggleCollapse()">' +
-    '<div style="font-size:var(--f19);font-weight:800;letter-spacing:-.02em">' + (isQuizMem ? '🧠 选择题复习' : '🧠 记忆复习') + '</div>' +
+    memTitleSpan(isQuizMem) +
     '<div style="display:flex;align-items:center;gap:8px">' +
       (collapsed && dueN > 0 ? '<span class="mem-pill" style="background:var(--danger-light);color:var(--danger)">' + dueN + ' 题该复习</span>' : '') +
       '<span class="mem-sw' + (on ? '' : ' off') + '" onclick="event.stopPropagation();toggleMemOn()">' + (on ? '开' : '关') + '<i></i></span>' +
@@ -20872,14 +21758,17 @@ function memBlockHtml() {
     return h + '</div>';
   }
   var ids = isQuizMem ? null : memViewBankIds();
-  var allIds = isQuizMem ? Object.keys((appData.quiz && appData.quiz.banks) || {}) : Object.keys(appData.banks);
+  var _qAllNames = isQuizMem ? quizBankNamesSorted() : [];
+  var _qOnNames = isQuizMem ? _qAllNames.filter(memQuizBankOn) : [];
+  var allIds = isQuizMem ? _qOnNames : Object.keys(appData.banks);
   var names = isQuizMem
-    ? allIds.join('、')
+    ? _qOnNames.join('、')
     : (ids || allIds).map(function(id) { return (appData.banks[id] || {}).name || ''; }).filter(Boolean).join('、');
   var total = 0;
   MEM_BUCKETS.forEach(function(b) { total += stats[b.key].length; });
   var titleTxt = isQuizMem
-    ? '📝 全部选择题库'
+    ? (_qOnNames.length === 0 ? '📝 还没有选择题库'
+      : (_qOnNames.length === _qAllNames.length ? '📝 全部选择题库' : '📝 ' + _qOnNames.length + ' 个选择题库'))
     : (!ids ? '📚 全部题库' : (ids.length === 1 ? '📚 ' + escapeHtml(appData.banks[ids[0]].name) : '📚 ' + ids.length + ' 个题库'));
   var bankBtn = isQuizMem
     ? '<div class="mem-bankbtn" style="flex:1;cursor:default">' +
@@ -20909,16 +21798,13 @@ function memBlockHtml() {
 // ==================== 错题本 ====================
 function renderWrongBookStart() {
   const c = $('wrongbookContainer');
-  // 🆕 v201：复习页两个独立 tab（挖空 / 选择题）
+  // 🆕 v201：复习页两个独立类型（挖空 / 选择题）
+  // 🆕 v217：原来那两颗「📖 挖空复习 / 📝 选择题复习」小标签**去掉** ——
+  //   用户 2026-10-18 拍板改成「点顶上『🧠 记忆复习』这四个字切换」（见 memTitleSpan）。
+  //   只开一个模块时照旧强制成那一个类型。
   if (!settingShowQuizModule()) _memKindFilter = 'recite';
   else if (!settingShowReciteModule()) _memKindFilter = 'quiz';
   var tabsHtml = '';
-  if (settingShowReciteModule() && settingShowQuizModule()) {
-    tabsHtml = '<div class="chip-group" style="margin-bottom:12px">' +
-      '<span class="chip' + (_memKindFilter === 'recite' ? ' active' : '') + '" onclick="setMemKindFilter(\'recite\')">📖 挖空复习</span>' +
-      '<span class="chip' + (_memKindFilter === 'quiz' ? ' active' : '') + '" onclick="setMemKindFilter(\'quiz\')">📝 选择题复习</span>' +
-      '</div>';
-  }
   // 🧠 点开了「记忆复习」里的某一档 → 这一屏先给那一档的题目列表（顶上那个「‹ 返回」回到本页）
   if (_memBucketView) { c.innerHTML = tabsHtml + renderMemBucketView(); return; }
   // 选择题 tab：记忆复习 + 🆕 v202「选择题复习清单」（按题库 → 章节列错题）
@@ -21952,6 +22838,13 @@ function showTodaySummary() {
       }
     }
   }
+  // 🆕 v217：选择题也进今日摘要（总题库 / 总掌握率 / 已掌握）
+  var _qbSum = (appData.quiz && appData.quiz.banks) || {};
+  Object.keys(_qbSum).forEach(function(n) {
+    var arr = _qbSum[n] || [];
+    totalCards += arr.length;
+    arr.forEach(function(q) { if (q && q.srMastered) mastered++; });
+  });
   var ov = document.createElement('div');
   ov.className = 'modal-overlay';
   ov.style.animation = 'none';
@@ -22025,6 +22918,17 @@ function renderSettings() {
         Object.values(appData.wrongBooks || {}).forEach(function(w) {
           if (Array.isArray(w)) totalW += w.length; else totalW += Object.keys(w).length;
         });
+        // 🆕 v217：存储概览把选择题也算进来（用户 2026-10-18 报「内容数据没有把选择题的加上」）
+        var _quizBanks = (appData.quiz && appData.quiz.banks) || {};
+        var quizBankCount = Object.keys(_quizBanks).length;
+        var quizTotalQ = 0, quizTotalW = 0;
+        Object.keys(_quizBanks).forEach(function(n) { quizTotalQ += (_quizBanks[n] || []).length; });
+        Object.values((appData.quiz && appData.quiz.wrongBooks) || {}).forEach(function(w) {
+          if (Array.isArray(w)) quizTotalW += w.length; else quizTotalW += Object.keys(w || {}).length;
+        });
+        var allBankCount = bankCount + quizBankCount;
+        var allQ = totalQ + quizTotalQ;
+        var allW = totalW + quizTotalW;
         var barColor = storagePercent > 80 ? '#e74c3c' : storagePercent > 50 ? '#e67e22' : 'var(--primary)';
         var sizeInfo = storageMB >= 1 ? storageMB.toFixed(1) + ' MB' : storageKB.toFixed(0) + ' KB';
         var statusText = storagePercent > 90 ? '⚠️ 即将用满，建议导出备份后清理'
@@ -22047,6 +22951,8 @@ function renderSettings() {
         // 各类型数据占用明细
         var banksSize = new Blob([JSON.stringify(appData.banks || {})]).size;
         var wrongSize = new Blob([JSON.stringify(appData.wrongBooks || {})]).size;
+        var quizBanksSize = new Blob([JSON.stringify(_quizBanks)]).size;
+        var quizWrongSize = new Blob([JSON.stringify((appData.quiz && appData.quiz.wrongBooks) || {})]).size;
         var settingsSize = new Blob([JSON.stringify(appData.settings || {})]).size;
         var avatarSize = ((appData.settings || {}).avatarData || '').length * 2;
         var other = { dailyStats: appData.dailyStats, roundCount: appData.roundCount, weekStats: appData.weekStats };
@@ -22063,21 +22969,27 @@ function renderSettings() {
           backupWarn +
           '<div style="display:flex;gap:10px;margin-top:8px">' +
             '<div style="flex:1;background:var(--bg-card);border-radius:8px;padding:10px;text-align:center">' +
-              '<div style="font-size:var(--f22);font-weight:700;color:var(--primary)">' + bankCount + '</div>' +
+              '<div style="font-size:var(--f22);font-weight:700;color:var(--primary)">' + allBankCount + '</div>' +
               '<div style="font-size:var(--f11);color:var(--text-tertiary)">个题库</div>' +
             '</div>' +
             '<div style="flex:1;background:var(--bg-card);border-radius:8px;padding:10px;text-align:center">' +
-              '<div style="font-size:var(--f22);font-weight:700;color:var(--primary)">' + totalQ + '</div>' +
+              '<div style="font-size:var(--f22);font-weight:700;color:var(--primary)">' + allQ + '</div>' +
               '<div style="font-size:var(--f11);color:var(--text-tertiary)">道题目</div>' +
             '</div>' +
             '<div style="flex:1;background:var(--bg-card);border-radius:8px;padding:10px;text-align:center">' +
-              '<div style="font-size:var(--f22);font-weight:700;color:' + (totalW > 0 ? '#e74c3c' : 'var(--text-tertiary)') + '">' + totalW + '</div>' +
+              '<div style="font-size:var(--f22);font-weight:700;color:' + (allW > 0 ? '#e74c3c' : 'var(--text-tertiary)') + '">' + allW + '</div>' +
               '<div style="font-size:var(--f11);color:var(--text-tertiary)">道错题</div>' +
             '</div>' +
           '</div>' +
+          '<div style="margin-top:8px;padding:7px 10px;background:var(--bg-card);border-radius:8px;font-size:var(--f11);color:var(--text-secondary);line-height:1.9">' +
+            '<div>📖 挖空：' + bankCount + ' 库 · ' + totalQ + ' 题 · ' + totalW + ' 错题</div>' +
+            '<div>📝 选择题：' + quizBankCount + ' 库 · ' + quizTotalQ + ' 题 · ' + quizTotalW + ' 错题</div>' +
+          '</div>' +
           '<div style="margin-top:8px;padding:8px 12px;background:var(--bg-card);border-radius:8px;font-size:var(--f11);color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:4px 12px;line-height:1.8">' +
-            '<span>📦 题库 ' + fmtSz(banksSize) + '</span>' +
-            '<span>📝 错题 ' + fmtSz(wrongSize) + '</span>' +
+            '<span>📦 挖空题库 ' + fmtSz(banksSize) + '</span>' +
+            '<span>📝 挖空错题 ' + fmtSz(wrongSize) + '</span>' +
+            '<span>📦 选择题题库 ' + fmtSz(quizBanksSize) + '</span>' +
+            '<span>📝 选择题错题 ' + fmtSz(quizWrongSize) + '</span>' +
             '<span>⚙️ 设置 ' + fmtSz(settingsSize) + '</span>' +
             '<span>📈 进度 ' + fmtSz(otherSize) + '</span>' +
             '<span>🖼️ 头像 ' + fmtSz(avatarSize) + '</span>' +
@@ -22304,6 +23216,14 @@ function renderSettings() {
         return '<div class="setting-item"><div><div class="setting-label">置换后点「显示原文」时，原来的空也显示出来</div><div class="setting-desc">开着＝原来挖的地方也原样显示（普通文字、不标颜色）；关着＝原来的空保持空着、不露出答案（默认）</div></div>' +
           '<label class="toggle"><input type="checkbox" id="swapRevealToggle"' + (s.swapShowOrig ? ' checked' : '') + ' onchange="saveSetting(\'swapShowOrig\', this.checked)"><span class="slider"></span></label></div>';
       })() +
+      // 🆕 v217（用户 2026-10-18 拍板）：🪄 置换时，答案区没有挖空 → 把整个答案（含 n. 词性）变成一个空。
+      //   初衷：背单词（题目是 happy、答案是 n.快乐）时，点 🪄 显示单词、挖掉翻译。
+      //   ⚠️ 默认**关**（老用户行为不变）；全能版（跟 🪄 同档）。
+      (function() {
+        if (!hasFeature('swapBlank')) return '';
+        return '<div class="setting-item"><div><div class="setting-label">🪄 答案没有挖空时，把答案变成挖空</div><div class="setting-desc">开着＝点 🪄 后，如果答案区没有挖空，就把整个答案（包括 n. 这种词性）当成一个空；关着＝答案原样显示（默认）</div></div>' +
+          '<label class="toggle"><input type="checkbox" id="swapBlankAnswerToggle"' + (s.swapBlankAnswer ? ' checked' : '') + ' onchange="saveSetting(\'swapBlankAnswer\', this.checked)"><span class="slider"></span></label></div>';
+      })() +
       // 🆕 v199：自适应难度挪到上面「系统自动挖空」组里了（密度那行下面），原位置不再重复渲染
       // 🆕 v191：四档自评总开关（用户 2026-09-30 拍板：放底部设置页、**一个开关管两边**）
       //   ⚠️ **默认值三处要写对**（跟 v189 的 tapFlip 是同一个坑，缺一处老用户就变"关"）：
@@ -22426,32 +23346,58 @@ function renderSettings() {
       //    🐞 历史：2026-09-16 之前它**真的会走到**（那时基础版只查 basic 那张表，
       //       dailySummary 不在里面 → 基础版买家看到「需升级解锁」）—— 三档时代的老坑，v197 删基础版后彻底没了。
       if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>学习计划 · 需升级全能版解锁</span></div></div>';
-      var examDateVal = ((appData.settings || {}).examDate || '');
-      var dailyTarget = (appData.settings || {}).dailyTarget || '';
+      var _exams = getExamDates();
+      var dailyTargetRaw = (appData.settings || {}).dailyTarget;
+      var dailyTarget = (typeof dailyTargetRaw === 'number') ? dailyTargetRaw : '';
       var suggestedDaily = '';
-      var daysLeft = getExamDaysLeft();
-      if (examDateVal && daysLeft !== null && daysLeft > 0) {
+      var _prim = getPrimaryExam();
+      if (_prim && _prim.daysLeft > 0) {
         var allCards = 0;
         Object.values(appData.banks || {}).forEach(function(b) { allCards += (b.cards || []).length; });
-        if (allCards > 0) suggestedDaily = Math.ceil(allCards / daysLeft);
+        Object.keys((appData.quiz && appData.quiz.banks) || {}).forEach(function(n) {
+          allCards += (((appData.quiz.banks || {})[n]) || []).length;
+        });
+        if (allCards > 0) suggestedDaily = Math.ceil(allCards / _prim.daysLeft);
       }
       var planHtml = '';
-      // 考试日期
-      planHtml += '<div style="margin-bottom:8px"><div class="setting-label">📅 考试日期</div>' +
-        // ⚠️ 2026-09-16 续修第 7 轮：这里给了**明确宽度 150px**（原来是 max-width:220px + 靠浏览器默认宽度）。
-        //    用户报「每日题数的框框太长了 和考试日期一样长度就行」→ 两个框现在都是 width:150px，
-        //    **逐像素一样长**（改前量过：考试日期 148px 自然宽、每日目标 419px 撑满一行）。
-        //    ⚠️ 改宽度时**两个一起改**，别只改一个 —— 用户要的就是"一样长"。
-        '<input type="date" id="examDateInput" value="' + examDateVal + '" onchange="saveExamDate(this.value)" style="margin-top:4px;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:var(--f14);box-sizing:border-box;width:150px;max-width:100%">' +
-      '</div>';
-      // 每日目标
+      // 📅 多个考试日期（🆕 v217）
+      planHtml += '<div style="margin-bottom:10px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
+          '<div class="setting-label" style="margin-bottom:0">📅 考试日期（可以加多个）</div>' +
+          (_exams.length ? '<button onclick="clearAllExamDates()" style="border:1px solid var(--border);background:var(--bg-input);border-radius:7px;padding:5px 9px;font-size:var(--f11);color:var(--text-secondary);cursor:pointer;white-space:nowrap">清除全部</button>' : '') +
+        '</div>';
+      if (!_exams.length) {
+        planHtml += '<div style="font-size:var(--f12);color:var(--text-tertiary);margin-top:5px">还没有设置考试日期 —— 首页不显示倒计时</div>';
+      }
+      _exams.forEach(function(ex, exI) {
+        var _miniBtn = 'width:30px;height:38px;padding:0;border:1px solid var(--border);border-radius:7px;background:var(--bg-input);color:var(--text-secondary);font-size:var(--f13);cursor:pointer;flex-shrink:0';
+        planHtml += '<div style="display:flex;align-items:center;gap:5px;margin-top:6px;flex-wrap:nowrap">' +
+          '<input type="text" value="' + escapeHtml(ex.label) + '" placeholder="名字（可留空）" maxlength="8" onchange="updateExamEntry(\'' + ex.id + '\',\'label\',this.value)" style="width:76px;flex-shrink:0;padding:8px 6px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:var(--f12);box-sizing:border-box;text-align:center">' +
+          '<input type="date" value="' + escapeHtml(ex.date) + '" onchange="updateExamEntry(\'' + ex.id + '\',\'date\',this.value)" style="flex:1;min-width:0;padding:8px 8px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:var(--f13);box-sizing:border-box">' +
+          '<button onclick="moveExamEntry(\'' + ex.id + '\',-1)" ' + (exI === 0 ? 'disabled ' : '') + 'style="' + _miniBtn + (exI === 0 ? 'opacity:.35' : '') + '">↑</button>' +
+          '<button onclick="moveExamEntry(\'' + ex.id + '\',1)" ' + (exI === _exams.length - 1 ? 'disabled ' : '') + 'style="' + _miniBtn + (exI === _exams.length - 1 ? 'opacity:.35' : '') + '">↓</button>' +
+          '<button onclick="removeExamEntry(\'' + ex.id + '\')" style="' + _miniBtn + 'color:var(--danger)">✕</button>' +
+        '</div>';
+      });
+      planHtml += '<button onclick="addExamEntry()" style="width:100%;margin-top:8px;padding:9px;border:1px dashed var(--primary);border-radius:8px;background:transparent;color:var(--primary);font-size:var(--f13);font-weight:600;cursor:pointer;min-height:40px">＋ 添加一个考试日期</button>' +
+        '<div style="font-size:var(--f11);color:var(--text-tertiary);margin-top:5px;line-height:1.7">主倒计时显示列表里<b>第一个还没过</b>的考试；第一场过了会自动跳到下一场。顺序用 ↑ / ↓ 调。</div></div>';
+      // 每日目标（留空=自动 / 0=不显示 / N=按你写的）
       planHtml += '<div style="margin-top:10px"><div class="setting-label">每日目标（题数）</div>' +
         '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">' +
-          '<input type="number" id="dailyTargetInput" value="' + dailyTarget + '" placeholder="' + (suggestedDaily || '自定义') + '" min="1" onchange="saveDailyTarget(parseInt(this.value)||0)" style="width:150px;max-width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:var(--f14);box-sizing:border-box">' +
+          '<input type="number" id="dailyTargetInput" value="' + dailyTarget + '" placeholder="' + (suggestedDaily || '自动') + '" min="0" onchange="saveDailyTarget(this.value)" style="width:150px;max-width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:var(--f14);box-sizing:border-box">' +
           '<span style="font-size:var(--f12);color:var(--text-tertiary);white-space:nowrap">题/天</span>' +
+          '<button onclick="saveDailyTarget(\'\')" style="margin-left:auto;border:1px solid var(--border);background:var(--bg-input);border-radius:7px;padding:6px 10px;font-size:var(--f11);color:var(--text-secondary);cursor:pointer;white-space:nowrap">清除</button>' +
         '</div>' +
-        '<div style="font-size:var(--f11);color:var(--text-tertiary);margin-top:4px">留空则根据考试日期和未掌握题数自动计算</div>' +
+        '<div style="font-size:var(--f11);color:var(--text-tertiary);margin-top:4px;line-height:1.7">留空 = 自动计算；填 <b>0</b> = 不显示；填其它数字 = 按你写的来</div>' +
       '</div>';
+      // ✏️ 倒计时旁边的一句话（🆕 v217）
+      var _examNote = String((appData.settings || {}).examNote || '').slice(0, 20);
+      planHtml += '<div style="margin-top:10px"><div class="setting-label">✏️ 倒计时旁边的一句话</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">' +
+          '<input type="text" id="examNoteInput" value="' + escapeHtml(_examNote) + '" maxlength="20" placeholder="例如：每天 30 题，稳住就能过" oninput="updateExamNote(this.value);var _c=document.getElementById(\'examNoteCount\');if(_c)_c.textContent=this.value.length+\'/20\'" style="flex:1;min-width:0;padding:9px 11px;border:2px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font-size:var(--f13);box-sizing:border-box">' +
+          '<span id="examNoteCount" style="font-size:var(--f10);color:var(--text-tertiary);white-space:nowrap">' + _examNote.length + '/20</span>' +
+          '<button onclick="clearExamNote()" style="border:1px solid var(--border);background:var(--bg-input);border-radius:7px;padding:6px 10px;font-size:var(--f11);color:var(--text-secondary);cursor:pointer;white-space:nowrap">清除</button>' +
+        '</div><div style="font-size:var(--f11);color:var(--text-tertiary);margin-top:4px">留空就不显示；最多 20 字</div></div>';
       // 学习日历热力图
       // 🧹 2026-09-16 清掉了一段兜底代码：原来这里有个
       //    `if (!hasFeature('heatmap')) { 补一个「🔥 连续 N 天」小条 + 升级提示 }` ——
@@ -22592,7 +23538,7 @@ function renderSettings() {
         '</div>' +
       '</div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:var(--f12);transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:var(--f13);cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:var(--f12)"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v216</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v217</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
       // 📲 2026-09-18 v166：用户在设置页找不到「怎么把工具存到桌面」的说明 → 关于最后一行加这个入口。
       //    点开走 showInstallGuide()（无延迟弹窗）。以后别的工具要加同一份 → 见 `新建文件夹/安装教程-可复用.md`。
@@ -24980,98 +25926,143 @@ async function doRestore() {
   showToast('这段字读不出备份码 —— 看看是不是复制漏了一截，或者粘错了东西');
 }
 
+// 🆕 v217：清理空间顶部可以选「挖空数据 / 选择题数据」，两边的颗粒度一样：
+//   挖空：复习清单 / 做题进度 / 收藏（都按题库）
+//   选择题：错题 / 做题进度 / 收藏 / 做题统计（都按题库）
+//   通用：头像历史 / 统计数据 / 删除所有数据
+var _cleanupType = 'recite';
+function setCleanupType(t) {
+  _cleanupType = (t === 'quiz') ? 'quiz' : 'recite';
+  showCleanupModal();
+}
+function _qzArrCount(v) {
+  if (!v) return 0;
+  return Array.isArray(v) ? v.length : Object.keys(v).length;
+}
 function showCleanupModal() {
+  var old = document.getElementById('cleanupOverlay'); if (old) old.remove();
   var bankNames = [];
   Object.keys(appData.banks || {}).forEach(function(id) {
     var b = appData.banks[id];
     bankNames.push({ id: id, name: b.name || id, cardCount: (b.cards || []).length });
   });
+  var quizNames = quizBankNamesSorted();
+  var qb = appData.quiz || {};
   var hasAvatar = !!(appData.settings && appData.settings.avatarHistory && appData.settings.avatarHistory.length);
-  var hasDaily = !!(appData.settings && appData.settings.dailyPractice);
+  var typeChips = '<div class="chip-group" style="padding:10px 18px 0;border-bottom:1px solid var(--border);flex-shrink:0">' +
+    '<span class="chip' + (_cleanupType === 'recite' ? ' active' : '') + '" onclick="setCleanupType(\'recite\')">📖 挖空数据</span>' +
+    '<span class="chip' + (_cleanupType === 'quiz' ? ' active' : '') + '" onclick="setCleanupType(\'quiz\')">📝 选择题数据</span>' +
+    '</div>';
 
-  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:480px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:85vh;max-height:85dvh;display:flex;flex-direction:column;padding:0">' +
-    '<div style="padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0">' +
-      '<h3 style="margin:0;font-size:var(--f17)">🧹 清理空间</h3>' +
-      '<p style="color:var(--text-secondary);font-size:var(--f12);margin:4px 0 0">勾选要清理的数据，操作不可恢复</p>' +
-    '</div>' +
-    '<div style="overflow-y:auto;flex:1;padding:12px 18px" id="cleanupList">' +
-
-    // 头像历史
-    (hasAvatar ? '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:4px 0;border-radius:8px;cursor:pointer;background:var(--bg-input)">' +
-      '<input type="checkbox" data-clean="avatar" style="flex-shrink:0">' +
-      '<span><span style="font-weight:600;font-size:var(--f14)">🖼 头像历史</span><br><span style="font-size:var(--f11);color:var(--text-tertiary)">清除已保存的历史头像</span></span>' +
-    '</label>' : '') +
-
-    // 复习清单（按题库）
-    (bankNames.length ? '<div style="margin-top:8px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">📝 复习清单</div>' : '') +
-    bankNames.map(function(b) {
+  var body = '';
+  if (_cleanupType === 'recite') {
+    body += (bankNames.length ? '<div style="margin-top:4px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">📝 复习清单</div>' : '');
+    body += bankNames.map(function(b) {
       var wb = appData.wrongBooks && appData.wrongBooks[b.id];
-      var wbCount = wb ? (Array.isArray(wb) ? wb.length : Object.keys(wb).length) : 0;
+      var wbCount = _qzArrCount(wb);
       if (!wbCount) return '';
       return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:8px;cursor:pointer">' +
-        '<input type="checkbox" data-clean="wrongbook" data-bank="' + b.id + '" style="flex-shrink:0">' +
+        '<input type="checkbox" data-clean="wrongbook" data-bank="' + escapeHtml(b.id) + '" style="flex-shrink:0">' +
         '<span style="font-size:var(--f13)">' + escapeHtml(b.name) + ' <span style="color:var(--text-tertiary);font-size:var(--f11)">(' + wbCount + ' 条记录)</span></span>' +
       '</label>';
-    }).join('') +
-
-    // 做题进度
-    (bankNames.length ? '<div style="margin-top:8px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">📊 做题进度</div>' : '') +
-    bankNames.map(function(b) {
+    }).join('');
+    body += (bankNames.length ? '<div style="margin-top:8px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">📊 做题进度</div>' : '');
+    body += bankNames.map(function(b) {
       var seq = appData.seqProgress && appData.seqProgress[b.id];
-      if (!seq) return '';
+      if (seq == null) return '';
       return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:8px;cursor:pointer">' +
-        '<input type="checkbox" data-clean="seqProgress" data-bank="' + b.id + '" style="flex-shrink:0">' +
+        '<input type="checkbox" data-clean="seqProgress" data-bank="' + escapeHtml(b.id) + '" style="flex-shrink:0">' +
         '<span style="font-size:var(--f13)">' + escapeHtml(b.name) + ' <span style="color:var(--text-tertiary);font-size:var(--f11)">(位置: 第' + (seq + 1) + '题)</span></span>' +
       '</label>';
-    }).join('') +
-
-    // 收藏题目
-    (bankNames.length ? '<div style="margin-top:8px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">⭐ 收藏题目</div>' : '') +
-    bankNames.map(function(b) {
+    }).join('');
+    body += (bankNames.length ? '<div style="margin-top:8px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">⭐ 收藏题目</div>' : '');
+    body += bankNames.map(function(b) {
       var favCount = 0;
       (b.cards || []).forEach(function(c) { if (c.starred) favCount++; });
-      // Also check favorites object
-      if (appData.favorites && appData.favorites[b.id]) {
-        favCount += (Array.isArray(appData.favorites[b.id]) ? appData.favorites[b.id].length : Object.keys(appData.favorites[b.id]).length);
-      }
+      favCount += _qzArrCount(appData.favorites && appData.favorites[b.id]);
       if (!favCount) return '';
       return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:8px;cursor:pointer">' +
-        '<input type="checkbox" data-clean="favorites" data-bank="' + b.id + '" style="flex-shrink:0">' +
+        '<input type="checkbox" data-clean="favorites" data-bank="' + escapeHtml(b.id) + '" style="flex-shrink:0">' +
         '<span style="font-size:var(--f13)">' + escapeHtml(b.name) + ' <span style="color:var(--text-tertiary);font-size:var(--f11)">(' + favCount + ' 题)</span></span>' +
       '</label>';
-    }).join('') +
+    }).join('');
+  } else {
+    if (!quizNames.length) {
+      body += '<div style="padding:18px 0;text-align:center;color:var(--text-tertiary);font-size:var(--f13)">还没有选择题数据</div>';
+    } else {
+      body += '<div style="margin-top:4px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">📝 选择题错题</div>';
+      body += quizNames.map(function(name) {
+        var wbCount = _qzArrCount((qb.wrongBooks || {})[name]);
+        if (!wbCount) return '';
+        return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:8px;cursor:pointer">' +
+          '<input type="checkbox" data-clean="qwrongbook" data-bank="' + escapeHtml(name) + '" style="flex-shrink:0">' +
+          '<span style="font-size:var(--f13)">' + escapeHtml(name) + ' <span style="color:var(--text-tertiary);font-size:var(--f11)">(' + wbCount + ' 条记录)</span></span></label>';
+      }).join('');
+      body += '<div style="margin-top:8px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">📊 做题进度</div>';
+      body += quizNames.map(function(name) {
+        var seq = (qb.seqProgress || {})[name];
+        if (seq == null) return '';
+        return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:8px;cursor:pointer">' +
+          '<input type="checkbox" data-clean="qseq" data-bank="' + escapeHtml(name) + '" style="flex-shrink:0">' +
+          '<span style="font-size:var(--f13)">' + escapeHtml(name) + ' <span style="color:var(--text-tertiary);font-size:var(--f11)">(位置: 第' + (seq + 1) + '题)</span></span></label>';
+      }).join('');
+      body += '<div style="margin-top:8px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">⭐ 收藏 / 重点</div>';
+      body += quizNames.map(function(name) {
+        var arr = (qb.banks || {})[name] || [];
+        var favCount = 0;
+        arr.forEach(function(q) { if (q && q.starred) favCount++; if (q && q.superFav) favCount++; });
+        favCount += _qzArrCount((qb.favorites || {})[name]);
+        favCount += _qzArrCount((qb.superFavs || {})[name]);
+        if (!favCount) return '';
+        return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:8px;cursor:pointer">' +
+          '<input type="checkbox" data-clean="qfav" data-bank="' + escapeHtml(name) + '" style="flex-shrink:0">' +
+          '<span style="font-size:var(--f13)">' + escapeHtml(name) + ' <span style="color:var(--text-tertiary);font-size:var(--f11)">(' + favCount + ' 题)</span></span></label>';
+      }).join('');
+      body += '<div style="margin-top:8px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">📈 做题统计</div>';
+      body += quizNames.map(function(name) {
+        if (!(qb.stats || {})[name]) return '';
+        return '<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin:2px 0;border-radius:8px;cursor:pointer">' +
+          '<input type="checkbox" data-clean="qstats" data-bank="' + escapeHtml(name) + '" style="flex-shrink:0">' +
+          '<span style="font-size:var(--f13)">' + escapeHtml(name) + ' <span style="color:var(--text-tertiary);font-size:var(--f11)">(做题统计)</span></span></label>';
+      }).join('');
+      body += '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)">' +
+        '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:4px 0;border-radius:8px;cursor:pointer;background:var(--danger-light)">' +
+          '<input type="checkbox" data-clean="quizAll" style="flex-shrink:0">' +
+          '<span style="color:var(--danger)"><span style="font-weight:700;font-size:var(--f14)">🗑️ 全部选择题数据</span><br><span style="font-size:var(--f11)">清空选择题题库、错题、收藏和进度（挖空数据不动）</span></span>' +
+        '</label></div>';
+    }
+  }
 
-    // 统计数据
-    '<div style="margin-top:8px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">📈 统计数据</div>' +
-    '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:4px 0;border-radius:8px;cursor:pointer;background:var(--bg-input)">' +
-      '<input type="checkbox" data-clean="stats" style="flex-shrink:0">' +
-      '<span><span style="font-weight:600;font-size:var(--f14)">📈 每日统计 + 周统计 + 番茄记录</span><br><span style="font-size:var(--f11);color:var(--text-tertiary)">清除每日/每周做题统计和番茄钟记录</span></span>' +
-    '</label>' +
-
-    // 🆕 v201：选择题数据
-    (appData.quiz && Object.keys(appData.quiz.banks || {}).length ? (
-      '<div style="margin-top:8px;font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:6px 0">📝 选择题数据</div>' +
-      '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:4px 0;border-radius:8px;cursor:pointer;background:var(--bg-input)">' +
-        '<input type="checkbox" data-clean="quizAll" style="flex-shrink:0">' +
-        '<span><span style="font-weight:600;font-size:var(--f14)">📝 选择题数据</span><br><span style="font-size:var(--f11);color:var(--text-tertiary)">清空选择题题库、错题、收藏和进度（挖空数据不动）</span></span>' +
-      '</label>'
-    ) : '') +
-
-    // 全部数据（红色警告）
-    '<div style="margin-top:12px;padding-top:12px;border-top:2px solid var(--danger)">' +
+  // —— 通用（两类都能用）——
+  body += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">' +
+    '<div style="font-size:var(--f13);font-weight:600;color:var(--text-secondary);padding:2px 0 6px">通用</div>';
+  if (hasAvatar) {
+    body += '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:4px 0;border-radius:8px;cursor:pointer;background:var(--bg-input)">' +
+      '<input type="checkbox" data-clean="avatar" style="flex-shrink:0">' +
+      '<span><span style="font-weight:600;font-size:var(--f14)">🖼 头像历史</span><br><span style="font-size:var(--f11);color:var(--text-tertiary)">清除已保存的历史头像</span></span></label>';
+  }
+  body += '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:4px 0;border-radius:8px;cursor:pointer;background:var(--bg-input)">' +
+    '<input type="checkbox" data-clean="stats" style="flex-shrink:0">' +
+    '<span><span style="font-weight:600;font-size:var(--f14)">📈 每日统计 + 周统计 + 番茄记录</span><br><span style="font-size:var(--f11);color:var(--text-tertiary)">清除每日/每周做题统计和番茄钟记录</span></span></label>';
+  body += '<div style="margin-top:12px;padding-top:12px;border-top:2px solid var(--danger)">' +
     '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:4px 0;border-radius:8px;cursor:pointer;background:var(--danger-light)">' +
       '<input type="checkbox" data-clean="all" style="flex-shrink:0">' +
-      '<span style="color:var(--danger)"><span style="font-weight:700;font-size:var(--f14)">🗑️ 删除所有数据</span><br><span style="font-size:var(--f11)">清空全部题库、设置和进度，不可恢复！</span></span>' +
-    '</label></div>' +
+      '<span style="color:var(--danger)"><span style="font-weight:700;font-size:var(--f14)">🗑️ 删除所有数据</span><br><span style="font-size:var(--f11)">清空全部题库、设置和进度，不可恢复！</span></span></label></div></div>';
 
+  var html = '<div class="modal" style="animation:none;border-radius:var(--radius);max-width:480px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-height:85vh;max-height:85dvh;display:flex;flex-direction:column;padding:0">' +
+    '<div style="padding:16px 18px 10px;border-bottom:1px solid var(--border);flex-shrink:0">' +
+      '<h3 style="margin:0;font-size:var(--f17)">🧹 清理空间</h3>' +
+      '<p style="color:var(--text-secondary);font-size:var(--f12);margin:4px 0 0">先选类型，再勾要清理的数据；操作不可恢复</p>' +
     '</div>' +
+    typeChips +
+    '<div style="overflow-y:auto;flex:1;padding:12px 18px" id="cleanupList">' + body + '</div>' +
     '<div style="padding:14px 18px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px">' +
       '<button class="btn btn-ghost" style="flex:1;font-size:var(--f14)" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>' +
       '<button class="btn" style="flex:1;font-size:var(--f14);background:var(--danger);color:#fff;border:none" onclick="performCleanup(this)">🗑 确认清理</button>' +
     '</div>' +
   '</div>';
 
-  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.style.animation = 'none'; ov.id = 'cleanupOverlay';
   ov.innerHTML = html;
   document.body.appendChild(ov);
   ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
@@ -25098,8 +26089,9 @@ function performCleanup(btn) {
   var cleaned = [];
   var checks = ov.querySelectorAll('input[type="checkbox"]:checked');
 
-  // 收集清理任务
-  var tasks = { avatar: false, wrongbook: [], seqProgress: [], favorites: [], stats: false, quizAll: false };
+  // 收集清理任务（🆕 v217：挖空 / 选择题各自按题库细分）
+  var tasks = { avatar: false, wrongbook: [], seqProgress: [], favorites: [], stats: false, quizAll: false,
+                qwrongbook: [], qseq: [], qfav: [], qstats: [] };
 
   for (var i = 0; i < checks.length; i++) {
     var clean = checks[i].dataset.clean;
@@ -25110,9 +26102,14 @@ function performCleanup(btn) {
     else if (clean === 'favorites' && bank) tasks.favorites.push(bank);
     else if (clean === 'stats') tasks.stats = true;
     else if (clean === 'quizAll') tasks.quizAll = true;
+    else if (clean === 'qwrongbook' && bank) tasks.qwrongbook.push(bank);
+    else if (clean === 'qseq' && bank) tasks.qseq.push(bank);
+    else if (clean === 'qfav' && bank) tasks.qfav.push(bank);
+    else if (clean === 'qstats' && bank) tasks.qstats.push(bank);
   }
 
-  if (!tasks.avatar && !tasks.wrongbook.length && !tasks.seqProgress.length && !tasks.favorites.length && !tasks.stats && !tasks.quizAll) {
+  if (!tasks.avatar && !tasks.wrongbook.length && !tasks.seqProgress.length && !tasks.favorites.length && !tasks.stats &&
+      !tasks.quizAll && !tasks.qwrongbook.length && !tasks.qseq.length && !tasks.qfav.length && !tasks.qstats.length) {
     showToast('请至少选择一项'); return;
   }
 
@@ -25163,6 +26160,35 @@ function performCleanup(btn) {
         clearTomatoTheme();
       }
       cleaned.push('统计数据');
+    }
+    // 🆕 v217：选择题按题库细分清理
+    if (tasks.qwrongbook.length && appData.quiz) {
+      tasks.qwrongbook.forEach(function(name) {
+        if (appData.quiz.wrongBooks) delete appData.quiz.wrongBooks[name];
+      });
+      cleaned.push('选择题错题(' + tasks.qwrongbook.length + '个)');
+    }
+    if (tasks.qseq.length && appData.quiz) {
+      tasks.qseq.forEach(function(name) {
+        if (appData.quiz.seqProgress) delete appData.quiz.seqProgress[name];
+      });
+      cleaned.push('选择题进度(' + tasks.qseq.length + '个)');
+    }
+    if (tasks.qfav.length && appData.quiz) {
+      tasks.qfav.forEach(function(name) {
+        var arr = (appData.quiz.banks || {})[name] || [];
+        arr.forEach(function(q) { if (q) { q.starred = false; q.superFav = false; } });
+        if (appData.quiz.favorites) delete appData.quiz.favorites[name];
+        if (appData.quiz.superFavs) delete appData.quiz.superFavs[name];
+      });
+      cleaned.push('选择题收藏(' + tasks.qfav.length + '个)');
+    }
+    if (tasks.qstats.length && appData.quiz) {
+      tasks.qstats.forEach(function(name) {
+        if (appData.quiz.stats) delete appData.quiz.stats[name];
+        if (appData.quiz.quizHistory) delete appData.quiz.quizHistory[name];
+      });
+      cleaned.push('选择题统计(' + tasks.qstats.length + '个)');
     }
     if (tasks.quizAll) {
       appData.quiz = defaultQuizData();
@@ -26532,10 +27558,23 @@ function goToBankQuiz(bankName) {
   var sel = qzEl('qzBankSelect');
   if (sel) {
     sel.value = bankName;
-                            
+
     updateSeqProgressUI();
     renderCategoryFilter(bankName);
   }
+}
+// 🆕 v217：从「选择题章节掌握度」点某一行 / 练习全部章节 → 带着筛选进做题设置页。
+//   chapter 为空 = 不限章节（练习全部）。
+function openQuizChapter(bankName, chapter) {
+  // ⚠️ IIFE 里的 appData 是代理：appData.banks 就是 root.quiz.banks，**没有 appData.quiz**
+  if (!bankName || !appData.banks[bankName]) return;
+  if (window.qzShowQuizPractice) { try { window.qzShowQuizPractice(); } catch (e) {} }
+  var sel = qzEl('qzBankSelect');
+  if (sel) sel.value = bankName;
+  if (!chapter) quizSectionFilter = null;
+  else quizSectionFilter = new Set([chapter]);
+  renderQuizSetup();
+  renderCategoryFilter(bankName, true);
 }
 
                              
@@ -26749,6 +27788,9 @@ function renameBankPrompt(el, name) {
         el.textContent = oldName;
         return;
       }
+      // 🆕 v217：题库改名 → 记忆复习「参加记录」名单 + 资料笔记/图库的 bankId 一起跟过去
+      try { if (window.memRenameQuizBank) window.memRenameQuizBank(oldName, v); } catch (e) {}
+      try { if (window.zlRenameQuizBankMaterials) window.zlRenameQuizBankMaterials(oldName, v); } catch (e) {}
       renderBanks();
     } else {
       el.textContent = v;
@@ -26896,6 +27938,9 @@ function deleteBank(name) {
   if (appData.favorites) delete appData.favorites[name];
   if (appData.superFavs) delete appData.superFavs[name];
   if (appData.bankMeta) delete appData.bankMeta[name];
+  // 🆕 v217：删库 → 记忆复习参加名单、资料笔记/图库一起清（跟挖空删库的做法一致）
+  try { if (window.memForgetQuizBank) window.memForgetQuizBank(name); } catch (e) {}
+  try { if (window.zlClearQuizBankMaterials) window.zlClearQuizBankMaterials(name); } catch (e) {}
   saveData(appData);
   renderBanks();
   toast('题库已删除');
@@ -27995,6 +29040,23 @@ function extractQuizSections(bank) {
   if (out.length === 1 && out[0] === '未分类') return [];
   return out;
 }
+// 🆕 v217：选择题分类筛选跟挖空一样 —— 两组可收起、显示「已选 N/M」、记住折叠状态。
+//   折叠状态单独存 qzFilterCollapsed（跟挖空那边的 filterCollapsed 分开，互不影响）。
+function _qzFilterCollapsed() {
+  var s = appData.settings || {};
+  var v = s.qzFilterCollapsed;
+  return (v && typeof v === 'object') ? v : {};
+}
+function toggleQzFilterGroup(which) {
+  var s = _qzFilterCollapsed();
+  s[which] = s[which] !== true;
+  saveSetting('qzFilterCollapsed', s);
+  renderCategoryFilter(qzEl('qzBankSelect').value, true);
+}
+function _qzFilterSelText(set, total) {
+  var n = (set && set.size) ? set.size : total;
+  return '已选 ' + n + '/' + total;
+}
 function renderCategoryFilter(bankName, keepFilter) {
   var div = qzEl('qzCategoryFilter');
   if (!div) return;
@@ -28009,26 +29071,36 @@ function renderCategoryFilter(bankName, keepFilter) {
     quizSectionFilter = null;
   }
   if (!cats.length && !secs.length) { div.innerHTML = ''; categoryFilter = null; quizSectionFilter = null; return; }
-  var h = '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">🏷️ 分类筛选</label>';
+  var h = '<label style="font-size:var(--f13);font-weight:600;display:block;margin-bottom:4px">🏷️ 分类筛选</label>';
   if (secs.length) {
     var secAll = !quizSectionFilter || quizSectionFilter.size >= secs.length;
-    h += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin:4px 0 2px">📚 章节</div><div class="chip-group" style="margin-top:2px">';
+    var _secCol = _qzFilterCollapsed().sec === true;
+    h += '<div style="margin-top:4px"><div class="filter-sub" onclick="QZ.toggleQzFilterGroup(\'sec\')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:5px">' +
+      '<span style="font-size:var(--f10);color:var(--text-tertiary)">' + (_secCol ? '▸' : '▾') + '</span>' +
+      '<span>📚 章节</span>' +
+      '<span style="font-weight:400;color:var(--text-tertiary)">' + _qzFilterSelText(quizSectionFilter, secs.length) + '</span>' +
+      '</div><div class="chip-group" id="qzFilterGrp_sec" style="' + (_secCol ? 'display:none;' : '') + '">';
     h += '<span class="chip' + (secAll ? ' active' : '') + '" onclick="QZ.toggleAllQuizSections()">全部</span>';
     for (var s = 0; s < secs.length; s++) {
       var sActive = !quizSectionFilter || quizSectionFilter.has(secs[s]);
-      h += '<span class="chip' + (sActive ? ' active' : '') + '" onclick="QZ.toggleQuizSection(\'' + QZ.escHtml(secs[s]) + '\')" style="margin-left:4px">' + secs[s] + '</span>';
+      h += '<span class="chip' + (sActive ? ' active' : '') + '" onclick="QZ.toggleQuizSection(' + s + ')" style="margin-left:4px">' + escHtml(secs[s]) + '</span>';
     }
-    h += '</div>';
+    h += '</div></div>';
   }
   if (cats.length) {
     var allActive = !categoryFilter || categoryFilter.size >= cats.length;
-    h += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin:8px 0 2px">🏷️ 标签</div><div class="chip-group" style="margin-top:2px">';
+    var _catCol = _qzFilterCollapsed().cat === true;
+    h += '<div style="margin-top:8px"><div class="filter-sub" onclick="QZ.toggleQzFilterGroup(\'cat\')" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:5px">' +
+      '<span style="font-size:var(--f10);color:var(--text-tertiary)">' + (_catCol ? '▸' : '▾') + '</span>' +
+      '<span>🏷️ 标签</span>' +
+      '<span style="font-weight:400;color:var(--text-tertiary)">' + _qzFilterSelText(categoryFilter, cats.length) + '</span>' +
+      '</div><div class="chip-group" id="qzFilterGrp_cat" style="' + (_catCol ? 'display:none;' : '') + '">';
     h += '<span class="chip' + (allActive ? ' active' : '') + '" onclick="QZ.toggleAllCategories()">全部</span>';
     for (var i = 0; i < cats.length; i++) {
       var active = !categoryFilter || categoryFilter.has(cats[i]);
-      h += '<span class="chip' + (active ? ' active' : '') + '" onclick="QZ.toggleCategory(\'' + QZ.escHtml(cats[i]) + '\')" style="margin-left:4px">' + cats[i] + '</span>';
+      h += '<span class="chip' + (active ? ' active' : '') + '" onclick="QZ.toggleCategory(' + i + ')" style="margin-left:4px">' + escHtml(cats[i]) + '</span>';
     }
-    h += '</div>';
+    h += '</div></div>';
   }
   div.innerHTML = h;
 }
@@ -28041,11 +29113,14 @@ function toggleAllQuizSections() {
   else quizSectionFilter = null;
   renderCategoryFilter(bankName, true);
 }
-function toggleQuizSection(sec) {
+// ⚠️ 传的是**下标**不是名字 —— 名字里可能有引号/尖括号，塞进 onclick 属性会坏（跟挖空 v174 同一个坑）。
+function toggleQuizSection(i) {
   var bankName = qzEl('qzBankSelect').value;
   var bank = appData.banks[bankName];
   if (!bank) return;
   var secs = extractQuizSections(bank);
+  var sec = secs[i];
+  if (sec === undefined) return;
   if (!quizSectionFilter) quizSectionFilter = new Set(secs);
   if (quizSectionFilter.has(sec)) {
     if (quizSectionFilter.size <= 1) return;
@@ -28070,20 +29145,24 @@ function toggleAllCategories() {
   }
   renderCategoryFilter(bankName, true);
 }
-function toggleCategory(cat) {
+function toggleCategory(i) {
+  var bankName = qzEl('qzBankSelect').value;
+  var bank = appData.banks[bankName];
+  if (!bank) return;
+  var cats = extractCategories(bank);
+  var cat = cats[i];
+  if (cat === undefined) return;
   if (!categoryFilter) {
-                           
-    categoryFilter = new Set(_allCats);
+    categoryFilter = new Set(cats);
     categoryFilter.delete(cat);
   } else if (categoryFilter.has(cat)) {
     if (categoryFilter.size <= 1) return;
     categoryFilter.delete(cat);
   } else {
     categoryFilter.add(cat);
-                       
-    if (categoryFilter.size >= _allCats.length) categoryFilter = null;
+    if (categoryFilter.size >= cats.length) categoryFilter = null;
   }
-  renderCategoryFilter(qzEl('qzBankSelect').value, true);
+  renderCategoryFilter(bankName, true);
 }
 function getFilteredCards(bank) {
   if (!bank || !bank.length) return [];
@@ -31293,7 +32372,8 @@ function renderQuizSetup() {
   }
          
   var bankName = select.value;
-  if (bankName) renderCategoryFilter(bankName);
+  // 🆕 v217：重画设置页时**保留**已选筛选（跟挖空一样）；换题库时走 select 的 change 才重置
+  if (bankName) renderCategoryFilter(bankName, true);
 }
 
                  
@@ -36875,7 +37955,8 @@ applySR = function(bankName, qId, wasCorrect, elapsedMs, noFastCheck) {
   card.lastPracticed = Date.now();
   card.doneAt = Date.now();
   if (!card.doneCount) card.doneCount = 1;
-  if (window.memCanUse && window.memCanUse() && window.memS && window.memS('memOn')) {
+  if (window.memCanUse && window.memCanUse() && window.memS && window.memS('memOn') &&
+      (!window.memQuizBankOn || window.memQuizBankOn(bankName))) {   // 🆕 v217：没勾「参加记录」的选择题库不写记录
     var _wasMastered = !!card.srMastered;
     try { window.memApplyAnswer(card, !wasCorrect); } catch (e) { console.error('memApplyAnswer', e); }
     if (!_wasMastered && card.srMastered) {
@@ -37073,6 +38154,7 @@ window.QZ = {
   normalizeImportFormat: normalizeImportFormat,
   normalizeText: normalizeText,
   openMemBucket: openMemBucket,
+  openQuizChapter: openQuizChapter,
   parseAnswerExplanationFormat: parseAnswerExplanationFormat,
   parseAnswersOnly: parseAnswersOnly,
   parseCSV: parseCSV,
@@ -37202,6 +38284,7 @@ window.QZ = {
   toggleCategory: toggleCategory,
   toggleAllQuizSections: toggleAllQuizSections,
   toggleQuizSection: toggleQuizSection,
+  toggleQzFilterGroup: toggleQzFilterGroup,
   toggleEditBankListItem: toggleEditBankListItem,
   toggleEditBankQuestion: toggleEditBankQuestion,
   toggleExplanation: toggleExplanation,
