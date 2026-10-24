@@ -13,7 +13,7 @@
      而且不能用透明底（苹果会把透明的地方填成黑色）。现在是草地绿实色底。 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
-<title>挖空背诵工具 v220 · 小阮出品</title>
+<title>挖空背诵工具 v222 · 小阮出品</title>
 <style>
 /* ============ CSS Variables ============ */
 :root {
@@ -748,7 +748,8 @@ body.hide-tab-icon .tab-item{font-size:var(--f125);font-weight:600;padding:8px 4
 .btn-sort:hover:not(:disabled){background:var(--primary-soft);color:var(--primary);border-color:var(--primary)}
 .btn-sort:active:not(:disabled){background:var(--primary);color:#fff}
 .btn-sort:disabled{opacity:.25;cursor:not-allowed;pointer-events:none}
-.file-input{opacity:0;position:fixed;left:-9999px;top:-9999px}
+/* 🆕 v221：文件输入框不再放到屏幕外（部分安卓浏览器/PWA 会拒绝点它），改成视口内 1px 隐形 */
+.file-input{position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;padding:0;margin:-1px;pointer-events:none}
 
 /* ============ Empty State ============ */
 .empty{text-align:center;padding:56px 24px;color:var(--text-secondary)}
@@ -802,6 +803,8 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
 .memrate-btn.on[data-tier="d"]{background:#cffafe;color:#0e7490;box-shadow:0 0 3px rgba(8,145,178,.18)}
 @media (max-width:360px){.memrate{gap:5px}.memrate-btn .t{font-size:var(--f11)}}
 .practice-card .card-text{font-size:var(--font-size-lg);line-height:2.0;word-break:break-word;overflow-wrap:break-word;overflow-x:hidden}
+/* 🆕 v221（用户 2026-10-24）：「每一行的尾巴尽量对齐」——答案区两端对齐；最后一行不拉伸 */
+.practice-card .answer-body{text-align:justify;text-justify:inter-ideograph;text-align-last:left}
   .practice-card .blank-input{
     display:inline-block;min-width:28px;max-width:400px;
     /* 🆕 v192 丁：上下内边距 2px→0（整行不被撑高） */
@@ -902,6 +905,16 @@ textarea{min-height:160px;resize:vertical;line-height:1.8;overflow-y:auto}
      ⚠️ 改 .blank-input 那条时，这条要**跟着一起改**，否则又会对不上。 */
   /* 🆕 v193：浏览页那个挖空**没有内边距**、也没有最小宽 —— 它要跟「关掉挖空后的纯文字」
      逐像素对齐（用户报「空白的挖空更长」就是它）。别把这条删了。 */
+  /* 🆕 v221：答错时“自己的字”要显示在这个空的正下方（不是整行下面） */
+  .practice-card .blank-wrap{position:relative;display:inline-block;vertical-align:baseline;max-width:100%}
+  .practice-card .blank-mine{position:absolute;top:100%;left:50%;transform:translateX(-50%);
+    font-size:11px;line-height:1.15;color:var(--text-tertiary);font-weight:400;
+    white-space:nowrap;pointer-events:none;max-width:46vw;overflow:hidden;text-overflow:ellipsis}
+  /* 🆕 v221：长空折行时，两截的接缝要“看不出来”（横线 / 椭圆都适用） */
+  .practice-card .blank-input.fold-a{margin-right:0;padding-right:0;border-right:none;border-radius:3px 0 0 3px}
+  .practice-card .blank-input.fold-b{margin-left:0;padding-left:0;border-left:none;border-radius:0 3px 3px 0}
+  .practice-card .blank-input.oval.fold-a{border-right-color:transparent;border-radius:50% 0 0 50%}
+  .practice-card .blank-input.oval.fold-b{border-left-color:transparent;border-radius:0 50% 50% 0}
   .practice-card .blank-input.bw-flat{padding:0;min-width:0}
   /* 🆕 v193：椭圆挖空时，输入框的 min-width 是 1.5em（见上面 .blank-input.oval），
      显示答案那块原来还是 28px → **短答案上又会差几个像素**。这里对齐。 */
@@ -1308,6 +1321,24 @@ mjx-container[jax="SVG"]{display:inline-block;max-width:100%;overflow-x:auto;ove
 .chapter-stat-fill.yellow { background:#ff9800; }
 .chapter-stat-fill.red { background:#f44336; }
 .chapter-stat-pct { font-size:var(--f13); font-weight:700; white-space:nowrap; min-width:38px; text-align:right; }
+/* 🆕 v221：章节右边 ⬆⬇ */
+/* 🆕 v221：收藏是全能版功能，免费/降级时星标**看得见但点不了**（用户 2026-10-24 定：灰掉、完全没反应） */
+.fav-locked{opacity:.32!important;pointer-events:none;cursor:default}
+.fav-hidden{display:none!important}
+/* 🆕 v221：音效 / 飘落只显示图标（像主题颜色那排） */
+.sfx-pick-row{display:flex;flex-wrap:wrap;gap:10px}
+.sfx-icon-btn{position:relative;width:46px;height:46px;border-radius:50%;border:2px solid var(--border);
+  background:var(--bg-input);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;
+  transition:.15s;flex:none}
+.sfx-icon-btn .sfx-ico{font-size:22px;line-height:1}
+.sfx-icon-btn.on{border-color:var(--primary);background:var(--primary-light);box-shadow:0 0 0 3px var(--primary-light)}
+.sfx-icon-btn.locked{opacity:.62}
+.sfx-icon-btn .sfx-price{position:absolute;right:-7px;bottom:-4px;background:var(--bg-card);border:1px solid var(--border);
+  border-radius:9px;padding:1px 4px;font-size:8px;line-height:1.2;color:#b45309;white-space:nowrap}
+.chapter-order-btns{display:inline-flex;gap:2px;margin-left:4px;flex-shrink:0}
+.chapter-order-btns button{width:24px;height:24px;padding:0;border:1px solid var(--border);border-radius:6px;
+  background:var(--bg-card);color:var(--text-secondary);font-size:var(--f12);cursor:pointer;line-height:1}
+.chapter-order-btns button:disabled{opacity:.25;cursor:not-allowed}
 
 /* ====== 浏览页章节TAB ====== */
 .browse-tabs { display:flex; gap:0; margin-bottom:14px; background:var(--bg-input); border-radius:10px; padding:3px; }
@@ -2027,8 +2058,8 @@ body.focus-mode #cardText { line-height:2; }
   <div class="header"><h1>📌 错题本</h1></div>
   <div class="chip-group" style="margin-bottom:12px">
     <span class="chip active" data-wtab="wrong" onclick="QZ.switchWrongTab('wrong', this)">❌ 错题</span>
-    <span class="chip" data-wtab="fav" onclick="QZ.switchWrongTab('fav', this)">ᥫ᭡ 收藏</span>
-    <span class="chip" data-wtab="super" onclick="QZ.switchWrongTab('super', this)">𓈒𓏸𓇼 重点</span>
+    <span class="chip" data-wtab="fav" id="wrongTabFav" onclick="QZ.switchWrongTab('fav', this)">ᥫ᭡ 收藏</span>
+    <span class="chip" data-wtab="super" id="wrongTabSuper" onclick="QZ.switchWrongTab('super', this)">𓈒𓏸𓇼 重点</span>
   </div>
   <div id="wrongBankTabs" style="margin:4px 0 16px;display:flex;gap:8px;flex-wrap:wrap;row-gap:14px"></div>
   <div id="wrongBanks"></div>
@@ -2132,7 +2163,7 @@ function totalCardCount(exceptBankId) {
   });
   return n;
 }
-var APP_VERSION = 220;
+var APP_VERSION = 222;
 
 // ==== 开发者的话（写死在 HTML 里的兜底文案）====
 // 显示优先级：云端(本次启动拉到了) → 本地 authorNote → 这段兜底
@@ -2231,6 +2262,9 @@ function getTier() {
   if (reciteTier === 'pro' || quizTier === 'pro') return 'pro';
   return 'free';
 }
+// 🆕 v221（用户 2026-10-24）：收藏是全能版功能；降级后原来的收藏数据保留，只是不能改/不能筛。
+function reciteFavAllowed() { return getRawModuleTier('recite') === 'pro' || isTrialActive(); }
+function quizFavAllowed() { return getRawModuleTier('quiz') === 'pro' || isQuizTrialActive(); }
 // 指定档位有没有某个功能 —— **全工具唯一的档位判断**
 // · 👑 全能版 = 全部，恒真。以后新加的门自动归全能版，不用回来改表。
 // · 🆓 免费版查 free 清单。
@@ -2244,10 +2278,11 @@ function tierHasFeature(name, tier) {
 function hasFeature(name) { return tierHasFeature(name, getTier()); }
 
 // ==================== 选择题功能门（v201） ====================
-// 免费版能用：导入（限额）、基础做题、错题本、收藏、进度、共享搜索/统计；
-// 其余（背题模式、混合刷题、随机不重复、计时、重点、整库编辑、合并、偏移、打印、备份、记忆复习）归全能版。
+// 免费版能用：导入（限额）、基础做题、错题本、进度、共享搜索/统计；
+// 其余（收藏、重点、背题模式、混合刷题、随机不重复、计时、整库编辑、合并、偏移、打印、备份、记忆复习）归全能版。
+// ⚠️ 2026-10-24 用户定：选择题收藏也按模块锁；档位对比表暂不改（用户说「不改」）。
 var QUIZ_FREE_FEATURES = [
-  'quizImport', 'quizPractice', 'quizWrongBook', 'quizFav', 'quizProgress', 'globalSearch'
+  'quizImport', 'quizPractice', 'quizWrongBook', 'quizProgress', 'globalSearch'
 ];
 function quizHasFeature(name) {
   if (getQuizTier() !== 'free') return true;
@@ -3222,6 +3257,16 @@ function setModuleVisibility(which, on) {
   saveData(appData);
   renderSettings();
   renderBanks();
+  // 🆕 v221 修（用户 2026-10-24 报）：两个模块都激活、但只显示挖空时，资料页还留着
+  //   「选择题资料」按钮。
+  //   ⚠️ 用户明确：**不要清缓存**（会丢当时的笔记/编辑状态）—— 只把按钮隐藏；
+  //      开关打开时按钮回来，之前的资料原样还在。
+  try {
+    var _qBtn = document.getElementById('zlTypeBtnQuiz');
+    if (_qBtn) _qBtn.style.display = settingShowQuizModule() ? '' : 'none';
+    var _rBtn = document.getElementById('zlTypeBtnRecite');
+    if (_rBtn) _rBtn.style.display = '';
+  } catch (e) {}
   if (typeof renderWrongBookStart === 'function' && document.getElementById('wrongbookContainer')) {
     try { renderWrongBookStart(); } catch (e) {}
   }
@@ -5132,6 +5177,7 @@ var _zlBankId = '';
 var _zlEditingNote = null; // note object being edited, null = new
 var _zlNoteContent = '';
 var _zlNoteTitle = '';
+var _zlNoteDirty = false;   // 🆕 v221：资料笔记有没有没保存的改动
 var _zlViewMode = 'edit'; // 'edit' | 'mindmap'
 var _zlMarkmapLoaded = false;
 var _zlReadonlyMap = false;   // 🧠 免费版资料页那份"只读示范导图"（2026-09-18）：开着一渲染完就把整棵树缩进框里
@@ -5141,6 +5187,8 @@ var _zlSearchQuery = '';
 //   · 选择题资料：bankId = 'qz:' + 选择题库名（跟挖空完全隔离，同名题库也不会串）
 function _zlBankKeys(type) {
   if (type === 'quiz') {
+    // 🆕 v221：只激活挖空（或用户关掉选择题模块）时，资料页不显示选择题题库
+    if (!settingShowQuizModule()) return [];
     return quizBankNamesSorted().map(function(n) { return 'qz:' + n; });
   }
   return Object.keys(appData.banks || {});
@@ -5152,6 +5200,7 @@ function zlBankDisplayName(key) {
 }
 function zlBankIsQuiz(key) { return String(key || '').indexOf('qz:') === 0; }
 function setZlType(type) {
+  if (type === 'quiz' && !settingShowQuizModule()) type = 'recite';
   _zlType = (type === 'quiz') ? 'quiz' : 'recite';
   var keys = _zlBankKeys(_zlType);
   if (keys.indexOf(_zlBankId) < 0) _zlBankId = keys[0] || '';
@@ -5232,10 +5281,12 @@ function renderZiliao() {
   }
 
   // 🆕 v217：先定类型（挖空 / 选择题），再列这一类的题库
-  if (_zlBankId && zlBankIsQuiz(_zlBankId)) _zlType = 'quiz';
+  // 🆕 v221：只激活挖空 / 用户关掉选择题模块 → 资料页只剩挖空，连类型切换都不显示
+  if (!settingShowQuizModule()) _zlType = 'recite';
+  if (_zlBankId && zlBankIsQuiz(_zlBankId) && settingShowQuizModule()) _zlType = 'quiz';
   else if (_zlBankId && appData.banks[_zlBankId]) _zlType = 'recite';
   else if (!_zlBankKeys(_zlType).length) {
-    _zlType = (!Object.keys(appData.banks || {}).length && quizBankNamesSorted().length) ? 'quiz' : 'recite';
+    _zlType = (settingShowQuizModule() && !Object.keys(appData.banks || {}).length && quizBankNamesSorted().length) ? 'quiz' : 'recite';
   }
   var bankIds = _zlBankKeys(_zlType);
   if (bankIds.indexOf(_zlBankId) < 0) _zlBankId = bankIds[0] || '';
@@ -5252,19 +5303,22 @@ function renderZiliao() {
       bankOptions += '<option value="' + escapeHtml(bid) + '"' + (_zlBankId === bid ? ' selected' : '') + '>' + escapeHtml((b && b.name) || bid) + '（' + (((b && b.cards) || []).length) + ' 题）</option>';
     }
   }
-  function _zlTypeBtn(t, label) {
+  function _zlTypeBtn(t, label, hidden) {
     var on = _zlType === t;
-    return '<button onclick="setZlType(\'' + t + '\')" style="flex:0 0 auto;width:78px;height:44px;padding:0;border:2px solid ' + (on ? 'var(--primary)' : 'var(--border)') +
+    return '<button id="zlTypeBtn' + (t === 'quiz' ? 'Quiz' : 'Recite') + '" onclick="setZlType(\'' + t + '\')" style="' + (hidden ? 'display:none;' : '') + 'flex:0 0 auto;width:78px;height:44px;padding:0;border:2px solid ' + (on ? 'var(--primary)' : 'var(--border)') +
       ';border-radius:10px;background:' + (on ? 'var(--primary-light)' : 'var(--bg-card)') +
       ';color:' + (on ? 'var(--primary)' : 'var(--text-secondary)') + ';font-size:var(--f14);font-weight:' + (on ? '700' : '500') +
       ';cursor:pointer;white-space:nowrap;box-sizing:border-box">' + label + '</button>';
   }
 
+  // 🆕 v221：只激活挖空时，**隐藏**「选择题资料」按钮（不删 DOM，开关打开还能回来）
+  var _zlTypeBtns = _zlTypeBtn('recite', '挖空资料') +
+    _zlTypeBtn('quiz', '选择题资料', !settingShowQuizModule());
   var html = '<div style="padding-bottom:80px">' +
     '<h1 style="font-size:var(--f22);font-weight:800;margin-bottom:14px;letter-spacing:-.02em;display:flex;align-items:center;justify-content:space-between">📑 资料<span id="zlStorageBadge" style="font-size:var(--f11);font-weight:400;color:var(--text-tertiary);cursor:pointer" onclick="showStorageInfo()">📦</span></h1>' +
     // 类型 + 题库选择（🆕 v217：两个等大纯文字按钮在左，下拉在右；永远一行，下拉可短）
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:nowrap">' +
-      _zlTypeBtn('recite', '挖空资料') + _zlTypeBtn('quiz', '选择题资料') +
+      _zlTypeBtns +
       '<select id="zlBankSelect" onchange="_zlBankId=this.value;_zlEditingNote=null;renderZiliaoContent()" style="flex:1;min-width:0;padding:10px 12px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);min-height:44px;box-sizing:border-box;text-overflow:ellipsis;white-space:nowrap;overflow:hidden">' +
         (bankOptions || '<option value="">' + (_zlType === 'quiz' ? '还没有选择题库' : '还没有挖空题库') + '</option>') +
       '</select>' +
@@ -5293,6 +5347,15 @@ function renderZiliaoContent() {
 function renderNoteList() {
   var area = document.getElementById('zlContentArea');
   if (!area) return;
+  // 🆕 v221：笔记有没保存的改动 → 离开前问一句
+  if (_zlNoteDirty) {
+    showConfirm('放弃修改？', '这篇笔记还没保存，确定离开吗？', function () {
+      _zlNoteDirty = false;
+      _zlEditingNote = null;
+      renderNoteList();
+    }, '放弃');
+    return;
+  }
   if (!_zlBankId) { area.innerHTML = '<p style="color:var(--text-tertiary);text-align:center;padding:30px">请先选择一个题库</p>'; return; }
 
   dbGetAll('notes').then(function(all) {
@@ -5365,7 +5428,7 @@ function renderNoteEditor() {
     '<button onclick="switchToMindMap()" style="padding:6px 14px;border:1px solid ' + (_zlViewMode === 'mindmap' ? 'var(--primary)' : 'var(--border)') + ';border-radius:6px;background:' + (_zlViewMode === 'mindmap' ? 'var(--primary-light)' : 'var(--bg)') + ';color:' + (_zlViewMode === 'mindmap' ? 'var(--primary)' : 'var(--text-secondary)') + ';font-size:var(--f12);cursor:pointer;min-height:36px">🧠 导图</button>';
 
   var html = '<button onclick="renderNoteList()" style="background:none;border:none;color:var(--primary);font-size:var(--f13);cursor:pointer;padding:4px 0;margin-bottom:8px">← 返回笔记列表</button>' +
-    '<input id="zlNoteTitleInput" placeholder="笔记标题" value="' + escapeHtml(_zlNoteTitle) + '" oninput="_zlNoteTitle=this.value" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f16);font-weight:600;margin-bottom:10px;box-sizing:border-box;min-height:44px">' +
+    '<input id="zlNoteTitleInput" placeholder="笔记标题" value="' + escapeHtml(_zlNoteTitle) + '" oninput="_zlNoteTitle=this.value;_zlNoteDirty=true" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f16);font-weight:600;margin-bottom:10px;box-sizing:border-box;min-height:44px">' +
     '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">' + viewToggle +
       '<button onclick="showImportOutline()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:var(--f12);cursor:pointer;min-height:36px">📥 导入大纲</button>' +
       '<button onclick="copyZiliaoAIPrompt()" style="padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text-secondary);font-size:var(--f12);cursor:pointer;min-height:36px">🤖 AI话术</button>' +
@@ -5395,7 +5458,7 @@ function renderNoteEditor() {
     // 延迟加载 markmap
     setTimeout(function() { loadMarkmap(); }, 100);
   } else {
-    html += '<textarea id="zlNoteEditor" placeholder="写笔记...&#10;&#10;支持 Markdown 语法：&#10;# 一级标题&#10;## 二级标题&#10;- 列表项&#10;1. 编号列表&#10;**加粗** *斜体*" oninput="_zlNoteContent=this.value" style="width:100%;min-height:300px;padding:14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);line-height:1.7;resize:vertical;box-sizing:border-box;font-family:inherit">' + escapeHtml(_zlNoteContent) + '</textarea>';
+    html += '<textarea id="zlNoteEditor" placeholder="写笔记...&#10;&#10;支持 Markdown 语法：&#10;# 一级标题&#10;## 二级标题&#10;- 列表项&#10;1. 编号列表&#10;**加粗** *斜体*" oninput="_zlNoteContent=this.value;_zlNoteDirty=true" style="width:100%;min-height:300px;padding:14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);line-height:1.7;resize:vertical;box-sizing:border-box;font-family:inherit">' + escapeHtml(_zlNoteContent) + '</textarea>';
   }
 
   html += '<div style="display:flex;gap:10px;margin-top:10px">' +
@@ -5415,6 +5478,7 @@ function saveCurrentNote() {
   var ti = document.getElementById('zlNoteTitleInput');
   if (ti) { title = ti.value.trim(); _zlNoteTitle = title; }
   if (!title) { showToast('请输入笔记标题'); return; }
+  _zlNoteDirty = false;
 
   var now = new Date().toISOString();
   var data = {
@@ -6919,6 +6983,20 @@ function getChapterStats(bankId) {
   //   ⚠️ 这份数据**两个地方在用**（浏览页「📊 章节掌握度」＋「⚙️ 章节管理」）——
   //      改这里两处一起变，这正是用户要的（他在两个地方看到的顺序必须一样）✓
   var result = Object.values(chapters);
+  // 🆕 v221（用户 2026-10-24）：章节顺序可以手动 ⬆⬇ 调，调完记住。
+  //   存的是一串章节名；新出现 / 改名的章节排在后面（按第一次出现顺序）。
+  try {
+    var _savedOrder = appData.settings && appData.settings.chapterOrder && appData.settings.chapterOrder[bankId];
+    if (_savedOrder && _savedOrder.length) {
+      var _pos = {};
+      _savedOrder.forEach(function(n, i) { _pos[n] = i; });
+      result.sort(function(a, b) {
+        var ai = Object.prototype.hasOwnProperty.call(_pos, a.name) ? _pos[a.name] : 9999;
+        var bi = Object.prototype.hasOwnProperty.call(_pos, b.name) ? _pos[b.name] : 9999;
+        return ai - bi;
+      });
+    }
+  } catch (e) {}
   return result;
 }
 
@@ -7562,6 +7640,11 @@ function renderChapterHeatmap(bankId) {
       '<div class="chapter-stat-count">' + s.mastered + '/' + s.total + '</div>' +
       '<div class="chapter-stat-bar"><div class="chapter-stat-fill ' + color + '" style="width:' + pct + '%"></div></div>' +
       '<div class="chapter-stat-pct" style="color:' + (color === 'red' ? '#f44336' : color === 'yellow' ? '#ff9800' : '#4caf50') + '">' + pct + '%</div>' +
+      // 🆕 v221：每章右边 ⬆⬇（调顺序，记住；不拖动）
+      '<span class="chapter-order-btns" onclick="event.stopPropagation()">' +
+        '<button type="button" onclick="event.stopPropagation();moveChapter(\'' + bankId + '\',' + i + ',-1)" title="上移" ' + (i === 0 ? 'disabled' : '') + '>⬆</button>' +
+        '<button type="button" onclick="event.stopPropagation();moveChapter(\'' + bankId + '\',' + i + ',1)" title="下移" ' + (i === stats.length - 1 ? 'disabled' : '') + '>⬇</button>' +
+      '</span>' +
     '</div>';
   }
   html += '<div style="margin-top:14px"><button class="btn btn-primary btn-block" onclick="practiceChapter(\'' + bankId + '\', \'\')">🎯 练习全部章节</button></div>';
@@ -7588,20 +7671,38 @@ function practiceChapterAt(bankId, i) {
   practiceChapter(bankId, st[i].name);
 }
 
+// 🆕 v221（用户 2026-10-24）：每章右边 ⬆⬇，调完记住；不做拖动（手机上拖动容易误触）
+function moveChapter(bankId, idx, dir) {
+  if (!hasFeature('chapterHeatmap')) return;
+  var stats = getChapterStats(bankId);
+  var names = stats.map(function(s) { return s.name; });
+  var j = idx + dir;
+  if (j < 0 || j >= names.length) return;
+  var tmp = names[idx]; names[idx] = names[j]; names[j] = tmp;
+  if (!appData.settings) appData.settings = {};
+  if (!appData.settings.chapterOrder) appData.settings.chapterOrder = {};
+  appData.settings.chapterOrder[bankId] = names;
+  saveData(appData);
+  // 🆕 v221 修（用户 2026-10-24 报）：点 ⬆⬇ 会跳回「题目列表 / 全部」。
+  //   原因：`_browseChapterMode` 在某些路径下是 false → 走了 renderBrowseStart()。
+  //   现在无论怎样都**留在章节掌握度这一页**重画，并尽量把滚动位置放回去。
+  var _sy = window.scrollY || 0;
+  _browseChapterMode = true;
+  _browseChapterBankId = bankId;
+  renderBrowseChapters(bankId);
+  setTimeout(function () { try { window.scrollTo(0, _sy); } catch (e) {} }, 0);
+}
+
 function renderBrowseChapters(bankId) {
   // 🆕 v176 ①：同上 —— 这条是「整屏换成章节那一页」的另一个入口，非全能版直接不进。
   if (!hasFeature('chapterHeatmap')) return;
-  _browseChapterMode = true;
-  _browseChapterBankId = bankId;
-  var c = $('browseContainer');
-  if (!c) return;
-  var bank = appData.banks[bankId];
-  if (!bank) return;
-  var heatmapHtml = renderChapterHeatmap(bankId);
-  c.innerHTML = '<div class="browse-tabs">' +
-    '<button class="browse-tab" onclick="renderBrowseList(\'' + bankId + '\')">📋 题目列表</button>' +
-    '<button class="browse-tab active" onclick="renderBrowseChapters(\'' + bankId + '\')">📊 章节掌握度</button>' +
-    '</div>' + heatmapHtml;
+  // 🆕 v221 修（用户 2026-10-24 报）：点 ⬆⬇ 后顶部「目录 / 题库下拉 / 搜索」不见了。
+  //   根因：这里原来只把容器换成「两个页签 + 热力图」，把 renderBrowseStart 的头部整块丢了。
+  //   现在走「完整重画浏览页 → 再切到章节页签」，头部和页签都跟原来一样。
+  if (bankId && appData.banks[bankId]) sessionStorage.setItem('lastPracticeBank', bankId);
+  _browseChapterKind = 'recite';
+  renderBrowseStart();
+  switchBrowseTab('chapters');
 }
 
 function restorePresetBanks() {
@@ -8439,15 +8540,57 @@ function _applyAnswerFirstLinePlan(card, plan) {
   if (card.fullText !== undefined) card.fullText = (card.question || '') + '\n' + card.answer;
   return true;
 }
+// 🆕 v221（用户 2026-10-24 定）：**每一行的开头统一**
+//   · 普通段落（含第一段）＝ 2 个全角空格
+//   · ①②③ 开头的段落 ＝ 顶格（0）
+//   · 子层（（1）(1) A. • 等）默认顶格（0）；设置开关打开后 ＝ 1 个全角空格
+//   ⚠️ 挖空坐标要跟着每行的缩进差量一起平移，否则挖空会整体右偏。
+function _normalizeAnswerIndent(card) {
+  if (!card) return false;
+  var oldAnswer = String(card.answer || '');
+  var oldLines = oldAnswer.split('\n');
+  var answerStart = String(card.question || '').length + 1;
+  var childExtra = !!(typeof appData !== 'undefined' && appData && appData.settings && appData.settings.childIndent === true);
+  var changes = {};
+  var newLines = oldLines.slice();
+  for (var i = 0; i < oldLines.length; i++) {
+    var line = oldLines[i];
+    if (!line.trim()) continue;
+    var lead = _leadingWsOf(line);
+    var body = line.slice(lead.length);
+    var marker = _answerNumberMarker(body);
+    var isBullet = /^(?:[•·・●○◆◇▪▫‣⁃]|[-*]\s)/.test(body);
+    var isCircle = /^[①-⑳]/.test(marker);
+    var isChild = isBullet ||
+      /^[（(]\s*\d/.test(marker) ||
+      /^[A-Za-z]\s*[\.、)）]/.test(marker);
+    var target;
+    if (!marker && !isBullet) target = '　　';       // 普通段落（含第一段）
+    else if (isCircle) target = '';                          // ①②③ 顶格
+    else if (isChild) target = childExtra ? '　' : '';   // 子层：默认顶格；开关打开 1 格
+    else target = '';                                        // 一、1. 等顶层编号 → 顶格
+    if (target === lead) continue;
+    changes[i] = { oldLeadLen: lead.length, delta: target.length - lead.length };
+    newLines[i] = target + body;
+  }
+  if (!Object.keys(changes).length) return false;
+  // 挖空坐标按行平移
+  (card.blanks || []).forEach(function(b) {
+    if (b.start == null || b.end == null || b.start < answerStart) return;
+    var relS = b.start - answerStart, relE = b.end - answerStart;
+    b.start = answerStart + _mapAnswerOffset(oldLines, changes, relS);
+    b.end = answerStart + _mapAnswerOffset(oldLines, changes, relE);
+  });
+  card.answer = newLines.join('\n');
+  if (card.fullText !== undefined) card.fullText = (card.question || '') + '\n' + card.answer;
+  return true;
+}
 function _alignAnswerFirstLine(card) {
-  // 🆕 v220：先统一同一组编号行的括号（全角/半角混用会让序号看着没对齐），
-  //   再把偏掉的那一行拉回多数缩进（单行偏深/偏浅都拉；两行以上更深当下一层），
-  //   最后处理第一行（第一行是标题时只在顶格的情况下补两个全角）
+  // 🆕 v221：先统一全角/半角括号，再按新规则把**每一行**的开头对齐。
+  //   （名字保留 `_alignAnswerFirstLine`，因为导入、老题修复、测试都调它；行为已经升级。）
   var markerChanged = _applyAnswerMarkerStyleChanges(card, _answerMarkerStyleChanges(card));
-  var groupChanged = _applyAnswerIndentGroupChanges(card, _answerIndentGroupChanges(card));
-  var plan = _answerFirstLinePlan(card);
-  var firstChanged = plan ? _applyAnswerFirstLinePlan(card, plan) : false;
-  return markerChanged || groupChanged || firstChanged;
+  var indentChanged = _normalizeAnswerIndent(card);
+  return markerChanged || indentChanged;
 }
 function _alignCardsAnswerFirstLine(cards) {
   (cards || []).forEach(function(c) { _alignAnswerFirstLine(c); });
@@ -9444,7 +9587,32 @@ function printBankPdf(btn) {
   };
   // 🆕 v183 D1：打印前先把公式排出来 —— MathJax 是异步的，不等它排完就 print 会印出一堆源码
   var _doPrint = function () {
-    try { window.print(); } catch (e) { showToast('当前浏览器不支持打印，请用「复制文字」'); cleanup(); }
+    // 🆕 v221：华为/小米自带浏览器、部分 PWA/WebView 里 window.print() 是“存在但什么都不做”。
+    //   这里监听 beforeprint；1.8 秒还没触发，就给一句明确提示 + 替代出口，不再静默。
+    var _bpFired = false;
+    var _bp = function () { _bpFired = true; };
+    try { window.addEventListener('beforeprint', _bp); } catch (e) {}
+    try { window.print(); }
+    catch (e) {
+      try { window.removeEventListener('beforeprint', _bp); } catch (e2) {}
+      showToast('当前浏览器不支持打印，请用「复制文字」或「导出题库文件」', 6000);
+      cleanup();
+      return;
+    }
+    var _setT = (typeof setTimeout === 'function') ? setTimeout : function (fn) { fn(); };
+    _setT(function () {
+      try { window.removeEventListener('beforeprint', _bp); } catch (e) {}
+      if (!_bpFired) {
+        if (typeof showToastLines === 'function') {
+          showToastLines([
+            '🖨️ 刚才没有弹出打印界面 —— 这个浏览器不支持打印。',
+            '请用 Chrome / 夸克 打开，或者用「导出 txt / 题库文件」把内容带走。'
+          ], 8000);
+        } else if (typeof showToast === 'function') {
+          showToast('这个浏览器不支持打印，请用 Chrome / 夸克，或导出 txt / 题库文件');
+        }
+      }
+    }, 1800);
   };
   // 🆕 v192 修（用户报「导出 PDF 的时候 公式没渲染」）：
   //    以前只有两种情况 —— 「MathJax 已加载」就排版，否则**直接印**。
@@ -9561,7 +9729,8 @@ function showDailyInsightCard() {
         ? '<button onclick="event.stopPropagation();refreshDailyInsight();this.closest(\'.modal-overlay\').remove();showDailyInsightCard();" style="background:var(--primary-light);border:1px solid var(--primary-soft);color:var(--primary);padding:6px 14px;border-radius:20px;font-size:var(--f13);cursor:pointer;white-space:nowrap">🔄 换一条</button>'
         : '<span style="font-size:var(--f11);color:var(--text-tertiary)">今日已刷新</span>') +
     '</div>' +
-    '<div style="background:linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #f0fdfa 100%);border-radius:14px;padding:20px 18px;margin-bottom:12px">' +
+    // 🆕 v221（用户 2026-10-24 给的图）：纯白卡片，不用渐变
+    '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px 18px;margin-bottom:12px">' +
       '<div style="font-size:var(--f16);line-height:2;color:var(--text)">' + escapeHtml(insight) + '</div>' +
     '</div>' +
     '<div style="font-size:var(--f11);color:var(--text-tertiary);text-align:right">每日洞见 · 基于认知科学与心理学</div>' +
@@ -10118,6 +10287,18 @@ function initApp() {
     }
   }
   document.addEventListener('keydown', handleBlankEnter);
+
+  // 🆕 v221（用户 2026-10-24 定）：整页关闭 / 刷新时，如果还有没保存的编辑，让浏览器问一句
+  //   ⚠️ 浏览器只能显示统一文案，不能自定义；这是最后一道保险，不是主要提示。
+  window.addEventListener('beforeunload', function (e) {
+    var _dirty = false;
+    try {
+      if (window.previewData && (previewData._dirty || previewData._addAt != null)) _dirty = true;
+      if (typeof _fsDirty !== 'undefined' && _fsDirty) _dirty = true;
+      if (typeof _zlNoteDirty !== 'undefined' && _zlNoteDirty) _dirty = true;
+    } catch (err) {}
+    if (_dirty) { e.preventDefault(); e.returnValue = ''; return ''; }
+  });
 
   // 首次打开检测：如果完全没数据，提示文件位置注意事项
   const banksExist = Object.keys(appData.banks).length > 0;
@@ -10877,6 +11058,10 @@ function qzEnterWrongBook() {
   if (typeof qzShowWrongBook === 'function') qzShowWrongBook();
 }
 function qzShowWrongBook() {
+  // 2026-10-24：没激活选择题全能版 → 收藏/重点页签灰掉；页面不要停在收藏内容上
+  // 🐞 v222 修：wrongTab 在选择题 IIFE 里，这里不能直接引用（会 ReferenceError）→ 交给 QZ
+  if (window.QZ && typeof QZ.resetWrongTabIfLocked === 'function') { try { QZ.resetWrongTabIfLocked(); } catch (e) {} }
+  if (window.QZ && typeof QZ.updateWrongTabLocks === 'function') QZ.updateWrongTabLocks();
   var rb = document.getElementById('browseReciteBody'); if (rb) rb.style.display = 'none';
   var qr = document.getElementById('quizWrongRoot'); if (qr) qr.style.display = 'block';
   var t1 = document.getElementById('browseTabList'); if (t1) t1.classList.remove('active');
@@ -11647,6 +11832,78 @@ function exportBankBlanksHidden(id) {
   showExportModal(bank.name + '（挖空隐藏）', pdfItemsToText(items, false), items, false);
 }
 
+// ==================== 🆕 v221：导出 txt（全能版） ====================
+//   ① 带标记：￥章节 / $题目 / @@挖空@@ / 口诀 —— 对方在「导入」里选中就能再导回工具
+//   ② 纯文本：章节名 + 题目 + 答案 + 口诀，不带任何标记 —— 拿去 WPS / 备忘录里改
+function _exportBankDate() {
+  var d = new Date();
+  return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+}
+function _bankCardsToMarkedText(bank) {
+  var out = [], lastChapter = null;
+  (bank.cards || []).forEach(function(card) {
+    var q = String(card.question || '');
+    var a = String(card.answer || '');
+    var answerStart = q.length + 1;
+    if (card.chapter && card.chapter !== lastChapter) {
+      out.push('￥' + card.chapter);
+      lastChapter = card.chapter;
+    }
+    var blanks = (card.blanks || []).filter(function(b) { return !b._combined; }).sort(function(x, y) { return x.start - y.start; });
+    var qb = [], ab = [];
+    blanks.forEach(function(b) {
+      if (b.start == null || b.end == null) return;
+      if (b.start < answerStart) qb.push(b); else ab.push(b);
+    });
+    out.push('$' + _insertBlankMarks(q, qb, 0));
+    out.push(_insertBlankMarks(a, ab, answerStart));
+    if (card.koujue) out.push('口诀：' + card.koujue);
+  });
+  return out.join('\n') + '\n';
+}
+function _bankCardsToPlainText(bank) {
+  var out = [], lastChapter = null;
+  (bank.cards || []).forEach(function(card) {
+    if (card.chapter && card.chapter !== lastChapter) {
+      out.push('【' + card.chapter + '】');
+      lastChapter = card.chapter;
+    }
+    out.push(String(card.question || ''));
+    out.push(String(card.answer || ''));
+    if (card.koujue) out.push('口诀：' + card.koujue);
+    out.push('');
+  });
+  return out.join('\n');
+}
+function _exportTextFallback(name, text) {
+  var old = document.getElementById('_exportTextFallback'); if (old) old.remove();
+  var ov = document.createElement('div'); ov.id = '_exportTextFallback'; ov.className = 'modal-overlay'; ov.style.animation = 'none';
+  ov.innerHTML = '<div class="modal" style="animation:none;max-width:420px;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:18px;border-radius:14px">' +
+    '<div style="font-size:var(--f16);font-weight:700;margin-bottom:8px">📄 ' + escapeHtml(name) + '</div>' +
+    '<div style="font-size:var(--f12);color:var(--text-secondary);line-height:1.7;margin-bottom:8px">浏览器没让直接下载，下面就是全部内容，点一下全选后复制。</div>' +
+    '<textarea readonly style="width:100%;min-height:220px;max-height:50vh;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg-input);color:var(--text);font-size:var(--f12);font-family:inherit" onclick="this.select()">' + escapeHtml(text) + '</textarea>' +
+    '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-primary" style="flex:1" onclick="var t=this.parentNode.parentNode.querySelector(\'textarea\');t.select();document.execCommand(\'copy\');showToast(\'已复制\')">📋 复制</button><button class="btn btn-ghost" style="flex:1" onclick="this.closest(\'.modal-overlay\').remove()">关闭</button></div>' +
+    '</div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
+}
+function _doExportBankText(bankId, kind) {
+  if (!hasFeature('exportFile')) { showToast('导出是全能版功能，升级后就能导出了'); return; }
+  if (trialBlocksExport()) { showTrialExportBlocked(); return; }
+  var bank = _findBankById(bankId); if (!bank) return;
+  var text = kind === 'marked' ? _bankCardsToMarkedText(bank) : _bankCardsToPlainText(bank);
+  var suffix = kind === 'marked' ? '_可导入' : '_纯文本';
+  var fname = _safeExportName(bank.name || '题库') + '_' + _exportBankDate() + suffix + '.txt';
+  try {
+    _downloadTextFile(fname, text);
+    showToastLines(['📄 已生成 ' + fname, kind === 'marked' ? '对方在「📂 上传」里选中它就能再导入' : '可以直接用 WPS / 备忘录打开'], 6000);
+  } catch (e) {
+    _exportTextFallback(fname, text);
+  }
+}
+function exportBankTxt(id) { _doExportBankText(id, 'marked'); }
+function exportBankPlainTxt(id) { _doExportBankText(id, 'plain'); }
+
 // ==================== 🆕 v196：导出选择菜单 / 导出题库文件 ====================
 // 原来题库页有一颗「📤 题目卷」、一颗「📝 挖空练习卷」，v196 并成一颗 📤：
 // 点开先选 —— 两种 PDF，或者「导出题库文件」（.json，发给别人用）
@@ -11667,6 +11924,8 @@ function showExportChoice(bankId) {
     + '<button style="' + btnCss + '" onclick="' + close + 'exportBank(\'' + bankId + '\')">📤 导出 PDF · 题目卷</button>'
     + '<button style="' + btnCss + '" onclick="' + close + 'exportBankBlanksHidden(\'' + bankId + '\')">📝 导出 PDF · 挖空练习卷</button>'
     + '<button style="' + btnCss + '" onclick="' + close + 'showBankFileExportDialog(\'' + bankId + '\')">📦 导出题库文件（可发给别人）</button>'
+    + '<button style="' + btnCss + '" onclick="' + close + 'exportBankTxt(\'' + bankId + '\')">📄 导出 txt（带标记，可再导入）</button>'
+    + '<button style="' + btnCss + '" onclick="' + close + 'exportBankPlainTxt(\'' + bankId + '\')">📝 导出纯文本（章节 + 答案 + 口诀）</button>'
     + '<button style="width:100%;text-align:center;padding:14px;background:var(--bg-input);border:none;font-size:var(--f15);color:var(--text-secondary);cursor:pointer;min-height:48px" onclick="' + close + '">取消</button>'
   + '</div>';
   document.body.appendChild(ov);
@@ -11842,7 +12101,7 @@ var _aiPendingCtx = null;
 
 function aiCfgLoad() {
   var d = {
-    key: '', model: 'deepseek-chat', autoRepair: true, enabled: true, compactPrompt: true,
+    key: '', aiCode: '', _aiTaskId: '', model: 'deepseek-flash', autoRepair: true, enabled: true, compactPrompt: true,
     stats: { runs: 0, apiCalls: 0, prompt: 0, completion: 0, lastPrompt: 0, lastCompletion: 0, lastAt: 0 },
     balance: null, alertBase: null, nextAlert: 2, lastBalance: null, alertCurrency: ''
   };
@@ -11853,7 +12112,9 @@ function aiCfgLoad() {
     var out = {};
     for (var k in d) out[k] = (o[k] !== undefined ? o[k] : d[k]);
     out.key = typeof o.key === 'string' ? o.key : '';
-    out.model = (typeof o.model === 'string' && o.model) ? o.model : 'deepseek-chat';
+    out.aiCode = typeof o.aiCode === 'string' ? o.aiCode : '';
+    out._aiTaskId = typeof o._aiTaskId === 'string' ? o._aiTaskId : '';
+    out.model = (typeof o.model === 'string' && o.model) ? o.model : 'deepseek-flash';
     out.autoRepair = !(o.autoRepair === false);
     out.enabled = !(o.enabled === false);
     out.compactPrompt = !(o.compactPrompt === false);
@@ -11907,12 +12168,13 @@ function _aiAttr(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 function _aiSectionHtml() {
-  if (!isAdmin()) return '';
+  // 🆕 v221：不再管理员专属；只给全能版（用户 2026-10-24 定）
+  if (getTier() !== 'pro') return '';
   var cfg = aiCfgLoad();
   var offDis = cfg.enabled ? '' : ' disabled';
-  return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'ai\')"><span>🤖 AI 整理（管理员）</span><span class="section-arrow" id="arrow_ai">▲</span></div>' +
-    '<div class="section-body" id="body_ai"><div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">' +
-      '<div style="font-size:12px;color:var(--text-secondary);line-height:1.7">填你自己的 DeepSeek Key，就能在导入页直接整理资料。<b>Key 只存在这台设备，不进备份、不上云。</b></div>' +
+  return '<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:8px">' +
+      '<div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:2px">🤖 AI 整理</div>' +
+      '<div style="font-size:12px;color:var(--text-secondary);line-height:1.7">填你自己的 DeepSeek Key，或者用一次性 AI 激活码，就能在导入页直接整理资料。<b>Key 只存在这台设备，不进备份、不上云。</b></div>' +
       '<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);min-height:36px;margin-top:2px"><input type="checkbox" id="aiEnabled"' + (cfg.enabled ? ' checked' : '') + ' onchange="aiSetEnabled(this.checked)"> 启用 AI 整理</label>' +
       '<div style="font-size:11px;color:var(--text-tertiary);line-height:1.6;margin-top:-4px">关掉后导入页不显示 AI 按钮、不发任何请求（余额也不查）；Key 仍保留。</div>' +
       '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);min-height:36px"><input type="checkbox" id="aiCompactPrompt"' + (cfg.compactPrompt ? ' checked' : '') + ' onchange="aiCfgSet(\'compactPrompt\', this.checked)"> 简洁话术（省 token，默认开）</label>' +
@@ -11922,9 +12184,12 @@ function _aiSectionHtml() {
         '<input id="aiKeyInput" type="password" value="' + _aiAttr(cfg.key) + '" placeholder="sk-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="aiCfgSet(\'key\', this.value)" style="flex:1;min-width:0;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg-card);color:var(--text);font-family:monospace">' +
         '<button class="btn btn-sm btn-ghost" onclick="aiToggleKeyVisible()" style="min-width:40px;min-height:40px" title="显示/隐藏">👁</button>' +
       '</div>' +
+      '<div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">AI 激活码（没有自己的 Key 时用）</div>' +
+      '<input id="aiCodeInput" type="text" value="' + _aiAttr(cfg.aiCode) + '" placeholder="AI-XXXX-XXXX" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="aiCfgSet(\'aiCode\', this.value.trim().toUpperCase())" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg-card);color:var(--text);font-family:monospace">' +
+      '<div style="font-size:11px;color:var(--text-tertiary);line-height:1.6;margin-top:-4px">一个码 = 一次整理（含 1 次自动返工）；<b>失败也算用掉</b>。只限全能版。填了自己的 Key 就优先用自己的 Key，不消耗码。</div>' +
       '<div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">模型</div>' +
       '<div style="display:flex;gap:6px">' +
-        '<input id="aiModelInput" type="text" value="' + _aiAttr(cfg.model) + '" placeholder="deepseek-chat" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="aiCfgSet(\'model\', this.value.trim())" style="flex:1;min-width:0;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg-card);color:var(--text);font-family:monospace">' +
+        '<input id="aiModelInput" type="text" value="' + _aiAttr(cfg.model) + '" placeholder="deepseek-flash" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="aiCfgSet(\'model\', this.value.trim())" style="flex:1;min-width:0;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg-card);color:var(--text);font-family:monospace">' +
         '<button class="btn btn-sm btn-ghost" onclick="aiFetchModels()" style="white-space:nowrap;min-height:40px' + (cfg.enabled ? '' : ';opacity:.45') + '"' + offDis + '>🔄 拉取模型</button>' +
       '</div>' +
       '<div id="aiModelList" style="display:flex;gap:6px;flex-wrap:wrap"></div>' +
@@ -11942,11 +12207,93 @@ function _aiSectionHtml() {
       '</div>' +
       '<button class="btn btn-outline btn-block" onclick="aiTestConnection()" style="min-height:42px' + (cfg.enabled ? '' : ';opacity:.45') + '"' + offDis + '>🧪 测试连接</button>' +
       '<div id="aiCfgStatus" style="font-size:12px;color:var(--text-tertiary);line-height:1.6"></div>' +
-    '</div></div></div>';
+    '</div>';
+}
+// 🆕 v222：设置 → 音效与动画（全能版专属；5 组动画 / 3 组音效）
+function _soundSettingsHtml() {
+  if (getTier() !== 'pro') {
+    return '<div class="section"><div class="section-header section-title" style="cursor:pointer" onclick="showToast(\'音效与动画是全能版功能，升级后可用\')"><span>🎵 音效与动画 · 全能版可用</span></div></div>';
+  }
+  var s = appData.settings || {};
+  var soundOn = s.soundOn === true;
+  var particleOn = s.particleOn === true;
+  var curS = s.soundId || 'softpiano';
+  var curE = s.effectId || 'ribbon';
+  var vol = (s.soundVolume == null ? 100 : s.soundVolume);
+
+  function soundIcon(d) {
+    var owned = _sfxOwned(d.id);
+    var active = curS === d.id;
+    return '<button class="sfx-icon-btn' + (active ? ' on' : '') + (owned ? '' : ' locked') + '"' +
+      ' onclick="' + (owned ? 'selectSound' : 'askBuySound') + '(\'' + d.id + '\')"' +
+      ' title="' + d.icon + ' ' + d.name + (d.free ? ' · 全能版自带' : ' · ' + d.price + '🍅') + '">' +
+      '<span class="sfx-ico">' + d.icon + '</span>' +
+      (!owned && !d.free ? '<span class="sfx-price">' + d.price + '</span>' : '') +
+      '</button>';
+  }
+  function effectIcon(d) {
+    var owned = _fxOwned(d.id);
+    var active = curE === d.id;
+    return '<button class="sfx-icon-btn' + (active ? ' on' : '') + (owned ? '' : ' locked') + '"' +
+      ' onclick="' + (owned ? 'selectEffect' : 'askBuyEffect') + '(\'' + d.id + '\')"' +
+      ' title="' + d.icon + ' ' + d.name + (d.free ? ' · 全能版自带' : ' · ' + d.price + '🍅') + '">' +
+      '<span class="sfx-ico">' + d.icon + '</span>' +
+      (!owned && !d.free ? '<span class="sfx-price">' + d.price + '</span>' : '') +
+      '</button>';
+  }
+  function groups(items, fn, groupNames) {
+    return groupNames.map(function (g) {
+      var list = items.filter(function (d) { return d.group === g; });
+      if (!list.length) return '';
+      return '<div style="margin:8px 0 2px;font-size:var(--f11);color:var(--text-tertiary);font-weight:600">' + g + '</div>' +
+        '<div class="sfx-pick-row" style="margin-bottom:4px">' + list.map(fn).join('') + '</div>';
+    }).join('');
+  }
+
+  return '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'soundfx\')"><span>🎵 音效与动画</span><span class="section-arrow" id="arrow_soundfx">▲</span></div>' +
+    '<div class="section-body" id="body_soundfx">' +
+      '<div class="setting-item"><div><div class="setting-label">做题结束音效</div><div class="setting-desc">整组做完才响一次，不是每题都响</div></div>' +
+        '<label class="toggle"><input type="checkbox" id="soundOnToggle"' + (soundOn ? ' checked' : '') + ' onchange="setSoundOn(this.checked)"><span class="slider"></span></label></div>' +
+      (soundOn ? (
+        '<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:4px"><div><div class="setting-label">选音效</div><div class="setting-desc">5 个免费；其余番茄解锁，最低 4🍅</div></div>' +
+        groups(SOUND_DEFS, soundIcon, SOUND_GROUPS) + '</div>' +
+        '<div class="setting-item"><div><div class="setting-label">音效音量</div><div class="setting-desc" id="soundVolVal">' + vol + '%</div></div>' +
+        '<div style="width:140px"><input type="range" min="0" max="100" step="5" value="' + vol + '" oninput="updateSoundVolume(parseInt(this.value))" onchange="updateSoundVolume(parseInt(this.value))"></div></div>'
+      ) : '') +
+      '<div class="setting-item"><div><div class="setting-label">做题结束动画</div><div class="setting-desc">整组做完飘 / 上升 10 秒；离开结束页立刻停</div></div>' +
+        '<label class="toggle"><input type="checkbox" id="particleOnToggle"' + (particleOn ? ' checked' : '') + ' onchange="setParticleOn(this.checked)"><span class="slider"></span></label></div>' +
+      (particleOn ? (
+        '<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:4px"><div><div class="setting-label">选动画</div><div class="setting-desc">5 个免费；其余番茄解锁，最低 4🍅</div></div>' +
+        groups(EFFECT_DEFS, effectIcon, EFFECT_GROUPS) + '</div>'
+      ) : '') +
+    '</div></div>';
+}
+
+function setSoundOn(v) { saveSetting('soundOn', !!v); renderSettings(); }
+function setParticleOn(v) { saveSetting('particleOn', !!v); renderSettings(); }
+function askBuySound(id) {
+  var def = _sfxDef(id);
+  if (!def) return;
+  if (def.free) { showToast('这个是全能版自带，已自动解锁'); return; }
+  showConfirm('解锁音效', '花 ' + def.price + '🍅 解锁「' + def.name + '」？', function () { buySound(id); }, '解锁');
+}
+function askBuyEffect(id) {
+  var def = _fxDef(id);
+  if (!def) return;
+  if (def.free) { showToast('这个是全能版自带，已自动解锁'); return; }
+  showConfirm('解锁动画', '花 ' + def.price + '🍅 解锁「' + def.name + '」？', function () { buyEffect(id); }, '解锁');
+}
+
+function updateSoundVolume(v) {
+  saveSetting('soundVolume', v);
+  var el = document.getElementById('soundVolVal');
+  if (el) el.textContent = v + '%';
 }
 function _aiErrText(e) {
   if (!e) return '未知错误';
   if (e.name === 'AbortError') return '已停止';
+  // 后端 /ai 的 400/403/404 是“AI 码无效 / 已达上限 / 资料太长”这类明确提示，直接显示它
+  if (e.message && e.status && e.status !== 401 && e.status !== 402 && e.status !== 429 && e.status < 500) return e.message;
   if (e.status === 401) return 'Key 不对或已失效，请到设置里重新填';
   if (e.status === 402) return 'DeepSeek 余额不足，请充值';
   if (e.status === 429) return '请求太频繁，等一会儿再试';
@@ -12152,7 +12499,7 @@ var AI_COMPACT_RULES = [
   '【输出格式】',
   '- 一行以 $ 开头 = 一道题（题目）。',
   '- 一行以 ￥ 开头 = 大类/章节（只有资料里有大分类、且【本次选项】说标时才写）。',
-  '- 其余行 = 上一题的答案，一行一个要点；一直写到下一个 $ 或 ￥ 为止。',
+  '- 其余行 = 上一题的答案：原文一段没换行的整段写成一行（句子中间别自己加换行）；带 ①②③ / 1. 2. 3. 编号的一个编号一行；一直写到下一个 $ 或 ￥ 为止。',
   '- 答案每个要点行开头空两个全角空格；答案里的 ①②③ 原样保留。',
   '- 口诀写成单独一行：口诀：xxx；多个口诀用「；」合到同一行。',
   '【挖空】',
@@ -12271,7 +12618,7 @@ function _aiChat(messages, model, signal) {
   return fetch(AI_API_BASE + '/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key },
-    body: JSON.stringify({ model: model || cfg.model || 'deepseek-chat', messages: messages, temperature: 0.2, stream: false }),
+    body: JSON.stringify({ model: model || cfg.model || 'deepseek-flash', messages: messages, temperature: 0.2, stream: false }),
     signal: signal || undefined
   }).then(function (r) {
     return r.text().then(function (t) {
@@ -12281,6 +12628,50 @@ function _aiChat(messages, model, signal) {
       if (!data) throw { message: '返回内容看不懂，请重试' };
       return data;
     });
+  });
+}
+// 🆕 v221：AI 调用分流 —— 有自己的 Key 就直连 DeepSeek（花自己的钱）；
+//   没有 Key 就用一次性 AI 码走后端代理（Key 在 Cloudflare secret，前端碰不到）。
+function _aiCall(messages, model, signal) {
+  var cfg = aiCfgLoad();
+  if (cfg.key) return _aiChat(messages, model, signal);
+  if (!cfg.aiCode && !cfg._aiTaskId) {
+    return Promise.reject({ message: '先填 DeepSeek Key，或输入 AI 激活码' });
+  }
+  var _hadCode = !!cfg.aiCode;
+  var body = {
+    codeHash: (appData && appData.activation && appData.activation.codeHash) || '',
+    aiCode: cfg.aiCode || '',
+    taskId: cfg._aiTaskId || '',
+    messages: messages
+  };
+  return fetch(API_BASE + '/ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: signal || undefined
+  }).then(function(r) {
+    return r.text().then(function(t) {
+      var d = null;
+      try { d = JSON.parse(t); } catch (e) {}
+      if (!r.ok || !d || !d.success) {
+        throw { status: r.status, message: (d && d.error) || ('AI 整理失败（' + r.status + '）') };
+      }
+      // 第一次调用成功后：码已被服务端核销 → 本地立刻清掉；返工只靠 taskId
+      if (d.taskId) {
+        var p = { _aiTaskId: d.taskId };
+        if (_hadCode) p.aiCode = '';
+        aiCfgSave(p);
+      }
+      return {
+        choices: [{ message: { content: d.content || '' }, finish_reason: 'stop' }],
+        usage: d.usage || {}
+      };
+    });
+  }).catch(function(e) {
+    // 用户定的「失败也核销」：只要带着码发出去过，本地就把码清掉，避免他反复点同一个废码
+    if (_hadCode) { try { aiCfgSave({ aiCode: '', _aiTaskId: '' }); } catch (e2) {} }
+    throw e;
   });
 }
 function _aiContent(data) {
@@ -12329,8 +12720,9 @@ function _aiFillResult(ctx, out) {
   setTimeout(function () { try { precheckImport(); } catch (e) {} }, 200);
 }
 function startAIImport() {
-  if (!isAdmin()) { showToast('仅管理员可用'); return; }
-  if (!aiCfgLoad().enabled) { showToastLines(['AI 整理已关闭', '设置 → 🤖 AI 整理（管理员）→ 打开「启用 AI 整理」'], 5000); return; }
+  if (getTier() !== 'pro') { showToast('AI 整理是全能版功能，升级后可用'); return; }
+  var _cfg0 = aiCfgLoad();
+  if (!_cfg0.enabled) { showToastLines(['AI 整理已关闭', '设置 → 🧰 不常用功能 → 🤖 AI 整理 → 打开「启用 AI 整理」'], 5000); return; }
   var ta = $('importTextarea');
   if (!ta) return;
   var v = ta.value || '';
@@ -12341,8 +12733,8 @@ function startAIImport() {
     showToastLines(['先粘贴或上传资料', '可以点上面的「📂 上传」，或者直接粘贴文字'], 5000);
     return;
   }
-  if (!aiCfgLoad().key) {
-    showToastLines(['还没填 DeepSeek Key', '设置 → 🤖 AI 整理（管理员）里填一次就行'], 6000);
+  if (!_cfg0.key && !_cfg0.aiCode) {
+    showToastLines(['还没填 DeepSeek Key，也没输入 AI 激活码', '设置 → 🧰 不常用功能 → 🤖 AI 整理 里填一个'], 6000);
     return;
   }
   var ctx = { source: src, hasSel: hasSel, selStart: ss, selEnd: se };
@@ -12357,13 +12749,15 @@ function startAIImport() {
   showPromptChooser('ai');
 }
 function _aiRun(prompt, ctx) {
-  if (!isAdmin()) { showToast('仅管理员可用'); return; }
+  if (getTier() !== 'pro') { showToast('AI 整理是全能版功能，升级后可用'); return; }
   var cfg = aiCfgLoad();
   if (!cfg.enabled) { showToast('AI 整理已关闭，去设置里打开'); return; }
-  if (!cfg.key) { showToast('先去设置里填 DeepSeek Key'); return; }
+  if (!cfg.key && !cfg.aiCode && !cfg._aiTaskId) { showToast('先填 DeepSeek Key，或输入 AI 激活码'); return; }
+  // 每次新整理都从干净的任务开始（返工才用 taskId）
+  aiCfgSave({ _aiTaskId: '' });
   var source = String((ctx && ctx.source) || '');
   if (!source.trim()) { showToast('先粘贴或上传资料'); return; }
-  var model = cfg.model || 'deepseek-chat';
+  var model = cfg.model || 'deepseek-flash';
   // v213：发送前本地去掉纯页码/页脚、压掉多余空行；简洁话术默认开
   var cleanSource = _aiCleanSource(source);
   var useCompact = cfg.compactPrompt !== false;
@@ -12380,7 +12774,7 @@ function _aiRun(prompt, ctx) {
   _aiAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
   var timeoutTimer = setTimeout(function () { if (_aiAbort) { try { _aiAbort.abort(); } catch (e) {} } }, 300000);
   function done() { clearInterval(timer); clearTimeout(timeoutTimer); _aiAbort = null; }
-  _aiChat(messages, model, _aiAbort && _aiAbort.signal)
+  _aiCall(messages, model, _aiAbort && _aiAbort.signal)
     .then(function (data) {
       _aiAccumUsage(runUsage, data);
       var r = _aiContent(data);
@@ -12397,7 +12791,7 @@ function _aiRun(prompt, ctx) {
         return x.indexOf('答案为空') >= 0 || x.indexOf('没有识别出任何题目') >= 0;
       });
       var repairMsgs = _aiRepairMessages(out, v.issues, needSource ? cleanSource : '');
-      return _aiChat(repairMsgs, model, _aiAbort && _aiAbort.signal).then(function (d2) {
+      return _aiCall(repairMsgs, model, _aiAbort && _aiAbort.signal).then(function (d2) {
         _aiAccumUsage(runUsage, d2);
         var r2 = _aiContent(d2);
         var out2 = _aiCleanOutput(r2.content);
@@ -12412,7 +12806,7 @@ function _aiRun(prompt, ctx) {
       _aiProgressHide();
       _aiCommitRun(runUsage, true);
       _aiFillResult(ctx, res.out);
-      aiRefreshBalance(true);   // 免费 GET；顺便检查「每降 2 元」提醒
+      if (cfg.key) aiRefreshBalance(true);   // 免费 GET；顺便检查「每降 2 元」提醒
       var finalV = _aiValidateOutput(res.out);
       var _notes = (res.issues || []).concat(res.warnings || []);
       var msg = '✅ 整理完成，共 ' + finalV.cards.length + ' 题';
@@ -12424,7 +12818,7 @@ function _aiRun(prompt, ctx) {
     .catch(function (e) {
       done();
       _aiProgressHide();
-      if (runUsage.calls) { _aiCommitRun(runUsage, false); aiRefreshBalance(true); }
+      if (runUsage.calls) { _aiCommitRun(runUsage, false); if (cfg.key) aiRefreshBalance(true); }
       if (e && e.name === 'AbortError') { showToast('已停止'); return; }
       showToastLines(['❌ 整理失败：' + _aiErrText(e), '资料没有动，可以再点一次 AI 重试'], 6000);
     });
@@ -12445,10 +12839,10 @@ function showImportModal() {
         '<button class="btn btn-outline" style="flex:1;min-height:44px" onclick="qzStartQuizImportFromModal()">📝 选择题</button>' +
       '</div></div>';
   }
-  // 🆕 v211：管理员专属的 AI 整理入口。没输管理码 → 这个字符串是空的，页面上根本看不到。
-  var aiEntry = (isAdmin() && aiCfgLoad().enabled)
+  // 🆕 v221：AI 整理入口 —— 不再管理员专属，只给全能版（用户 2026-10-24 定）
+  var aiEntry = (getTier() === 'pro' && aiCfgLoad().enabled)
     ? '<div style="margin-top:8px">' +
-        '<button class="btn btn-sm" style="background:var(--primary-light);border:none;font-size:var(--f13);width:100%;color:var(--primary);font-weight:700;min-height:44px;cursor:pointer" onclick="startAIImport()">🤖 AI 帮我整理（管理员）</button>' +
+        '<button class="btn btn-sm" style="background:var(--primary-light);border:none;font-size:var(--f13);width:100%;color:var(--primary);font-weight:700;min-height:44px;cursor:pointer" onclick="startAIImport()">🤖 AI 帮我整理</button>' +
         '<div style="font-size:var(--f11);color:var(--text-tertiary);margin-top:4px;text-align:center">先把资料粘贴/上传到上面，再点这里 —— 会按下面这套话术整理</div>' +
       '</div>'
     : '';
@@ -12646,21 +13040,29 @@ async function handleSplitFileImportA(el) {
 
 // 统一文件导入入口：自动检测格式并分发到对应 handler
 async function handleUnifiedFileImport(el) {
-  var file = el.files[0]; if (!file) return;
+  var file = el && el.files && el.files[0];
+  if (!file) { showToast('没有选到文件，请再点一次「📂 上传」'); return; }
   var name = file.name.toLowerCase();
   var ext = name.substring(name.lastIndexOf('.'));
+  // 用户点了之后先给一句反馈 —— 大文件读取要几秒，不给反馈会被当成「没反应」
+  showToast('📂 已选中：' + file.name + '，正在读取…', 4000);
   // 构造一个类似 input 的临时对象传给各 handler
   var fakeEl = { files: [file], value: '' };
-  if (ext === '.docx' || ext === '.doc') {
-    handleWordImport(fakeEl);
-  } else if (ext === '.pdf') {
-    handlePdfImport(fakeEl);
-  } else if (ext === '.json') {
-    // 🆕 v196：「题库文件」（.json）从这进 —— 是它自己人就弹确认卡，不是就按老办法当文本导
-    handleBankFileImport(file);
-  } else {
-    // .txt, .csv, .md 等文本格式
-    handleFileImport(fakeEl);
+  try {
+    if (ext === '.docx' || ext === '.doc') {
+      await handleWordImport(fakeEl);
+    } else if (ext === '.pdf') {
+      await handlePdfImport(fakeEl);
+    } else if (ext === '.json') {
+      // 🆕 v196：「题库文件」（.json）从这进 —— 是它自己人就弹确认卡，不是就按老办法当文本导
+      await handleBankFileImport(file);
+    } else {
+      // .txt, .csv, .md 等文本格式
+      await handleFileImport(fakeEl);
+    }
+  } catch (e) {
+    console.error('[上传] 读取失败：', e);
+    showToast('这个文件读不出来：' + (e && e.message ? e.message : e), 6000);
   }
   el.value = '';
 }
@@ -13421,7 +13823,7 @@ function _pgBuild() {
   if (_PGST.bigpoint === 'yes') L.push(N() + '一行开头写 ￥ 的 = 一个大点（当分类 / 章节用）。例：￥教育观');
   L.push(N() + '一行开头写 $ 的 = 一道题目。例：$素质教育的内涵');
   L.push(N() + '一行以「口诀：」开头的 = 这道题的口诀。');
-  L.push(N() + '其余的行 = 上一道题的答案，一行写一个要点');
+  L.push(N() + '其余的行 = 上一道题的答案（原文一段没换行的，一段就是一行；带 ①②③ / 1. 2. 3. 编号的，一个编号一行）');
   L.push(N() + '一道题的答案可以有很多行，一直写到下一道 $ 或 ￥ 为止');
   L.push(N() + '落在一道题答案里的行，都算这道题的答案，不要自己另起新题');
   // 🆕 v183 D1 补（2026-09-24 用户报「你给我的可以呀 但是豆包的不行」）：
@@ -13567,7 +13969,8 @@ function _pgBuild() {
 
   L.push('【答案怎么写】');
   L.push(N() + '🔴 答案里带 ① ② ③ 这种序号的，【每个序号都要另起一行】，不要连着写下去。');
-  L.push(N() + '没序号的地方，一句话也另起一行。');
+  L.push(N() + '🔴 没序号的地方，【按原文的段落走】—— 原文这一段没有换行的，整段就写成一行，句子中间【不要】自己加换行；只有原文自己换了行，才跟着换行。');
+  L.push('   · 例：原文是一整段、5 句话、中间没有换行 → 输出也是一整行，5 句话连着写，不要一句一行。');
   L.push(N() + '原文答案里的 ①②③ 这种序号，原样保留，别去掉。');
   // 🆕 v219（2026-10-20 用户改主意）：v186 的「每个要点行都空两格」已被取代 ——
   //    现在保留原层级，只把第一行的缩进对齐到第二行；见下面三条。
@@ -13694,7 +14097,8 @@ function _pgBuild() {
   // 🆕 v197（2026-10-07 用户：「那都默认用户一次性发 留个兜底话术吧」）：
   //   「资料有多少？」整题删掉了 —— 原来的两句（只有勾「分批发」才出现）改成这一句，**每份话术里都在**。
   L.push('- 你直接整理我这次发给你的内容就行 —— 不要说「还有内容没发」「请发完整的」，也不用去猜前面或后面还有什么');
-  L.push('- 输出完自己从头到尾对一遍：段数、行数要和原文一一对上');
+  L.push('- 输出完自己从头到尾对一遍：原文的每一段、每一句、每个字都在；原文一段没换行的，输出也是一整行');
+  L.push('  · 这里说的「行」= 原文本来就有换行的地方；原文一段没换行的，输出就是一整行，句子中间别断开');
   L.push('');
   L.push('🔴🔴 最后再说一遍（这条我每次都碰到）：');
   L.push('- 开头【不要】写「好的」「我来帮你整理」「以下是我整理的内容」这类话');
@@ -14392,7 +14796,7 @@ function showImportPreview(name, cards, stats) {
     <div id="previewCards"></div>
     <div id="previewPageNavBottom" style="margin-top:10px"></div>
     </div>
-    ${isAdmin() ? '<div style="display:flex;justify-content:flex-end;padding:10px 0 0"><button class="btn btn-ghost btn-sm" onclick="savePreviewAsTxt()" style="font-size:var(--f12);min-height:36px">💾 保存成 txt 文件（管理员）</button></div>' : ''}
+    ${''}
     <div class="flex gap-10" style="padding:14px 0 0;flex-shrink:0">
     <button class="btn btn-ghost flex-1" onclick="closePreviewModal()">取消</button>
     <button class="btn btn-primary flex-1" id="previewConfirmBtn" onclick="confirmImport()">确认导入 (${cards.length} 题)</button>
@@ -14404,13 +14808,20 @@ function showImportPreview(name, cards, stats) {
   const saveBtn = document.createElement('button');
   saveBtn.id = 'floatingSaveBtn';
   saveBtn.textContent = '💾';
-  saveBtn.title = '保存选中（回车）';
+  saveBtn.title = '保存所有选中（回车）';
   saveBtn.onclick = () => {
     if (!previewData || previewData.mode !== 'manual') return;
-    const idx = previewData._activeIdx;
-    if (idx == null) return;
-    const sel = previewData.cards[idx]._charSelected || {};
-    if (Object.values(sel).some(v => v)) saveCardSelection(idx);
+    // 🆕 v221：一次保存**所有**有选中的卡片（老代码只存最后点过的那一张，
+    //   别的卡选中了却没存，用户下滑才发现 → 用户报的「点红圈没保存」）。
+    var _n = 0;
+    (previewData.cards || []).forEach(function(c, i) {
+      var sel = c._charSelected || {}, selQ = c._charSelectedQ || {};
+      var has = Object.keys(sel).some(function(k) { return sel[k]; }) ||
+                Object.keys(selQ).some(function(k) { return selQ[k]; });
+      if (has) { saveCardSelection(i); _n++; }
+    });
+    if (_n) showToast('✅ 已保存 ' + _n + ' 张卡的选中');
+    else showToast('没有新的选中；先点字选中，再点 💾');
   };
   saveBtn.style.cssText = 'position:fixed;right:12px;top:50%;transform:translateY(-50%);z-index:9999;font-size:var(--f28);padding:8px;min-height:auto;background:transparent;border:none;opacity:.15;cursor:pointer;line-height:1;transition:opacity .2s';
   saveBtn.onmouseenter = () => { saveBtn.style.opacity = '.5'; };
@@ -14627,14 +15038,14 @@ function renderPreviewCards() {
       '<div id="previewBody-' + i + '" class="pv-body" style="display:' + (_pvCollapsed ? 'none' : 'block') + '">' +
       (card._editing ? '<div id="editPanel-' + i + '" style="background:var(--bg);border:2px solid var(--primary);border-radius:10px;padding:12px;margin-bottom:10px">' +
         '<label style="font-size:var(--f12);color:var(--text-secondary)">题目</label>' +
-        '<textarea id="editPQ-' + i + '" style="width:100%;min-height:50px;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:var(--f13);resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="2">' + escapeHtml(card.question) + '</textarea>' +
+        '<textarea id="editPQ-' + i + '" oninput="if(window.previewData)window.previewData._dirty=true" style="width:100%;min-height:50px;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:var(--f13);resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="2">' + escapeHtml(card.question) + '</textarea>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><label style="font-size:var(--f12);color:var(--text-secondary)">答案</label>' +
           '<div style="display:flex;gap:4px;flex-wrap:wrap">' +
             '<button class="btn btn-sm btn-ghost" style="font-size:var(--f11);padding:2px 8px;min-height:30px;color:var(--primary)" onclick="event.stopPropagation();focusEditAnswerSearch(' + i + ')" title="打开全屏编辑并直接找字">🔍 找字</button>' +
             '<button class="btn btn-sm btn-ghost" id="editBigBtn-' + i + '" style="font-size:var(--f11);padding:2px 8px;min-height:30px;color:var(--primary)" onclick="event.stopPropagation();toggleEditAnswerBig(' + i + ')" title="把答案框拉大 / 收起">' + (_pvBig ? '⤢ 收起' : '⤢ 拉大') + '</button>' +
             '<button class="btn btn-sm btn-ghost" style="font-size:var(--f11);padding:2px 8px;min-height:30px;color:var(--primary)" onclick="event.stopPropagation();openAnswerFullscreenEdit(' + i + ')" title="把答案放大到全屏编辑">⛶ 全屏编辑</button>' +
           '</div></div>' +
-        '<textarea id="editPA-' + i + '" style="width:100%;min-height:' + (_pvBig ? '50vh' : '140px') + ';' + (_pvBig ? 'height:50vh;max-height:50vh;' : '') + 'padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:var(--f13);resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="6">' + escapeHtml(card.answer) + '</textarea>' +
+        '<textarea id="editPA-' + i + '" oninput="if(window.previewData)window.previewData._dirty=true" style="width:100%;min-height:' + (_pvBig ? '50vh' : '140px') + ';' + (_pvBig ? 'height:50vh;max-height:50vh;' : '') + 'padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:var(--f13);resize:vertical;margin-bottom:8px;font-family:inherit;line-height:1.6" rows="6">' + escapeHtml(card.answer) + '</textarea>' +
         '<label style="font-size:var(--f12);color:var(--text-secondary)">💡 口诀（可选）</label>' +
         '<input id="editPKj-' + i + '" value="' + escapeHtml(card.koujue || '') + '" placeholder="例如：全（全民化）民（民主化）" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:var(--f13);margin-bottom:10px;font-family:inherit">' +
         // 🆕 v212：拆 / 合 **所有人都能用**（用户拍板「三个都放开」）；拆的时候读答案框里的光标位置。
@@ -15008,25 +15419,51 @@ function toggleImportChar(idx, charIdx, section) {
   var selKey = section === 'q' ? '_charSelectedQ' : '_charSelected';
   var savedKey = section === 'q' ? '_savedCharsQ' : '_savedChars';
   if (!card[selKey]) card[selKey] = {};
-  // 如果是已保存的字，点击取消该字所属的挖空
+  // 如果是已保存的字，点击只取消这一个字（🆕 v221）
+  //   🐞 老代码：点一个字 → 把**整段空**从 blanks 删掉，却只清掉这一个字的 saved 标记
+  //      → 剩下的 7 个字还显示“已保存”样式，但没有 blank 对象 → 用户说的“剩下的无法识别”。
+  //   现在：点哪个字就只去掉哪个字；左边/右边如果还有字，各自保留成一个空。
+  //   两个**本来就独立**的空不会被合并 —— 这里只拆当前这一个 blank。
   if (card[savedKey] && card[savedKey][charIdx]) {
     card[savedKey][charIdx] = false;
     var q = (card.question || '').trim();
     var answerStart = q.length + 1;
-    card.blanks = (card.blanks || []).filter(function(b) {
-      var relStart, relEnd;
-      if (section === 'q') {
-        // 题目区挖空：位置在 [0, q.length]，无需偏移
-        relStart = b.start;
-        relEnd = b.end;
-      } else {
-        relStart = b.start - answerStart;
-        relEnd = b.end - answerStart;
+    var base = (card.blanks || []).filter(function(b) { return !b._combined; });
+    var target = null;
+    for (var _bi = 0; _bi < base.length; _bi++) {
+      var _b = base[_bi];
+      var _rs = (section === 'q') ? _b.start : (_b.start - answerStart);
+      var _re = (section === 'q') ? _b.end : (_b.end - answerStart);
+      if (charIdx >= _rs && charIdx < _re) { target = _b; break; }
+    }
+    if (target) {
+      card.blanks = base.filter(function(b) { return b !== target; });
+      var relStart = (section === 'q') ? target.start : (target.start - answerStart);
+      var relEnd = (section === 'q') ? target.end : (target.end - answerStart);
+      var leftLen = charIdx - relStart;
+      var rightLen = relEnd - (charIdx + 1);
+      var srcText = (section === 'q') ? (card.question || '') : (card.answer || '');
+      var srcStart = (section === 'q') ? target.start : (target.start - answerStart);
+      if (leftLen > 0) {
+        card.blanks.push({
+          start: target.start, end: target.start + leftLen,
+          text: srcText.substring(srcStart, srcStart + leftLen),
+          isAnswer: section === 'a'
+        });
       }
-      return !(charIdx >= relStart && charIdx < relEnd);
-    });
+      if (rightLen > 0) {
+        card.blanks.push({
+          start: target.start + leftLen + 1, end: target.end,
+          text: srcText.substring(srcStart + leftLen + 1, srcStart + leftLen + 1 + rightLen),
+          isAnswer: section === 'a'
+        });
+      }
+    } else {
+      card.blanks = base;
+    }
     // 全部空被移除后清除手动标记
     if (!card.blanks.length) delete card._manualBlanks;
+    if (card.blanks.length) _rebuildCombinedBlanks(card);
     document.getElementById('pv-answer-' + idx).innerHTML = renderAnswerChars(card, idx);
     document.getElementById('pv-info-' + idx).innerHTML = renderSavedInfo(card, idx);
     return;
@@ -15271,8 +15708,19 @@ function _rebuildCombinedBlanks(card) {
 
 function renderSavedInfo(card, idx) {
   const blanks = (card.blanks || []).slice().sort((a, b) => a.start - b.start).filter(b => !b._combined);
-  if (!blanks.length) return '<span style="font-size:var(--f11);color:var(--text-tertiary)">暂未保存挖空</span>';
-  return '<span style="font-size:var(--f11);color:var(--text-secondary)">已保存 ' + blanks.length + ' 个空：</span>' + blanks.map((b, j) => `<span class="blank-tag" onclick="removeManualBlank(${idx},${j})" style="font-size:var(--f11);padding:2px 8px;cursor:pointer" title="点击取消">${escapeHtml(b.text)} ✕</span>`).join(' ');
+  // 🆕 v221：每张卡明确显示「有选中未保存 / 已保存 N 个空」——不用下滑猜
+  var _pend = 0;
+  try {
+    _pend += Object.keys(card._charSelected || {}).filter(function(k) { return card._charSelected[k]; }).length;
+    _pend += Object.keys(card._charSelectedQ || {}).filter(function(k) { return card._charSelectedQ[k]; }).length;
+  } catch (e) {}
+  var _head = _pend
+    ? '<span style="font-size:var(--f11);color:var(--warning);font-weight:600">⚠️ ' + _pend + ' 个字选中还没保存</span>'
+    : (blanks.length
+        ? '<span style="font-size:var(--f11);color:var(--text-secondary)">✅ 已保存 ' + blanks.length + ' 个空：</span>'
+        : '<span style="font-size:var(--f11);color:var(--text-tertiary)">暂未保存挖空</span>');
+  if (!blanks.length) return _head;
+  return _head + blanks.map((b, j) => `<span class="blank-tag" onclick="removeManualBlank(${idx},${j})" style="font-size:var(--f11);padding:2px 8px;cursor:pointer" title="点击取消">${escapeHtml(b.text)} ✕</span>`).join(' ');
 }
 function removeManualBlank(idx, bidx) {
   const card = previewData.cards[idx];
@@ -15368,8 +15816,18 @@ function openAddCard(afterIdx) {
 }
 function closeAddCard() {
   if (!previewData) return;
-  previewData._addAt = null; previewData._addFrom = null;
-  renderPreviewCards();
+  var _has = (((document.getElementById('newCardQ') || {}).value || '').trim() ||
+              ((document.getElementById('newCardA') || {}).value || '').trim() ||
+              ((document.getElementById('newCardK') || {}).value || '').trim());
+  var _do = function() {
+    previewData._addAt = null; previewData._addFrom = null;
+    renderPreviewCards();
+  };
+  if (_has) {
+    showConfirm('放弃这道新题？', '填了内容但还没点「保存新题」，确定关闭吗？', _do, '放弃');
+    return;
+  }
+  _do();
 }
 function setAddAt(n) {
   if (!previewData) return;
@@ -15389,6 +15847,7 @@ function saveNewCard() {
   if (!a) { showToast('答案不能为空'); return; }
   var at = previewData._addAt;
   var card = {
+    id: generateId(),   // 🆕 v221：新卡必须有自己的 id —— 没有 id 时练习页答案键全变 undefined，新题等于加不上
     question: q, answer: a, koujue: k, fullText: q + '\n' + a,
     blanks: [], _charSelected: {}, _savedChars: {}, _charSelectedQ: {}, _savedCharsQ: {}, _autoBlanks: null
   };
@@ -15486,13 +15945,19 @@ function editPreviewTitle(h2) {
 
 function closePreviewModal() {
   // 有未保存的选中字时才提醒
-  const hasUnsaved = previewData && previewData.cards.some(c => {
+  const _hasDraft = !!(previewData && previewData._addAt != null &&
+    (((document.getElementById('newCardQ') || {}).value || '').trim() ||
+     ((document.getElementById('newCardA') || {}).value || '').trim() ||
+     ((document.getElementById('newCardK') || {}).value || '').trim()));
+  const hasUnsaved = !!((previewData && previewData.cards.some(c => {
     const selA = c._charSelected || {};
     const selQ = c._charSelectedQ || {};
     return Object.values(selA).some(v => v) || Object.values(selQ).some(v => v);
-  });
+  })) || (previewData && previewData._dirty) || _hasDraft);
   if (hasUnsaved) {
-    showConfirm('放弃编辑？', '有未保存的选中字，确定退出吗？', () => {
+    showConfirm('放弃编辑？', (previewData && previewData._dirty)
+      ? '有修改没保存，确定退出吗？'
+      : (_hasDraft ? '「新增一道题」里填了内容，还没点保存，确定退出吗？' : '有未保存的选中字，确定退出吗？'), () => {
       const wasSingle = previewData && previewData._singleCardEdit;
       const m = $('previewModal'); if (m) { previewData = null; m.remove(); }
       if (wasSingle) { if (confirmImport._origSingleCard) confirmImport = confirmImport._origSingleCard; renderPracticeCard(); }
@@ -15681,6 +16146,7 @@ function saveEditPreviewCard(idx, silent) {
 
   if (!newQ) { showToast('题目不能为空'); return; }
   if (!newA) { showToast('答案不能为空'); return; }
+  if (previewData) previewData._dirty = false;
 
   const ansChanged = newA !== card.answer;
   const qChanged = newQ !== card.question;
@@ -16092,6 +16558,7 @@ function closeAnswerFullscreen() {
 }
 // 🆕 v218：全屏编辑的临时状态（找字 / 键盘 / 拉大）
 var _fsSearch = { idx: -1, q: '', hits: [], cur: -1 };
+var _fsDirty = false;   // 🆕 v221：全屏编辑有没有没保存的改动
 var _fsSel = null;
 var _fsBig = false;
 var _fsKeyboardOpen = false;   // 键盘两态用「记住的状态」，不靠 activeElement（点按钮会先 blur）
@@ -16139,7 +16606,7 @@ function openAnswerFullscreenEdit(idx, focusSearch) {
     '</div>' +
     '<div style="font-size:var(--f11);color:var(--text-tertiary);margin:-2px 0 6px;flex-shrink:0">一次只能选中一处；下面列出全部命中，点哪一条就选中哪一处。</div>' +
     '<div id="answerFullscreenSearchResults" style="display:none;max-height:20vh;overflow-y:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;flex-shrink:0"></div>' +
-    '<textarea id="answerFullscreenEditTa" spellcheck="false" oninput="refreshFullscreenLines(' + idx + ');fullscreenSearchClearResults()" onfocus="fullscreenKeyboardState(true)" onblur="_fsSel={start:this.selectionStart,end:this.selectionEnd};if(!_fsBtnPress)fullscreenKeyboardState(false)" style="flex:0 0 auto;min-height:200px;max-height:45vh;width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;background:var(--bg-card);color:var(--text);font-size:var(--f16);line-height:1.9;resize:none;font-family:inherit">' + escapeHtml(aVal) + '</textarea>' +
+    '<textarea id="answerFullscreenEditTa" spellcheck="false" oninput="_fsDirty=true;refreshFullscreenLines(' + idx + ');fullscreenSearchClearResults()" onfocus="fullscreenKeyboardState(true)" onblur="_fsSel={start:this.selectionStart,end:this.selectionEnd};if(!_fsBtnPress)fullscreenKeyboardState(false)" style="flex:0 0 auto;min-height:200px;max-height:45vh;width:100%;padding:12px;border:2px solid var(--border);border-radius:12px;background:var(--bg-card);color:var(--text);font-size:var(--f16);line-height:1.9;resize:none;font-family:inherit">' + escapeHtml(aVal) + '</textarea>' +
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-shrink:0;flex-wrap:wrap">' +
       '<div style="font-size:var(--f12);color:var(--text-secondary)">按行拆（不用键盘）<span style="font-size:var(--f11);color:var(--text-tertiary)">—— 点某一行选中整行；点 ✂️ 从这一行前面拆开</span></div>' +
       '<button id="fsKeyboardBtn" class="btn btn-sm btn-ghost" style="font-size:var(--f12);padding:4px 10px;min-height:32px" onpointerdown="_fsBtnPress=true" onmousedown="_fsBtnPress=true" onclick="toggleFullscreenKeyboard()">⌨️ 弹出键盘</button>' +
@@ -16170,8 +16637,16 @@ function openAnswerFullscreenEdit(idx, focusSearch) {
   }
 }
 function closeAnswerFullscreenEdit() {
-  var ov = document.getElementById('answerFullscreenEdit');
-  if (ov) ov.remove();
+  var _do = function() {
+    _fsDirty = false;
+    var ov = document.getElementById('answerFullscreenEdit');
+    if (ov) ov.remove();
+  };
+  if (_fsDirty) {
+    showConfirm('放弃修改？', '全屏编辑里有改动还没保存，确定关闭吗？', _do, '放弃');
+    return;
+  }
+  _do();
 }
 function _fullscreenEditRead(idx) {
   var q = document.getElementById('answerFullscreenQ');
@@ -16321,6 +16796,7 @@ function switchFullscreenCard(idx, dir) {
   if (!v.qv.trim()) { showToast('题目不能为空'); return; }
   if (!v.av.trim()) { showToast('答案不能为空'); return; }
   _fullscreenEditWriteBack(idx, v);
+  _fsDirty = false;
   closeAnswerFullscreenEdit();
   var _saveRes = saveEditPreviewCard(idx, true);   // 切换前自动保存（静默）
   if (_saveRes && _saveRes.lost) {
@@ -16362,6 +16838,7 @@ function splitFromFullscreen(idx) {
   if (!v.a) return;
   if (v.start <= 0 || v.start >= v.av.length) { showToast('先把光标放到答案里要拆开的位置'); return; }
   _fullscreenEditWriteBack(idx, v);
+  _fsDirty = false;
   closeAnswerFullscreenEdit();
   splitPreviewCard(idx);
 }
@@ -16369,6 +16846,7 @@ function mergeFromFullscreen(idx) {
   var v = _fullscreenEditRead(idx);
   if (!v.a) return;
   _fullscreenEditWriteBack(idx, v);
+  _fsDirty = false;
   closeAnswerFullscreenEdit();
   mergePreviewCard(idx);
 }
@@ -16378,6 +16856,7 @@ function saveAnswerFullscreenEdit(idx) {
   if (!v.qv.trim()) { showToast('题目不能为空'); return; }
   if (!v.av.trim()) { showToast('答案不能为空'); return; }
   _fullscreenEditWriteBack(idx, v);
+  _fsDirty = false;
   closeAnswerFullscreenEdit();
   closeAnswerFullscreen();
   saveEditPreviewCard(idx);
@@ -16513,18 +16992,45 @@ function confirmImport() {
   // 所有版本均可导入
   // 单题编辑模式（从刷题页进入）
   if (previewData._singleCardEdit) {
-    const edited = previewData.cards[0];
-    delete edited._charSelected; delete edited._savedChars; delete edited._charSelectedQ; delete edited._savedCharsQ; delete edited._autoBlanks; delete edited._pvKey; delete edited._editing;
-    practiceState.cards[previewData._cardIdx] = edited;
-    practiceState.revealed.delete(edited.id);
-    delete practiceState.answers[edited.id];
+    // 🐞 v221 修（用户 2026-10-24 报）：做题页的单题编辑入口里「➕ 新增一道题」，
+    //   预览里看得到、保存后做题页却没有、退出重进也没有。
+    //   根因：这段只把 `previewData.cards[0]` 写回，**新增的卡片全被丢掉**。
+    //   现在：原来的题按 id 找回来写回；多出来的卡片按预览顺序插在它后面，
+    //   同时插进 `practiceState.cards`（这一轮马上就能看到），再落盘到题库。
+    var _origId = practiceState.cards[previewData._cardIdx] && practiceState.cards[previewData._cardIdx].id;
+    var _origCard = null, _extras = [];
+    (previewData.cards || []).forEach(function (c) {
+      if (!_origCard && c.id === _origId) _origCard = c;
+      else _extras.push(c);
+    });
+    if (!_origCard) _origCard = previewData.cards[0];
+    function _cleanSingle(c) {
+      delete c._charSelected; delete c._savedChars; delete c._charSelectedQ; delete c._savedCharsQ;
+      delete c._autoBlanks; delete c._pvKey; delete c._editing;
+      c.answer = (c.answer || '').replace(/\s+$/, '');
+      c.fullText = (c.question || '') + '\n' + c.answer;
+    }
+    _cleanSingle(_origCard);
+    practiceState.cards[previewData._cardIdx] = _origCard;
+    practiceState.revealed.delete(_origCard.id);
+    delete practiceState.answers[_origCard.id];
     const bank = appData.banks[practiceState.bankId];
     if (bank) {
-      const orig = bank.cards.find(x => x.id === edited.id);
-      if (orig) { orig.blanks = edited.blanks; orig.fullText = edited.fullText; orig._manualBlanks = edited._manualBlanks; }
+      const orig = bank.cards.find(function (x) { return x.id === _origCard.id; });
+      if (orig) { orig.blanks = _origCard.blanks; orig.fullText = _origCard.fullText; orig._manualBlanks = _origCard._manualBlanks; }
+      var _baseIdx = orig ? bank.cards.indexOf(orig) : (bank.cards.length - 1);
+      var _ins = 0;
+      _extras.forEach(function (c) {
+        _cleanSingle(c);
+        if (!c.id) c.id = generateId();
+        bank.cards.splice(_baseIdx + 1 + _ins, 0, c);
+        practiceState.cards.splice(previewData._cardIdx + 1 + _ins, 0, c);
+        _ins++;
+      });
+      if (_extras.length) practiceState.total = practiceState.cards.length;
       saveData(appData);
     }
-    previewData = null; const m = $('previewModal'); if (m) m.remove();
+    if (previewData) previewData._dirty = false; previewData = null; const m = $('previewModal'); if (m) m.remove();
     renderPracticeCard();
     return;
   }
@@ -16590,7 +17096,7 @@ function confirmImport() {
         bank.updatedAt = Date.now();
         // 编辑已有题库不占试用配额（这里原来会 trialQuotaAdd，和上面那句注释自相矛盾）
         saveData(appData);
-        previewData = null; const m = $('previewModal'); if (m) m.remove();
+        if (previewData) previewData._dirty = false; previewData = null; const m = $('previewModal'); if (m) m.remove();
         // 试用期间多提醒一次「到期会清空」（2026-09-15 用户要求）—— 编辑已有题库加的题也会被清掉
         if (isTrialActive()) showToastLines(['已更新！' + cleaned.length + ' 题', '⚠️ 试用期间导入的内容，试用结束会一起清空']);
         else showToast(`已更新！${cleaned.length} 题`);
@@ -16613,7 +17119,7 @@ function confirmImport() {
     if (isTrialActive()) trialQuotaAdd(1, cleaned.length);     // 试用期间记配额
     trialMarkBank(bankId, cleaned.length);                     // 记下是试用期导的，删了要还配额
     saveData(appData);
-    previewData = null; const m = $('previewModal'); if (m) m.remove();
+    if (previewData) previewData._dirty = false; previewData = null; const m = $('previewModal'); if (m) m.remove();
     // 试用期间多提醒一次「到期会清空」（2026-09-15 用户要求）
     if (isTrialActive()) showToastLines(['导入成功！' + cleaned.length + ' 题', '⚠️ 试用期间导入的内容，试用结束会一起清空']);
     else showToast(`导入成功！${cleaned.length} 题`);
@@ -18253,6 +18759,7 @@ function renderPracticeCard() {
   const _swappedNow = !!st._swapped;
   const textHtml = renderCardWithBlanks(card, revealed, qHidden);
   const starIcon = starSvg(card.starred);
+  const _starLocked = !reciteFavAllowed();   // 🆕 v221：免费/降级 → 星标变淡，点了提示升级
   const hasKj = !!card.koujue;
   const kjState = st.koujueExpanded[card.id] || 0;
   const hasVoice = appData.settings.voiceEnabled;
@@ -18268,7 +18775,7 @@ function renderPracticeCard() {
       <button class="btn btn-ghost btn-sm" onclick="backToPracticeSetup()" style="padding:4px 8px;font-size:var(--f18)" title="返回">🏠</button>
       <span style="font-size:var(--f14);font-weight:700;color:var(--text)">${cur} / ${total}</span>
       ${(st._isSprint || st._multiBanks || st._isMemory) ? '<span style="font-size:var(--f10);background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (st._cardBankMap && st._cardBankMap[st.index] ? st._cardBankMap[st.index].bankName : (st._isSprint ? '冲刺' : (st._isMemory ? '记忆复习' : '混合'))) + '</span>' : ''}
-      <button style="background:none;border:none;font-size:var(--f24);cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--primary)" onclick="toggleStarCurrent()">${starIcon}</button>
+      <button style="background:none;border:none;font-size:var(--f24);cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--primary)" class="${_starLocked ? 'fav-locked' : ''}" ${_starLocked ? 'disabled' : ''} onclick="toggleStarCurrent()" title="收藏">${starIcon}</button>
       <button style="background:none;border:none;font-size:var(--f20);cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--danger)" onclick="deleteCurrentCard()" title="删除此题">🗑️</button>
     </div>
 
@@ -18361,10 +18868,19 @@ function renderPracticeCard() {
   //    顺手也少了一处"同一个条件写两遍"—— 那种写法正是这次两个 bug 的共同根因。
   if (pd) updatePomodoroDisplay();
 
-  setTimeout(() => {
-    const fi = document.querySelector('#cardText .blank-input');
-    if (fi && !revealed) fi.focus();
-  }, 200);
+  // 🆕 v221（用户 2026-10-24 报「有的手机点一下键盘没出来」）：
+  //   老代码在**手机上**也 200ms 后自动 focus 第一个空。部分安卓浏览器不允许
+  //   “程序化 focus”弹键盘 → 用户再点这个**已经聚焦**的框，浏览器认为焦点没变，也不弹
+  //   → 看起来就是“点一下没反应、不能打字”。
+  //   现在只在**鼠标/触控板**设备上自动聚焦；手机/平板一律等用户自己点。
+  var _autoFocusDesktop = window.innerWidth >= 768 &&
+    !(('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0));
+  if (_autoFocusDesktop) {
+    setTimeout(() => {
+      const fi = document.querySelector('#cardText .blank-input');
+      if (fi && !revealed) fi.focus();
+    }, 200);
+  }
 
   // 更新专注模式收藏按钮图标
   var fsb = document.getElementById('focusStarBtn');
@@ -18585,7 +19101,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
 
   // 答案区无挖空 → 纯文本
   if (!aBlanksRaw.length) {
-    h += '<div style="line-height:1.9;white-space:pre-wrap">' + escNlAnswer(a) + '</div>';
+    h += '<div class="answer-body" style="line-height:1.9;white-space:pre-wrap">' + escNlAnswer(a) + '</div>';
     return h;
   }
 
@@ -18618,7 +19134,7 @@ function renderCardWithBlanks(card, revealed, hideQ) {
     le = ba.end;
   }
   ah += fmtAnswerSegLast(text.substring(le), true);
-  h += '<div style="line-height:1.9;white-space:pre-wrap">' + ah + '</div>';
+  h += '<div class="answer-body" style="line-height:1.9;white-space:pre-wrap">' + ah + '</div>';
   return h;
 }
 
@@ -18672,7 +19188,7 @@ function foldLongBlanks() {
     span.style.wordBreak = 'break-word';
     var rects = Array.prototype.slice.call(span.getClientRects()).filter(function (r) { return r.width > 1; });
     if (rects.length <= 1) { parent.replaceChild(inp, span); return; }   // 没跨行 → 原样放回
-    var availEm = Math.max(1, (rects[0].width - (fs * 0.5 + 4)) / fs - 0.5);   // 减左右 padding(.25em×2)+margin(4px)，再留 0.5em 安全边
+    var availEm = Math.max(1, (rects[0].width - (fs * 0.5 + 4)) / fs - 0.02);   // 减左右 padding(.25em×2)+margin(4px)，再留 0.5em 安全边
     var w = 0, k = 0;
     while (k < ans.length && w + _blankCharEm(ans[k]) <= availEm) { w += _blankCharEm(ans[k]); k++; }
     if (k < 1) k = 1;
@@ -18708,6 +19224,9 @@ function foldLongBlanks() {
     var in2 = mk(ans.slice(k), v.slice(k));
     in1.setAttribute('data-fold-a', '1');
     in2.setAttribute('data-fold-b', '1');
+    // 🆕 v221：两截看起来要像“一条空”——接缝不留边距、不画中间边框
+    in1.classList.add('fold-a');
+    in2.classList.add('fold-b');
     // 打字自动流：前半截打满 → 多出来的字自动接到后半截（用户原话「字不够自动移动」）
     var flow = function () {
       if (in1.value.length > k) {
@@ -18727,6 +19246,23 @@ function foldLongBlanks() {
     });
     parent.replaceChild(in1, span);
     parent.insertBefore(in2, in1.nextSibling);
+    // 🆕 v221：如果两截最终落在同一行 → 自动并回一个框（用户截图「说 / 话」就是这种）
+    //   ⚠️ 只合并“同一个空折出来的两截”（它们共用同一个 data-bidx、且是我们刚拆的）；
+    //      两个本来就独立的空永远不会走到这里。
+    try {
+      var _r1 = in1.getBoundingClientRect(), _r2 = in2.getBoundingClientRect();
+      var _parentW = parent.clientWidth || 0;
+      var _fsEst = parseFloat(getComputedStyle(in1).fontSize) || 16;
+      var _estW = ans.length * _fsEst * 1.05;   // 粗略估一下整块宽度（中文 1 字 ≈ 1em）
+      // 只有「两截在同一行」**而且「整块还放得下这一行」**才并回一个框；
+      //   真·超一行的长空（整块放不下）继续保留两截。
+      if (_r1.height > 0 && _r2.height > 0 && Math.abs(_r1.top - _r2.top) <= 2 &&
+          _parentW > 0 && _estW <= _parentW - 2) {
+        var _merged = mk(ans, v);
+        parent.replaceChild(_merged, in1);
+        if (in2.parentNode) in2.parentNode.removeChild(in2);
+      }
+    } catch (e) {}
   });
   // ② 显示答案态：长答案也**照挖空态的同一套口径拆两截**（用户 2026-10-07：「和正常的挖空一样，
   //   显示挖空和隐藏挖空那个空不会跳」）—— 两态的每一截宽度都用 ovalBlankWidth(同一份切片) 算、
@@ -18758,7 +19294,7 @@ function foldLongBlanks() {
     probe.style.wordBreak = 'break-word';
     var rects = Array.prototype.slice.call(probe.getClientRects()).filter(function (r) { return r.width > 1; });
     if (rects.length <= 1) { parent.replaceChild(sp, probe); return; }
-    var availEm = Math.max(1, (rects[0].width - (fs * 0.5 + 4)) / fs - 0.5);
+    var availEm = Math.max(1, (rects[0].width - (fs * 0.5 + 4)) / fs - 0.02);
     var w = 0, k = 0;
     while (k < txt.length && w + _blankCharEm(txt[k]) <= availEm) { w += _blankCharEm(txt[k]); k++; }
     if (k < 1) k = 1;
@@ -18838,6 +19374,8 @@ function saveCurrentAnswers() {
   inputs.forEach(inp => {
     // 🆕 v197：长空拆出来的后半截 —— 不单独存，跟着前半截一起存（拼回一个空）
     if (inp.dataset.foldB) return;
+    // 🆕 v221：红框里显示的是“正确答案”，不是用户填的 → 绝不能把它存成用户答案
+    if (inp.dataset.corrected === '1') return;
     // 🐞 2026-09-19 v170 连带 bug（用户 Q1）：题目区的空在 HTML 里是 **"q0" 这种字符串键**
     //    （答案区是 "0" 这种数字键，见 renderCardWithBlanks）。这里原来一律 parseInt →
     //    `parseInt('q0')` = **NaN** → 填的字被写进 `ans[cid][NaN]` 这个垃圾键，
@@ -18902,6 +19440,8 @@ function autoCheckIfDone() {
   saveCurrentAnswers();
   const card = practiceState.cards[practiceState.index];
   if (!card || practiceState.revealed.has(card.id)) return;
+  // 🆕 v221：红框里已经是“正确答案”了，不要再判一次（否则会被判成对）
+  if (document.querySelector('#cardText .blank-input[data-corrected="1"]')) return;
   const inputs = document.querySelectorAll('#cardText .blank-input');
   for (const inp of inputs) {
     if (inp.dataset.foldB) continue;   // 🆕 v197：长空的后半截不单独算「没填」
@@ -18969,6 +19509,20 @@ function renderWrongCardInteractive(card, wrongDetail) {
   return html;
 }
 
+// 🆕 v221：把「自己打的字」挂在这个空的正下方（只包一层 inline-block，不改变框的宽度）
+function _attachMineUnderInput(inp, mine) {
+  if (!inp || !inp.parentNode) return;
+  var wrap = inp.parentNode;
+  if (!wrap.classList || !wrap.classList.contains('blank-wrap')) {
+    wrap = document.createElement('span');
+    wrap.className = 'blank-wrap';
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+  }
+  var m = wrap.querySelector('.blank-mine');
+  if (!m) { m = document.createElement('span'); m.className = 'blank-mine'; wrap.appendChild(m); }
+  m.textContent = mine;
+}
 function applyCheckToInputs(card) {
   const inputs = document.querySelectorAll('#cardText .blank-input');
   let hasWrong = false;
@@ -19012,6 +19566,22 @@ function applyCheckToInputs(card) {
       wrongAnswers.push(userAns);
       _rdWrong.push({ mine: userAns, right: correctAns });
       _rdMarks.push(false);
+      // 🆕 v221（用户 2026-10-24 定）：开关打开时，红框里换成正确答案；正下方小灰字显示自己打的字
+      if (getTier() === 'pro' && appData && appData.settings && appData.settings.showCorrectOnWrong === true) {
+        inp.dataset.mine = userAns;
+        inp.dataset.corrected = '1';
+        inp.value = inp.dataset.ans || correctAns;
+        if (foldB) { foldB.dataset.corrected = '1'; foldB.value = foldB.dataset.ans || ''; }
+        inp.title = '正确答案；点一下可以重新输入';
+        // 点一下就把“正确答案”清掉，让用户重新填（否则他会以为这是自己填的）
+        inp.addEventListener('focus', function () {
+          if (this.dataset.corrected === '1') {
+            this.value = '';
+            this.dataset.corrected = '';
+          }
+        }, { once: true });
+        _attachMineUnderInput(inp, userAns);
+      }
     }
   });
   // 🆕 v199：置换练习的判分**到此为止** —— 红绿已经按普通空的路子上了，但一个字都不记录：
@@ -19128,6 +19698,8 @@ function toggleAllAnswers() {
 }
 
 function toggleStarCurrent() {
+  // 2026-10-24：免费 / 降级时收藏星看得见但点不了（按钮已灰 + disabled，点了完全没反应）
+  if (!reciteFavAllowed()) return;
   // 🆕 v218 修：离开做题页后星星可能还挂在屏幕上，点它时 practiceState 已经是 null
   //   → 原来会直接炸「practiceState.cards」。没有正在做的题就什么都不做。
   if (!practiceState || !practiceState.cards || !practiceState.cards[practiceState.index]) return;
@@ -19153,6 +19725,12 @@ function applyFocusMode() {
     document.body.classList.add('focus-mode');
   } else {
     document.body.classList.remove('focus-mode');
+  }
+  var _fsb = document.getElementById('focusStarBtn');
+  if (_fsb) {
+    var _favOk = reciteFavAllowed();
+    _fsb.classList.toggle('fav-locked', !_favOk);
+    _fsb.disabled = !_favOk;
   }
 }
 
@@ -19468,11 +20046,11 @@ function renderCardSwapped(card, hideQ, revealed) {
       }
       return h;
     }
-    h += '<div style="line-height:1.9;white-space:pre-wrap">' + escNlAnswer(a) + '</div>';
+    h += '<div class="answer-body" style="line-height:1.9;white-space:pre-wrap">' + escNlAnswer(a) + '</div>';
     return h;
   }
   var _sa = _swapRegionHtml(card, text, answerStart, text.length, aBlanks, saved, seq, false, revealed, '');
-  h += '<div style="line-height:1.9;white-space:pre-wrap">' + _sa.html + '</div>';
+  h += '<div class="answer-body" style="line-height:1.9;white-space:pre-wrap">' + _sa.html + '</div>';
   return h;
 }
 // 🆕 v199：浏览页的 🪄（只读置换）——只有「显示挖空」开着时才有用（关着点它没反应，用户定）
@@ -19493,7 +20071,7 @@ function renderBrowseSwapAnswer(card) {
     if (appData && appData.settings && appData.settings.swapBlankAnswer) {
       var _ovalB = isOvalBlank();
       return '<div class="practice-card" style="background:none;border:none;box-shadow:none;padding:0;min-height:0;margin:0">' +
-             '<div style="line-height:2.0;color:var(--text-secondary)"><span class="blank-input bw-flat' + (_ovalB ? ' oval' : '') + '" style="width:' +
+             '<div style="line-height:2;color:var(--text-secondary)"><span class="blank-input bw-flat' + (_ovalB ? ' oval' : '') + '" style="width:' +
              browsePlainBlankWidth(ans, _ovalB) + ';max-width:100%"></span></div></div>';
     }
     return '<div style="color:var(--text-secondary)">' + escNlAnswer(ans) + '</div>';
@@ -19501,7 +20079,7 @@ function renderBrowseSwapAnswer(card) {
   var full = card.fullText || ((card.question || '') + '\n' + ans);
   var _r = _swapRegionHtml(card, full, answerStart, full.length, abs, {}, 0, true, false, '');
   return '<div class="practice-card" style="background:none;border:none;box-shadow:none;padding:0;min-height:0;margin:0">' +
-         '<div style="line-height:2.0;color:var(--text-secondary)">' + _r.html + '</div></div>';
+         '<div style="line-height:2;color:var(--text-secondary)">' + _r.html + '</div></div>';
 }
 // 🆕 v199：「系统自动挖空」开关 —— 关掉后设置页那两行（默认挖空密度 / 自适应难度）跟着藏；
 //   设置值本身都保留（开着的时候原样回来）。
@@ -19950,7 +20528,1067 @@ function showPracticeResult() {
     ${rdHtml}
   </div>`;
   renderRdList();   // 🆕 v189：明细区是「默认展开」的，所以画完结果页立刻填上内容
+  // 🆕 v221：整组做完才触发音效 / 飘落（用户 2026-10-24 定）
+  playRoundEndEffects();
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════
+// 🆕 v222（2026-10-24 用户定）：做题结束动画 + 音效
+//   · 24 个动画（原有 5 个原地升级；新增 19 个）
+//   · 19 个音效（原有 13 个原地升级；新增 6 个）
+//   · 全能版免费：5 个动画 + 5 个音效；其余番茄解锁，最低 4🍅
+//   · 动画 10 秒；离开结束页 / 切后台立刻停
+//   · 画法自动：动物 + 贝壳用系统 emoji；其余手绘高清（2 倍预渲染）
+// ══════════════════════════════════════════════════════════════════════════
+var FREE_EFFECTS = ['ribbon', 'petal', 'leaf', 'autumn', 'snow'];
+var EFFECT_GROUPS = ['纸屑礼花', '四季花园', '自然梦幻', '可爱动物', '上升 / 音乐'];
+
+var EFFECT_DEFS = [
+  // 纸屑礼花（5）
+  { id:'ribbon',    name:'彩色纸屑雨', price:0,  free:true, icon:'🎊', group:'纸屑礼花', style:'paperrain', colors:'multi' },
+  { id:'burst',     name:'纸屑礼花',   price:8,  icon:'🎉', group:'纸屑礼花', style:'burst' },
+  { id:'goldrain',  name:'金色细雨',   price:6,  icon:'✨', group:'纸屑礼花', style:'paperrain', colors:'gold' },
+  { id:'sparkle',   name:'星光闪烁',   price:6,  icon:'🌟', group:'纸屑礼花', style:'sparkle' },
+  { id:'fireworks', name:'烟花绽放',   price:10, icon:'🎆', group:'纸屑礼花', style:'fireworks' },
+
+  // 四季花园（6）
+  { id:'petal',     name:'春·花瓣',   price:0, free:true, icon:'🌸', group:'四季花园', style:'sprite', kind:'petal',  size:[8,14],  vy:[0.5,1.1],  sway:0.9, density:1.0 },
+  { id:'leaf',      name:'夏·绿叶',   price:0, free:true, icon:'🍃', group:'四季花园', style:'sprite', kind:'leaf',   size:[8,14],  vy:[0.5,1.0],  sway:0.8, density:1.0 },
+  { id:'autumn',    name:'秋·落叶',   price:0, free:true, icon:'🍁', group:'四季花园', style:'sprite', kind:'autumn', size:[8,14],  vy:[0.5,1.1],  sway:1.0, density:1.0 },
+  { id:'snow',      name:'冬·雪花',   price:0, free:true, icon:'❄️', group:'四季花园', style:'sprite', kind:'snow',   size:[6,11],  vy:[0.35,0.8], sway:0.5, density:1.1 },
+  { id:'flower',    name:'小花·花园', price:8, icon:'🌼', group:'四季花园', style:'sprite', kind:'flower', variants:3, size:[8,13], vy:[0.35,0.65], sway:0.9, density:1.0, upright:true },
+  { id:'clover',    name:'四叶草',   price:4, icon:'🍀', group:'四季花园', style:'sprite', kind:'clover', size:[7,12], vy:[0.35,0.7], sway:0.9, density:1.0 },
+
+  // 自然梦幻（7）
+  { id:'shell',     name:'贝壳',     price:8, icon:'🐚', group:'自然梦幻', style:'shellmix', size:[10,15], vy:[0.35,0.7], sway:0.6, density:1.1 },
+  { id:'cloud',     name:'云朵',     price:4, icon:'☁️', group:'自然梦幻', style:'sprite', kind:'cloud', size:[11,17], vy:[0.2,0.4],  sway:0.4, density:0.55, upright:true },
+  { id:'feather',   name:'羽毛',     price:4, icon:'🪶', group:'自然梦幻', style:'sprite', kind:'feather', size:[8,13], vy:[0.3,0.6], sway:1.0, density:0.9 },
+  { id:'crystal',   name:'水晶',     price:6, icon:'💎', group:'自然梦幻', style:'sprite', kind:'crystal', size:[7,11], vy:[0.35,0.8], sway:0.6, density:0.9 },
+  { id:'moon',      name:'月亮星星', price:4, icon:'🌙', group:'自然梦幻', style:'sprite', kind:'moon', variants:3, size:[8,13], vy:[0.25,0.5], sway:0.4, density:0.8 },
+  { id:'candy',     name:'糖果',     price:4, icon:'🍬', group:'自然梦幻', style:'sprite', kind:'candy', variants:3, size:[8,12], vy:[0.4,0.8], sway:0.7, density:1.0 },
+  { id:'stardust',  name:'紫色星尘', price:6, icon:'💜', group:'自然梦幻', style:'sprite', kind:'stardust', variants:3, size:[7,12], vy:[0.2,0.5], sway:0.5, density:1.2 },
+
+  // 可爱动物（3）
+  { id:'sheep',     name:'小羊', price:8, icon:'🐑', group:'可爱动物', style:'emoji', emoji:'🐑', size:[10,15], vy:[0.35,0.7], sway:0.55, density:0.8, upright:true },
+  { id:'rabbit',    name:'小兔', price:6, icon:'🐰', group:'可爱动物', style:'emoji', emoji:'🐰', size:[10,15], vy:[0.35,0.7], sway:0.6,  density:0.8, upright:true },
+  { id:'cat',       name:'小猫', price:6, icon:'🐱', group:'可爱动物', style:'emoji', emoji:'🐱', size:[10,15], vy:[0.35,0.7], sway:0.6,  density:0.8, upright:true },
+
+  // 上升 / 音乐（3）
+  { id:'balloon',   name:'气球', price:4, icon:'🎈', group:'上升 / 音乐', style:'sprite', kind:'balloon', variants:3, size:[12,18], vy:[0.35,0.7], sway:0.8, density:0.6, rise:true, upright:true },
+  { id:'bubble',    name:'泡泡', price:4, icon:'🫧', group:'上升 / 音乐', style:'sprite', kind:'bubble', size:[8,14], vy:[0.25,0.5], sway:1.2, density:1.1, rise:true, upright:true },
+  { id:'note',      name:'音符', price:4, icon:'🎵', group:'上升 / 音乐', style:'sprite', kind:'note', size:[7,11], vy:[0.35,0.7], sway:0.8, density:1.0 }
+];
+
+var FREE_SOUNDS = ['softpiano', 'windchime', 'springbreeze', 'wintersnow', 'party'];
+var SOUND_GROUPS = ['轻柔', '自然', '庆祝'];
+
+var SOUND_DEFS = [
+  { id:'softpiano',   name:'轻柔钢琴', price:0, free:true, icon:'🎹', group:'轻柔' },
+  { id:'windchime',   name:'清脆风铃', price:0, free:true, icon:'🔔', group:'轻柔' },
+  { id:'springbreeze',name:'春风铃声', price:0, free:true, icon:'🌸', group:'自然' },
+  { id:'wintersnow',  name:'冬雪风铃', price:0, free:true, icon:'❄️', group:'自然' },
+  { id:'party',       name:'礼花彩带', price:0, free:true, icon:'🎊', group:'庆祝' },
+  { id:'summerrustle',name:'夏叶沙沙', price:4,  icon:'🍃', group:'自然' },
+  { id:'autumncrisp', name:'秋叶脆响', price:4,  icon:'🍁', group:'自然' },
+  { id:'waterdrop',   name:'水滴',     price:4,  icon:'💧', group:'自然' },
+  { id:'wood',        name:'木质轻敲', price:4,  icon:'🪵', group:'轻柔' },
+  { id:'coin',        name:'金币入袋', price:6,  icon:'🪙', group:'庆祝' },
+  { id:'fanfare',     name:'通关小号', price:8,  icon:'🎺', group:'庆祝' },
+  { id:'applause',    name:'轻轻鼓掌', price:10, icon:'👏', group:'庆祝' },
+  { id:'whoosh',      name:'上升音效', price:8,  icon:'🌀', group:'庆祝' },
+  { id:'musicbox',    name:'音乐盒',   price:6,  icon:'🎼', group:'轻柔' },
+  { id:'glass',       name:'玻璃风铃', price:6,  icon:'🔮', group:'轻柔' },
+  { id:'pad',         name:'温暖铺底', price:4,  icon:'🫧', group:'轻柔' },
+  { id:'sparkle',     name:'星光一闪', price:4,  icon:'✨', group:'轻柔' },
+  { id:'pageturn',    name:'纸页翻动', price:4,  icon:'📄', group:'自然' },
+  { id:'firework',    name:'烟花升空', price:8,  icon:'🎆', group:'庆祝' }
+];
+
+function _sfxDef(id) {
+  for (var i = 0; i < SOUND_DEFS.length; i++) if (SOUND_DEFS[i].id === id) return SOUND_DEFS[i];
+  return null;
+}
+function _fxDef(id) {
+  for (var i = 0; i < EFFECT_DEFS.length; i++) if (EFFECT_DEFS[i].id === id) return EFFECT_DEFS[i];
+  return null;
+}
+function _sfxOwned(id) {
+  var d = _sfxDef(id);
+  if (d && d.free) return getTier() === 'pro';
+  var arr = (appData.settings && appData.settings.unlockedSounds) || [];
+  return arr.indexOf(id) >= 0;
+}
+function _fxOwned(id) {
+  var d = _fxDef(id);
+  if (d && d.free) return getTier() === 'pro';
+  var arr = (appData.settings && appData.settings.unlockedEffects) || [];
+  return arr.indexOf(id) >= 0;
+}
+
+// ── 音效引擎：现场合成，不下载音频文件 ─────────────────────────────
+var _sfxCtx = null, _sfxMaster = null, _sfxDry = null, _sfxConv = null, _sfxWet = null;
+
+function _sfxAc() {
+  if (!_sfxCtx) {
+    var C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return null;
+    try { _sfxCtx = new C(); } catch (e) { return null; }
+    _sfxMaster = _sfxCtx.createGain();
+    _sfxMaster.gain.value = 1;
+    _sfxMaster.connect(_sfxCtx.destination);
+    _sfxDry = _sfxCtx.createGain();
+    _sfxDry.gain.value = 0.9;
+    _sfxDry.connect(_sfxMaster);
+    _sfxConv = _sfxCtx.createConvolver();
+    try {
+      var rate = _sfxCtx.sampleRate;
+      var len = Math.floor(rate * 2.2);
+      var buf = _sfxCtx.createBuffer(2, len, rate);
+      for (var c = 0; c < 2; c++) {
+        var d = buf.getChannelData(c);
+        for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.8);
+      }
+      _sfxConv.buffer = buf;
+    } catch (e) {}
+    _sfxWet = _sfxCtx.createGain();
+    _sfxWet.gain.value = 0.32;
+    _sfxConv.connect(_sfxWet);
+    _sfxWet.connect(_sfxMaster);
+  }
+  if (_sfxCtx.state === 'suspended') { try { _sfxCtx.resume(); } catch (e) {} }
+  return _sfxCtx;
+}
+
+document.addEventListener('pointerdown', function () {
+  if (_sfxCtx && _sfxCtx.state === 'suspended') { try { _sfxCtx.resume(); } catch (e) {} }
+}, { passive: true });
+
+function _sfxBus(pan) {
+  var ctx = _sfxAc();
+  if (!ctx || !_sfxDry || !_sfxConv) return null;
+  var g = ctx.createGain();
+  if (ctx.createStereoPanner) {
+    var p = ctx.createStereoPanner();
+    p.pan.value = Math.max(-1, Math.min(1, pan || 0));
+    g.connect(p); p.connect(_sfxDry); p.connect(_sfxConv);
+  } else {
+    g.connect(_sfxDry); g.connect(_sfxConv);
+  }
+  return g;
+}
+
+function _sfxTone(freq, when, dur, opts) {
+  var ctx = _sfxAc();
+  if (!ctx) return;
+  opts = opts || {};
+  var dest = _sfxBus(opts.pan || 0);
+  if (!dest) return;
+  var t = ctx.currentTime + 0.03 + (when || 0);
+  var type = opts.type || 'sine';
+  var vol = opts.vol == null ? 0.12 : opts.vol;
+  var attack = opts.attack == null ? 0.008 : opts.attack;
+  var partials = opts.partials || [1];
+  var gains = opts.gains || null;
+  for (var i = 0; i < partials.length; i++) {
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = type;
+    var f = freq * partials[i] * (1 + (opts.detune || 0));
+    o.frequency.setValueAtTime(f, t);
+    if (opts.glideTo) { try { o.frequency.exponentialRampToValueAtTime(opts.glideTo * partials[i], t + dur); } catch (e) {} }
+    var amp = vol * (gains ? gains[i] : (i === 0 ? 1 : 0.28 / Math.pow(i, 1.2)));
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, amp), t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur * (1 - i * 0.05));
+    o.connect(g); g.connect(dest);
+    o.start(t); o.stop(t + dur + 0.08);
+  }
+}
+
+function _sfxNoise(when, dur, vol, filter, freq, pan) {
+  var ctx = _sfxAc();
+  if (!ctx) return;
+  var dest = _sfxBus(pan || 0);
+  if (!dest) return;
+  var t = ctx.currentTime + 0.03 + (when || 0);
+  var len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+  var buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  var d = buf.getChannelData(0);
+  for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  var s = ctx.createBufferSource(); s.buffer = buf;
+  var f = ctx.createBiquadFilter();
+  f.type = filter || 'lowpass';
+  f.frequency.value = freq || 2000;
+  f.Q.value = 0.8;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(dest);
+  s.start(t); s.stop(t + dur + 0.05);
+}
+
+function _sfxPadChord() {
+  var ctx = _sfxAc();
+  if (!ctx) return;
+  var dest = _sfxBus(0);
+  if (!dest) return;
+  var t = ctx.currentTime + 0.03;
+  var f = ctx.createBiquadFilter();
+  f.type = 'lowpass';
+  f.Q.value = 0.6;
+  f.frequency.setValueAtTime(500, t);
+  f.frequency.linearRampToValueAtTime(1600, t + 1.4);
+  f.frequency.linearRampToValueAtTime(700, t + 3.0);
+  f.connect(dest);
+  [261.63, 329.63, 392.0].forEach(function (freq, i) {
+    var o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.value = freq;
+    o.detune.value = (i - 1) * 5;
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.035, t + 0.9);
+    g.gain.linearRampToValueAtTime(0.0001, t + 3.2);
+    o.connect(g); g.connect(f);
+    o.start(t); o.stop(t + 3.3);
+  });
+}
+
+function _sfxPlay(id) {
+  var c = _sfxAc();
+  if (!c) return;
+  var s = appData.settings || {};
+  var vol = (s.soundVolume == null ? 100 : s.soundVolume) / 100;
+  vol = Math.max(0.02, Math.min(1.5, vol));
+  if (_sfxMaster) _sfxMaster.gain.value = vol;
+
+  switch (id) {
+    case 'softpiano':
+      [[523.25,0,2.2,0.10],[659.25,0.14,2.1,0.08],[783.99,0.28,2.0,0.065],[1046.5,0.44,1.8,0.05]].forEach(function (n) {
+        _sfxTone(n[0], n[1], n[2], { vol: n[3], attack: 0.006, partials: [1,2,3,4,5,6], gains: [1,0.45,0.22,0.12,0.07,0.04] });
+      });
+      _sfxTone(261.63, 0, 2.5, { vol: 0.03, partials: [1,2], gains: [1,0.3], attack: 0.02 });
+      _sfxNoise(0, 0.04, 0.012, 'highpass', 3000, 0);
+      break;
+
+    case 'windchime':
+      [[1046.5,0,1.2,0.12],[1318.5,0.08,1.1,0.09],[1568,0.16,1.0,0.07],[2093,0.24,0.8,0.045]].forEach(function (n) {
+        _sfxTone(n[0], n[1], n[2], { vol: n[3], partials: [1,2.01,3.02], gains: [1,0.2,0.06] });
+      });
+      break;
+
+    case 'springbreeze':
+      _sfxTone(1318.5, 0, 0.7, { vol: 0.07 });
+      _sfxTone(1568, 0.10, 0.7, { vol: 0.055 });
+      _sfxTone(2093, 0.20, 0.6, { vol: 0.035 });
+      _sfxNoise(0.02, 0.5, 0.018, 'lowpass', 5000, 0);
+      break;
+
+    case 'summerrustle':
+      for (var i = 0; i < 3; i++) _sfxNoise(i * 0.08, 0.22, 0.035, 'lowpass', 2600 + i * 500, 0);
+      _sfxTone(523.25, 0.02, 0.35, { vol: 0.035 });
+      break;
+
+    case 'autumncrisp':
+      _sfxNoise(0, 0.06, 0.06, 'lowpass', 4200, 0);
+      _sfxNoise(0.07, 0.05, 0.045, 'lowpass', 3600, 0);
+      _sfxTone(392, 0.02, 0.18, { type: 'triangle', vol: 0.05 });
+      break;
+
+    case 'wintersnow':
+      _sfxTone(2093, 0, 1.3, { vol: 0.05 });
+      _sfxTone(2637, 0.12, 1.1, { vol: 0.035 });
+      _sfxTone(3136, 0.24, 0.9, { vol: 0.025 });
+      break;
+
+    case 'party':
+      _sfxNoise(0, 0.09, 0.09, 'lowpass', 5000, 0);
+      _sfxTone(523.25, 0.02, 0.4, { type: 'triangle', vol: 0.08 });
+      _sfxTone(783.99, 0.10, 0.5, { type: 'triangle', vol: 0.07 });
+      _sfxTone(1046.5, 0.18, 0.6, { type: 'triangle', vol: 0.06 });
+      break;
+
+    case 'waterdrop':
+      _sfxTone(1500, 0, 0.18, { vol: 0.16, glideTo: 420 });
+      _sfxTone(900, 0.08, 0.12, { vol: 0.06, glideTo: 300 });
+      break;
+
+    case 'wood':
+      _sfxTone(220, 0, 0.09, { type: 'triangle', vol: 0.2, glideTo: 180 });
+      _sfxNoise(0, 0.05, 0.06, 'lowpass', 900, 0);
+      break;
+
+    case 'coin':
+      _sfxTone(988, 0, 0.1, { type: 'square', vol: 0.08 });
+      _sfxTone(1319, 0.09, 0.35, { type: 'square', vol: 0.07 });
+      break;
+
+    case 'fanfare':
+      [523.25, 659.25, 783.99, 1046.5].forEach(function (freq, k) {
+        _sfxTone(freq, k * 0.12, 0.55, { type: 'triangle', vol: 0.11 });
+        _sfxTone(freq * 2, k * 0.12, 0.35, { vol: 0.035 });
+      });
+      break;
+
+    case 'applause':
+      for (var a = 0; a < 12; a++) {
+        _sfxNoise(a * 0.035 + Math.random() * 0.02, 0.09 + Math.random() * 0.05, 0.05, 'lowpass', 1400 + Math.random() * 1800, (Math.random() - 0.5) * 1.2);
+      }
+      break;
+
+    case 'whoosh':
+      _sfxTone(180, 0, 0.5, { type: 'sawtooth', vol: 0.06, glideTo: 900 });
+      _sfxNoise(0.05, 0.4, 0.05, 'lowpass', 3000, 0);
+      break;
+
+    case 'musicbox':
+      [[1046.5,0],[1318.5,0.13],[1568,0.26],[2093,0.4]].forEach(function (n) {
+        _sfxTone(n[0], n[1], 1.5, { vol: 0.11, attack: 0.002, partials: [1,2.01,3.02], gains: [1,0.25,0.08] });
+      });
+      _sfxTone(523.25, 0.02, 1.8, { vol: 0.035, partials: [1,2], gains: [1,0.2] });
+      break;
+
+    case 'glass':
+      [[1568,0,-0.3],[2093,0.12,0.3],[2637,0.26,-0.1],[3136,0.4,0.25]].forEach(function (n) {
+        _sfxTone(n[0], n[1], 2.4, { vol: 0.07, pan: n[2], attack: 0.003, partials: [1,2.76,5.4,8.93], gains: [1,0.5,0.22,0.1] });
+      });
+      _sfxNoise(0, 0.5, 0.008, 'highpass', 6000, 0);
+      break;
+
+    case 'pad':
+      _sfxPadChord();
+      [523.25, 783.99, 1046.5].forEach(function (freq, k) {
+        _sfxTone(freq, 0.3 + k * 0.15, 2.2, { vol: 0.035, partials: [1,2], gains: [1,0.2] });
+      });
+      break;
+
+    case 'sparkle':
+      [2093, 2637, 3136, 4186].forEach(function (freq, k) {
+        _sfxTone(freq, k * 0.07, 0.9, { vol: 0.05, pan: (k % 2 ? 0.3 : -0.3), attack: 0.002, partials: [1,2], gains: [1,0.2] });
+      });
+      _sfxNoise(0, 0.6, 0.02, 'highpass', 5000, 0);
+      break;
+
+    case 'pageturn':
+      for (var pt = 0; pt < 3; pt++) {
+        _sfxNoise(pt * 0.06, 0.12 + Math.random() * 0.05, 0.045, 'bandpass', 1200 + Math.random() * 1800, (pt - 1) * 0.3);
+      }
+      _sfxTone(880, 0.02, 0.12, { vol: 0.02, partials: [1,2], gains: [1,0.2] });
+      break;
+
+    case 'firework':
+      _sfxTone(300, 0, 0.55, { type: 'sawtooth', vol: 0.04, glideTo: 1400, attack: 0.02 });
+      _sfxNoise(0.55, 0.12, 0.08, 'lowpass', 2500, 0);
+      _sfxTone(90, 0.58, 0.35, { vol: 0.08, glideTo: 45, attack: 0.005 });
+      _sfxNoise(0.6, 0.5, 0.02, 'highpass', 4000, 0);
+      break;
+
+    default:
+      _sfxTone(880, 0, 0.3, { vol: 0.1 });
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// v222 做题结束动画引擎（手绘高清 sprite + 系统 emoji + 纸屑）
+// ══════════════════════════════════════════════════════════════════════════
+
+var _fxRaf = null, _fxTimer = null, _fxCanvas = null, _fxCtx = null;
+var _fxParts = [], _fxUntil = 0, _fxSpawnUntil = 0, _fxLast = 0, _fxDefCur = null;
+var _fxFireworkTimer = null;
+
+var _FX_MULTI = ['#f472b6', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa', '#fb7185', '#38bdf8'];
+var _FX_GOLD = ['#fcd34d', '#fbbf24', '#f59e0b', '#fde68a', '#eab308'];
+var _FX_SPRITES = {};
+
+function _fxStop() {
+  if (_fxRaf) { cancelAnimationFrame(_fxRaf); _fxRaf = null; }
+  if (_fxTimer) { clearInterval(_fxTimer); _fxTimer = null; }
+  if (_fxFireworkTimer) { clearTimeout(_fxFireworkTimer); _fxFireworkTimer = null; }
+  if (_fxCanvas && _fxCanvas.parentNode) _fxCanvas.parentNode.removeChild(_fxCanvas);
+  _fxCanvas = null; _fxCtx = null; _fxParts = [];
+}
+
+function _fxSetupCanvas() {
+  var cv = document.createElement('canvas');
+  cv.id = 'roundFxCanvas';
+  cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9997';
+  document.body.appendChild(cv);
+  _fxCanvas = cv;
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  function resize() {
+    cv.width = Math.floor(window.innerWidth * dpr);
+    cv.height = Math.floor(window.innerHeight * dpr);
+    _fxCtx = cv.getContext('2d');
+    if (_fxCtx) _fxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  return cv;
+}
+
+function _fxSprite(kind, variant) {
+  var key = kind + '#' + variant;
+  if (_FX_SPRITES[key]) return _FX_SPRITES[key];
+  var S = 120, R = 48;
+  var cv = document.createElement('canvas');
+  cv.width = S * 2; cv.height = S * 2;
+  var ctx = cv.getContext('2d');
+  ctx.scale(2, 2);
+  ctx.translate(S / 2, S / 2);
+  if (kind === 'petal') _fxDrawPetal(ctx, R);
+  else if (kind === 'leaf') _fxDrawLeaf(ctx, R);
+  else if (kind === 'autumn') _fxDrawAutumn(ctx, R);
+  else if (kind === 'snow') _fxDrawSnow(ctx, R);
+  else if (kind === 'flower') _fxDrawFlower(ctx, R, variant);
+  else if (kind === 'clover') _fxDrawClover(ctx, R);
+  else if (kind === 'cloud') _fxDrawCloud(ctx, R);
+  else if (kind === 'feather') _fxDrawFeather(ctx, R);
+  else if (kind === 'crystal') _fxDrawCrystal(ctx, R);
+  else if (kind === 'moon') _fxDrawMoon(ctx, R, variant);
+  else if (kind === 'candy') _fxDrawCandy(ctx, R, variant);
+  else if (kind === 'stardust') _fxDrawStardust(ctx, R, variant);
+  else if (kind === 'balloon') _fxDrawBalloon(ctx, R, variant);
+  else if (kind === 'bubble') _fxDrawBubble(ctx, R);
+  else if (kind === 'note') _fxDrawNote(ctx, R);
+  _FX_SPRITES[key] = { canvas: cv, ref: 0.4 };
+  return _FX_SPRITES[key];
+}
+
+/* ── 花瓣 / 叶子 / 枫叶 / 雪花 ── */
+function _fxDrawPetal(ctx, R) {
+  ctx.fillStyle = '#f9a8d4';
+  ctx.beginPath();
+  ctx.moveTo(0, -R);
+  ctx.bezierCurveTo(R * 0.6, -R * 0.82, R * 0.8, R * 0.08, 0, R);
+  ctx.bezierCurveTo(-R * 0.8, R * 0.08, -R * 0.6, -R * 0.82, 0, -R);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, -R * 0.12, R * 0.18, R * 0.52, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function _fxDrawLeaf(ctx, R) {
+  ctx.fillStyle = '#86efac';
+  ctx.beginPath();
+  ctx.moveTo(0, -R);
+  ctx.bezierCurveTo(R * 0.7, -R * 0.55, R * 0.72, R * 0.45, 0, R);
+  ctx.bezierCurveTo(-R * 0.72, R * 0.45, -R * 0.7, -R * 0.55, 0, -R);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, -R * 0.75); ctx.lineTo(0, R * 0.8); ctx.stroke();
+}
+
+function _fxDrawAutumn(ctx, R) {
+  var lobes = 5, pts = [];
+  for (var k = 0; k < lobes * 2; k++) {
+    var ang = -Math.PI / 2 + k * Math.PI / lobes;
+    var rad = (k % 2 === 0) ? R * 1.35 : R * 0.52;
+    pts.push([Math.cos(ang) * rad, Math.sin(ang) * rad]);
+  }
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for (var k2 = 1; k2 < pts.length; k2++) {
+    var pv = pts[k2 - 1], cv = pts[k2];
+    ctx.quadraticCurveTo(pv[0], pv[1], (pv[0] + cv[0]) / 2, (pv[1] + cv[1]) / 2);
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#f59e0b';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(120,53,15,.35)';
+  ctx.lineWidth = 0.9;
+  for (var k3 = 0; k3 < lobes; k3++) {
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(pts[k3 * 2][0], pts[k3 * 2][1]); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, R * 1.15); ctx.stroke();
+}
+
+function _fxDrawSnow(ctx, R) {
+  ctx.strokeStyle = '#93c5fd';
+  ctx.lineWidth = Math.max(1.2, R * 0.16);
+  ctx.shadowColor = 'rgba(147,197,253,.9)';
+  ctx.shadowBlur = 8;
+  for (var s = 0; s < 3; s++) {
+    ctx.rotate(Math.PI / 3);
+    ctx.beginPath(); ctx.moveTo(-R, 0); ctx.lineTo(R, 0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(R * 0.45, 0); ctx.lineTo(R * 0.72, -R * 0.28); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(R * 0.45, 0); ctx.lineTo(R * 0.72, R * 0.28); ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#bfdbfe';
+  ctx.beginPath(); ctx.arc(0, 0, Math.max(1, R * 0.14), 0, Math.PI * 2); ctx.fill();
+}
+
+/* ── 小花 / 四叶草 ── */
+function _fxDrawFlower(ctx, R, variant) {
+  if (variant === 1) {
+    // 雏菊
+    ctx.fillStyle = '#ffffff';
+    for (var i = 0; i < 10; i++) {
+      ctx.save(); ctx.rotate(i * Math.PI * 2 / 10);
+      ctx.beginPath(); ctx.ellipse(0, -R * 0.55, R * 0.16, R * 0.48, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(0, 0, R * 0.24, 0, Math.PI * 2); ctx.fill();
+  } else if (variant === 2) {
+    // 小玫瑰
+    ctx.fillStyle = '#fb7185';
+    ctx.beginPath(); ctx.arc(0, 0, R * 0.62, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fda4af';
+    ctx.beginPath(); ctx.arc(-R * 0.12, -R * 0.12, R * 0.38, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fecdd3';
+    ctx.beginPath(); ctx.arc(-R * 0.05, -R * 0.05, R * 0.2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(190,24,93,.35)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(0, 0, R * 0.5, 0.4, Math.PI * 1.3); ctx.stroke();
+  } else {
+    // 五瓣樱
+    ctx.fillStyle = '#f9a8d4';
+    for (var k = 0; k < 5; k++) {
+      ctx.save(); ctx.rotate(k * Math.PI * 2 / 5);
+      ctx.beginPath(); ctx.ellipse(0, -R * 0.55, R * 0.34, R * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(0, 0, R * 0.26, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.arc(-R * 0.06, -R * 0.08, R * 0.08, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function _fxDrawClover(ctx, R) {
+  ctx.fillStyle = '#4ade80';
+  for (var i = 0; i < 4; i++) {
+    ctx.save(); ctx.rotate(i * Math.PI / 2);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-R * 0.55, -R * 0.2, -R * 0.55, -R * 0.85, 0, -R * 0.75);
+    ctx.bezierCurveTo(R * 0.55, -R * 0.85, R * 0.55, -R * 0.2, 0, 0);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.strokeStyle = '#15803d';
+  ctx.lineWidth = Math.max(0.8, R * 0.08);
+  ctx.beginPath(); ctx.moveTo(0, R * 0.1); ctx.quadraticCurveTo(R * 0.2, R * 0.6, R * 0.05, R * 1.1); ctx.stroke();
+}
+
+/* ── 云 / 羽毛 / 水晶 / 月亮 ── */
+function _fxDrawCloud(ctx, R) {
+  var puffs = [[-0.5,0.1,0.35],[-0.2,-0.15,0.45],[0.15,-0.2,0.42],[0.5,0.05,0.35],[0,0.2,0.4]];
+  ctx.fillStyle = 'rgba(147,197,253,.55)';
+  puffs.forEach(function (q) { ctx.beginPath(); ctx.arc(q[0]*R, q[1]*R, q[2]*R*1.12, 0, Math.PI*2); ctx.fill(); });
+  ctx.beginPath(); ctx.ellipse(0, R*0.35, R*0.88, R*0.22, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  puffs.forEach(function (q) { ctx.beginPath(); ctx.arc(q[0]*R, q[1]*R, q[2]*R, 0, Math.PI*2); ctx.fill(); });
+  ctx.beginPath(); ctx.ellipse(0, R*0.35, R*0.8, R*0.18, 0, 0, Math.PI*2); ctx.fill();
+}
+
+function _fxDrawFeather(ctx, R) {
+  ctx.fillStyle = '#bae6fd';
+  ctx.beginPath();
+  ctx.moveTo(0, -R);
+  ctx.bezierCurveTo(R*0.7, -R*0.4, R*0.55, R*0.45, 0, R);
+  ctx.bezierCurveTo(-R*0.55, R*0.45, -R*0.3, -R*0.3, 0, -R);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.85)';
+  ctx.lineWidth = Math.max(0.6, R*0.05);
+  ctx.beginPath(); ctx.moveTo(0, -R); ctx.lineTo(0, R); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.45)';
+  ctx.lineWidth = Math.max(0.4, R*0.03);
+  for (var i = 0; i < 6; i++) {
+    var y = -R*0.6 + i*R*0.25;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(R*0.45, y - R*0.18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(-R*0.35, y - R*0.15); ctx.stroke();
+  }
+}
+
+function _fxDrawCrystal(ctx, R) {
+  var top=[0,-R], ur=[R*0.6,-R*0.2], lr=[R*0.45,R*0.35], bot=[0,R], ll=[-R*0.45,R*0.35], ul=[-R*0.6,-R*0.2];
+  ctx.fillStyle = '#a5f3fc'; ctx.beginPath(); ctx.moveTo(top[0],top[1]); ctx.lineTo(ur[0],ur[1]); ctx.lineTo(0,0); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#67e8f9'; ctx.beginPath(); ctx.moveTo(top[0],top[1]); ctx.lineTo(0,0); ctx.lineTo(ul[0],ul[1]); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#22d3ee'; ctx.beginPath(); ctx.moveTo(ul[0],ul[1]); ctx.lineTo(0,0); ctx.lineTo(ll[0],ll[1]); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#06b6d4'; ctx.beginPath(); ctx.moveTo(ur[0],ur[1]); ctx.lineTo(0,0); ctx.lineTo(lr[0],lr[1]); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#0e7490'; ctx.beginPath(); ctx.moveTo(ll[0],ll[1]); ctx.lineTo(0,0); ctx.lineTo(bot[0],bot[1]); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.8)';
+  ctx.lineWidth = Math.max(0.5, R*0.04);
+  ctx.beginPath();
+  ctx.moveTo(top[0],top[1]); ctx.lineTo(ur[0],ur[1]); ctx.lineTo(lr[0],lr[1]); ctx.lineTo(bot[0],bot[1]); ctx.lineTo(ll[0],ll[1]); ctx.lineTo(ul[0],ul[1]); ctx.closePath(); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.9)';
+  ctx.beginPath(); ctx.arc(R*0.15, -R*0.4, R*0.07, 0, Math.PI*2); ctx.fill();
+}
+
+function _fxDrawMoon(ctx, R, variant) {
+  if (variant === 0) {
+    var g = ctx.createRadialGradient(-R*0.2,-R*0.2,R*0.05,0,0,R*0.8);
+    g.addColorStop(0, '#fef9c3'); g.addColorStop(0.7, '#fde68a'); g.addColorStop(1, '#fbbf24');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0,0,R*0.68,0,Math.PI*2); ctx.fill();
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath(); ctx.arc(R*0.3,-R*0.18,R*0.6,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = 'rgba(217,119,6,.18)';
+    [[-0.25,0.1,0.08],[-0.15,0.35,0.05],[-0.35,-0.1,0.04]].forEach(function (q) {
+      ctx.beginPath(); ctx.arc(q[0]*R,q[1]*R,q[2]*R,0,Math.PI*2); ctx.fill();
+    });
+  } else if (variant === 1) {
+    var g2 = ctx.createRadialGradient(0,0,R*0.05,0,0,R*0.9);
+    g2.addColorStop(0, '#fffbeb'); g2.addColorStop(0.5, '#fde68a'); g2.addColorStop(1, '#f59e0b');
+    ctx.fillStyle = g2;
+    ctx.beginPath();
+    for (var i = 0; i < 10; i++) {
+      var a = -Math.PI/2 + i*Math.PI/5;
+      var rad = (i%2===0) ? R*0.85 : R*0.36;
+      var x = Math.cos(a)*rad, y = Math.sin(a)*rad;
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath(); ctx.fill();
+  } else {
+    var g3 = ctx.createRadialGradient(0,0,R*0.05,0,0,R*0.9);
+    g3.addColorStop(0, '#fffbeb'); g3.addColorStop(0.5, '#fde68a'); g3.addColorStop(1, '#f59e0b');
+    ctx.fillStyle = g3;
+    _fxSparklePath(ctx, 0, 0, R*0.9);
+  }
+}
+
+/* ── 糖果 / 紫色星尘 / 气球 / 泡泡 / 音符 ── */
+function _fxDrawCandy(ctx, R, variant) {
+  var pals = [['#fecdd3','#fb7185'],['#bbf7d0','#34d399'],['#fde68a','#fbbf24']];
+  var c = pals[variant % 3];
+  ctx.fillStyle = c[0];
+  ctx.beginPath(); ctx.moveTo(-R*0.6,0); ctx.lineTo(-R*0.95,-R*0.3); ctx.lineTo(-R*0.95,R*0.3); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(R*0.6,0); ctx.lineTo(R*0.95,-R*0.3); ctx.lineTo(R*0.95,R*0.3); ctx.closePath(); ctx.fill();
+  var g = ctx.createLinearGradient(-R*0.6,-R*0.4,R*0.6,R*0.4);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(0.5,c[0]); g.addColorStop(1,c[1]);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.ellipse(0,0,R*0.62,R*0.42,0,0,Math.PI*2); ctx.fill();
+  ctx.save();
+  ctx.beginPath(); ctx.ellipse(0,0,R*0.62,R*0.42,0,0,Math.PI*2); ctx.clip();
+  ctx.strokeStyle = 'rgba(255,255,255,.55)';
+  ctx.lineWidth = 3;
+  for (var i = -3; i <= 3; i++) {
+    ctx.beginPath(); ctx.moveTo(i*R*0.2-R*0.4,-R*0.5); ctx.lineTo(i*R*0.2+R*0.4,R*0.5); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  ctx.beginPath(); ctx.ellipse(-R*0.22,-R*0.16,R*0.16,R*0.08,-0.3,0,Math.PI*2); ctx.fill();
+}
+
+function _fxDrawStardust(ctx, R, variant) {
+  var pals = [['#f3e8ff','#c084fc','#7e22ce'],['#ede9fe','#a78bfa','#6d28d9'],['#fae8ff','#e879f9','#a21caf']];
+  var c = pals[variant % 3];
+  ctx.save();
+  ctx.shadowColor = 'rgba(168,85,247,.85)';
+  ctx.shadowBlur = 12;
+  var g = ctx.createRadialGradient(0,0,R*0.05,0,0,R*0.9);
+  g.addColorStop(0, '#ffffff'); g.addColorStop(0.45, c[1]); g.addColorStop(1, c[2]);
+  ctx.fillStyle = g;
+  if (variant === 1) _fxSparklePath(ctx, 0, 0, R*0.95);
+  else if (variant === 2) {
+    _fxSparklePath(ctx, 0, 0, R*0.55);
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    [[-0.45,-0.3,0.08],[0.4,-0.4,0.06],[0.45,0.35,0.07],[-0.35,0.45,0.05]].forEach(function (q) {
+      ctx.beginPath(); ctx.arc(q[0]*R,q[1]*R,q[2]*R,0,Math.PI*2); ctx.fill();
+    });
+  } else {
+    ctx.beginPath();
+    for (var i = 0; i < 10; i++) {
+      var a = -Math.PI/2 + i*Math.PI/5;
+      var rad = (i%2===0) ? R*0.85 : R*0.36;
+      var x = Math.cos(a)*rad, y = Math.sin(a)*rad;
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function _fxDrawBalloon(ctx, R, variant) {
+  var pals = [['#fecdd3','#fb7185'],['#bbf7d0','#34d399'],['#bae6fd','#38bdf8']];
+  var c = pals[variant % 3];
+  ctx.strokeStyle = 'rgba(120,113,108,.55)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(0,R*0.62); ctx.quadraticCurveTo(R*0.18,R*0.95,R*0.05,R*1.2); ctx.stroke();
+  var g = ctx.createRadialGradient(-R*0.25,-R*0.3,R*0.05,0,0,R*0.75);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(0.35,c[0]); g.addColorStop(1,c[1]);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.ellipse(0,-R*0.05,R*0.62,R*0.72,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.55)';
+  ctx.beginPath(); ctx.ellipse(-R*0.22,-R*0.32,R*0.14,R*0.24,-0.4,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = c[1];
+  ctx.beginPath(); ctx.moveTo(-R*0.09,R*0.6); ctx.lineTo(R*0.09,R*0.6); ctx.lineTo(0,R*0.72); ctx.closePath(); ctx.fill();
+}
+
+function _fxDrawBubble(ctx, R) {
+  var g = ctx.createRadialGradient(-R*0.25,-R*0.25,R*0.05,0,0,R*0.8);
+  g.addColorStop(0,'rgba(255,255,255,.06)');
+  g.addColorStop(0.7,'rgba(186,230,253,.16)');
+  g.addColorStop(0.92,'rgba(147,197,253,.42)');
+  g.addColorStop(1,'rgba(255,255,255,.75)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0,0,R*0.78,0,Math.PI*2); ctx.fill();
+  var cols = ['rgba(244,114,182,.5)','rgba(134,239,172,.5)','rgba(96,165,250,.5)'];
+  for (var i = 0; i < 3; i++) {
+    ctx.strokeStyle = cols[i]; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(0,0,R*0.76, i*2.1, i*2.1+1.5); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,.9)';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.arc(-R*0.15,-R*0.18,R*0.45,Math.PI*1.05,Math.PI*1.45); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.9)';
+  ctx.beginPath(); ctx.arc(-R*0.28,-R*0.3,R*0.07,0,Math.PI*2); ctx.fill();
+}
+
+function _fxDrawNote(ctx, R) {
+  ctx.fillStyle = '#0f766e';
+  ctx.beginPath();
+  ctx.moveTo(-R*0.15,R*0.35); ctx.lineTo(-R*0.15,-R*0.85); ctx.lineTo(-R*0.05,-R*0.85); ctx.lineTo(-R*0.05,R*0.35);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-R*0.1,-R*0.85);
+  ctx.quadraticCurveTo(R*0.6,-R*0.65,R*0.45,-R*0.15);
+  ctx.quadraticCurveTo(R*0.3,-R*0.5,-R*0.1,-R*0.55);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-R*0.3,R*0.45,R*0.32,R*0.22,-0.35,0,Math.PI*2); ctx.fill();
+}
+
+function _fxSparklePath(ctx, x, y, r) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r*0.22, y - r*0.22);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x + r*0.22, y + r*0.22);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - r*0.22, y + r*0.22);
+  ctx.lineTo(x - r, y);
+  ctx.lineTo(x - r*0.22, y - r*0.22);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/* ── 粒子 ── */
+function _fxPaperColor(def) {
+  if (def.colors === 'gold') return _FX_GOLD[Math.floor(Math.random() * _FX_GOLD.length)];
+  return _FX_MULTI[Math.floor(Math.random() * _FX_MULTI.length)];
+}
+
+function _fxMakePart(def, initial) {
+  var w = window.innerWidth, h = window.innerHeight;
+  var z = 0.75 + Math.random() * 0.6;
+  var p = {
+    def: def,
+    z: z,
+    x: Math.random() * w,
+    y: initial ? (Math.random() * h * 1.15 - h * 0.15) : (-30 - Math.random() * h * 0.25),
+    vx: (Math.random() - 0.5) * 0.35,
+    vy: 0.45 + Math.random() * 0.8,
+    rot: Math.random() * Math.PI * 2,
+    vr: (Math.random() - 0.5) * 0.06,
+    flip: Math.random() * Math.PI * 2,
+    flipSpeed: (Math.random() - 0.5) * 0.08,
+    phase: Math.random() * Math.PI * 2,
+    sway: 0.7,
+    opacity: 0.85 + Math.random() * 0.15,
+    age: 0,
+    ttl: Infinity,
+    rise: !!def.rise,
+    upright: !!def.upright
+  };
+
+  if (def.style === 'paperrain' || def.style === 'burst') {
+    p.type = 'paper';
+    p.r = (4 + Math.random() * 5) * z;
+    p.color = _fxPaperColor(def);
+    p.vy = (0.5 + Math.random() * 0.9) * z;
+    p.gravity = 0.025;
+  } else if (def.style === 'sparkle') {
+    p.type = 'sparkle';
+    p.r = (3 + Math.random() * 4) * z;
+    p.vy = (0.15 + Math.random() * 0.35) * z;
+    p.sway = 0.45;
+  } else if (def.style === 'shellmix') {
+    var rr = Math.random();
+    if (rr < 0.28) { p.type = 'emoji'; p.emoji = '🐚'; p.r = (10 + Math.random() * 5) * z; }
+    else if (rr < 0.42) { p.type = 'emoji'; p.emoji = '🦪'; p.r = (8 + Math.random() * 4) * z; }
+    else if (rr < 0.72) { p.type = 'emoji'; p.emoji = '⚪'; p.r = (4 + Math.random() * 3) * z; }
+    else { p.type = 'pstar'; p.r = (8 + Math.random() * 4) * z; }
+    p.vy = (0.35 + Math.random() * 0.35) * z;
+    p.sway = 0.6;
+  } else if (def.style === 'emoji') {
+    p.type = 'emoji';
+    p.emoji = def.emoji;
+    p.r = (def.size[0] + Math.random() * (def.size[1] - def.size[0])) * z;
+    p.vy = (def.vy[0] + Math.random() * (def.vy[1] - def.vy[0])) * z;
+    p.sway = def.sway;
+  } else {
+    p.type = 'sprite';
+    p.kind = def.kind;
+    p.variant = def.variants ? Math.floor(Math.random() * def.variants) : 0;
+    p.r = (def.size[0] + Math.random() * (def.size[1] - def.size[0])) * z;
+    p.vy = (def.vy[0] + Math.random() * (def.vy[1] - def.vy[0])) * z;
+    p.sway = def.sway;
+  }
+
+  if (def.density != null) p.density = def.density;
+  if (p.rise) p.y = initial ? Math.random() * h : (h + 30 + Math.random() * h * 0.2);
+  return p;
+}
+
+function _fxBurst(x, y, count, colors, speed) {
+  for (var i = 0; i < count; i++) {
+    var a = Math.random() * Math.PI * 2;
+    var sp = speed * (0.4 + Math.random() * 0.8);
+    _fxParts.push({
+      def: _fxDefCur,
+      type: 'paper',
+      x: x, y: y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - speed * 0.25,
+      gravity: 0.9,
+      r: 4 + Math.random() * 5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.25,
+      flip: Math.random() * Math.PI * 2,
+      flipSpeed: (Math.random() - 0.5) * 0.2,
+      phase: Math.random() * Math.PI * 2,
+      sway: 0,
+      opacity: 1,
+      age: 0,
+      ttl: 240,
+      rise: false,
+      upright: false
+    });
+  }
+}
+
+function _fxDrawPart(ctx, p, now) {
+  var sx = p.upright ? 1 : (0.6 + 0.4 * Math.abs(Math.cos(p.flip)));
+  ctx.save();
+  ctx.globalAlpha = p.opacity;
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.rot);
+  ctx.scale(sx, 1);
+
+  if (p.type === 'paper') {
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.r * 1.4, -p.r * 0.45, p.r * 2.8, p.r * 0.9);
+  } else if (p.type === 'sparkle') {
+    var tw = 0.35 + 0.65 * Math.abs(Math.sin(now / 520 + p.phase));
+    ctx.globalAlpha = p.opacity * tw;
+    ctx.shadowColor = 'rgba(253,230,138,.9)';
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = '#fde68a';
+    _fxSparklePath(ctx, 0, 0, p.r);
+    ctx.shadowBlur = 0;
+  } else if (p.type === 'pstar') {
+    var g = ctx.createRadialGradient(0, 0, p.r * 0.05, 0, 0, p.r * 0.95);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.45, '#c084fc');
+    g.addColorStop(1, '#7e22ce');
+    ctx.fillStyle = g;
+    ctx.shadowColor = 'rgba(168,85,247,.85)';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    for (var i = 0; i < 10; i++) {
+      var a = -Math.PI / 2 + i * Math.PI / 5;
+      var rad = (i % 2 === 0) ? p.r * 0.85 : p.r * 0.36;
+      var x = Math.cos(a) * rad, y = Math.sin(a) * rad;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  } else if (p.type === 'emoji') {
+    ctx.font = Math.round(p.r * 2.8) + 'px "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.emoji, 0, 0);
+  } else {
+    var sp = _fxSprite(p.kind, p.variant);
+    var ds = p.r / sp.ref;
+    ctx.drawImage(sp.canvas, -ds / 2, -ds / 2, ds, ds);
+  }
+
+  ctx.restore();
+}
+
+function _fxLoop(now) {
+  if (!_fxCtx) return;
+  var dt = Math.min(2, (now - _fxLast) / 16.667);
+  _fxLast = now;
+
+  if (now > _fxUntil + 1500) {
+    _fxStop();
+    return;
+  }
+
+  var w = window.innerWidth, h = window.innerHeight;
+  _fxCtx.clearRect(0, 0, w, h);
+
+  for (var i = _fxParts.length - 1; i >= 0; i--) {
+    var p = _fxParts[i];
+    p.age += dt;
+    p.y += (p.rise ? -p.vy : p.vy) * dt;
+    p.x += (p.vx + Math.sin(now / 900 + p.phase) * p.sway) * dt;
+    p.vx += 0;
+    p.vy += (p.gravity || 0) * dt;
+    p.flip += p.flipSpeed * dt;
+
+    if (p.upright) p.rot = Math.sin(now / 1300 + p.phase) * 0.25;
+    else p.rot += p.vr * dt;
+
+    var out = p.rise ? (p.y < -80) : (p.y > h + 80);
+    if (out || p.age > p.ttl) {
+      if (!p.rise && now < _fxSpawnUntil && p.ttl === Infinity) {
+        p.y = -30 - Math.random() * h * 0.2;
+        p.x = Math.random() * w;
+        p.phase = Math.random() * Math.PI * 2;
+      } else if (p.rise && now < _fxSpawnUntil && p.ttl === Infinity) {
+        p.y = h + 30 + Math.random() * h * 0.2;
+        p.x = Math.random() * w;
+        p.phase = Math.random() * Math.PI * 2;
+      } else {
+        _fxParts.splice(i, 1);
+        continue;
+      }
+    }
+
+    if (p.x < -100) p.x = w + 60;
+    else if (p.x > w + 100) p.x = -60;
+
+    _fxDrawPart(_fxCtx, p, now);
+  }
+
+  if (_fxParts.length === 0 && now > _fxSpawnUntil) {
+    _fxStop();
+    return;
+  }
+
+  _fxRaf = requestAnimationFrame(_fxLoop);
+}
+
+function _fxStart(id) {
+  if (getTier() !== 'pro') return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var def = _fxDef(id) || _fxDef('ribbon');
+  if (!def) return;
+
+  _fxStop();
+  _fxDefCur = def;
+  _fxSetupCanvas();
+  if (!_fxCtx) { _fxStop(); return; }
+
+  var now = performance.now();
+  _fxUntil = now + 10000;
+  _fxSpawnUntil = now + 8500;
+  _fxLast = now;
+  _fxParts = [];
+
+  // 初始粒子
+  if (def.style === 'burst') {
+    _fxBurst(window.innerWidth * 0.5, window.innerHeight * 0.62, 140, _FX_MULTI, 6);
+    _fxBurst(0, window.innerHeight * 0.78, 70, _FX_MULTI, 9);
+    _fxBurst(window.innerWidth, window.innerHeight * 0.78, 70, _FX_MULTI, 9);
+  } else if (def.style === 'fireworks') {
+    // 后面用定时器放
+  } else {
+    var density = def.density == null ? 1 : def.density;
+    var initial = Math.max(16, Math.floor(window.innerWidth / 16 * density));
+    for (var i = 0; i < initial; i++) _fxParts.push(_fxMakePart(def, true));
+  }
+
+  // 持续生成
+  if (def.style === 'fireworks') {
+    function fireOnce() {
+      if (!_fxCtx) return;
+      var colors = Math.random() < 0.5 ? _FX_MULTI : _FX_GOLD;
+      _fxBurst(
+        window.innerWidth * (0.18 + Math.random() * 0.64),
+        window.innerHeight * (0.18 + Math.random() * 0.32),
+        80, colors, 5
+      );
+      _fxFireworkTimer = setTimeout(fireOnce, 800);
+    }
+    fireOnce();
+  } else {
+    var spawnN = def.style === 'burst' ? 3 : 2;
+    _fxTimer = setInterval(function () {
+      var t = performance.now();
+      if (t > _fxSpawnUntil) {
+        clearInterval(_fxTimer);
+        _fxTimer = null;
+        return;
+      }
+      for (var k = 0; k < spawnN; k++) _fxParts.push(_fxMakePart(def, false));
+    }, 150);
+  }
+
+  _fxRaf = requestAnimationFrame(_fxLoop);
+}
+
+function playRoundEndEffects() {
+  try {
+    if (getTier() !== 'pro') return;
+    var s = appData.settings || {};
+    if (s.soundOn === true) _sfxPlay(s.soundId || 'softpiano');
+    if (s.particleOn === true) _fxStart(s.effectId || 'ribbon');
+  } catch (e) { console.warn('[结算音效] 失败：', e); }
+}
+
+function selectSound(id) {
+  if (!_sfxOwned(id)) { showToast('这个音效还没解锁，去番茄商店解锁'); return; }
+  saveSetting('soundId', id);
+  renderSettings();
+  try { _sfxPlay(id); } catch (e) {}
+}
+function selectEffect(id) {
+  if (!_fxOwned(id)) { showToast('这个动画还没解锁，去番茄商店解锁'); return; }
+  saveSetting('effectId', id);
+  renderSettings();
+  try { _fxStart(id); } catch (e) {}
+}
+function buySound(id) {
+  var def = _sfxDef(id);
+  if (!def) return;
+  if (def.free) { showToast('这个音效是全能版自动解锁的'); return; }
+  if (_sfxOwned(id)) { showToast('已经解锁过了'); return; }
+  if (!spendTomatoes(def.price, '解锁音效·' + def.name)) { showToast('🍅 番茄不足！需要 ' + def.price + '🍅'); return; }
+  var arr = (appData.settings.unlockedSounds || []).slice();
+  if (arr.indexOf(id) < 0) arr.push(id);
+  appData.settings.unlockedSounds = arr;
+  appData.settings.soundId = id;
+  saveData(appData);
+  showToast('🎵 已解锁 ' + def.name);
+  renderSettings();
+  if (window._refreshTomatoModal) _refreshTomatoModal('shop');
+}
+function buyEffect(id) {
+  var def = _fxDef(id);
+  if (!def) return;
+  if (def.free) { showToast('这个动画是全能版自动解锁的'); return; }
+  if (_fxOwned(id)) { showToast('已经解锁过了'); return; }
+  if (!spendTomatoes(def.price, '解锁动画·' + def.name)) { showToast('🍅 番茄不足！需要 ' + def.price + '🍅'); return; }
+  var arr = (appData.settings.unlockedEffects || []).slice();
+  if (arr.indexOf(id) < 0) arr.push(id);
+  appData.settings.unlockedEffects = arr;
+  appData.settings.effectId = id;
+  saveData(appData);
+  showToast('🎬 已解锁 ' + def.name);
+  renderSettings();
+  if (window._refreshTomatoModal) _refreshTomatoModal('shop');
+}
+
+// v222：离开结束页 / 切后台 / 关页面 → 立刻停
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) { try { _fxStop(); } catch (e) {} }
+});
+window.addEventListener('pagehide', function () { try { _fxStop(); } catch (e) {} });
+
 
 // ====== 🆕 v189：结果页「逐题明细」（用户 2026-09-29 拍板）======
 // 数据来源：`practiceState._rd[题号下标] = { wrong: [{mine, right}] }`（在 applyCheckToInputs 里写）。
@@ -20696,6 +22334,7 @@ function renderBrowseStart() {
     return;
   }
   const c = $('browseContainer');
+  if (!c) return;   // 🆕 v221 防崩
   const banks = Object.values(appData.banks).sort((a, b) => b.createdAt - a.createdAt);
 
   if (!banks.length) {
@@ -20748,7 +22387,7 @@ function renderBrowseStart() {
   <div id="browseFilterArea">
   <div class="chip-group mb-12" id="browseFilterChips">
     <span class="chip active" data-filter="all" onclick="setBrowseFilter('all', this)">全部</span>
-    <span class="chip" data-filter="star" onclick="setBrowseFilter('star', this)">收藏${favCount ? ' · '+favCount : ''}</span>
+    <span class="chip${reciteFavAllowed() ? '' : ' fav-locked'}" data-filter="star" onclick="setBrowseFilter('star', this)">收藏${favCount ? ' · '+favCount : ''}</span>
 
 	    <span class="chip" data-filter="koujue" onclick="setBrowseFilter('koujue', this)">口诀${kjCount ? ' · '+kjCount : ''}</span>
     <span class="chip" onclick="showBrowseExport()" title="导出这些题" style="border:1px dashed var(--primary);color:var(--primary);background:transparent">导出</span>
@@ -20764,6 +22403,8 @@ function renderBrowseStart() {
 }
 
 function setBrowseFilter(filter, el) {
+  // 2026-10-24：免费/降级时「收藏」筛选看得见但点不了（按钮已灰、pointer-events:none）
+  if (filter === 'star' && !reciteFavAllowed()) return;
   browseState.filter = filter;
   browseState.starSub = 'all';
   browseState.searchQuery = '';
@@ -20859,8 +22500,12 @@ function changeBrowseBank() {
 
 function renderBrowseList() {
   const c = $('browseActive');
+  if (!c) return;   // 🆕 v221 防崩：章节 ⬆⬇ 重画时容器可能已经不在
   const st = browseState;
+  const _favCls = reciteFavAllowed() ? '' : ' fav-locked';
   if (!st || !st.cards.length) { c.innerHTML = `<div class="empty"><p>题库为空</p></div>`; return; }
+  // 2026-10-24：免费/降级时如果筛选项还停在「收藏」，直接回「全部」——收藏内容不展示
+  if (st.filter === 'star' && !reciteFavAllowed()) st.filter = 'all';
 
   // 筛选
   let cards = st.cards;
@@ -20915,7 +22560,7 @@ function renderBrowseList() {
         html += '<div class="kj-mnemonic" style="display:flex;justify-content:space-between;align-items:flex-start">';
         html += '<span style="flex:1">' + (keywordsOnly || escapeHtml(card.koujue || '')) + '</span>';
         html += '<span style="display:flex;gap:4px;flex-shrink:0">';
-        html += '<span style="font-size:var(--f20);cursor:pointer;padding:2px 6px;min-width:36px;display:inline-flex;align-items:center;justify-content:center;color:var(--primary)" onclick="event.stopPropagation();toggleBrowseStarFromList(' + card._idx + ')">' + starSvg(card.starred) + '</</span>';
+        html += '<span class="' + _favCls + '" style="font-size:var(--f20);cursor:pointer;padding:2px 6px;min-width:36px;display:inline-flex;align-items:center;justify-content:center;color:var(--primary)" onclick="event.stopPropagation();toggleBrowseStarFromList(' + card._idx + ')">' + starSvg(card.starred) + '</span>';
         html += '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editKoujueBrowse(this)" data-cid="' + card.id + '" style="padding:2px 6px;font-size:var(--f12);opacity:.4" title="编辑口诀">✏️</button>';
         html += '</span></div>';
         html += '<div class="kj-meaning" id="kjb-mean-' + card.id + '">';
@@ -20934,7 +22579,7 @@ function renderBrowseList() {
         html += '<div class="browse-dir-item" onclick="openBrowseDetail(' + card._idx + ')">';
         html += '<span style="font-size:var(--f11);color:var(--text-tertiary);min-width:28px">' + (card._idx + 1) + '</span>';
         html += '<span style="flex:1;font-size:var(--f14);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(qText) + '</span>';
-        html += '<span style="font-size:var(--f20);flex-shrink:0;cursor:pointer;padding:6px 10px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;color:var(--primary)" onclick="event.stopPropagation();toggleBrowseStarFromList(' + card._idx + ')">' + starSvg(card.starred) + '</span>';
+        html += '<span class="' + _favCls + '" style="font-size:var(--f20);flex-shrink:0;cursor:pointer;padding:6px 10px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;color:var(--primary)" onclick="event.stopPropagation();toggleBrowseStarFromList(' + card._idx + ')">' + starSvg(card.starred) + '</span>';
         html += '</div>';
       }
     }
@@ -21190,7 +22835,7 @@ function _renderBrowseBlankRegionHtml(text, relBlanks, oval, color, gap) {
   // 外面套一层 .practice-card：挖空的 12 条 CSS 全挂在 .practice-card 下面，
   // 套上就整个复用（等于两边长得一模一样）；再把那张卡自己的白框压掉，只借样式不借壳。
   return '<div class="practice-card" style="background:none;border:none;box-shadow:none;padding:0;min-height:0;margin:0">' +
-         '<div style="line-height:2.0;color:' + (color || 'var(--text-secondary)') + '">' + h + '</div></div>';
+         '<div style="line-height:2;color:' + (color || 'var(--text-secondary)') + '">' + h + '</div></div>';
 }
 function renderBrowseAnswerBlanks(card) {
   var ans = card.answer || '';
@@ -21227,7 +22872,7 @@ function renderBrowseSwapQuestion(card) {
   if (!qb.length) return escNl(q);
   var full = card.fullText || ((card.question || '') + '\n' + (card.answer || ''));
   var _r = _swapRegionHtml(card, full, 0, answerStart, qb, {}, 0, true, false, 'q');
-  return '<div style="line-height:2.0">' + _r.html + '</div>';
+  return '<div style="line-height:2">' + _r.html + '</div>';
 }
 // ✨ 按钮：翻「浏览页显示挖空」这个设置，翻完立刻重画（＝「一个值两个入口」的那个第二入口）
 function toggleBrowseBlank() {
@@ -21237,11 +22882,58 @@ function toggleBrowseBlank() {
   renderBrowseDetail();
 }
 
+// 2026-10-24（用户最终定）：浏览详情间距**恢复 v216 的样子**——
+//   题目上面约 18.5px（顶栏 mb-10 + 半行距）、题目和答案之间约 29px（margin-bottom:12px + 两个半行距）。
+//   v216 的 `.browse-detail-body` **没有** `white-space:pre-wrap`；后来加上它，
+//   模板里的缩进/换行被当成真空行，才出现截图那种大空隙 —— 这里去掉。
+//   答案区（行距 2.0 / 段间空行 / 原文）全部不动；只保留显示副本裁首尾空行（防大空白），
+//   内部空行一字不动，挖空坐标按裁掉的字数平移。
+function _browseTrimCard(card) {
+  if (!card) return card;
+  var qRaw = String(card.question == null ? '' : card.question);
+  var aRaw = String(card.answer == null ? '' : card.answer);
+  var qs = 0, qe = 0, as = 0, ae = 0;
+  while (qs < qRaw.length && (qRaw.charAt(qs) === '\n' || qRaw.charAt(qs) === '\r')) qs++;
+  while (qe < qRaw.length - qs && (qRaw.charAt(qRaw.length - 1 - qe) === '\n' || qRaw.charAt(qRaw.length - 1 - qe) === '\r')) qe++;
+  while (as < aRaw.length && (aRaw.charAt(as) === '\n' || aRaw.charAt(as) === '\r')) as++;
+  while (ae < aRaw.length - as && (aRaw.charAt(aRaw.length - 1 - ae) === '\n' || aRaw.charAt(aRaw.length - 1 - ae) === '\r')) ae++;
+  var q = qRaw.slice(qs, qRaw.length - qe);
+  var a = aRaw.slice(as, aRaw.length - ae);
+  var answerStart = qRaw.length + 1;
+  var blanks = (card.blanks || []).map(function (b) {
+    if (b.end <= qRaw.length) {
+      return { start: b.start - qs, end: b.end - qs, text: b.text };
+    }
+    if (b.start >= answerStart) {
+      var rs = b.start - answerStart - as;
+      var re = b.end - answerStart - as;
+      return { start: q.length + 1 + rs, end: q.length + 1 + re, text: b.text };
+    }
+    return null;
+  }).filter(function (b) {
+    if (!b || b.start < 0 || b.end <= b.start) return false;
+    return (b.end <= q.length) || (b.start >= q.length + 1 && b.end <= q.length + 1 + a.length);
+  });
+  var dcard = Object.assign({}, card, {
+    question: q,
+    answer: a,
+    fullText: q + '\n' + a,
+    blanks: blanks
+  });
+  // 2026-10-24 用户：「缩进太多了，缩进俩字就行」——
+  //   显示副本统一按 v221 规则排：普通段 2 全角；①②③ / 子层仍按原规则（顶格 / 开关 1 格）。
+  //   只改副本，题库原文不动；挖空坐标由 _normalizeAnswerIndent 一起平移。
+  try { _normalizeAnswerIndent(dcard); } catch (e) {}
+  return dcard;
+}
 function renderBrowseDetail() {
   const c = $('browseActive');
+  if (!c) return;   // 🆕 v221 防崩
   const st = browseState;
+  const _favCls = reciteFavAllowed() ? '' : ' fav-locked';
   const filtered = st._filteredCards || st.cards;
-  const card = filtered[st.index];
+  // 显示副本：只去掉题目/答案首尾空行（内部空行和答案行距都不动）
+  const card = _browseTrimCard(filtered[st.index]);
   if (!card) { backToBrowseList(); return; }
   const cur = st.index + 1, total = filtered.length;
   const wbDetail = getWrongBook(st.bankId);
@@ -21269,6 +22961,10 @@ function renderBrowseDetail() {
   } else {
     answerHtml = '';
   }
+  const _qInner = browseBlankOn() ? (st._swapped ? renderBrowseSwapQuestion(card) : renderBrowseQuestionBlanks(card)) : escNl(card.question);
+  // ⚠️ 必须在这里拼好、紧贴着 <div> 输出：body 是 white-space:pre-wrap，
+  //    模板里的缩进/换行会被当成真的空白行，凭空多出一整行（用户截图红圈就是这么来的）。
+  const _bodyInner = '<div style="margin-bottom:12px;font-weight:500">' + _qInner + '</div>' + answerHtml;
   c.innerHTML = `<div>
     <div class="flex justify-between items-center mb-10">
       <button class="btn btn-ghost btn-sm" onclick="backToBrowseList()">← 目录</button>
@@ -21277,13 +22973,10 @@ function renderBrowseDetail() {
         ${hasFeature('swapBlank') ? '<button class="btn btn-ghost btn-sm' + (st._swapped ? ' browse-swap-on' : '') + '" onclick="toggleBrowseSwap()" style="padding:6px 8px;font-size:var(--font-size)" title="置换挖空：把挖空的显示出来、没挖空的遮住">🪄</button>' : ''}
         <button class="btn btn-ghost btn-sm" onclick="toggleBrowseBlank()" style="padding:6px 8px;font-size:var(--font-size)" title="显示/隐藏答案原文">✨</button>
         <button class="btn btn-ghost btn-sm" onclick="toggleBrowseAnswers()" style="padding:6px 8px;font-size:var(--font-size)" title="隐藏/显示答案">💐</button>
-        <button style="background:none;border:none;font-size:var(--f24);cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--primary)" onclick="toggleBrowseStar()">${starSvg(card.starred)}</button>
+        <button style="background:none;border:none;font-size:var(--f24);cursor:pointer;padding:8px 12px;line-height:1;min-width:44px;min-height:44px;color:var(--primary)" onclick="toggleBrowseStar()" class="${_favCls}" ${reciteFavAllowed() ? '' : 'disabled'}>${starSvg(card.starred)}</button>
       </div>
     </div>
-    <div class="browse-detail-body" style="line-height:2;font-size:var(--font-size-lg);white-space:pre-wrap">
-      <div style="margin-bottom:12px;font-weight:500">${browseBlankOn() ? (st._swapped ? renderBrowseSwapQuestion(card) : renderBrowseQuestionBlanks(card)) : escNl(card.question)}</div>
-      ${answerHtml}
-    </div>
+    <div class="browse-detail-body" style="line-height:2;font-size:var(--font-size-lg)">${_bodyInner}</div>
     <!-- 🆕 v191：浏览页也挂同样的四档（用户 2026-09-30 拍板「挂」）——
          那页**压根没有输入框**，是真正的「不打字通道」。
          ⚠️ 浏览页答案是**默认直接显示**的（像看讲义）；想「先想再对答案」得自己点 💐 藏起来
@@ -21331,6 +23024,7 @@ function removeFromWrongBook(cardId) {
 }
 
 function toggleBrowseStarFromList(idx) {
+  if (!reciteFavAllowed()) return;
   const card = browseState.cards[idx];
   card.starred = !card.starred;
   const bank = appData.banks[browseState.bankId];
@@ -21340,6 +23034,7 @@ function toggleBrowseStarFromList(idx) {
 }
 
 function toggleBrowseStar() {
+  if (!reciteFavAllowed()) return;
   if (!browseState) return;
   const filtered = browseState._filteredCards || browseState.cards;
   const card = filtered[browseState.index];
@@ -23867,8 +25562,7 @@ function renderSettings() {
       return html;
     })() +
 
-    // 🆕 v211：管理员专属「AI 整理」设置。没输管理码 → 这一段直接是空字符串。
-    (isAdmin() ? _aiSectionHtml() : '') +
+    // 🆕 v221：AI 整理已挪到「🧰 不常用功能」里（不再管理员专属；只限全能版）
 
     // 🆕 v201：合并版显示设置（模块状态 / 显示开关 / 题库显示方式 / 类型标识）
     (function() {
@@ -23954,6 +25648,16 @@ function renderSettings() {
       //   做题 / 浏览 / 预览时，答案里每一条编号 / 要点之间空一行；续行不空。导出 PDF / 打印不变。
         '<div class="setting-item"><div><div class="setting-label">答案点之间空一行</div><div class="setting-desc">答案里每一条编号 / 要点之间空一行，看起来不挤；默认关。只在做题、浏览、预览里生效，导出 PDF 不变</div></div>' +
         '<label class="toggle"><input type="checkbox" id="answerPointGapToggle"' + (s.answerPointGap === true ? ' checked' : '') + ' onchange="saveSetting(\'answerPointGap\', this.checked)"><span class="slider"></span></label></div>' +
+      // 🆕 v221（用户 2026-10-24 定）：答错后显示正确答案；默认关＝现在这样（显示自己打的字）
+      //   🆕 2026-10-24 用户追加：**改成全能版专属**
+      (function() {
+        if (getTier() !== 'pro') return '<div class="setting-item tier-locked-item"><div><div class="setting-label">答错后显示正确答案</div><div class="setting-desc">需升级全能版解锁</div></div></div>';
+        return '<div class="setting-item"><div><div class="setting-label">答错后显示正确答案</div><div class="setting-desc">开着＝答错的空里显示正确答案（红框），正下方用小灰字显示你自己打的字；关着＝只显示你打的字（默认）</div></div>' +
+          '<label class="toggle"><input type="checkbox" id="showCorrectOnWrongToggle"' + (s.showCorrectOnWrong === true ? ' checked' : '') + ' onchange="saveSetting(\'showCorrectOnWrong\', this.checked)"><span class="slider"></span></label></div>';
+      })() +
+      // 🆕 v221（用户 2026-10-24 定）：段落开头统一规则 + 子层可选缩进
+        '<div class="setting-item"><div><div class="setting-label">子层再缩进一个字</div><div class="setting-desc">默认：普通段落空两格，①②③ 顶格，子层（（1）・ 等）也顶格。打开后子层开头多空一个全角空格；普通段落和 ①②③ 不变</div></div>' +
+        '<label class="toggle"><input type="checkbox" id="childIndentToggle"' + (s.childIndent === true ? ' checked' : '') + ' onchange="saveSetting(\'childIndent\', this.checked)"><span class="slider"></span></label></div>' +
       // 🆕 v189「丙」（用户 2026-09-29 拍板「先甲 然后直接加上丙」）：点两边翻页开关（**默认开**）。
       //   ⚠️ 默认值三处都要写对，缺一处老用户就变成"关"：
       //      ① 这里显示 `s.tapFlip !== false`（**不能写 `s.tapFlip`** —— undefined 会显示成没勾）
@@ -24029,6 +25733,9 @@ function renderSettings() {
           '<div style="width:140px"><input type="range" min="0.5" max="2" value="' + (s.voicePitch || 1.0) + '" step="0.1" oninput="updateVoicePitch(parseFloat(this.value))" onchange="updateVoicePitch(parseFloat(this.value))"></div></div>';
       })() +
       '</div></div>' +
+
+    // 🆕 v221：音效与动画
+    _soundSettingsHtml() +
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'appearance\')"><span>外观</span><span class="section-arrow" id="arrow_appearance">▲</span></div>' +
       '<div class="section-body" id="body_appearance">' +
@@ -24256,12 +25963,10 @@ function renderSettings() {
     //    点开走**已有的**弹窗函数 showDailyInsightCard()（内容/「🔄 换一条」都在那边，一个字没动）。
     (function() {
       if (!hasFeature('dailyInsight')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>每日洞见 · 全能版专属</span></div></div>';
+      // 🆕 v221（用户 2026-10-24）：设置页只留一行标题，没有按钮；点整行打开弹窗
       return '<div class="section">' +
-        '<div class="section-header section-title">' +
+        '<div class="section-header section-title" style="cursor:pointer" onclick="showDailyInsightCard()">' +
           '<span>💡 每日洞见</span>' +
-        '</div>' +
-        '<div style="text-align:center;margin-top:8px">' +
-          '<button onclick="showDailyInsightCard()" style="background:var(--bg-card);border:1px solid var(--primary);color:var(--primary);padding:8px 20px;border-radius:20px;font-size:var(--f13);cursor:pointer">💡 查看今日洞见</button>' +
         '</div>' +
       '</div>';
     })() +
@@ -24273,11 +25978,8 @@ function renderSettings() {
       // ⚠️ 同上面「学习计划」那段：dailySummary 归免费版（2026-09-16），三个档位都走不到，留着兜底。
       if (!hasFeature('dailySummary')) return '<div class="section"><div class="section-header section-title" style="opacity:0.5;cursor:default"><span>今日学习摘要 · 需升级全能版解锁</span></div></div>';
       return '<div class="section">' +
-        '<div class="section-header section-title">' +
+        '<div class="section-header section-title" style="cursor:pointer" onclick="showTodaySummary()">' +
           '<span>📋 今日学习摘要</span>' +
-        '</div>' +
-        '<div style="text-align:center;margin-top:8px">' +
-          '<button onclick="showTodaySummary()" style="background:var(--bg-card);border:1px solid var(--primary);color:var(--primary);padding:8px 20px;border-radius:20px;font-size:var(--f13);cursor:pointer">📋 查看今日学习摘要</button>' +
         '</div>' +
       '</div>';
     })() +
@@ -24291,7 +25993,13 @@ function renderSettings() {
           '<div style="font-size:var(--f11);color:var(--text-tertiary);text-align:center">挖空框和字对不上、挖空跑到旁边去了 → 用这个</div>' +
           '<button class="btn btn-outline btn-block" onclick="previewAddIndentOldCards()" style="min-height:44px;margin-top:4px">␣ 老题补两格</button>' +
           '<div style="font-size:var(--f11);color:var(--text-tertiary);text-align:center">老题答案第一行顶格 / 编号行里有一个偏了 → 用这个（新导入的已经自动对齐）</div>' +
+          '<button class="btn btn-outline btn-block" onclick="rareMergeAdjacentBlanks()" style="min-height:44px;margin-top:4px">🔗 合并相邻挖空</button>' +
+          '<div style="font-size:var(--f11);color:var(--text-tertiary);text-align:center">两个空紧挨着（中间没字）→ 合成一个；会先问一次，合并后可撤销</div>' +
         '</div>' +
+        // 🆕 v221：AI 整理放进「不常用功能」；全能版可用，免费版只看到一行提示
+        (getTier() === 'pro'
+          ? _aiSectionHtml()
+          : '<div class="setting-item" style="cursor:pointer" onclick="showToast(\'AI 整理是全能版功能；升级后可用自己的 Key，或使用一次性 AI 激活码\')"><div><div class="setting-label">🤖 AI 整理 · 全能版可用</div><div class="setting-desc">用自己的 DeepSeek Key，或一次性 AI 激活码</div></div><div style="display:flex;align-items:center">→</div></div>') +
       '</div></div>' +
 
     '<div class="section"><div class="section-header section-title" onclick="toggleSection(\'about\')"><span>关于</span><span class="section-arrow" id="arrow_about">▲</span></div>' +
@@ -24311,7 +26019,7 @@ function renderSettings() {
         '</div>' +
       '</div>' +
       (isAdmin() ? '<div class="setting-item" style="flex-direction:column;align-items:stretch;cursor:pointer" onclick="toggleAuthorNoteSection()"><div class="setting-label" style="display:flex;align-items:center;gap:8px">💬 开发者留言 <span id="authorNoteArrow" style="font-size:var(--f12);transition:transform .2s">▼</span></div><div class="setting-desc">编辑后点击"同步到云端"，内容将显示在「使用说明 → 开发者」中，<b>所有用户可见</b></div><div id="authorNoteEditor" style="display:none;margin-top:8px"><textarea id="authorNoteInput" placeholder="写给使用者的话...&#10;支持多行输入，Enter键换行" style="width:100%;min-height:100px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--text);font-size:var(--f14);resize:vertical;font-family:inherit;line-height:1.6;margin-bottom:8px" onclick="event.stopPropagation()" oninput="saveAuthorNote(this.value)">' + (appData.settings.authorNote || '') + '</textarea><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button id="authorSyncBtn" onclick="event.stopPropagation();syncAuthorNoteToCloud()" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:var(--f13);cursor:pointer;min-height:40px;font-weight:600">📤 同步到云端</button><span id="authorSyncStatus" style="font-size:var(--f12)"></span></div></div></div>' : '') +
-      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v220</div></div></div>' +
+      '<div class="setting-item"><div><div class="setting-label">挖空背诵工具 · 小阮出品</div><div class="setting-desc">手机刷题背书工具 · 纯前端离线可用 · v222</div></div></div>' +
       '<div class="setting-item" style="cursor:pointer" onclick="checkUpdate()" id="checkUpdateRow"><div><div class="setting-label">🔄 检查更新 <span id="updateDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:6px"></span></div><div class="setting-desc">查看新版本内容，更新前请先备份</div></div><div style="display:flex;align-items:center">→</div></div>' +
       // 📲 2026-09-18 v166：用户在设置页找不到「怎么把工具存到桌面」的说明 → 关于最后一行加这个入口。
       //    点开走 showInstallGuide()（无延迟弹窗）。以后别的工具要加同一份 → 见 `新建文件夹/安装教程-可复用.md`。
@@ -24327,7 +26035,7 @@ function renderSettings() {
   setTimeout(function() { updateAuthorSyncStatus(); }, 200);
   // 🆕 v212：管理员 + AI 开关打开时，余额缓存超过 60 秒就自动刷新一次（免费 GET，不花 token）
   try {
-    if (isAdmin()) {
+    if (getTier() === 'pro') {
       var _aic = aiCfgLoad();
       if (_aic.enabled && _aic.key) {
         var _b = _aic.balance;
@@ -24392,6 +26100,59 @@ function _rareOverlay(id, title, bodyHtml, footHtml) {
   document.body.appendChild(ov);
   ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
   return ov;
+}
+
+// ── 🆕 v221 合并相邻挖空（老题）：两个空紧挨着（中间一个字都没有）→ 合成一个
+//   用户 2026-10-24 定：不做整页预览，点一次 → 告诉他要合并几处 → 确认 → 执行 → 可撤销。
+var _rareMergeUndoData = null;
+function _rareMergePlanCard(card) {
+  var blanks = (card.blanks || []).filter(function(b) { return !b._combined && b.start != null && b.end != null; })
+    .sort(function(a, b) { return a.start - b.start; });
+  if (blanks.length < 2) return null;
+  var out = [], merged = 0;
+  for (var i = 0; i < blanks.length; i++) {
+    var cur = blanks[i];
+    while (i + 1 < blanks.length && blanks[i + 1].start === cur.end) {
+      var nx = blanks[i + 1];
+      cur = { start: cur.start, end: nx.end, text: String(cur.text || '') + String(nx.text || ''), isAnswer: cur.isAnswer };
+      i++; merged++;
+    }
+    out.push(cur);
+  }
+  if (!merged) return null;
+  return { blanks: out, merged: merged };
+}
+function rareMergeAdjacentBlanks() {
+  if (!hasFeature('exportFile')) { showToast('这是全能版功能'); return; }
+  var plan = [], total = 0;
+  Object.keys(appData.banks || {}).forEach(function(bid) {
+    var b = appData.banks[bid]; if (!b) return;
+    (b.cards || []).forEach(function(c) {
+      var r = _rareMergePlanCard(c);
+      if (r) { plan.push({ card: c, blanks: r.blanks, old: (c.blanks || []).slice(), merged: r.merged }); total += r.merged; }
+    });
+  });
+  if (!total) { showToast('没有相邻的挖空需要合并'); return; }
+  showConfirm('合并相邻挖空', '会合并 **' + total + ' 处** 紧挨着的空（中间一个字都没有）。\n\n合并后可以点「撤销」恢复；不确定就先备份。', function() {
+    _rareMergeUndoData = plan.map(function(x) { return { card: x.card, old: x.old }; });
+    plan.forEach(function(x) { x.card.blanks = x.blanks; });
+    saveData(appData);
+    renderBanks();
+    showModal('✅ 已合并 ' + total + ' 处相邻挖空',
+      '<div style="font-size:var(--f13);line-height:1.8;color:var(--text-secondary)">如果合错了，点下面「撤销」就能恢复。</div>' +
+      '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-ghost" style="flex:1" onclick="this.closest(\'.modal-overlay\').remove()">关闭</button>' +
+      '<button class="btn btn-primary" style="flex:1" onclick="rareMergeUndo()">↩ 撤销</button></div>');
+  }, '合并');
+}
+function rareMergeUndo() {
+  if (!_rareMergeUndoData) { showToast('没有可撤销的操作'); return; }
+  _rareMergeUndoData.forEach(function(x) { x.card.blanks = x.old; });
+  _rareMergeUndoData = null;
+  saveData(appData);
+  renderBanks();
+  var m = document.querySelector('.modal-overlay .modal'); // 关掉当前弹窗
+  var ov = document.querySelector('.modal-overlay'); if (ov) ov.remove();
+  showToast('↩ 已撤销，挖空恢复原样');
 }
 
 // ── ① 修复挖空位置（老题）：只改 start/end，不改文字 ──
@@ -24889,6 +26650,35 @@ function renderGardenContent() {
       } else {
         h += '<button onclick="event.stopPropagation();buyTheme(\'' + theme.id + '\')" style="padding:4px 8px;border:none;border-radius:10px;font-size:var(--f10);cursor:pointer;min-height:28px;background:var(--primary);color:#fff">18🍅</button>';
       }
+      h += '</div>';
+    }
+    h += '</div>';
+    // 🆕 v221：音效 / 飘落（番茄解锁；钢琴/彩带全能版自带）
+    h += '<div style="font-size:var(--f13);font-weight:600;color:var(--text);margin-bottom:8px">🎵 做题结束音效</div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">';
+    for (var si = 0; si < SOUND_DEFS.length; si++) {
+      var sd = SOUND_DEFS[si];
+      var sOwn = _sfxOwned(sd.id);
+      var sAct = (appData.settings.soundId || 'softpiano') === sd.id;
+      h += '<div style="background:var(--bg-input);border-radius:8px;padding:8px;display:flex;align-items:center;gap:6px">' +
+        '<div style="flex:1;min-width:0"><div style="font-size:var(--f12);font-weight:600;color:var(--text)">' + sd.icon + ' ' + sd.name + '</div>' +
+        '<div style="font-size:var(--f10);color:var(--text-tertiary)">' + (sAct ? '正在用' : (sOwn ? '已解锁' : (sd.free ? '全能版自带' : sd.price + '🍅'))) + '</div></div>';
+      if (!sOwn && !sd.free) h += '<button onclick="event.stopPropagation();buySound(\'' + sd.id + '\')" style="padding:4px 8px;border:none;border-radius:10px;font-size:var(--f10);cursor:pointer;min-height:28px;background:var(--primary);color:#fff">解锁</button>';
+      else if (sOwn && !sAct) h += '<button onclick="event.stopPropagation();selectSound(\'' + sd.id + '\')" style="padding:4px 8px;border:1px solid var(--border);border-radius:10px;font-size:var(--f10);cursor:pointer;min-height:28px;background:var(--bg-card);color:var(--text-secondary)">使用</button>';
+      h += '</div>';
+    }
+    h += '</div>';
+    h += '<div style="font-size:var(--f13);font-weight:600;color:var(--text);margin-bottom:8px">🎬 做题结束动画</div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">';
+    for (var ei = 0; ei < EFFECT_DEFS.length; ei++) {
+      var ed = EFFECT_DEFS[ei];
+      var eOwn = _fxOwned(ed.id);
+      var eAct = (appData.settings.effectId || 'ribbon') === ed.id;
+      h += '<div style="background:var(--bg-input);border-radius:8px;padding:8px;display:flex;align-items:center;gap:6px">' +
+        '<div style="flex:1;min-width:0"><div style="font-size:var(--f12);font-weight:600;color:var(--text)">' + ed.icon + ' ' + ed.name + '</div>' +
+        '<div style="font-size:var(--f10);color:var(--text-tertiary)">' + (eAct ? '正在用' : (eOwn ? '已解锁' : (ed.free ? '全能版自带' : ed.price + '🍅'))) + '</div></div>';
+      if (!eOwn && !ed.free) h += '<button onclick="event.stopPropagation();buyEffect(\'' + ed.id + '\')" style="padding:4px 8px;border:none;border-radius:10px;font-size:var(--f10);cursor:pointer;min-height:28px;background:var(--primary);color:#fff">解锁</button>';
+      else if (eOwn && !eAct) h += '<button onclick="event.stopPropagation();selectEffect(\'' + ed.id + '\')" style="padding:4px 8px;border:1px solid var(--border);border-radius:10px;font-size:var(--f10);cursor:pointer;min-height:28px;background:var(--bg-card);color:var(--text-secondary)">使用</button>';
       h += '</div>';
     }
     h += '</div>';
@@ -28275,6 +30065,7 @@ function getSuperFavs(bankName) {
 }
 
 function toggleFav() {
+  if (!quizFavAllowed()) return;
   if (!quizState) return;
   var q = quizState.questions[quizState.currentIndex];
   var realBank = (quizState.quickBankNames && quizState.quickBankNames[quizState.currentIndex]) || quizState.bankName;
@@ -28301,7 +30092,7 @@ function toggleFav() {
 }
 
 function toggleSuperFav() {
-  if (isTierLocked('superFav')) return;
+  if (isTierLocked('superFav') || !quizFavAllowed()) return;
   if (!quizState) return;
   var q = quizState.questions[quizState.currentIndex];
   var realBank = (quizState.quickBankNames && quizState.quickBankNames[quizState.currentIndex]) || quizState.bankName;
@@ -28329,9 +30120,19 @@ function updateFavButtons() {
   var qBank = (quizState.quickBankNames && quizState.quickBankNames[quizState.currentIndex]) || quizState.bankName;
   var favs = getFavorites(qBank);
   var isFav = favs.some(function(f) { return f.id === q.id; });
+  var _favOk = quizFavAllowed();
   var favBtn = qzEl('favBtn');
-  if (favBtn) { favBtn.textContent = 'ᥫ᭡'; favBtn.style.opacity = isFav ? '1' : '0.3'; }
+  if (favBtn) {
+    favBtn.textContent = 'ᥫ᭡';
+    favBtn.style.opacity = isFav ? '1' : '0.3';
+    favBtn.classList.toggle('fav-locked', !_favOk);
+    favBtn.disabled = !_favOk;
+  }
   var superBtn = qzEl('superFavBtn');
+  if (superBtn) {
+    superBtn.classList.toggle('fav-locked', !_favOk);
+    superBtn.disabled = !_favOk;
+  }
   if (superBtn) {
     if (isFav) {
       superBtn.style.display = 'inline-flex';
@@ -28426,6 +30227,7 @@ function updateAvatarDisplay() {
 
                            
 function switchPage(page, btn) {
+  try { _fxStop(); } catch (e) {}
                                
   if (page === 'wrong' && browseState) {
     page = 'quiz';
@@ -28471,13 +30273,15 @@ function switchPage(page, btn) {
     qzEl('seqProgress').style.display = drawMode === 'sequential' ? '' : 'none';
   }
   if (page === 'wrong') {
-                      
+    // 2026-10-24：没激活选择题全能版 → 不要停在收藏/重点内容上
+    if (!quizFavAllowed() && (wrongTab === 'fav' || wrongTab === 'super')) wrongTab = 'wrong';
+    updateWrongTabLocks();
     var wbEl = qzEl('wrongBanks');
     var fbEl = qzEl('favBanks');
     if (wbEl) wbEl.style.display = wrongTab === 'wrong' ? '' : 'none';
     if (fbEl) fbEl.style.display = wrongTab === 'fav' ? '' : 'none';
-    document.querySelectorAll('#page-wrong .chip[data-wtab]').forEach(function(c) { c.classList.remove('active'); });
-    var activeChip = document.querySelector('#page-wrong .chip[data-wtab="' + wrongTab + '"]');
+    document.querySelectorAll('#quizWrongRoot .chip[data-wtab]').forEach(function(c) { c.classList.remove('active'); });
+    var activeChip = document.querySelector('#quizWrongRoot .chip[data-wtab="' + wrongTab + '"]');
     if (activeChip) activeChip.classList.add('active');
     if (wrongTab === 'fav') renderFavorites(); else renderWrongBooks();
   }  if (page === 'settings') { renderSettings(); updateAvatarDisplay(); }
@@ -35566,9 +37370,29 @@ function reviewWrongFromResult() {
                             
 var wrongTab = 'wrong';                   
 
+function resetWrongTabIfLocked() {
+  if (typeof quizFavAllowed === 'function' && !quizFavAllowed() && (wrongTab === 'fav' || wrongTab === 'super')) {
+    wrongTab = 'wrong';
+  }
+}
+function updateWrongTabLocks() {
+  // 2026-10-24：选择题没激活全能版时，「收藏 / 重点」两个页签看得见但点不了
+  var locked = !quizFavAllowed();
+  ['wrongTabFav', 'wrongTabSuper'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('fav-locked', locked);
+    if (locked) el.classList.remove('active');
+  });
+}
+
 function switchWrongTab(tab, el) {
+  // 2026-10-24：未激活的选择题模块 → 收藏/重点页签灰掉，点了完全没反应
+  if ((tab === 'fav' || tab === 'super') && !quizFavAllowed()) return;
+  updateWrongTabLocks();
   wrongTab = tab;
-  document.querySelectorAll('#page-wrong .chip[data-wtab]').forEach(function(c) { c.classList.remove('active'); });
+  document.querySelectorAll('#quizWrongRoot .chip[data-wtab]').forEach(function(c) { c.classList.remove('active'); });
+  if (!el) el = document.querySelector('#quizWrongRoot .chip[data-wtab="' + tab + '"]');
   if (el) el.classList.add('active');
   qzEl('wrongBanks').style.display = tab === 'wrong' ? '' : 'none';
   qzEl('favBanks').style.display = tab === 'fav' ? '' : 'none';
@@ -35833,6 +37657,8 @@ function browseAllWrongs() {
                           
 function renderFavorites() {
   var container = qzEl('favBanks');
+  // 2026-10-24：未激活的选择题模块 → 收藏内容不展示
+  if (!quizFavAllowed()) { if (container) container.innerHTML = ''; return; }
   var favs = appData.favorites || {};
   var names = Object.keys(favs).filter(function(n) { return favs[n].length > 0; });
   if (names.length === 0) {
@@ -35884,6 +37710,7 @@ function toggleFavBank(bankId) {
 }
 
 function browseFavFromIndex(name, index) {
+  if (!quizFavAllowed()) return;
   var favs = getFavorites(name);
   if (favs.length === 0) { toast('没有收藏'); return; }
   if (index < 0 || index >= favs.length) index = 0;
@@ -35900,6 +37727,7 @@ function browseFavFromIndex(name, index) {
 }
 
 function removeFavItem(name, index) {
+  if (!quizFavAllowed()) return;
   var favs = getFavorites(name);
   if (index < 0 || index >= favs.length) return;
   var q = favs[index];
@@ -35917,6 +37745,7 @@ function removeFavItem(name, index) {
 }
 
 function browseFavs(name) {
+  if (!quizFavAllowed()) return;
   var favs = getFavorites(name);
   if (favs.length === 0) { toast('没有收藏'); return; }
   browseState = { name: name, questions: favs, index: 0, total: favs.length, answers: {}, isFavBrowse: true };
@@ -35932,6 +37761,7 @@ function browseFavs(name) {
 }
 
 function clearFavs(name) {
+  if (!quizFavAllowed()) return;
   if (!confirm('确定清空"' + name + '"的收藏吗？')) return;
   appData.favorites[name] = [];
   saveData(appData);
@@ -35942,6 +37772,8 @@ function clearFavs(name) {
                                      
 function renderSuperFavs() {
   var container = qzEl('superFavBanks');
+  // 2026-10-24：未激活的选择题模块 → 重点内容不展示
+  if (!quizFavAllowed()) { if (container) container.innerHTML = ''; return; }
   var superFavs = appData.superFavs || {};
   var names = Object.keys(superFavs).filter(function(n) { return superFavs[n].length > 0; });
   if (names.length === 0) {
@@ -35992,6 +37824,7 @@ function toggleSuperBank(bankId) {
 }
 
 function browseSuperFavFromIndex(name, index) {
+  if (!quizFavAllowed()) return;
   var superFavs = getSuperFavs(name);
   if (superFavs.length === 0) { toast('没有重点标记'); return; }
   if (index < 0 || index >= superFavs.length) index = 0;
@@ -36008,6 +37841,7 @@ function browseSuperFavFromIndex(name, index) {
 }
 
 function removeSuperFavItem(name, index) {
+  if (!quizFavAllowed()) return;
   var superFavs = getSuperFavs(name);
   if (index < 0 || index >= superFavs.length) return;
   superFavs.splice(index, 1);
@@ -36017,6 +37851,7 @@ function removeSuperFavItem(name, index) {
 }
 
 function browseSuperFavs(name) {
+  if (!quizFavAllowed()) return;
   var superFavs = getSuperFavs(name);
   if (superFavs.length === 0) { toast('没有重点标记'); return; }
   browseState = { name: name, questions: superFavs, index: 0, total: superFavs.length, answers: {}, isFavBrowse: true, isSuperBrowse: true };
@@ -36032,6 +37867,7 @@ function browseSuperFavs(name) {
 }
 
 function clearSuperFavs(name) {
+  if (!quizFavAllowed()) return;
   if (!confirm('确定清空"' + name + '"的重点标记吗？（不会影响ᥫ᭡收藏）')) return;
   appData.superFavs[name] = [];
   saveData(appData);
@@ -36095,6 +37931,7 @@ function toggleExplanation(btn) {
 }
 
 function toggleFavFromBrowse() {
+  if (!quizFavAllowed()) return;
   if (!browseState) return;
   var q = browseState.questions[browseState.index];
   var favs = getFavorites(browseState.name);
@@ -36141,6 +37978,7 @@ function toggleFavFromBrowse() {
 }
 
 function toggleSuperFavFromBrowse() {
+  if (!quizFavAllowed()) return;
   if (!browseState) return;
   var q = browseState.questions[browseState.index];
   var favs = getFavorites(browseState.name);
@@ -36204,14 +38042,18 @@ function renderBrowseQuestion() {
     }
   }
 
+  // 2026-10-24：收藏/重点按模块锁 —— 免费时按钮**看得见但点不了**（灰掉 + disabled）
+  var _favOk = quizFavAllowed();
+  var _favLockCls = _favOk ? '' : ' fav-locked';
+  var _favLockAttr = _favOk ? '' : ' disabled';
   var html = '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px">' +
     '<div style="display:flex;align-items:center;gap:6px">' +
       '<div style="font-size:13px;color:var(--text-secondary)">题目 #' + (q.id || (idx + 1)) + (isMulti ? ' <span style="color:var(--warning);font-weight:600">[多选]</span>' : '') + '</div>' +
       '<button style="background:none;border:none;font-size:13px;cursor:pointer;padding:2px 6px;color:var(--text-tertiary);opacity:0.4;min-height:32px" onclick="QZ.editCurrentBrowseQuestion()" title="编辑此题">✏️</button>' +
     '</div>' +
     '<div style="display:flex;align-items:center;gap:2px">' +
-      (isFav ? '<button style="background:none;border:none;outline:none;font-size:18px;cursor:pointer;padding:0;line-height:1;color:#8B5CF6;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;border-radius:8px;position:relative;z-index:91;opacity:' + (isSuper ? '1' : '0.3') + '" onpointerdown="QZ.toggleSuperFavFromBrowse()" title="重点标记">𓈒𓏸𓇼</button>' : '') +
-      '<button style="background:none;border:none;outline:none;font-size:22px;cursor:pointer;padding:0;line-height:1;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;border-radius:8px;position:relative;z-index:91;color:#8B5CF6;opacity:' + (isFav ? '1' : '0.3') + '" onpointerdown="QZ.toggleFavFromBrowse()" title="' + (isFav ? '取消收藏' : '收藏') + '">ᥫ᭡</button>' +
+      (isFav ? '<button style="background:none;border:none;outline:none;font-size:18px;cursor:pointer;padding:0;line-height:1;color:#8B5CF6;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;border-radius:8px;position:relative;z-index:91;opacity:' + (isSuper ? '1' : '0.3') + '" class="' + (_favLockCls ? 'fav-locked' : '') + '"' + _favLockAttr + ' onpointerdown="QZ.toggleSuperFavFromBrowse()" title="重点标记">𓈒𓏸𓇼</button>' : '') +
+      ('<button style="background:none;border:none;outline:none;font-size:22px;cursor:pointer;padding:0;line-height:1;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;border-radius:8px;position:relative;z-index:91;color:#8B5CF6;opacity:' + (isFav ? '1' : '0.3') + '" class="' + (_favLockCls ? 'fav-locked' : '') + '"' + _favLockAttr + ' onpointerdown="QZ.toggleFavFromBrowse()" title="' + (isFav ? '取消收藏' : '收藏') + '">ᥫ᭡</button>') +
     '</div></div>';
   html += '<div style="font-size:16px;font-weight:500;line-height:1.7;margin-bottom:14px">' + escHtml(q.question) + '</div>';
 
@@ -39213,6 +41055,8 @@ window.QZ = {
   switchQuizMode: switchQuizMode,
   switchWrongBank: switchWrongBank,
   switchWrongTab: switchWrongTab,
+  updateWrongTabLocks: updateWrongTabLocks,
+  resetWrongTabIfLocked: resetWrongTabIfLocked,
   syncDrawModeLockUI: syncDrawModeLockUI,
   toast: toast,
   toggleAllCategories: toggleAllCategories,
